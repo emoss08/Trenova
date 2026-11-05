@@ -19,7 +19,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { organization } from "@/lib/queries/organization";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import { type MicrosoftSSOConfig } from "@trenova/shared/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -132,7 +132,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
   const mutation = useApiMutation({
     mutationFn: (values: MicrosoftSSOFormValues) =>
-      apiService.organizationService.upsertMicrosoftSSOConfig(organizationId, {
+      organizationService.upsertMicrosoftSSOConfig(organizationId, {
         ...values,
         allowedDomains: parseAllowedDomains(values.allowedDomainsText),
         redirectUrl,

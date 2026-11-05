@@ -5,7 +5,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatTimestamp, getPriorityConfig, SOURCE_LABELS } from "@/lib/notification-helpers";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { notificationService } from "@trenova/shared/services/notification";
 import type { Notification } from "@trenova/shared/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckDoubleIcon, CheckIcon, Inbox01Icon } from "@trenova/shared/components/icons";
@@ -104,7 +104,7 @@ export default function NotificationList() {
   const handleMarkRead = useCallback(
     async (id: string) => {
       try {
-        await apiService.notificationService.markRead([id]);
+        await notificationService.markRead([id]);
         invalidate();
       } catch {
         toast.error(t("Failed to mark notification as read"));
@@ -115,7 +115,7 @@ export default function NotificationList() {
 
   const handleMarkAllRead = useCallback(async () => {
     try {
-      await apiService.notificationService.markAllRead();
+      await notificationService.markAllRead();
       invalidate();
     } catch {
       toast.error(t("Failed to mark all as read"));

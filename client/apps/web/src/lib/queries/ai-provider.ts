@@ -9,7 +9,7 @@ import {
   type AIProviderRoutingDraft,
 } from "@/lib/graphql/ai-provider";
 import { fetchAIUsageSummary } from "@/lib/graphql/ai-usage";
-import { apiService } from "@/services/api";
+import { aiProviderService } from "@/services/ai-provider";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const aiProvider = createQueryKeys("aiProvider", {
@@ -27,7 +27,7 @@ export const aiProvider = createQueryKeys("aiProvider", {
   }),
   catalog: () => ({
     queryKey: ["ai-provider-catalog"],
-    queryFn: () => apiService.aiProviderService.catalog(),
+    queryFn: () => aiProviderService.catalog(),
   }),
   models: (endpoint: AIProviderEndpoint) => ({
     queryKey: [endpoint],

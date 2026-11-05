@@ -1,7 +1,7 @@
 import { fetchRateAgreementPricing } from "@/lib/graphql/rate-agreement-card";
 import { nextLaneOffset } from "@/lib/rate-agreement";
 import { infiniteQueryOptions } from "@tanstack/react-query";
-import { apiService } from "@/services/api";
+import { rateAgreementService } from "@/services/rate";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const rateAgreement = createQueryKeys("rateAgreement", {
@@ -9,7 +9,7 @@ export const rateAgreement = createQueryKeys("rateAgreement", {
   get: (rateAgreementId: string) => ({
     queryKey: [rateAgreementId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
-      apiService.rateAgreementService.getWithoutLanes(rateAgreementId, { signal }),
+      rateAgreementService.getWithoutLanes(rateAgreementId, { signal }),
   }),
   /**
    * The key the agreement's lanes are read under, a page at a time, most
@@ -21,13 +21,13 @@ export const rateAgreement = createQueryKeys("rateAgreement", {
   /** The agreement's versions, each the terms as they stood when it was cut. */
   versions: (rateAgreementId: string) => ({
     queryKey: [rateAgreementId],
-    queryFn: async () => apiService.rateAgreementService.listVersions(rateAgreementId),
+    queryFn: async () => rateAgreementService.listVersions(rateAgreementId),
   }),
   /** The agreement's live lanes grouped by what prices them, with each group's rate range. */
   laneSummary: (rateAgreementId: string) => ({
     queryKey: [rateAgreementId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
-      apiService.rateAgreementService.laneSummary(rateAgreementId, { signal }),
+      rateAgreementService.laneSummary(rateAgreementId, { signal }),
   }),
   /** The loads the agreement has priced, and when it last priced one. */
   pricing: (rateAgreementId: string) => ({
@@ -45,7 +45,7 @@ export function rateAgreementLanesQuery(rateAgreementId: string, pageSize: numbe
   return infiniteQueryOptions({
     queryKey: [...rateAgreement.lanes(rateAgreementId).queryKey, pageSize],
     queryFn: ({ pageParam, signal }) =>
-      apiService.rateAgreementService.listLanes(
+      rateAgreementService.listLanes(
         rateAgreementId,
         { limit: pageSize, offset: pageParam },
         { signal },

@@ -23,7 +23,7 @@ import {
   tenderExhaustedActionChoices,
 } from "@/lib/choices";
 import { dispatchControl } from "@/lib/queries/dispatch-control";
-import { apiService } from "@/services/api";
+import { dispatchControlService } from "@/services/dispatch-control";
 import {
   dispatchControlSchema,
   type DispatchControl,
@@ -51,7 +51,7 @@ export default function DispatchControlForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: dispatchControl.get._def,
-    mutationFn: async (values: DispatchControl) => apiService.dispatchControlService.update(values),
+    mutationFn: async (values: DispatchControl) => dispatchControlService.update(values),
     resourceName: "Dispatch Control",
     resetForm: reset,
     form,

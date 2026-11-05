@@ -11,7 +11,7 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { LOCALE_NAMES, LOCALES } from "@trenova/shared/i18n/generated/locales";
 import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import type {
   UserCreateFormValues,
@@ -245,8 +245,8 @@ function OrganizationMembershipSection({
     setError(null);
 
     const [organizations, memberships] = await Promise.all([
-      apiService.userService.getUserOrganizations(),
-      apiService.userService.listOrganizationMemberships(userId),
+      userService.getUserOrganizations(),
+      userService.listOrganizationMemberships(userId),
     ]).catch((err) => {
       setError("Unable to load organization access.");
       console.error("Failed to load organization memberships", err);
@@ -288,7 +288,7 @@ function OrganizationMembershipSection({
     setIsSaving(true);
     setError(null);
 
-    const updatedMemberships = await apiService.userService
+    const updatedMemberships = await userService
       .replaceOrganizationMemberships(userId, {
         organizationIds: selectedOrgIDs,
       })

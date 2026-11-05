@@ -124,7 +124,7 @@ const { data } = useQuery(tractor.card(id));
 const save = useApiMutation({
   form,                       // server field errors land on the form's fields
   resourceName: "Cover sheet",
-  mutationFn: (values: FormValues) => apiService.thingService.create(values),
+  mutationFn: (values: FormValues) => thingService.create(values),
   onSuccess: () => {
     void queryClient.invalidateQueries({ queryKey: thing._def });
     toast.success(t("Saved"));
@@ -141,7 +141,7 @@ of itself. `useApiMutation` reports a failure, so the handler only has to hold a
 const remove = useApiMutation({
   scope: { id: `thing-remove:${thing.id}` },   // a second call waits instead of racing
   resourceName: "Thing",
-  mutationFn: () => apiService.thingService.remove(thing.id),
+  mutationFn: () => thingService.remove(thing.id),
   onSuccess: () => void queryClient.invalidateQueries({ queryKey: thingQueries._def }),
 });
 

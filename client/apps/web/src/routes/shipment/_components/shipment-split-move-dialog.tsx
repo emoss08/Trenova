@@ -19,7 +19,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useSelectOption } from "@/hooks/use-select-option";
 import { locationOptionPlace } from "@/lib/location-option";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
-import { apiService } from "@/services/api";
+import { assignmentService } from "@/services/assignment";
 import type {
   ShipmentMove,
   SplitMovePayload,
@@ -279,8 +279,7 @@ export function SplitMoveDialog({
     unknown,
     SplitMoveFormValues
   >({
-    mutationFn: (payload: SplitMovePayload) =>
-      apiService.assignmentService.splitMove(moveId, payload),
+    mutationFn: (payload: SplitMovePayload) => assignmentService.splitMove(moveId, payload),
     resourceName: "Split Move",
     form,
     onSuccess: (data: SplitMoveResponse) => {

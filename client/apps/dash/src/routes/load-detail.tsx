@@ -29,6 +29,8 @@ import {
   stopPlace,
   useLoad,
 } from "../_components/use-loads";
+import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
+import { PayLoadFailed } from "../_components/pay-load-failed";
 
 function CopyChip({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -70,15 +72,18 @@ function PayEstimateCard({ shipmentId, moveId }: { shipmentId: string; moveId: s
 
   const estimate = useQuery({
     queryKey: ["dash-pay-estimate", shipmentId, moveId],
-    queryFn: async ({ signal }) => {
-      try {
-        return await fetchMyLoadPayEstimate(shipmentId, moveId, { signal });
-      } catch {
-        return null;
-      }
-    },
+    queryFn: ({ signal }) => nullWhenAbsent(fetchMyLoadPayEstimate(shipmentId, moveId, { signal })),
     staleTime: 5 * 60 * 1000,
   });
+
+  if (estimate.isError) {
+    return (
+      <PayLoadFailed
+        message={t("We couldn't load the pay estimate for this load.")}
+        onRetry={() => void estimate.refetch()}
+      />
+    );
+  }
 
   if (estimate.isPending || !estimate.data || estimate.data.grossMinor <= 0) {
     return null;

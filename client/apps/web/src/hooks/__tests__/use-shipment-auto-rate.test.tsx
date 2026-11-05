@@ -7,11 +7,9 @@ import { useShipmentAutoRate } from "../use-shipment-auto-rate";
 
 const previewContractRateMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: {
-      previewContractRate: previewContractRateMock,
-    },
+vi.mock("@/services/shipment", () => ({
+  shipmentService: {
+    previewContractRate: previewContractRateMock,
   },
 }));
 

@@ -385,7 +385,6 @@ export type BulkDuplicateFormulaTemplateRequest = z.infer<
 export const createVersionRequestSchema = z.object({
   changeMessage: z.string().optional(),
 });
-export type CreateVersionRequest = z.infer<typeof createVersionRequestSchema>;
 
 export const rollbackRequestSchema = z.object({
   targetVersion: z.number(),

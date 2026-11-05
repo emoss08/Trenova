@@ -6,7 +6,7 @@ import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SegmentedField } from "@/components/fields/segmented-field";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { FOCUS_CHOICES, focusChoiceFor, focusUntil, type FocusChoice } from "@/lib/user-settings";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -82,7 +82,7 @@ function AboutCard({ user, picture }: { user: User | null; picture: ProfilePictu
     resourceName: "Profile",
     textFields: ABOUT_TEXT_FIELDS,
     save: async (next, previous) => {
-      const updated = await apiService.userService.updateMyProfile({
+      const updated = await userService.updateMyProfile({
         ...(next.jobTitle !== previous.jobTitle ? { jobTitle: next.jobTitle } : {}),
         ...(next.phoneNumber !== previous.phoneNumber ? { phoneNumber: next.phoneNumber } : {}),
         ...(next.avatarStyle !== previous.avatarStyle ? { avatarStyle: next.avatarStyle } : {}),
@@ -242,7 +242,7 @@ function AvailabilityCard({ user }: { user: User | null }) {
     resourceName: "Availability",
     textFields: AVAILABILITY_TEXT_FIELDS,
     save: async (next) => {
-      const updated = await apiService.userService.updateMyAvailability(
+      const updated = await userService.updateMyAvailability(
         next.status === "focus"
           ? { status: "focus", focusUntil: focusUntil(next.focusFor, new Date(), timezone) }
           : next.status === "away"

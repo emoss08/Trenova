@@ -61,10 +61,6 @@ vi.mock("@trenova/shared/services/user", async (importOriginal) => ({
   },
 }));
 
-vi.mock("@/services/api", async () => ({
-  apiService: { userService: (await import("@trenova/shared/services/user")).userService },
-}));
-
 const { UserPanel } = await import("../user-panel");
 
 const detail = {

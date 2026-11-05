@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { trailerService } from "@/services/trailer";
 import { locateTrailerPayloadSchema, type LocateTrailerPayload } from "@/types/trailer";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,8 +59,7 @@ export function LocateTrailerDialog({
   }, [open, targetLocationId, setValue]);
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: (payload: LocateTrailerPayload) =>
-      apiService.trailerService.locate(trailerId, payload),
+    mutationFn: (payload: LocateTrailerPayload) => trailerService.locate(trailerId, payload),
     resourceName: "Trailer",
     form,
     onSuccess: () => {

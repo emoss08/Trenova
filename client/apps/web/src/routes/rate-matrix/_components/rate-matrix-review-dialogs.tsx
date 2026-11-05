@@ -1,7 +1,7 @@
 import { describeApiError } from "@/lib/api-error-message";
 import type { RateMatrixRecord } from "@/lib/graphql/rate-matrix";
 import { invalidateRateMatrix, rateMatrix } from "@/lib/queries/rate-matrix";
-import { apiService } from "@/services/api";
+import { rateMatrixService } from "@/services/rate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
@@ -67,7 +67,7 @@ export function RateMatrixSubmitDialog({
 
   const submit = useMutation({
     mutationFn: () =>
-      apiService.rateMatrixService.submit(matrix.id, {
+      rateMatrixService.submit(matrix.id, {
         comment: "",
         reviewerId: reviewerId ?? undefined,
         reviewerNote: note.trim(),
@@ -244,9 +244,9 @@ export function RateMatrixDecisionDialog({
   const mutation = useMutation({
     mutationFn: (action: RateMatrixDecision) => {
       const text = comment.trim();
-      if (action === "approve") return apiService.rateMatrixService.approve(matrix.id, text);
-      if (action === "reject") return apiService.rateMatrixService.reject(matrix.id, text);
-      return apiService.rateMatrixService.requestChanges(matrix.id, text);
+      if (action === "approve") return rateMatrixService.approve(matrix.id, text);
+      if (action === "reject") return rateMatrixService.reject(matrix.id, text);
+      return rateMatrixService.requestChanges(matrix.id, text);
     },
     onSuccess: async () => {
       setComment("");
@@ -324,7 +324,7 @@ export function RateMatrixArchiveDialog({
   const confirmId = useId();
 
   const archive = useMutation({
-    mutationFn: () => apiService.rateMatrixService.archive(matrix.id, pinned > 0),
+    mutationFn: () => rateMatrixService.archive(matrix.id, pinned > 0),
     onSuccess: async () => {
       setConfirmed(false);
       onOpenChange(false);
@@ -402,7 +402,7 @@ export function RateMatrixRestoreDialog({
   const queryClient = useQueryClient();
 
   const restore = useMutation({
-    mutationFn: (target: number) => apiService.rateMatrixService.restore(matrix.id, target),
+    mutationFn: (target: number) => rateMatrixService.restore(matrix.id, target),
     onSuccess: async () => {
       onClose();
       await invalidateRateMatrix(queryClient);

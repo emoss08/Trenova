@@ -19,3 +19,5 @@ export class WorkerService {
     return safeParse(workerWithoutPersonalDetailsSchema, response, "Worker");
   }
 }
+
+export const workerService = new WorkerService();

@@ -43,6 +43,8 @@ import {
 import { useReaderPanel, useStepSubmit } from "../reader-panel";
 import { AttachMenu, ReplyFiles, type RefusedUpload } from "./reply-files";
 import { StepBody, StepError, StepFooter } from "./step-parts";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
+import { toast } from "@trenova/shared/components/ui/toast";
 
 /** How long typing pauses before the draft is saved for the team. */
 const SAVE_AFTER_MS = 1200;
@@ -448,7 +450,14 @@ export function ReplyComposer({
           body,
           files.map((file) => file.documentId),
         )
-        .catch(() => undefined);
+        .catch((error: unknown) => {
+          // The composer is closing, so this was the last save. Nobody is left on the screen
+          // to notice, and the words are gone unless they are told now.
+          reportFailure(error, { source: "background", operation: "saveReplyDraft" });
+          toast.error(t("Your reply draft wasn't saved"), {
+            description: t("Open the message again to check your reply before you send it."),
+          });
+        });
     }
   });
   useEffect(() => flushDraft, [flushDraft]);

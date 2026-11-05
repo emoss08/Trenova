@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import {
   accessPolicyFormSchema,
   type AccessPolicy,
@@ -102,7 +102,7 @@ export function AccessPolicyPanel({
         fieldKey="name"
         formComponent={formComponent}
         mutationFn={async (values) => {
-          const saved = await apiService.organizationService.updateAccessPolicy(
+          const saved = await organizationService.updateAccessPolicy(
             organizationId,
             toAccessPolicy(values),
           );
@@ -123,7 +123,7 @@ export function AccessPolicyPanel({
       description={t("Create a priority-ordered authorization decision for a protected resource.")}
       formComponent={formComponent}
       mutationFn={async (values) => {
-        const saved = await apiService.organizationService.createAccessPolicy(
+        const saved = await organizationService.createAccessPolicy(
           organizationId,
           toAccessPolicy(values),
         );

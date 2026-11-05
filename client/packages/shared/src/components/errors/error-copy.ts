@@ -35,6 +35,7 @@ export const ERROR_ICONS: Record<ErrorKind, IconComponent> = {
   timeout: Hourglass01Icon,
   server: ServerAlertIcon,
   request: AlertCircleIcon,
+  contract: RefreshCw02Icon,
   unexpected: AlertTriangleIcon,
 };
 
@@ -117,6 +118,13 @@ export function errorCopy(t: TranslateFn, description: ErrorDescription): ErrorC
         description:
           description.detail ??
           t("The request was rejected. Check what you entered and try again."),
+      };
+    case "contract":
+      return {
+        title: t("This page is out of step with Trenova"),
+        description: t(
+          "The server sent something this version of the page can't read. Reload to pick up the latest version. If it keeps happening, contact support with the reference below.",
+        ),
       };
     case "unexpected":
       return {

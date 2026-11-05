@@ -4,7 +4,7 @@ import { ChargeSplitEditor } from "@/components/billing/charge-split-editor";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { allocationsForCharge } from "@/lib/billing-queue-charges";
 import { rulesResolver } from "@/lib/rules-resolver";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -116,7 +116,7 @@ export function BillingQueueReassignChargeDialog({
   >({
     form,
     resourceName: "billing queue charge",
-    mutationFn: (input) => apiService.billingQueueService.reassignCharge(item.id, input),
+    mutationFn: (input) => billingQueueService.reassignCharge(item.id, input),
     onSuccess: (result) => {
       afterReassignment(result, chargeName);
       onOpenChange(false);

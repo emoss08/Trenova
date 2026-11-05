@@ -49,3 +49,5 @@ export class HazmatSegregationRuleService {
     return response.updateHazmatSegregationRule;
   }
 }
+
+export const hazmatSegregationRuleService = new HazmatSegregationRuleService();

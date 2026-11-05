@@ -4,8 +4,7 @@ import { scrollParent } from "@/lib/dom";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import { artifactDocumentUrl } from "@/services/assistant";
+import { assistantService, artifactDocumentUrl } from "@/services/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -237,7 +236,7 @@ export function DeskDocBody({
 
   const saveMutation = useApiMutation({
     mutationFn: ({ body, note }: { body: string; note: string }) =>
-      apiService.assistantService.saveDocumentVersion(threadId, current.id, { body, note }),
+      assistantService.saveDocumentVersion(threadId, current.id, { body, note }),
     onSuccess: async (saved) => {
       await refresh();
       setView(null);
@@ -246,7 +245,7 @@ export function DeskDocBody({
     resourceName: "Document",
   });
   const restoreMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.assistantService.restoreDocumentVersion(threadId, id),
+    mutationFn: (id: string) => assistantService.restoreDocumentVersion(threadId, id),
     onSuccess: async (saved) => {
       await refresh();
       setView(null);
@@ -256,7 +255,7 @@ export function DeskDocBody({
   });
   const rewriteMutation = useApiMutation({
     mutationFn: (input: { block: DocBlock; mode: RewriteMode; ask: string }) =>
-      apiService.assistantService.rewriteDocument(threadId, current.id, {
+      assistantService.rewriteDocument(threadId, current.id, {
         text: input.block.raw,
         mode: input.mode,
         prompt: input.ask,

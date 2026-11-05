@@ -6,8 +6,9 @@ import type { PaletteScope } from "../palette-model";
 
 const { globalSearch } = vi.hoisted(() => ({ globalSearch: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { globalSearchService: { search: globalSearch } },
+vi.mock("@/services/global-search", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/global-search")>()),
+  globalSearchService: { search: globalSearch },
 }));
 
 const { usePaletteRemoteSearch } = await import("../use-palette-data");

@@ -14,8 +14,7 @@ import {
   takeCachedThread,
 } from "@/lib/thread-list";
 import { useDeskThreads } from "./use-desk-threads";
-import { apiService } from "@/services/api";
-import { downloadAssistantTranscript } from "@/services/assistant";
+import { assistantService, downloadAssistantTranscript } from "@/services/assistant";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { commandJ } from "./artifacts/desk-workspace-state";
 import { NO_PENDING_LOOKUPS, pendingLookupIds } from "./artifacts/pending-lookups";
@@ -334,7 +333,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   const deleteMutation = useApiMutation({
     mutationKey: DELETE_THREAD_KEY,
-    mutationFn: (thread: AssistantThread) => apiService.assistantService.deleteThread(thread.id),
+    mutationFn: (thread: AssistantThread) => assistantService.deleteThread(thread.id),
     onMutate: (thread) => {
       if (activeThreadId === thread.id) {
         void navigate("/desk");
@@ -370,7 +369,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const renameMutation = useApiMutation({
     scope: RENAME_THREAD_SCOPE,
     mutationFn: ({ thread, title }: { thread: AssistantThread; title: string }) =>
-      apiService.assistantService.updateThread(thread.id, { title }),
+      assistantService.updateThread(thread.id, { title }),
     onMutate: ({ thread, title }) => {
       holdThreadReads(thread.id);
       return { undo: patchCachedThread(queryClient, thread.id, { title }) };
@@ -407,7 +406,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const pinMutation = useApiMutation({
     scope: PIN_THREAD_SCOPE,
     mutationFn: ({ thread, pinned }: { thread: AssistantThread; pinned: boolean }) =>
-      apiService.assistantService.updateThread(thread.id, { pinned }),
+      assistantService.updateThread(thread.id, { pinned }),
     onMutate: ({ thread, pinned }) => {
       holdThreadReads(thread.id);
       const before = cachedThread(queryClient, thread.id) ?? thread;
@@ -446,7 +445,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // Opening a conversation reads it, and so does a reply landing while it is
   // open; the rail's dot for an unseen reply clears either way.
   const readMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.assistantService.markThreadRead(id),
+    mutationFn: (id: string) => assistantService.markThreadRead(id),
     onSuccess: refreshThreads,
     resourceName: "Conversation",
   });

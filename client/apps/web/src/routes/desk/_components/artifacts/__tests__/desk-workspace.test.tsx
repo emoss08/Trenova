@@ -89,10 +89,6 @@ vi.mock("@/services/assistant", async (importOriginal) => ({
   },
 }));
 
-vi.mock("@/services/api", async () => ({
-  apiService: { assistantService: (await import("@/services/assistant")).assistantService },
-}));
-
 let clock = Math.floor(Date.now() / 1000) - 3600;
 
 function artifact(overrides: Partial<AssistantArtifact> & { id: string }): AssistantArtifact {

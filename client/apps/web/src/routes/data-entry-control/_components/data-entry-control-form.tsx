@@ -12,7 +12,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { caseFormatChoices } from "@/lib/choices";
 import { dataEntryControl } from "@/lib/queries/data-entry-control";
-import { apiService } from "@/services/api";
+import { dataEntryControlService } from "@/services/data-entry-control";
 import { dataEntryControlSchema, type DataEntryControl } from "@/types/data-entry-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -35,8 +35,7 @@ export default function DataEntryControlForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: dataEntryControl.get._def,
-    mutationFn: async (values: DataEntryControl) =>
-      apiService.dataEntryControlService.update(values),
+    mutationFn: async (values: DataEntryControl) => dataEntryControlService.update(values),
     resourceName: "Data Entry Control",
     resetForm: reset,
     form,

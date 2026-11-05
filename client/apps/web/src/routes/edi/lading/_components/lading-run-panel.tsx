@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { unlessRefused } from "@/components/lading-editor/lading-service";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import {
   ArrowNarrowRightIcon,
   Database01Icon,
@@ -125,7 +125,7 @@ export function LadingRunPanel({
 
   const runLive = useApiMutation({
     mutationFn: (request: { map: string; input: LadingRunInput }) =>
-      apiService.ladingService.run(version.id, request),
+      ladingService.run(version.id, request),
     onSuccess: (result: LadingRunResult) => show({ result, where: "server" }),
   });
 

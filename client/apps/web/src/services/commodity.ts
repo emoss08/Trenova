@@ -73,3 +73,5 @@ export class CommodityService {
     return response.patchCommodity;
   }
 }
+
+export const commodityService = new CommodityService();

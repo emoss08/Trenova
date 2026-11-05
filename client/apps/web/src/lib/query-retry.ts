@@ -1,5 +1,7 @@
 import { ApiRequestError } from "@trenova/shared/lib/api";
+import { isNetworkFailure } from "@trenova/shared/lib/error-presentation";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { RequestTimeoutError } from "@trenova/shared/lib/request-errors";
 import { retryableProblemTypes } from "@trenova/shared/types/errors";
 
 // Retry policy for the QueryClient. Kept out of providers.tsx so that module exports only
@@ -8,6 +10,18 @@ import { retryableProblemTypes } from "@trenova/shared/types/errors";
 const MAX_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 500;
 const RETRY_MAX_DELAY_MS = 8_000;
+// A wait longer than this is left to the person: the screen says so rather than sitting
+// on a spinner for a minute.
+const RETRY_AFTER_LIMIT_MS = 30_000;
+const RETRY_AFTER_JITTER_MS = 500;
+
+function retryAfterMs(error: unknown): number | null {
+  if (!(error instanceof ApiRequestError || error instanceof GraphQLRequestError)) {
+    return null;
+  }
+
+  return error.retryAfter !== null && error.retryAfter > 0 ? error.retryAfter * 1_000 : null;
+}
 
 // Status alone decides most cases. A request that never reached a resolver carries no
 // extensions at all — the auth middleware, the rate limiter, the CSRF check, the
@@ -30,6 +44,17 @@ function isRetryableStatus(status: number | undefined): boolean | null {
 }
 
 function isRetryableError(error: unknown): boolean {
+  if (error instanceof RequestTimeoutError) {
+    return true;
+  }
+
+  // A rate limit is the one 4xx that replaying can change, and only once the server's own
+  // wait has passed. Without a wait to honour, a replay just adds to the load it is shedding.
+  const wait = retryAfterMs(error);
+  if (wait !== null && (error as { status?: number }).status === 429) {
+    return wait <= RETRY_AFTER_LIMIT_MS;
+  }
+
   if (error instanceof GraphQLRequestError) {
     const byStatus = isRetryableStatus(error.status);
     if (byStatus !== null) {
@@ -56,23 +81,21 @@ function isRetryableError(error: unknown): boolean {
     return problemType !== null && retryableProblemTypes.has(problemType);
   }
 
-  // A rejected fetch never becomes an ApiRequestError or a GraphQLRequestError — it
-  // surfaces as the raw TypeError the platform throws when the connection fails.
-  return isConnectionFailure(error);
-}
-
-function isConnectionFailure(error: unknown): boolean {
-  if (error instanceof DOMException && error.name === "AbortError") {
-    return false;
-  }
-
-  return error instanceof TypeError;
+  // A rejected fetch never becomes an ApiRequestError or a GraphQLRequestError: it surfaces
+  // as the TypeError the platform throws. A bug in a query function is a TypeError too, and
+  // replaying that only hides it, so the platform's own wording tells them apart.
+  return isNetworkFailure(error);
 }
 
 // retryDelay uses equal-jitter backoff: half the window is the deterministic ceiling and
 // half is random, so a server recovering from a fault does not take the whole fleet's
 // retries back in one synchronised burst the way pure exponential backoff would.
-export function retryDelay(failureCount: number): number {
+export function retryDelay(failureCount: number, error?: unknown): number {
+  const wait = retryAfterMs(error);
+  if (wait !== null) {
+    return wait + Math.round(Math.random() * RETRY_AFTER_JITTER_MS);
+  }
+
   const ceiling = Math.min(RETRY_BASE_DELAY_MS * 2 ** failureCount, RETRY_MAX_DELAY_MS);
   return Math.round(ceiling / 2 + (Math.random() * ceiling) / 2);
 }

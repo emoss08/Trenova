@@ -38,3 +38,5 @@ export class ManualJournalService {
     });
   }
 }
+
+export const manualJournalService = new ManualJournalService();

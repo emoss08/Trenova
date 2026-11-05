@@ -15,3 +15,5 @@ export class AccountingControlService {
     return safeParse(accountingControlSchema, response, "Accounting Control");
   }
 }
+
+export const accountingControlService = new AccountingControlService();

@@ -1,14 +1,15 @@
-import { apiService } from "@/services/api";
+import { documentControlService } from "@/services/document-control";
+import { documentService } from "@/services/document";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const documentControl = createQueryKeys("documentControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.documentControlService.get(),
+    queryFn: async () => documentControlService.get(),
   }),
   extractionStatus: () => ({
     queryKey: ["extraction-status"],
     queryFn: async ({ signal }: { signal: AbortSignal }) =>
-      apiService.documentService.getExtractionStatus({ signal }),
+      documentService.getExtractionStatus({ signal }),
   }),
 });

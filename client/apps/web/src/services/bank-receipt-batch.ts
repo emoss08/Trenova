@@ -18,3 +18,5 @@ export class BankReceiptBatchService {
     return api.post<BatchDetailResponse>("/accounting/bank-receipt-batches/", data);
   }
 }
+
+export const bankReceiptBatchService = new BankReceiptBatchService();

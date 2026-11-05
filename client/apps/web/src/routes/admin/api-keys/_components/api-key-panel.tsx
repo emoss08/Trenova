@@ -28,7 +28,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { integration } from "@/lib/queries/integration";
 import type { ApiKeyRow } from "@/lib/graphql/api-key-table";
-import { apiService } from "@/services/api";
+import { apiKeyService } from "@/services/api-key";
 import type { ApiKey, ApiKeyPermissionInput, CreateApiKeyRequest } from "@/types/api-key";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,7 +103,7 @@ function APIKeyCreatePanel({ open, onOpenChange }: CreatePanelProps) {
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ApiKeyPanelFormValues) =>
-      apiService.apiKeyService.create(toRequestPayload(values)),
+      apiKeyService.create(toRequestPayload(values)),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["api-key-list"] });
       reset(getDefaultValues());
@@ -238,7 +238,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ApiKeyPanelFormValues) =>
-      apiService.apiKeyService.update(row.id, toRequestPayload(values)),
+      apiKeyService.update(row.id, toRequestPayload(values)),
     onSuccess: async () => {
       await invalidateData();
       reset(getDefaultValues());
@@ -249,7 +249,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   });
 
   const rotateMutation = useApiMutation({
-    mutationFn: async () => apiService.apiKeyService.rotate(row.id),
+    mutationFn: async () => apiKeyService.rotate(row.id),
     onSuccess: async (result) => {
       await invalidateData();
       onOpenChange(false);
@@ -260,7 +260,7 @@ function APIKeyEditPanel({ open, onOpenChange, row }: EditPanelProps) {
   });
 
   const revokeMutation = useApiMutation({
-    mutationFn: async () => apiService.apiKeyService.revoke(row.id),
+    mutationFn: async () => apiKeyService.revoke(row.id),
     onSuccess: async () => {
       setRevokeDialogOpen(false);
       await invalidateData();

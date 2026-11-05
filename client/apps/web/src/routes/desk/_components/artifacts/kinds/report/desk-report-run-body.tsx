@@ -7,7 +7,7 @@ import { describeCron } from "@/lib/cron";
 import type { ReportRunDeskCard } from "@/lib/graphql/report-desk-card";
 import { assistant } from "@/lib/queries/assistant";
 import { reports } from "@/lib/queries/reports";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { translateLabel } from "@trenova/shared/i18n/labels";
@@ -494,7 +494,7 @@ function RunActions({
   const { allowed: mayRun } = usePermission(Resource.Report, Operation.Export);
   const cancel = useCancelReportRun();
   const rerun = useApiMutation({
-    mutationFn: () => apiService.assistantService.runArtifactReport(artifact.threadId, artifact.id),
+    mutationFn: () => assistantService.runArtifactReport(artifact.threadId, artifact.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: assistant.artifacts(artifact.threadId).queryKey,

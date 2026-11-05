@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Download01Icon, Mail01Icon } from "@trenova/shared/components/icons";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { customerStatementService } from "@/services/customer-statement";
 import type { StatementRange } from "@/types/customer-statement";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -33,7 +33,7 @@ export function StatementActions({
   );
 
   const { mutate: download, isPending: isDownloading } = useApiMutation({
-    mutationFn: () => apiService.customerStatementService.downloadPdf(customerId, range),
+    mutationFn: () => customerStatementService.downloadPdf(customerId, range),
     resourceName: "CustomerStatement",
     onSuccess: ({ blob, fileName }) => downloadBlob(blob, fileName),
   });

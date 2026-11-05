@@ -75,3 +75,5 @@ export class EquipmentTypeService {
     return safeParse(equipmentTypeSchema, response.patchEquipmentType, "EquipmentType");
   }
 }
+
+export const equipmentTypeService = new EquipmentTypeService();

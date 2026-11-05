@@ -49,3 +49,5 @@ export class TableQueryService {
     return safeParse(tableCatalogueSchema, response, "Table catalogue");
   }
 }
+
+export const tableQueryService = new TableQueryService();

@@ -2,7 +2,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useSignOut } from "@/hooks/use-sign-out";
 import { pageFavorite } from "@/lib/queries/page-favorite";
-import { apiService } from "@/services/api";
+import { pageFavoriteService } from "@/services/page-favorite";
 import { documentContentUrl } from "@/services/document";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -71,7 +71,7 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
 
   const { mutate: togglePin } = useApiMutation({
     mutationFn: (values: { pageUrl: string; pageTitle: string }) =>
-      apiService.pageFavoriteService.togglePageFavorite(values),
+      pageFavoriteService.togglePageFavorite(values),
     resourceName: "Page Favorite",
     onSuccess: (result) => {
       say(result.favorited ? t("Pinned to home") : t("Unpinned from home"));

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { safeParse } from "@trenova/shared/lib/parse";
+import { ResponseContractError } from "@trenova/shared/lib/request-errors";
 
 const toastError = vi.hoisted(() => vi.fn());
 vi.mock("@trenova/shared/components/ui/toast", () => ({
@@ -34,15 +35,15 @@ describe("safeParse", () => {
   // Every service response crosses this boundary, so a schema that has drifted from the
   // server has to surface as something the user can report — not an unhandled rejection
   // swallowed by a query.
-  it("rejects with the ZodError and tells the user when the shape is wrong", async () => {
+  it("rejects with a ResponseContractError and tells the user when the shape is wrong", async () => {
     await expect(safeParse(schema, { id: "row_1", count: "three" })).rejects.toBeInstanceOf(
-      z.ZodError,
+      ResponseContractError,
     );
     expect(toastError).toHaveBeenCalledTimes(1);
   });
 
   it("names the payload in the message when a label is given", async () => {
-    await expect(safeParse(schema, null, "User")).rejects.toBeInstanceOf(z.ZodError);
+    await expect(safeParse(schema, null, "User")).rejects.toBeInstanceOf(ResponseContractError);
 
     expect(toastError).toHaveBeenCalledWith(
       "Failed to parse User",
@@ -51,23 +52,23 @@ describe("safeParse", () => {
   });
 
   it("falls back to a generic label when none is given", async () => {
-    await expect(safeParse(schema, undefined)).rejects.toBeInstanceOf(z.ZodError);
+    await expect(safeParse(schema, undefined)).rejects.toBeInstanceOf(ResponseContractError);
 
     expect(toastError).toHaveBeenCalledWith("Failed to parse response", expect.anything());
   });
 
   it("treats a missing field, an explicit null and a wrong type as distinct failures", async () => {
-    const missing = await safeParse(schema, { id: "row_1" }).catch((e: z.ZodError) => e);
+    const missing = await safeParse(schema, { id: "row_1" }).catch((e: ResponseContractError) => e);
     const nulled = await safeParse(schema, { id: "row_1", count: null }).catch(
-      (e: z.ZodError) => e,
+      (e: ResponseContractError) => e,
     );
     const wrongType = await safeParse(schema, { id: "row_1", count: [] }).catch(
-      (e: z.ZodError) => e,
+      (e: ResponseContractError) => e,
     );
 
     for (const error of [missing, nulled, wrongType]) {
-      expect(error).toBeInstanceOf(z.ZodError);
-      expect((error as z.ZodError).issues[0].path).toEqual(["count"]);
+      expect(error).toBeInstanceOf(ResponseContractError);
+      expect((error as ResponseContractError).issues[0].path).toEqual(["count"]);
     }
   });
 });

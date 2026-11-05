@@ -6,7 +6,7 @@ import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { useOpenedOnce } from "@/hooks/use-opened-once";
 import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
@@ -160,7 +160,7 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
   const billingActions = useShipmentBillingActions();
 
   const { mutateAsync: uncancelShipment } = useMutation({
-    mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
+    mutationFn: (shipmentId: string) => shipmentService.uncancel(shipmentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
     },

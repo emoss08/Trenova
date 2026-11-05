@@ -2,7 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { customerService } from "@/services/customer";
 import type { CustomerRow } from "@/lib/graphql/customer-table";
 import type { Customer } from "@trenova/shared/types/customer";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,7 +40,7 @@ function CustomerStatusCell({ row }: { row: CustomerRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Customer["status"]) => {
       if (!row.id) return;
-      await apiService.customerService.patch(row.id, {
+      await customerService.patch(row.id, {
         status: newStatus,
       });
 
@@ -171,9 +171,7 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerRow>[] {
       id: "revenueTrend",
       header: t("Revenue, 6 months"),
       accessorFn: () => null,
-      cell: ({ row }) => (
-        <SeriesCell spec={MONTHLY_REVENUE} id={row.original.id} format="money" />
-      ),
+      cell: ({ row }) => <SeriesCell spec={MONTHLY_REVENUE} id={row.original.id} format="money" />,
       size: 190,
       minSize: 150,
       maxSize: 240,

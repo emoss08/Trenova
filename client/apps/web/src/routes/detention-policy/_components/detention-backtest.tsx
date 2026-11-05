@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { BAR_TRANSITION, DivergingBar } from "@/components/detention/detention-charts";
 import { pricingFingerprint } from "@/lib/detention-policy";
-import { apiService } from "@/services/api";
+import { detentionAnalyticsService } from "@/services/detention";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card } from "@trenova/shared/components/ui/card";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -299,7 +299,7 @@ export function DetentionBacktest() {
       const days = WINDOW_OPTIONS.find((option) => option.value === windowValue)?.days ?? 90;
       const now = Math.floor(Date.now() / 1000);
 
-      return apiService.detentionAnalyticsService.backtest(policy, {
+      return detentionAnalyticsService.backtest(policy, {
         from: now - days * 86400,
         to: now,
         assumeNoticeCompliance: assumeCompliance,

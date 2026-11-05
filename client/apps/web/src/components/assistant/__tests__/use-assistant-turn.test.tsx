@@ -27,14 +27,13 @@ const startTurn = vi.hoisted(() => vi.fn<StartTurn>());
 const attachTurn = vi.hoisted(() => vi.fn<Attach>());
 const stopTurn = vi.hoisted(() => vi.fn(async (_turnId: string) => undefined));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      activeTurn: (threadId: string) => activeTurn(threadId),
-      startTurn: (...args: Parameters<StartTurn>) => startTurn(...args),
-      attachTurn: (...args: Parameters<Attach>) => attachTurn(...args),
-      stopTurn: (turnId: string) => stopTurn(turnId),
-    },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: {
+    activeTurn: (threadId: string) => activeTurn(threadId),
+    startTurn: (...args: Parameters<StartTurn>) => startTurn(...args),
+    attachTurn: (...args: Parameters<Attach>) => attachTurn(...args),
+    stopTurn: (turnId: string) => stopTurn(turnId),
   },
 }));
 

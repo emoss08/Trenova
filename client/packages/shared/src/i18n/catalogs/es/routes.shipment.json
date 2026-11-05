@@ -798,6 +798,7 @@
   "We are extracting text, classifying the document, and assembling the shipment draft.": "Estamos extrayendo el texto, clasificando el documento y componiendo el borrador del envío.",
   "We are queuing OCR and intelligence work for this rate confirmation.": "Estamos poniendo en cola el trabajo de OCR e inteligencia para esta confirmación de tarifa.",
   "We are still evaluating the uploaded document.": "Todavía estamos evaluando el documento subido.",
+  "We couldn't check on this draft. Try again in a moment.": "No pudimos comprobar este borrador. Inténtalo de nuevo en un momento.",
   "Weather alerts": "Alertas meteorológicas",
   "Weight (lbs)": "Peso (lb)",
   "What the state actually charged, so the estimated fees on this load can be reconciled against actuals.": "Lo que el estado cobró realmente, para poder conciliar las tarifas estimadas de esta carga con los importes reales.",

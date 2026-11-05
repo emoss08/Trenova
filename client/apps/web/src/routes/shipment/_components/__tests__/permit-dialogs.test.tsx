@@ -10,9 +10,7 @@ const { createPermit, updatePermit } = vi.hoisted(() => ({
   updatePermit: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { shipmentService: { createPermit, updatePermit } },
-}));
+vi.mock("@/services/shipment", () => ({ shipmentService: { createPermit, updatePermit } }));
 
 vi.mock("@/components/autocomplete-fields", () => ({
   UsStateAutocompleteField: () => null,

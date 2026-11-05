@@ -1,14 +1,22 @@
-## Effect
+## Errors
 
-Effect v4 (beta). Your training data is predominantly v3 and will be wrong.
+Errors are plain classes classified in one place, not a library. Trenova does not use Effect.
 
-- All @effect/* packages share the `effect` version number. Never mix.
-- `effect/unstable/*` modules may break in minor releases. Do not import from
-  them without asking.
-- Effect is confined to the API client and SSE client. Components, hooks, and
-  form code stay Effect-free. Terminate every program with Effect.runPromise at
-  the TanStack Query boundary.
-- Forms use zod, not Schema. Do not unify these.
+- `describeError(unknown)` (`@trenova/shared/lib/error-presentation`) turns anything thrown
+  into an `ErrorKind`. Branch on that, not on status codes or `instanceof`. A new kind must
+  be added to `KIND_TONE` and `ERROR_ICONS`, so forgetting one fails to compile.
+- The transports throw `ApiRequestError`, `GraphQLRequestError`, `RequestTimeoutError` and
+  `ResponseContractError`. A rejected fetch stays the platform's `TypeError`, which
+  `isNetworkFailure` recognizes by its wording; any other `TypeError` is a bug and is not
+  retried.
+- JSON and GraphQL requests run under `withRequestDeadline`. Event streams, downloads and
+  uploads do not. `REQUEST_TIMEOUT_MS` stays above the server's write timeout, so it only
+  ends dead connections.
+- Queries retry through `lib/query-retry.ts`, honouring `Retry-After`. Mutations never retry.
+  A write that timed out may have landed, so it is never reported as failed.
+- A response is decoded at the service with `safeParse`, which throws `ResponseContractError`.
+- `reportFailure` is the one sink for what is wrong with Trenova itself. Query and mutation
+  caches, error boundaries and unhandled rejections already feed it; do not log around it.
 
 ## Tests
 

@@ -1,13 +1,12 @@
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
-import { apiService } from "@/services/api";
+import { caseChecklistService } from "@/services/case-checklist";
 import type { ChecklistKind } from "@/types/case-checklist";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const caseChecklist = createQueryKeys("caseChecklist", {
   list: (kind: ChecklistKind) => ({
     queryKey: [kind],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.caseChecklistService.list(kind, { signal }),
+    queryFn: ({ signal }: { signal?: AbortSignal }) => caseChecklistService.list(kind, { signal }),
   }),
   // Customers to give a checklist of their own, from the same source the
   // customer field searches.

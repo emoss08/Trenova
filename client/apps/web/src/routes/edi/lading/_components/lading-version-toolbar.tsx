@@ -3,7 +3,7 @@ import { EDITOR_SAVE_EVENT } from "@/components/formula-editor/tariff-commands";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import { LadingVersionStatusBadge } from "@trenova/shared/components/status-badge";
 import {
   ArchiveIcon,
@@ -75,7 +75,7 @@ export function LadingVersionToolbar({
 
   const save = useApiMutation({
     mutationFn: () =>
-      apiService.ladingService.saveDraft(version.id, {
+      ladingService.saveDraft(version.id, {
         files: working.files,
         samples: working.samples,
         notes: working.notes,
@@ -90,27 +90,27 @@ export function LadingVersionToolbar({
     },
   });
   const certify = useApiMutation({
-    mutationFn: () => apiService.ladingService.certify(version.id),
+    mutationFn: () => ladingService.certify(version.id),
     onSuccess: refresh,
   });
   const activate = useApiMutation({
-    mutationFn: () => apiService.ladingService.activate(version.id),
+    mutationFn: () => ladingService.activate(version.id),
     onSuccess: refresh,
   });
   const archive = useApiMutation({
-    mutationFn: () => apiService.ladingService.archive(version.id),
+    mutationFn: () => ladingService.archive(version.id),
     onSuccess: refresh,
   });
   const startShadow = useApiMutation({
-    mutationFn: (days: number) => apiService.ladingService.startShadow(version.id, days),
+    mutationFn: (days: number) => ladingService.startShadow(version.id, days),
     onSuccess: refresh,
   });
   const stopShadow = useApiMutation({
-    mutationFn: () => apiService.ladingService.stopShadow(version.id),
+    mutationFn: () => ladingService.stopShadow(version.id),
     onSuccess: refresh,
   });
   const newDraft = useApiMutation({
-    mutationFn: () => apiService.ladingService.newDraft(project.id, version.id),
+    mutationFn: () => ladingService.newDraft(project.id, version.id),
     onSuccess: async (draft: LadingVersion) => {
       await refresh();
       onPickVersion(draft.id);

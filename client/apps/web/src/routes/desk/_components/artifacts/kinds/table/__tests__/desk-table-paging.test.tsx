@@ -19,42 +19,41 @@ const list = vi.hoisted(() => ({
   estimatedTotal: null as number | null,
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      artifactRows: async (
-        _threadId: string,
-        _artifactId: string,
-        read: ArtifactRowsRequest,
-      ): Promise<ArtifactRows> => {
-        list.reads.push(read);
-        const failure = list.failures.shift();
-        if (failure !== undefined) {
-          throw failure;
-        }
-        let all = list.universe.filter((row) =>
-          read.q ? row.name.toLowerCase().includes(read.q.toLowerCase()) : true,
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: {
+    artifactRows: async (
+      _threadId: string,
+      _artifactId: string,
+      read: ArtifactRowsRequest,
+    ): Promise<ArtifactRows> => {
+      list.reads.push(read);
+      const failure = list.failures.shift();
+      if (failure !== undefined) {
+        throw failure;
+      }
+      let all = list.universe.filter((row) =>
+        read.q ? row.name.toLowerCase().includes(read.q.toLowerCase()) : true,
+      );
+      if (read.sortBy === "name") {
+        all = [...all].sort(
+          (a, b) => a.name.localeCompare(b.name) * (read.sortDirection === "desc" ? -1 : 1),
         );
-        if (read.sortBy === "name") {
-          all = [...all].sort(
-            (a, b) => a.name.localeCompare(b.name) * (read.sortDirection === "desc" ? -1 : 1),
-          );
-        }
-        const start = read.after ? Number(read.after.slice(2)) : (read.offset ?? 0);
-        const page = all.slice(start, start + read.limit);
-        const end = start + page.length;
-        return {
-          rows: page,
-          hasMore: end < all.length,
-          nextCursor: end < all.length ? `c-${end}` : "",
-          nextOffset: null,
-          total: read.total ? (list.estimatedTotal ?? all.length) : null,
-          totalEstimated: read.total ? list.estimatedTotal !== null : false,
-          withheld: list.withheld,
-          searchable: list.searchable,
-          sortable: list.sortable,
-        };
-      },
+      }
+      const start = read.after ? Number(read.after.slice(2)) : (read.offset ?? 0);
+      const page = all.slice(start, start + read.limit);
+      const end = start + page.length;
+      return {
+        rows: page,
+        hasMore: end < all.length,
+        nextCursor: end < all.length ? `c-${end}` : "",
+        nextOffset: null,
+        total: read.total ? (list.estimatedTotal ?? all.length) : null,
+        totalEstimated: read.total ? list.estimatedTotal !== null : false,
+        withheld: list.withheld,
+        searchable: list.searchable,
+        sortable: list.sortable,
+      };
     },
   },
 }));

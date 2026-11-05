@@ -42,12 +42,12 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: { getUIPolicy },
-    formulaTemplateService: { getDeclaredInputs },
-    rateQuoteService: { getAppliedForShipment: getAppliedQuote },
-  },
+vi.mock("@/services/shipment", () => ({ shipmentService: { getUIPolicy } }));
+
+vi.mock("@/services/formula-template", () => ({ formulaTemplateService: { getDeclaredInputs } }));
+
+vi.mock("@/services/rate", () => ({
+  rateQuoteService: { getAppliedForShipment: getAppliedQuote },
 }));
 vi.mock("@/components/autocomplete-fields", () => ({
   CustomerAutocompleteField: () => null,

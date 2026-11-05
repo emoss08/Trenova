@@ -13,3 +13,5 @@ export class DataEntryControlService {
     return safeParse(dataEntryControlSchema, response, "Data Entry Control");
   }
 }
+
+export const dataEntryControlService = new DataEntryControlService();

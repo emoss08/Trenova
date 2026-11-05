@@ -13,10 +13,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/shipment-tracking", () => ({
-  ShipmentTrackingService: class {
-    getPublicView = mocks.getPublicView;
-    proofOfDeliveryUrl = (token: string) =>
-      `/api/v1/shipment-tracking-links/${token}/proof-of-delivery/`;
+  shipmentTrackingService: {
+    getPublicView: mocks.getPublicView,
+    proofOfDeliveryUrl: (token: string) =>
+      `/api/v1/shipment-tracking-links/${token}/proof-of-delivery/`,
   },
 }));
 
@@ -196,7 +196,9 @@ describe("TrackingView in preview", () => {
     );
 
     expect(screen.getByText("Preview")).toBeDefined();
-    expect(screen.getByText("What Cargill Protein would see through a link sent now")).toBeDefined();
+    expect(
+      screen.getByText("What Cargill Protein would see through a link sent now"),
+    ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Add to calendar" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Refresh" })).toBeNull();
     expect(screen.getByText("pod.pdf")).toBeDefined();

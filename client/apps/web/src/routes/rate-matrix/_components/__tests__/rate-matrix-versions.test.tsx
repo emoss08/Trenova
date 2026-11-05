@@ -20,11 +20,9 @@ vi.mock("@/hooks/use-permission", () => ({
   useReviewApproval: () => ({ allowed: true, needsSecondReviewer: false }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    get rateMatrixService() {
-      return { approve, archive, listReviewers: vi.fn().mockResolvedValue([]) };
-    },
+vi.mock("@/services/rate", () => ({
+  get rateMatrixService() {
+    return { approve, archive, listReviewers: vi.fn().mockResolvedValue([]) };
   },
 }));
 

@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 /**
@@ -9,6 +9,6 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 export const billingQueueNova = createQueryKeys("billingQueueNova", {
   generation: () => ({
     queryKey: ["generation"],
-    queryFn: async ({ signal }) => apiService.billingQueueService.getNovaGeneration({ signal }),
+    queryFn: async ({ signal }) => billingQueueService.getNovaGeneration({ signal }),
   }),
 });

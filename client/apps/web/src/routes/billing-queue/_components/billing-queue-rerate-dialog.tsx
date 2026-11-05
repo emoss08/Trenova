@@ -21,7 +21,7 @@ import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { TARIFF_INPUTS_REFINEMENT } from "@trenova/shared/lib/tariff-inputs";
 import { tariffFormInputValuesSchema } from "@trenova/shared/types/tariff-form";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
@@ -80,7 +80,7 @@ export function BillingQueueRerateDialog({
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (values: RerateFormValues) =>
-      apiService.billingQueueService.updateCharges(itemId, {
+      billingQueueService.updateCharges(itemId, {
         formulaTemplateId: values.formulaTemplateId,
         tariffInputs: values.tariffInputs,
         expandShipmentDetails: true,

@@ -42,3 +42,5 @@ export class AIProviderService {
     return safeParse(testAIProviderResultSchema, response, "AI Provider Test");
   }
 }
+
+export const aiProviderService = new AIProviderService();

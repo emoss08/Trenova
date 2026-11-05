@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { formulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import type { ForkLineage, FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon, GitBranch01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
@@ -121,7 +121,7 @@ export function ForkLineageDialog({
     queryKey: formulaTemplate.lineage(templateId ?? "").queryKey,
     queryFn: () =>
       templateId
-        ? apiService.formulaTemplateService.getLineage(templateId)
+        ? formulaTemplateService.getLineage(templateId)
         : Promise.reject(new Error("No template ID")),
     enabled: open && !!templateId,
   });

@@ -17,7 +17,7 @@ import {
   carrierTypeChoices,
   findChoice,
 } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { carrierService } from "@/services/carrier";
 import type { CarrierRow } from "@/lib/graphql/carrier-table";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ function CarrierStatusCell({ row }: { row: CarrierRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Carrier["status"]) => {
       if (!row.id) return;
-      await apiService.carrierService.patch(row.id, {
+      await carrierService.patch(row.id, {
         status: newStatus,
       });
 

@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { EDIMappingProfileRow } from "@/lib/graphql/edi-table";
 import { edi } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMappingProfileItem } from "@trenova/shared/types/edi";
@@ -66,8 +66,8 @@ export function MappingProfilePanel({
   const saveMutation = useApiMutation({
     mutationFn: (item: EDIMappingProfileItem) =>
       data?.id
-        ? apiService.ediService.saveMappingProfileItems(data.id, [item])
-        : apiService.ediService.saveMappingProfile(partnerId, [item]),
+        ? ediService.saveMappingProfileItems(data.id, [item])
+        : ediService.saveMappingProfile(partnerId, [item]),
     onSuccess: async () => {
       setDraft((current) => ({ ...emptyDraft, entityType: current.entityType }));
       await Promise.all([
@@ -82,8 +82,8 @@ export function MappingProfilePanel({
   const deleteMutation = useApiMutation({
     mutationFn: (itemId: string) =>
       data?.id
-        ? apiService.ediService.deleteMappingProfileItem(data.id, itemId)
-        : apiService.ediService.deleteMappingItem(partnerId, itemId),
+        ? ediService.deleteMappingProfileItem(data.id, itemId)
+        : ediService.deleteMappingItem(partnerId, itemId),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({

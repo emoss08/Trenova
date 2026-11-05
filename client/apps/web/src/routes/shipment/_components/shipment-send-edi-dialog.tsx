@@ -9,7 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -32,8 +32,7 @@ export function ShipmentSendEDIDialog({
   const queryClient = useQueryClient();
   const ediPartner = shipment.customer?.ediPartner;
   const mutation = useMutation({
-    mutationFn: () =>
-      apiService.ediService.submitLoadTender({ sourceShipmentId: shipment.id ?? "" }),
+    mutationFn: () => ediService.submitLoadTender({ sourceShipmentId: shipment.id ?? "" }),
     onSuccess: async () => {
       toast.success(t("EDI load tender submitted"));
       await Promise.all([

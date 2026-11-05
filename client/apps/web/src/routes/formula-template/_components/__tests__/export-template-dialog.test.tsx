@@ -16,12 +16,10 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    formulaTemplateService: {
-      get: mocks.get,
-      listVersions: mocks.listVersions,
-    },
+vi.mock("@/services/formula-template", () => ({
+  formulaTemplateService: {
+    get: mocks.get,
+    listVersions: mocks.listVersions,
   },
 }));
 

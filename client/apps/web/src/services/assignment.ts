@@ -72,3 +72,5 @@ export class AssignmentService {
     return safeParse(shipmentMoveSchema, response, "ShipmentMove");
   }
 }
+
+export const assignmentService = new AssignmentService();

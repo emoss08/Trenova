@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { PageLayoutStub, renderAccountingPage } from "@/test/accounting-page-mocks";
 import { BalanceSheetPage } from "../page";
 
-vi.mock("@/services/api", () => ({
-  apiService: { accountingReportService: { getBalanceSheet: vi.fn() } },
+vi.mock("@/services/accounting-report", () => ({
+  accountingReportService: { getBalanceSheet: vi.fn() },
 }));
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
 vi.mock("@/components/accounting/fiscal-period-selector", () => ({

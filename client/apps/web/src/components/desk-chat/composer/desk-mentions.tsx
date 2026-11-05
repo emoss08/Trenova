@@ -1,6 +1,6 @@
 import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import { mentionToken } from "@/components/assistant/composer-types";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import {
   isMentionKind,
   mentionSearchTypes,
@@ -87,7 +87,7 @@ export function useMentionSearch(query: string | null, tab: MentionSearchType) {
     }
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      apiService.assistantService
+      assistantService
         .searchMentions(query, tab, { signal: controller.signal })
         .then((found) => {
           setResults(found);

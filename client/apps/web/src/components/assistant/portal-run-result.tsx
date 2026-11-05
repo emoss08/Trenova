@@ -2,7 +2,7 @@ import { PortalCodeForm } from "@/components/assistant/portal-code-form";
 import { PortalLiveBrowser } from "@/components/assistant/portal-sign-in";
 import { ExternalLink } from "@/components/link";
 import type { PortalRunResultView } from "@/lib/portal-run";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import type { PortalRecording } from "@/types/agent-extension";
 import { useMutation } from "@tanstack/react-query";
 import { PlayCircleIcon } from "@trenova/shared/components/icons";
@@ -95,7 +95,7 @@ export function PortalRunResult({
 function PortalRecordingLink({ runId }: { runId: string }) {
   const t = useT();
   const fetchRecording = useMutation<PortalRecording, Error>({
-    mutationFn: () => apiService.agentExtensionService.portalRunRecording(runId),
+    mutationFn: () => agentExtensionService.portalRunRecording(runId),
   });
   const recording = fetchRecording.data;
   const link = recording?.shareUrl || recording?.recordingUrl || "";

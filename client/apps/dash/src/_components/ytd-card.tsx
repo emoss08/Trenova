@@ -1,9 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
 import { fetchMyYtdPay } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { PayLoadFailed } from "./pay-load-failed";
 
 export function YtdCard() {
   const t = useT();
@@ -11,17 +13,16 @@ export function YtdCard() {
   const [year] = useState(() => new Date().getFullYear());
   const ytd = useQuery({
     queryKey: ["dash-ytd-pay", year],
-    queryFn: async ({ signal }) => {
-      try {
-        return await fetchMyYtdPay(year, { signal });
-      } catch {
-        return null;
-      }
-    },
+    queryFn: ({ signal }) => nullWhenAbsent(fetchMyYtdPay(year, { signal })),
   });
 
   if (ytd.isPending) {
     return <Skeleton className="h-24 w-full rounded-2xl" />;
+  }
+  if (ytd.isError) {
+    return (
+      <PayLoadFailed message={t("We couldn't load your pay.")} onRetry={() => void ytd.refetch()} />
+    );
   }
   if (!ytd.data) {
     return null;
@@ -29,9 +30,7 @@ export function YtdCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs font-medium text-muted-foreground">
-        {t("{0} year to date", year)}
-      </p>
+      <p className="text-xs font-medium text-muted-foreground">{t("{0} year to date", year)}</p>
       <p className="mt-1 text-2xl font-semibold tracking-tight">
         <AmountDisplay value={ytd.data.netPayMinor} />
       </p>

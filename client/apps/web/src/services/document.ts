@@ -3,8 +3,6 @@ import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   type CreateDocumentUploadSessionParams,
-  type BulkUploadDocumentParams,
-  type BulkUploadDocumentResponse,
   type DeliveryFacts,
   type Document,
   type DocumentSignatureStatus,
@@ -17,7 +15,6 @@ import {
   type DocumentUploadSession,
   type DocumentUploadSessionState,
   type UploadDocumentParams,
-  bulkUploadDocumentResponseSchema,
   documentContentSchema,
   documentPacketSummarySchema,
   documentSchema,
@@ -84,23 +81,6 @@ export class DocumentService {
 
     const response = await api.upload<Document>("/documents/upload/", formData);
     return safeParse(documentSchema, response, "Document");
-  }
-
-  public async bulkUpload(params: BulkUploadDocumentParams): Promise<BulkUploadDocumentResponse> {
-    const formData = new FormData();
-    formData.append("resourceId", params.resourceId);
-    formData.append("resourceType", params.resourceType);
-    if (params.lineageId) {
-      formData.append("lineageId", params.lineageId);
-    }
-
-    params.files.forEach((file) => formData.append("files", file));
-
-    const response = await api.upload<BulkUploadDocumentResponse>(
-      "/documents/upload-bulk/",
-      formData,
-    );
-    return safeParse(bulkUploadDocumentResponseSchema, response, "Bulk Upload Document");
   }
 
   public async createUploadSession(
@@ -335,3 +315,5 @@ export class DocumentService {
     );
   }
 }
+
+export const documentService = new DocumentService();

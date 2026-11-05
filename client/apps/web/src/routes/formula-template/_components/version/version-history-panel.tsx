@@ -44,7 +44,7 @@ import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { describeApiError } from "@/lib/api-error-message";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import {
   VERSION_TAG_OPTIONS,
   type FieldChange,
@@ -160,7 +160,7 @@ export function VersionHistoryPanel({
     if (!template?.id || !pendingRollbackVersion) return;
 
     setRollingBackVersion(pendingRollbackVersion.versionNumber);
-    await apiService.formulaTemplateService
+    await formulaTemplateService
       .rollback(template.id, {
         targetVersion: pendingRollbackVersion.versionNumber,
         // i18n-ignore: change message stored on the template version record
@@ -424,7 +424,7 @@ function VersionItem({
 
   const updateEffectiveDateMutation = useMutation({
     mutationFn: (effectiveFrom: number | null) =>
-      apiService.formulaTemplateService.updateVersionEffectiveDate(
+      formulaTemplateService.updateVersionEffectiveDate(
         templateId,
         version.versionNumber,
         effectiveFrom,
@@ -454,7 +454,7 @@ function VersionItem({
 
   const updateTagsMutation = useMutation({
     mutationFn: (tags: VersionTag[]) =>
-      apiService.formulaTemplateService.updateVersionTags(templateId, version.versionNumber, tags),
+      formulaTemplateService.updateVersionTags(templateId, version.versionNumber, tags),
     onSuccess: () => {
       void invalidateFormulaTemplate(queryClient);
       setTagsDialogOpen(false);

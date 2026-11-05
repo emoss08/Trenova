@@ -10,7 +10,7 @@ import {
   SourceStatusBar,
 } from "@/components/tariff-studio/source-status";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import { BookOpen01Icon, Code01Icon, InfoCircleIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -96,7 +96,7 @@ export function SourceSection() {
 
   const explainMutation = useMutation({
     mutationFn: () =>
-      apiService.formulaTemplateService.explainFormula(
+      formulaTemplateService.explainFormula(
         draftContent(),
         preview.source === "shipment" && preview.shipmentId
           ? { shipmentId: preview.shipmentId }

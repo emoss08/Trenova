@@ -3,7 +3,7 @@ import { useLiveTurns } from "@/components/assistant/use-active-turns";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantChapter, AssistantMessage, AssistantThread } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -74,7 +74,7 @@ export function useDeskChapters({
 
   const rename = useApiMutation({
     mutationFn: ({ chapter, title }: { chapter: AssistantChapter; title: string }) =>
-      apiService.assistantService.renameChapter(threadId, chapter.id, title, chapter.version),
+      assistantService.renameChapter(threadId, chapter.id, title, chapter.version),
     onSuccess: (saved) => {
       queryClient.setQueryData<AssistantChapter[]>(chaptersKey, (chapters) =>
         chapters?.map((chapter) => (chapter.id === saved.id ? saved : chapter)),
@@ -84,13 +84,12 @@ export function useDeskChapters({
     resourceName: "Chapter",
   });
   const open = useApiMutation({
-    mutationFn: (messageId: string) => apiService.assistantService.openChapter(threadId, messageId),
+    mutationFn: (messageId: string) => assistantService.openChapter(threadId, messageId),
     onSuccess: () => void refresh(),
     resourceName: "Chapter",
   });
   const merge = useApiMutation({
-    mutationFn: (chapterId: string) =>
-      apiService.assistantService.removeChapter(threadId, chapterId),
+    mutationFn: (chapterId: string) => assistantService.removeChapter(threadId, chapterId),
     onMutate: (chapterId) => {
       queryClient.setQueryData<AssistantChapter[]>(chaptersKey, (chapters) =>
         chapters?.filter((chapter) => chapter.id !== chapterId),
@@ -152,4 +151,3 @@ export function useDeskChapters({
     onLinkShown,
   };
 }
-

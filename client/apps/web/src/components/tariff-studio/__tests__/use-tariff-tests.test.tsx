@@ -13,9 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const getContextCells =
   vi.fn<(request: { needs: readonly TariffNeed[]; whole: boolean }) => Promise<TariffTableCells>>();
 
-vi.mock("@/services/api", () => ({
-  apiService: { formulaTemplateService: { getContextCells } },
-}));
+vi.mock("@/services/formula-template", () => ({ formulaTemplateService: { getContextCells } }));
 
 const { useTariffTests } = await import("../use-tariff-tests");
 

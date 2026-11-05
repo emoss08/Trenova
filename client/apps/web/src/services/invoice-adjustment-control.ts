@@ -18,3 +18,5 @@ export class InvoiceAdjustmentControlService {
     return safeParse(invoiceAdjustmentControlSchema, response, "Invoice Adjustment Control");
   }
 }
+
+export const invoiceAdjustmentControlService = new InvoiceAdjustmentControlService();

@@ -20,7 +20,7 @@ const service = vi.hoisted(() => ({
 }));
 const fetchers = vi.hoisted(() => ({ pricing: vi.fn(), options: vi.fn(), activity: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { rateAgreementService: service } }));
+vi.mock("@/services/rate", () => ({ rateAgreementService: service }));
 vi.mock("@/lib/graphql/rate-agreement-card", () => ({
   fetchRateAgreementPricing: fetchers.pricing,
 }));
@@ -534,7 +534,9 @@ describe("DeskRateAgreement", () => {
     await waitFor(() =>
       expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("about 1.3Mlanes priced"),
     );
-    expect(await screen.findByText("8 of about 1.3M shown · About 40K retired")).toBeInTheDocument();
+    expect(
+      await screen.findByText("8 of about 1.3M shown · About 40K retired"),
+    ).toBeInTheDocument();
   });
 
   it("says the lanes could not be read in their own place, and the rest of the card stands", async () => {

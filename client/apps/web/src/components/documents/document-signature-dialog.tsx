@@ -9,7 +9,7 @@ import {
   documentSignatureFormValues,
   type DocumentSignatureFormValues,
 } from "@/lib/document-signature";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -75,7 +75,7 @@ export function DocumentSignatureDialog({
       if (!document) {
         throw new Error("No document selected");
       }
-      return apiService.documentService.setSignature(document.id, {
+      return documentService.setSignature(document.id, {
         status: values.status,
         signedAt: values.status === "Signed" ? values.signedAt : null,
         version: document.version,

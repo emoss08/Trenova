@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
+import { rateQuoteService } from "@/services/rate";
 import { useMutation } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -71,8 +71,7 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
   const [result, setResult] = useState<ShopResult | undefined>();
 
   const { mutate: runShop, isPending } = useMutation({
-    mutationFn: (chosen: ShopStrategy) =>
-      apiService.rateQuoteService.shop(shipmentId, { strategy: chosen }),
+    mutationFn: (chosen: ShopStrategy) => rateQuoteService.shop(shipmentId, { strategy: chosen }),
     onSuccess: setResult,
     onError: () => toast.error(t("Could not shop this lane")),
   });

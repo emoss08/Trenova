@@ -1,7 +1,7 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -104,7 +104,7 @@ export function SubmitReviewDialog({
       const request = new AbortController();
       draftRequest.current = request;
       try {
-        return await apiService.formulaTemplateService.draftReviewNote(templateId, {
+        return await formulaTemplateService.draftReviewNote(templateId, {
           signal: request.signal,
         });
       } catch (error) {
@@ -151,7 +151,7 @@ export function SubmitReviewDialog({
 
   const submit = useMutation({
     mutationFn: () =>
-      apiService.formulaTemplateService.submit(templateId, {
+      formulaTemplateService.submit(templateId, {
         comment: "",
         reviewerId: reviewerId ?? undefined,
         reviewerNote: note.text.trim(),

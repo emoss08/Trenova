@@ -19,7 +19,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { stillBeingRead } from "@/lib/document-reading";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   Document,
@@ -44,6 +44,7 @@ import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
 
 interface DocumentIntelligenceDialogProps {
   open: boolean;
@@ -752,7 +753,7 @@ export function DocumentIntelligenceDialog({
     queryFn: async ({ signal }) => {
       if (!documentID) return null;
       try {
-        return await apiService.documentService.getContent(documentID, { signal });
+        return await documentService.getContent(documentID, { signal });
       } catch (error) {
         if (error instanceof ApiRequestError && error.status === 404) return null;
         throw error;
@@ -768,15 +769,15 @@ export function DocumentIntelligenceDialog({
     },
   });
 
-  const { data: shipmentDraft, isLoading: isDraftLoading } = useQuery({
+  const {
+    data: shipmentDraft,
+    isError: draftReadFailed,
+    isLoading: isDraftLoading,
+  } = useQuery({
     queryKey: ["document-shipment-draft", documentID, shipmentDraftStatus],
     queryFn: async () => {
       if (!documentID) return null;
-      try {
-        return await apiService.documentService.getShipmentDraft(documentID);
-      } catch {
-        return null;
-      }
+      return nullWhenAbsent(documentService.getShipmentDraft(documentID));
     },
     enabled: open && !!documentID && shipmentDraftStatus !== "Unavailable",
   });
@@ -784,7 +785,7 @@ export function DocumentIntelligenceDialog({
   const { mutate: reextract, isPending: isReextracting } = useMutation({
     mutationFn: async () => {
       if (!document) return;
-      await apiService.documentService.reextract(document.id);
+      await documentService.reextract(document.id);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -896,7 +897,13 @@ export function DocumentIntelligenceDialog({
                       </div>
                     ) : (
                       <>
-                        <DraftSection draft={shipmentDraft ?? null} />
+                        {draftReadFailed ? (
+                          <div className="text-muted-foreground rounded-lg border border-dashed p-3 text-sm">
+                            {t("The shipment draft couldn't be loaded.")}
+                          </div>
+                        ) : (
+                          <DraftSection draft={shipmentDraft ?? null} />
+                        )}
                         {(!shipmentDraft || shipmentDraft.status === "Unavailable") &&
                         document.detectedKind &&
                         document.detectedKind !== "RateConfirmation" ? (

@@ -43,16 +43,14 @@ vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
   fetchAccountingSyncAttempts: vi.fn(),
   fetchAccountingBackfills: vi.fn(),
 }));
-vi.mock("@/services/api", () => ({
-  apiService: {
-    invoiceService: {
-      listEmailAttempts: fetchers.attempts,
-      getSendPlan: fetchers.plan,
-      send: fetchers.send,
-      generatePdf: fetchers.generatePdf,
-      getPostPreview: fetchers.postPreview,
-      post: fetchers.post,
-    },
+vi.mock("@/services/invoice", () => ({
+  invoiceService: {
+    listEmailAttempts: fetchers.attempts,
+    getSendPlan: fetchers.plan,
+    send: fetchers.send,
+    generatePdf: fetchers.generatePdf,
+    getPostPreview: fetchers.postPreview,
+    post: fetchers.post,
   },
 }));
 vi.mock("@/lib/graphql/invoice", () => ({

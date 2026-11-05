@@ -2,7 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { hazardousClassChoices, packingGroupChoices, statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { hazardousMaterialService } from "@/services/hazardous-material";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -14,7 +14,7 @@ function HazardousMaterialStatusCell({ row }: { row: HazardousMaterial }) {
   const handleStatusChange = useCallback(
     async (newStatus: HazardousMaterial["status"]) => {
       if (!row.id) return;
-      await apiService.hazardousMaterialService.patch(row.id, {
+      await hazardousMaterialService.patch(row.id, {
         status: newStatus,
       });
 

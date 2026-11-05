@@ -10,12 +10,12 @@ const { updateCharges, getDeclaredInputs } = vi.hoisted(() => ({
   getDeclaredInputs: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: { updateCharges },
-    formulaTemplateService: { getDeclaredInputs },
-  },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { updateCharges },
 }));
+
+vi.mock("@/services/formula-template", () => ({ formulaTemplateService: { getDeclaredInputs } }));
 vi.mock("@/components/autocomplete-fields", () => ({
   FormulaTemplateAutocompleteField: () => null,
 }));

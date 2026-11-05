@@ -19,7 +19,7 @@ import {
 } from "@/lib/billing-queue-charges";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import {
@@ -187,7 +187,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
     isPending,
   } = useMutation({
     mutationFn: (payload: BillingQueueUpdateChargesInput) =>
-      apiService.billingQueueService.updateCharges(item.id, {
+      billingQueueService.updateCharges(item.id, {
         ...payload,
         expandShipmentDetails: true,
       }),
@@ -216,7 +216,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
   const resolve = useApiMutation({
     mutationFn: ({ issueId, optionKey }: { issueId: string; optionKey: string }) =>
-      apiService.billingQueueService.resolveIssue(item.id, issueId, optionKey),
+      billingQueueService.resolveIssue(item.id, issueId, optionKey),
     resourceName: "BillingQueueItem",
     onSuccess: (next) => {
       if (next.review) {
@@ -229,7 +229,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const afterReassignment = useAfterReassignment(item);
   const reassign = useApiMutation({
     mutationFn: ({ input }: { input: ReassignChargeInput; chargeName: string }) =>
-      apiService.billingQueueService.reassignCharge(item.id, input),
+      billingQueueService.reassignCharge(item.id, input),
     resourceName: "billing queue charge",
     onSuccess: (result, { chargeName }) => {
       setEditingKey(null);

@@ -13,3 +13,5 @@ export class DistanceOverrideService {
     await api.delete(`/distance-overrides/${id}/`);
   }
 }
+
+export const distanceOverrideService = new DistanceOverrideService();

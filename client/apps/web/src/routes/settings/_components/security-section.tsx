@@ -15,7 +15,7 @@ import {
   type PasswordCheck,
   type SignInKind,
 } from "@/lib/user-settings";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -97,7 +97,7 @@ function PasswordRow() {
 
   const submit = form.handleSubmit(async (values) => {
     try {
-      const updated = await apiService.userService.changeMyPassword(values);
+      const updated = await userService.changeMyPassword(values);
       useAuthStore.getState().setUser(updated);
       close();
       feedback.message(t("Password updated"));
@@ -328,7 +328,7 @@ function SessionsCard() {
   const signOut = async (id: string) => {
     setBusy(true);
     try {
-      await apiService.userService.revokeMySession(id);
+      await userService.revokeMySession(id);
       removeLater([id]);
       feedback.message(t("Session signed out"));
     } catch (error) {
@@ -341,7 +341,7 @@ function SessionsCard() {
   const signOutOthers = async () => {
     setBusy(true);
     try {
-      const { revoked } = await apiService.userService.revokeMyOtherSessions();
+      const { revoked } = await userService.revokeMyOtherSessions();
       removeLater(others.map((session) => session.id));
       feedback.message(
         t("{0, plural, one {Signed out of # session} other {Signed out of # sessions}}", revoked),

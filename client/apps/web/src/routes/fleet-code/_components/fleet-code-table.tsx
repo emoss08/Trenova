@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { fleetCodeTableGraphQLConfig, type FleetCodeRow } from "@/lib/graphql/fleet-code-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { fleetCodeService } from "@/services/fleet-code";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import type { FleetCode } from "@trenova/shared/types/fleet-code";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function FleetCodeTable() {
     async (rows: FleetCodeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.fleetCodeService.bulkUpdateStatus({
+        fleetCodeService.bulkUpdateStatus({
           fleetCodeIds: ids,
           status: status as FleetCode["status"],
         }),

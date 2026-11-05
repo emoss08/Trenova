@@ -11,6 +11,8 @@ import { AlertCircleIcon, CheckIcon, SpinnerIcon } from "@trenova/shared/compone
 type ProcessingPhaseProps = {
   document: Document | null | undefined;
   draft: DocumentShipmentDraft | null | undefined;
+  /** The draft could not be read, which is not the same as it not being ready yet. */
+  draftReadFailed?: boolean;
   fileName?: string;
   onRetryExtraction: () => void;
   isRetrying: boolean;
@@ -24,8 +26,10 @@ type Step = { label: string; state: StepState };
 function getSteps(
   doc: Document | null | undefined,
   draft: DocumentShipmentDraft | null | undefined,
+  draftReadFailed: boolean,
 ): Step[] {
   const hasFailed =
+    draftReadFailed ||
     doc?.contentStatus === "Failed" ||
     draft?.status === "Failed" ||
     (doc &&
@@ -90,7 +94,11 @@ function getSteps(
 function getErrorMessage(
   doc: Document | null | undefined,
   draft: DocumentShipmentDraft | null | undefined,
+  draftReadFailed: boolean,
 ): string | null {
+  if (draftReadFailed) {
+    return translate("We couldn't check on this draft. Try again in a moment.");
+  }
   if (doc?.contentStatus === "Failed") {
     return doc.contentError || "Could not extract text from this document.";
   }
@@ -147,6 +155,7 @@ function StepDot({ state }: { state: StepState }) {
 export function ProcessingPhase({
   document: doc,
   draft,
+  draftReadFailed = false,
   fileName,
   onRetryExtraction,
   isRetrying,
@@ -154,8 +163,8 @@ export function ProcessingPhase({
 }: ProcessingPhaseProps) {
   const t = useT();
 
-  const steps = getSteps(doc, draft);
-  const errorMessage = getErrorMessage(doc, draft);
+  const steps = getSteps(doc, draft, draftReadFailed);
+  const errorMessage = getErrorMessage(doc, draft, draftReadFailed);
   const hasFailed = !!errorMessage;
 
   return (

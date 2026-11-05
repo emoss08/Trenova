@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import type { BillingQueueTarget } from "./billing-queue-assign-dialog";
 import { useCallback, useState } from "react";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
@@ -47,7 +47,7 @@ export function BillingQueueCancelDialog({
       if (single) {
         await Promise.all(
           targets.map((target) =>
-            apiService.billingQueueService.updateStatus(target.id, {
+            billingQueueService.updateStatus(target.id, {
               status: "Canceled",
               cancelReason,
             }),

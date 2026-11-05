@@ -8,18 +8,19 @@ import { BankReceiptQueuePage } from "../page";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), getSummary: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    bankReceiptWorkItemService: {
-      list: mocks.list,
-      getById: vi.fn(),
-      assign: vi.fn(),
-      startReview: vi.fn(),
-      resolve: vi.fn(),
-      dismiss: vi.fn(),
-    },
-    bankReceiptService: { getSummary: mocks.getSummary, getById: vi.fn() },
+vi.mock("@/services/bank-receipt-work-item", () => ({
+  bankReceiptWorkItemService: {
+    list: mocks.list,
+    getById: vi.fn(),
+    assign: vi.fn(),
+    startReview: vi.fn(),
+    resolve: vi.fn(),
+    dismiss: vi.fn(),
   },
+}));
+
+vi.mock("@/services/bank-receipt", () => ({
+  bankReceiptService: { getSummary: mocks.getSummary, getById: vi.fn() },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },

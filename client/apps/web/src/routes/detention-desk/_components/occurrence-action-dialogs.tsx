@@ -2,7 +2,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { detentionWaiverReasonChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { detentionService } from "@/services/detention";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -59,7 +59,7 @@ export function WaiveDialog({ occurrenceId, open, onOpenChange, onDone }: Action
     unknown,
     WaiveFormValues
   >({
-    mutationFn: (values) => apiService.detentionService.waive(occurrenceId, values),
+    mutationFn: (values) => detentionService.waive(occurrenceId, values),
     onSuccess: () => {
       reset();
       onOpenChange(false);
@@ -140,7 +140,7 @@ export function DisputeDialog({ occurrenceId, open, onOpenChange, onDone }: Acti
     unknown,
     DisputeFormValues
   >({
-    mutationFn: (values) => apiService.detentionService.dispute(occurrenceId, values),
+    mutationFn: (values) => detentionService.dispute(occurrenceId, values),
     onSuccess: () => {
       reset();
       onOpenChange(false);

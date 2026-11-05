@@ -9,7 +9,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { useNavigationStore } from "@/stores/navigation-store";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useNow } from "@trenova/shared/hooks/use-now";
@@ -122,7 +122,7 @@ function RegionalRows({ user }: { user: User | null }) {
         await applyLocale(next.locale);
       }
       try {
-        const updated = await apiService.userService.updateMySettings(next);
+        const updated = await userService.updateMySettings(next);
         useAuthStore.getState().setUser(updated);
       } catch (error) {
         if (next.locale !== previous.locale) {
@@ -307,7 +307,7 @@ function AssistantRow({ user }: { user: User | null }) {
     form,
     resourceName: "Assistant",
     save: async (next) => {
-      const updated = await apiService.userService.updateMyAssistantVisibility({
+      const updated = await userService.updateMyAssistantVisibility({
         assistantHidden: !next.showAssistant,
       });
       if (updated.assistantHidden) {

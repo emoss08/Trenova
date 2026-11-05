@@ -4,7 +4,7 @@ import {
   persistDocumentUploadSession,
   removeDocumentUploadSession,
 } from "@/lib/document-upload-store";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type {
   Document,
   DocumentProcessingProfile,
@@ -16,6 +16,7 @@ import type { UploadErrorType, UploadState } from "@/types/upload";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 const MAX_FILE_CONCURRENCY = 2;
 const MAX_PART_CONCURRENCY = 4;
@@ -192,9 +193,7 @@ export function useDocumentUpload({
       const blob = file.slice(start, end, file.type || "application/octet-stream");
 
       for (let attempt = 0; attempt < MAX_PART_RETRIES; attempt++) {
-        const [target] = await apiService.documentService.getUploadPartTargets(session.id, [
-          partNumber,
-        ]);
+        const [target] = await documentService.getUploadPartTargets(session.id, [partNumber]);
 
         try {
           await api.putFileWithProgress(
@@ -311,7 +310,7 @@ export function useDocumentUpload({
 
   const createFreshSession = useCallback(
     async (uploadState: UploadState) => {
-      const session = await apiService.documentService.createUploadSession({
+      const session = await documentService.createUploadSession({
         resourceId,
         resourceType,
         processingProfile,
@@ -344,9 +343,10 @@ export function useDocumentUpload({
         return undefined;
       }
       try {
-        const state = await apiService.documentService.getUploadSession(session.id);
+        const state = await documentService.getUploadSession(session.id);
         return state.session.status === "Quarantined" ? state.session : undefined;
-      } catch {
+      } catch (error) {
+        reportFailure(error, { source: "background", operation: "getUploadSession" });
         return undefined;
       }
     },
@@ -356,7 +356,7 @@ export function useDocumentUpload({
   const waitForSessionFinalization = useCallback(
     async (uploadId: string, sessionId: string, signal: AbortSignal) => {
       while (!signal.aborted) {
-        const state = await apiService.documentService.getUploadSession(sessionId);
+        const state = await documentService.getUploadSession(sessionId);
         sessionByUploadIdRef.current.set(uploadId, state.session);
 
         setUploadState(uploadId, (current) => ({
@@ -381,7 +381,7 @@ export function useDocumentUpload({
           if (!state.session.documentId) {
             throw new Error("Upload finalized without a document record");
           }
-          return apiService.documentService.getById(state.session.documentId);
+          return documentService.getById(state.session.documentId);
         }
 
         if (
@@ -429,7 +429,7 @@ export function useDocumentUpload({
           errorType: undefined,
         }));
 
-        let state = await apiService.documentService.getUploadSession(activeSession.id);
+        let state = await documentService.getUploadSession(activeSession.id);
         if (
           isTerminalUploadStatus(state.session.status) ||
           state.session.fileSize !== uploadState.file.size ||
@@ -437,7 +437,7 @@ export function useDocumentUpload({
         ) {
           await discardSession(uploadState.id);
           session = await createFreshSession(uploadState);
-          state = await apiService.documentService.getUploadSession(session.id);
+          state = await documentService.getUploadSession(session.id);
         }
         sessionByUploadIdRef.current.set(uploadState.id, state.session);
         await syncSessionToStore(uploadState.id, uploadState.file);
@@ -472,10 +472,7 @@ export function useDocumentUpload({
         }
 
         if (state.session.strategy === "single") {
-          const [target] = await apiService.documentService.getUploadPartTargets(
-            state.session.id,
-            [1],
-          );
+          const [target] = await documentService.getUploadPartTargets(state.session.id, [1]);
           const checkedForMalware = state.session.malwareScan;
           await api.putFileWithProgress(
             target.url,
@@ -506,9 +503,7 @@ export function useDocumentUpload({
           progress: 100,
         }));
 
-        const completionSession = await apiService.documentService.completeUploadSession(
-          state.session.id,
-        );
+        const completionSession = await documentService.completeUploadSession(state.session.id);
         sessionByUploadIdRef.current.set(uploadState.id, completionSession);
         await syncSessionToStore(uploadState.id, uploadState.file);
         const document = await waitForSessionFinalization(
@@ -628,7 +623,7 @@ export function useDocumentUpload({
 
     if (session?.id) {
       restoredSessionIdsRef.current.delete(session.id);
-      void apiService.documentService.cancelUploadSession(session.id).catch(() => undefined);
+      void documentService.cancelUploadSession(session.id).catch(() => undefined);
       void removeDocumentUploadSession(session.id);
     }
 
@@ -703,7 +698,7 @@ export function useDocumentUpload({
       try {
         const [persisted, activeSessions] = await Promise.all([
           listPersistedDocumentUploadSessions(resourceType, resourceId),
-          apiService.documentService.listActiveUploadSessions(resourceType, resourceId),
+          documentService.listActiveUploadSessions(resourceType, resourceId),
         ]);
 
         if (cancelled) {
@@ -764,8 +759,8 @@ export function useDocumentUpload({
           );
           processQueueRef.current();
         }
-      } catch {
-        return;
+      } catch (error) {
+        reportFailure(error, { source: "background", operation: "restoreUploads" });
       }
     };
 

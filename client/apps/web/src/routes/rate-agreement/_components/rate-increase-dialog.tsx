@@ -7,8 +7,7 @@ import { AutoCompleteDateField } from "@/components/fields/date-field/date-field
 import { SelectField } from "@/components/fields/select-field";
 import { DeltaValue } from "@/components/metric-tiles";
 import { ratePartyTypeChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
-import type { RateIncreaseRequestPayload } from "@/services/rate";
+import { rateAgreementService, type RateIncreaseRequestPayload } from "@/services/rate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -163,14 +162,14 @@ export function RateIncreaseDialog({
 
   const preview = useMutation({
     mutationFn: (payload: RateIncreaseRequestPayload) =>
-      apiService.rateAgreementService.previewRateIncrease(payload),
+      rateAgreementService.previewRateIncrease(payload),
     onSuccess: setPlan,
     onError: () => toast.error(t("The increase could not be previewed")),
   });
 
   const apply = useMutation({
     mutationFn: (payload: RateIncreaseRequestPayload) =>
-      apiService.rateAgreementService.applyRateIncrease(payload),
+      rateAgreementService.applyRateIncrease(payload),
     onSuccess: (applied) => {
       toast.success(
         t(

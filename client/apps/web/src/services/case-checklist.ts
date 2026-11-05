@@ -28,3 +28,5 @@ export class CaseChecklistService {
     await api.delete(`/case-checklists/${id}/`);
   }
 }
+
+export const caseChecklistService = new CaseChecklistService();

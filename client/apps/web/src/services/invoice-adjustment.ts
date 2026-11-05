@@ -156,3 +156,5 @@ export class InvoiceAdjustmentService {
     );
   }
 }
+
+export const invoiceAdjustmentService = new InvoiceAdjustmentService();

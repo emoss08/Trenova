@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { locationTableGraphQLConfig, type LocationRow } from "@/lib/graphql/location-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { locationService } from "@/services/location";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import type { Location } from "@trenova/shared/types/location";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function LocationTable() {
     async (rows: LocationRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.locationService.bulkUpdateStatus({
+        locationService.bulkUpdateStatus({
           locationIds: ids as string[],
           status: status as Location["status"],
         }),

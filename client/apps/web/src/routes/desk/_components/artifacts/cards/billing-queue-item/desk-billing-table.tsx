@@ -1,7 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { useDeskStore } from "@/stores/desk-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -175,7 +175,7 @@ export function BillingBulkBar({
 
   const start = useApiMutation({
     mutationFn: ({ itemIds, assignMe }: { itemIds: string[]; assignMe: boolean }) =>
-      apiService.billingQueueService.startBulk("Approve", itemIds, crypto.randomUUID(), {
+      billingQueueService.startBulk("Approve", itemIds, crypto.randomUUID(), {
         assignApprover: assignMe,
       }),
     resourceName: "BillingQueueItem",
@@ -187,7 +187,7 @@ export function BillingBulkBar({
     },
   });
   const cancel = useApiMutation({
-    mutationFn: (runId: string) => apiService.billingQueueService.undoBulk(runId),
+    mutationFn: (runId: string) => billingQueueService.undoBulk(runId),
     resourceName: "BillingQueueItem",
     onSettled: () => {
       setUndo(null);

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { carrierStatusChoices } from "@/lib/choices";
 import { carrierTableGraphQLConfig, type CarrierRow } from "@/lib/graphql/carrier-table";
-import { apiService } from "@/services/api";
+import { carrierService } from "@/services/carrier";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function CarrierTable() {
     async (rows: CarrierRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.carrierService.bulkUpdateStatus({
+        carrierService.bulkUpdateStatus({
           carrierIds: ids,
           status: status as Carrier["status"],
         }),

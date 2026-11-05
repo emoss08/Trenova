@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import {
   transferOwnershipSchema,
   type TransferOwnershipPayload,
@@ -52,7 +52,7 @@ export function ShipmentTransferOwnershipDialog({
 
   const { mutateAsync } = useApiMutation({
     mutationFn: (values: TransferOwnershipPayload) =>
-      apiService.shipmentService.transferOwnership(shipmentId, values.ownerId),
+      shipmentService.transferOwnership(shipmentId, values.ownerId),
     resourceName: "Shipment",
     form,
     onSuccess: () => {

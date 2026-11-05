@@ -5,7 +5,7 @@ import {
   shipmentTypeTableGraphQLConfig,
   type ShipmentTypeRow,
 } from "@/lib/graphql/shipment-type-table";
-import { apiService } from "@/services/api";
+import { shipmentTypeService } from "@/services/shipment-type";
 import type { ShipmentType } from "@/types/shipment-type";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
@@ -30,7 +30,7 @@ export default function ShipmentTypeTable() {
     async (rows: ShipmentTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.shipmentTypeService.bulkUpdateStatus({
+        shipmentTypeService.bulkUpdateStatus({
           shipmentTypeIds: ids as string[],
           status: status as ShipmentType["status"],
         }),
@@ -58,7 +58,7 @@ export default function ShipmentTypeTable() {
         throw new Error("Code is required.");
       }
 
-      await apiService.shipmentTypeService.patch(rowId, { [field]: value });
+      await shipmentTypeService.patch(rowId, { [field]: value });
       if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["shipment-type-list"],

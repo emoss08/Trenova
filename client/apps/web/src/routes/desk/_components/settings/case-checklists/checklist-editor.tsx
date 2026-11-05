@@ -8,7 +8,7 @@ import {
   newCustomStepKey,
 } from "@/lib/case-checklist-steps";
 import { caseChecklist } from "@/lib/queries/case-checklist";
-import { apiService } from "@/services/api";
+import { caseChecklistService } from "@/services/case-checklist";
 import {
   checklistTemplateSchema,
   type ChecklistKind,
@@ -167,7 +167,7 @@ export function ChecklistEditor({
 
   const save = useApiMutation({
     mutationFn: (values: ChecklistEditorValues) =>
-      apiService.caseChecklistService.save({
+      caseChecklistService.save({
         id: template.id || undefined,
         version: template.version,
         kind,
@@ -188,7 +188,7 @@ export function ChecklistEditor({
   });
 
   const removeTemplate = useApiMutation({
-    mutationFn: () => apiService.caseChecklistService.remove(template.id),
+    mutationFn: () => caseChecklistService.remove(template.id),
     resourceName: "Case Checklist",
     onSuccess: async () => {
       await refresh();

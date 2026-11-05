@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { tableConfigurationService } from "@/services/table-configuration";
 import type { TableConfig, TableConfiguration, TableViewSource } from "@/types/table-configuration";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -64,7 +64,7 @@ export function DataTableConfigItem({
   };
 
   const { mutateAsync: deleteConfig, isPending: isDeletingConfig } = useApiMutation({
-    mutationFn: (id: string) => apiService.tableConfigurationService.delete(id),
+    mutationFn: (id: string) => tableConfigurationService.delete(id),
     resourceName: "Table Configuration",
     onSuccess: () => {
       onViewDeleted?.(config.id);
@@ -73,7 +73,7 @@ export function DataTableConfigItem({
   });
 
   const { mutateAsync: setDefaultConfig, isPending: isSettingDefaultConfig } = useApiMutation({
-    mutationFn: (id: string) => apiService.tableConfigurationService.setDefault(id),
+    mutationFn: (id: string) => tableConfigurationService.setDefault(id),
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       onApplyConfig(updated.tableConfig, { id: updated.id, name: updated.name });
@@ -82,15 +82,14 @@ export function DataTableConfigItem({
   });
 
   const { mutateAsync: setOrgDefaultConfig, isPending: isSettingOrgDefault } = useApiMutation({
-    mutationFn: (enabled: boolean) =>
-      apiService.tableConfigurationService.setOrgDefault(config.id, enabled),
+    mutationFn: (enabled: boolean) => tableConfigurationService.setOrgDefault(config.id, enabled),
     resourceName: "Table Configuration",
     onSettled: refetchConfigurations,
   });
 
   const { mutateAsync: updateConfig, isPending: isUpdatingConfig } = useApiMutation({
     mutationFn: (tableConfig: TableConfig) =>
-      apiService.tableConfigurationService.update(config.id, {
+      tableConfigurationService.update(config.id, {
         name: config.name,
         description: config.description,
         resource: config.resource,
@@ -106,7 +105,7 @@ export function DataTableConfigItem({
   });
 
   const { mutateAsync: duplicateConfig, isPending: isDuplicating } = useApiMutation({
-    mutationFn: () => apiService.tableConfigurationService.duplicate(config),
+    mutationFn: () => tableConfigurationService.duplicate(config),
     resourceName: "Table Configuration",
     onSettled: refetchConfigurations,
   });

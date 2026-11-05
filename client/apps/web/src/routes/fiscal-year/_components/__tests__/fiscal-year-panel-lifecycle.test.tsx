@@ -33,17 +33,16 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    fiscalYearService: {
-      activate: mocks.activate,
-      close: mocks.close,
-      closePreview: mocks.closePreview,
-      reopen: mocks.reopen,
-    },
-    fiscalPeriodService: {},
+vi.mock("@/services/fiscal-year", () => ({
+  fiscalYearService: {
+    activate: mocks.activate,
+    close: mocks.close,
+    closePreview: mocks.closePreview,
+    reopen: mocks.reopen,
   },
 }));
+
+vi.mock("@/services/fiscal-period", () => ({ fiscalPeriodService: {} }));
 
 // Contract: fiscalyearservice. A year's status and current flag never move through
 // the edit form's save; Activate (Draft or Open → Open and current), Close (Open) and

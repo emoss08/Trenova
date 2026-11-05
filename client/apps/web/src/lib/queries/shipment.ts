@@ -4,31 +4,30 @@ import {
 } from "@/lib/graphql/customer-tracking";
 import { getCarrierTrackingLink, listShipmentCheckCalls } from "@/lib/graphql/check-calls";
 import { getShipmentProfitabilityGraphQL } from "@/lib/graphql/shipment";
-import { apiService } from "@/services/api";
-import { ShipmentTrackingService } from "@/services/shipment-tracking";
+import { shipmentService } from "@/services/shipment";
+import { shipmentEventService } from "@/services/shipment-event";
+import { shipmentTrackingService } from "@/services/shipment-tracking";
 import type { PaginationInfo } from "@trenova/shared/types/server";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
-const shipmentTrackingService = new ShipmentTrackingService();
-
 export const shipment = createQueryKeys("shipment", {
   uiPolicy: () => ({
     queryKey: ["ui-policy"],
-    queryFn: async () => apiService.shipmentService.getUIPolicy(),
+    queryFn: async () => shipmentService.getUIPolicy(),
   }),
   get: (shipmentId: Shipment["id"], params?: Record<string, string>) => ({
     queryKey: ["get", shipmentId, params],
-    queryFn: async () => apiService.shipmentService.get(shipmentId, params),
+    queryFn: async () => shipmentService.get(shipmentId, params),
   }),
   eta: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["eta", shipmentId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
-      apiService.shipmentService.getEta(shipmentId, { signal }),
+      shipmentService.getEta(shipmentId, { signal }),
   }),
   billingReadiness: (shipmentId: Shipment["id"]) => ({
     queryKey: ["billing-readiness", shipmentId],
-    queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),
+    queryFn: async () => shipmentService.getBillingReadiness(shipmentId),
   }),
   // The version participates in the key so a save refetches the assessment.
   // The shipment panel invalidates under "shipment-list", not this namespace,
@@ -36,15 +35,15 @@ export const shipment = createQueryKeys("shipment", {
   // looking authoritative.
   permitAssessment: (shipmentId: NonNullable<Shipment["id"]>, version?: number) => ({
     queryKey: ["permit-assessment", shipmentId, version],
-    queryFn: async () => apiService.shipmentService.getPermitAssessment(shipmentId),
+    queryFn: async () => shipmentService.getPermitAssessment(shipmentId),
   }),
   permits: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["permits", shipmentId],
-    queryFn: async () => apiService.shipmentService.listPermits(shipmentId),
+    queryFn: async () => shipmentService.listPermits(shipmentId),
   }),
   permitRequirements: (shipmentId: NonNullable<Shipment["id"]>) => ({
     queryKey: ["permit-requirements", shipmentId],
-    queryFn: async () => apiService.shipmentService.listPermitRequirements(shipmentId),
+    queryFn: async () => shipmentService.listPermitRequirements(shipmentId),
   }),
   profitability: (shipmentId: Shipment["id"]) => ({
     queryKey: ["profitability", shipmentId],
@@ -52,13 +51,13 @@ export const shipment = createQueryKeys("shipment", {
   }),
   listUnassigned: (req: { limit: number; after?: string | null }) => ({
     queryKey: ["list-unassigned", req],
-    queryFn: async () => apiService.shipmentService.listUnassigned(req),
+    queryFn: async () => shipmentService.listUnassigned(req),
   }),
   // The latest events on one shipment, newest first, for a card's activity.
   // Realtime refreshes them under ["shipment", "events"] with the shipment.
   events: (shipmentId: NonNullable<Shipment["id"]>, limit: number) => ({
     queryKey: ["events", shipmentId, limit],
-    queryFn: async () => apiService.shipmentEventService.list({ shipmentId, limit }),
+    queryFn: async () => shipmentEventService.list({ shipmentId, limit }),
   }),
   // Every check call on the shipment's moves, newest first: dispatcher calls,
   // carrier posts through the tracking link, and agent reports.
@@ -89,7 +88,7 @@ export const shipment = createQueryKeys("shipment", {
   }),
   listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
     queryKey: ["comments", req.shipmentId, req],
-    queryFn: async () => apiService.shipmentService.getComments(req),
+    queryFn: async () => shipmentService.getComments(req),
   }),
 });
 

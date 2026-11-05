@@ -5,7 +5,7 @@ import {
   type ServiceTypeRow,
 } from "@/lib/graphql/service-type-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { serviceTypeService } from "@/services/service-type";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
@@ -30,7 +30,7 @@ export default function EquipmentTypeTable() {
     async (rows: ServiceTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.serviceTypeService.bulkUpdateStatus({
+        serviceTypeService.bulkUpdateStatus({
           serviceTypeIds: ids as string[],
           status: status as ServiceType["status"],
         }),
@@ -58,7 +58,7 @@ export default function EquipmentTypeTable() {
         throw new Error("Code is required.");
       }
 
-      await apiService.serviceTypeService.patch(rowId, { [field]: value });
+      await serviceTypeService.patch(rowId, { [field]: value });
       if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["service-type-list"],

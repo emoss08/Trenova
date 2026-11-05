@@ -142,3 +142,5 @@ export class FormulaLibraryService {
     return safeParse(pageThreadSchema, response, "Formula Assistant Conversation");
   }
 }
+
+export const formulaLibraryService = new FormulaLibraryService();

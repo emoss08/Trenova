@@ -15,7 +15,7 @@ import {
   distanceProfileTableGraphQLConfig,
   type DistanceProfileRow,
 } from "@/lib/graphql/distance-profile-table";
-import { DistanceProfileService } from "@/services/distance-profile";
+import { distanceProfileService } from "@/services/distance-profile";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,8 +25,6 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./distance-profile-columns";
 import { DistanceProfilePanel } from "./distance-profile-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-const distanceProfileService = new DistanceProfileService();
 
 export default function DistanceProfileTable() {
   const t = useT();

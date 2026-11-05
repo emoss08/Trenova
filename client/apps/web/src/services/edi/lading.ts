@@ -153,3 +153,5 @@ export class LadingService {
     return api.post(`/edi/flows/instances/${instanceId}/release/`);
   }
 }
+
+export const ladingService = new LadingService();

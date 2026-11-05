@@ -20,8 +20,9 @@ vi.mock("@/lib/queries/billing-queue", async (importOriginal) => {
     },
   };
 });
-vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { updateCharges: vi.fn(), reassignCharge: vi.fn() } },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { updateCharges: vi.fn(), reassignCharge: vi.fn() },
 }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

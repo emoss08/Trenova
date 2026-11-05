@@ -4,7 +4,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useRegister } from "@/hooks/use-register";
 import { absoluteAppUrl, invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceShare } from "@/lib/queries/invoice-share";
-import { apiService } from "@/services/api";
+import { invoiceShareService } from "@/services/invoice-share";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -167,7 +167,7 @@ function InviteForm({ invoice, tab }: { invoice: Invoice; tab: InvoiceDetailTab 
 
   const mutation = useApiMutation({
     mutationFn: (values: ShareInvoiceFormValues) =>
-      apiService.invoiceShareService.share(invoice.id, { ...values, tab }),
+      invoiceShareService.share(invoice.id, { ...values, tab }),
     onSuccess: (result) => {
       queryClient.setQueryData(invoiceShare.list(invoice.id).queryKey, result.shares);
       toast.success(shareSuccessMessage(t, result));

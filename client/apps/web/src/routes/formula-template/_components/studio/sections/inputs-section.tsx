@@ -2,7 +2,7 @@ import { TariffInputsFields } from "@/components/tariff-inputs/tariff-inputs-fie
 import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { inputDocEdits } from "@/components/tariff-studio/source-edits";
 import { describeApiError } from "@/lib/api-error-message";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { VariableIcon } from "@trenova/shared/components/icons";
@@ -26,7 +26,7 @@ export function InputsSection() {
   // Nova writes a doc comment for each input declared without one; they land in the editor as
   // one change, so a single undo takes them all back.
   const describe = useMutation({
-    mutationFn: () => apiService.formulaTemplateService.describeInputs(draftContent()),
+    mutationFn: () => formulaTemplateService.describeInputs(draftContent()),
     onSuccess: (answer) => {
       // Placed against the file as it is now, which the check was made from.
       const changes = inputDocEdits(draftContent().source, check.inputs, answer.descriptions);

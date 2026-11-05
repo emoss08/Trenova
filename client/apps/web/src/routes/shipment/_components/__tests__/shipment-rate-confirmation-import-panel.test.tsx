@@ -47,14 +47,13 @@ vi.mock("@/lib/queries/document-control", () => ({
   },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    documentService: {
-      getById: async () => mocks.document,
-      getShipmentDraft: async () => null,
-      reextract: async () => {
-        mocks.calls.push("reextract");
-      },
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService: {
+    getById: async () => mocks.document,
+    getShipmentDraft: async () => null,
+    reextract: async () => {
+      mocks.calls.push("reextract");
     },
   },
 }));

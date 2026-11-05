@@ -61,8 +61,6 @@ export class ExchangeRateService {
     const searchParams = new URLSearchParams({ base });
     return api.post<{ status: string }>(`/exchange-rates/refresh/?${searchParams}`);
   }
-
-  async createSettlementQuote(payload: SettlementQuoteRequest) {
-    return api.post<SettlementQuote>("/exchange-rates/settlement-quotes/", payload);
-  }
 }
+
+export const exchangeRateService = new ExchangeRateService();

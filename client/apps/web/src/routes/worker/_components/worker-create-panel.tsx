@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { checkSectionErrors } from "@/lib/form";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { workerService } from "@/services/worker";
 import type { Worker } from "@trenova/shared/types/worker";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -103,7 +103,7 @@ export function WorkerCreatePanel({ open, onOpenChange, form }: WorkerCreatePane
 
   const { mutateAsync } = useApiMutation<Worker, Worker, unknown, Worker>({
     mutationFn: async (values: Worker) => {
-      return await apiService.workerService.create(values);
+      return await workerService.create(values);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["worker-list"] });

@@ -42,10 +42,23 @@ describe("the board's skeleton columns", () => {
   );
 
   it("are the columns the board opens with, in order, at their sizes", () => {
-    expect(boardSkeletonColumns(t)).toEqual(
+    const drawn = boardSkeletonColumns(t).map(({ id, label, size, sortable }) => ({
+      id,
+      label,
+      size,
+      sortable,
+    }));
+
+    expect(drawn).toEqual(
       shown.map((column) => ({
         id: column.id,
-        label: typeof column.header === "string" ? column.header : "",
+        // The actions column's head is for screen readers, so nothing is drawn for it.
+        label:
+          column.id === "actions"
+            ? ""
+            : typeof column.header === "string"
+              ? column.header
+              : column.meta?.label,
         size: column.size,
         sortable: column.meta?.sortable !== false,
       })),

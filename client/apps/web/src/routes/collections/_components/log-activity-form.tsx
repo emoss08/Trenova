@@ -9,7 +9,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { parseAmountToMinor } from "@trenova/shared/lib/money";
-import { apiService } from "@/services/api";
+import { collectionService } from "@/services/collection";
 import { contactActivityKinds, type ContactActivityKind } from "@/types/collection";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -82,7 +82,7 @@ export function LogActivityForm({ customerId }: { customerId: string }) {
 
   const { mutateAsync, isPending } = useApiMutation({
     mutationFn: (values: LogActivityValues) =>
-      apiService.collectionService.logActivity(customerId, {
+      collectionService.logActivity(customerId, {
         kind: values.kind,
         summary: values.summary.trim(),
         contactName: values.contactName.trim(),

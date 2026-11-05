@@ -17,7 +17,7 @@ import {
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { checkSectionErrors } from "@/lib/form";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { workerService } from "@/services/worker";
 import { TimeFormat } from "@trenova/shared/types/user";
 import type { WorkerRow } from "@/lib/graphql/worker-table";
 import type { Worker } from "@trenova/shared/types/worker";
@@ -190,7 +190,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
 
   const { mutateAsync } = useApiMutation<Worker, Worker, unknown, Worker>({
     mutationFn: async (values: Worker) => {
-      return await apiService.workerService.update(row?.id as string, values);
+      return await workerService.update(row?.id as string, values);
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({ queryKey: ["worker-list"] });

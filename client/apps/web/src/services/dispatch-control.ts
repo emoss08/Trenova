@@ -13,3 +13,5 @@ export class DispatchControlService {
     return safeParse(dispatchControlSchema, response, "Dispatch Control");
   }
 }
+
+export const dispatchControlService = new DispatchControlService();

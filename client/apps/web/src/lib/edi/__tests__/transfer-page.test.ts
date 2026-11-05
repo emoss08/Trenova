@@ -3,9 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const getTransfer = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: { ediService: { getTransfer } },
-}));
+vi.mock("@/services/edi", () => ({ ediService: { getTransfer } }));
 
 const { sentTransferPath } = await import("../transfer-page");
 const { transfer } =

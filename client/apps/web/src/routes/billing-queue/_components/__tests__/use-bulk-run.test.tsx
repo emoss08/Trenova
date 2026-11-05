@@ -17,13 +17,12 @@ const mocks = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: {
-      startBulk: mocks.startBulk,
-      getBulk: mocks.getBulk,
-      undoBulk: mocks.undoBulk,
-    },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: {
+    startBulk: mocks.startBulk,
+    getBulk: mocks.getBulk,
+    undoBulk: mocks.undoBulk,
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: mocks.toast }));

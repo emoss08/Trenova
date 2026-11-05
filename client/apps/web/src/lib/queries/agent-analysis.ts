@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { agentAnalysisService } from "@/services/agent-analysis";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 /** How many analyses the history shows at once. */
@@ -11,7 +11,6 @@ export const agentAnalysis = createQueryKeys("agentAnalysis", {
   }),
   run: (runId: string) => ({
     queryKey: ["run", runId],
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      apiService.agentAnalysisService.run(runId, { signal }),
+    queryFn: ({ signal }: { signal?: AbortSignal }) => agentAnalysisService.run(runId, { signal }),
   }),
 });

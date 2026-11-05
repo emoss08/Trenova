@@ -1,6 +1,5 @@
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
-import type { RateAgreementReviewAction } from "@/services/rate";
+import { rateAgreementService, type RateAgreementReviewAction } from "@/services/rate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -177,7 +176,7 @@ export function ReviewActionDialog({
 
   const mutation = useMutation({
     mutationFn: (trimmedComment: string) =>
-      apiService.rateAgreementService.review(agreement?.id ?? "", action, trimmedComment),
+      rateAgreementService.review(agreement?.id ?? "", action, trimmedComment),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement"] });

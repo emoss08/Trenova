@@ -1,7 +1,7 @@
 import { appendToHistory, type ThreadHistory } from "@/components/assistant/thread-history";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 
 /** Who takes the conversation over, and, for one chapter of it, which. */
@@ -19,7 +19,7 @@ export function useHandOffThread(threadId: string, facts: readonly string[] = []
 
   return useApiMutation({
     mutationFn: ({ agentId, chapterId }: HandOffTarget) =>
-      apiService.assistantService.handoffThread(threadId, agentId, facts, chapterId),
+      assistantService.handoffThread(threadId, agentId, facts, chapterId),
     onSuccess: async (result) => {
       const card = result.message;
       if (card) {

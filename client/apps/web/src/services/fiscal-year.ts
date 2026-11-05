@@ -24,3 +24,5 @@ export class FiscalYearService {
     return api.put<FiscalYear>(`/fiscal-years/${id}/activate/`);
   }
 }
+
+export const fiscalYearService = new FiscalYearService();

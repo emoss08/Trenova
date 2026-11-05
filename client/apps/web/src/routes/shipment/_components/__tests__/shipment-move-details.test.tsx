@@ -9,9 +9,7 @@ const { getUIPolicy, moveCardProps } = vi.hoisted(() => ({
   moveCardProps: [] as { allowPersistedMoveRemoval: boolean }[],
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { shipmentService: { getUIPolicy } },
-}));
+vi.mock("@/services/shipment", () => ({ shipmentService: { getUIPolicy } }));
 
 // MoveCard pulls in assignment mutations, location lookups and a split dialog,
 // none of which this test is about. Stubbing it isolates the one decision the

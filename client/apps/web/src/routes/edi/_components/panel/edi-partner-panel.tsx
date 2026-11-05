@@ -4,7 +4,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { organization as organizationQueries } from "@/lib/queries/organization";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -76,7 +76,7 @@ function CreatePartnerPanel({
   });
   const createExternalMutation = useApiMutation({
     mutationFn: (values: EDIPartnerFormValues) =>
-      apiService.ediService.createPartner(toPartnerRequest(values)),
+      ediService.createPartner(toPartnerRequest(values)),
     form: externalForm,
     resourceName: "EDI Partner",
     onSuccess: async () => {
@@ -87,7 +87,7 @@ function CreatePartnerPanel({
   });
   const createConnectionMutation = useApiMutation({
     mutationFn: (values: CreateInternalPartnerPairFormValues) =>
-      apiService.ediService.createConnection(toConnectionRequest(values)),
+      ediService.createConnection(toConnectionRequest(values)),
     form: pairForm,
     resourceName: "EDI Connection",
     onSuccess: async () => {
@@ -299,7 +299,7 @@ function PartnerEditPanel({
       if (!partner) {
         throw new Error("Partner is required");
       }
-      return apiService.ediService.updatePartner(partner.id, toPartnerRequest(values));
+      return ediService.updatePartner(partner.id, toPartnerRequest(values));
     },
     form,
     resourceName: "EDI Partner",

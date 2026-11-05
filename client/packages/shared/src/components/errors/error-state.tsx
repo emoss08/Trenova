@@ -67,7 +67,7 @@ type ErrorActionsProps = {
 function ErrorActions({ description, onRetry, size, extra }: ErrorActionsProps) {
   const t = useT();
 
-  if (description.kind === "stale-build") {
+  if (description.kind === "stale-build" || description.kind === "contract") {
     return (
       <>
         <Button size={size} onClick={reloadPage}>

@@ -17,7 +17,10 @@ import { CardDocumentsSkeleton } from "../../skeletons/record-card-skeleton";
 
 const documentService = vi.hoisted(() => ({ getByResource: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { documentService } }));
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService,
+}));
 
 function attached(fields: Partial<Document> & { id: string }): Document {
   return {

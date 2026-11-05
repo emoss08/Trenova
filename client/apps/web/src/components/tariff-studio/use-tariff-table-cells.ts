@@ -5,7 +5,7 @@ import {
   uncachedNeeds,
   type TableCellCache,
 } from "@/lib/tariff-table-cells";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TariffNeed } from "@trenova/shared/types/tariff";
 import { useCallback } from "react";
@@ -47,7 +47,7 @@ export function useTariffTableCells(stamp: string): TariffTableCellsState {
 
   const mutation = useMutation({
     mutationFn: async ({ needs, whole }: { needs: readonly TariffNeed[]; whole: boolean }) =>
-      apiService.formulaTemplateService.getContextCells({ needs, whole }),
+      formulaTemplateService.getContextCells({ needs, whole }),
     onSuccess: (answer) => {
       queryClient.setQueryData<TableCellCache>(
         formulaTemplate.contextCells(answer.stamp).queryKey,

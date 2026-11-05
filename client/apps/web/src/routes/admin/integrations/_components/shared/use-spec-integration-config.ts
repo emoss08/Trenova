@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
@@ -51,7 +51,7 @@ export function useSpecIntegrationConfig({
 
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
-      apiService.integrationService.updateConfig(integrationType, payload),
+      integrationService.updateConfig(integrationType, payload),
     form,
     // i18n-ignore: resource name only appears in console error logs
     resourceName: `${name} configuration`,
@@ -67,7 +67,7 @@ export function useSpecIntegrationConfig({
   });
 
   const testConnectionMutation = useMutation({
-    mutationFn: () => apiService.integrationService.testConnection(integrationType),
+    mutationFn: () => integrationService.testConnection(integrationType),
     onSuccess: async () => {
       toast.success(t("{0} connection successful", name));
       await Promise.all([

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { apiService } from "@/services/api";
+import { hazardousMaterialService } from "@/services/hazardous-material";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { hazardousMaterialSchema, type HazardousMaterial } from "@/types/hazardous-material";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,7 +58,7 @@ export function HazardousMaterialPanel({
             throw new Error("No Hazardous Material ID selected");
           }
 
-          return apiService.hazardousMaterialService.update(currentRow.id, values);
+          return hazardousMaterialService.update(currentRow.id, values);
         }}
       />
     );
@@ -72,7 +72,7 @@ export function HazardousMaterialPanel({
       queryKey="hazardous-material-list"
       title={t("Hazardous material")}
       formComponent={<HazardousMaterialForm isEditing />}
-      mutationFn={(values) => apiService.hazardousMaterialService.create(values)}
+      mutationFn={(values) => hazardousMaterialService.create(values)}
     />
   );
 }

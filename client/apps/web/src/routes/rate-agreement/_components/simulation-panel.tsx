@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip } from "@/components/kpi/kpi-strip";
 import { DeltaValue, StatTile } from "@/components/metric-tiles";
-import { apiService } from "@/services/api";
+import { rateSimulationService } from "@/services/rate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -76,7 +76,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: history } = useQuery({
     queryKey: ["rate-simulations", rateAgreementId],
-    queryFn: () => apiService.rateSimulationService.listForAgreement(rateAgreementId as string),
+    queryFn: () => rateSimulationService.listForAgreement(rateAgreementId as string),
     enabled: Boolean(rateAgreementId),
   });
 
@@ -84,7 +84,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: simulation } = useQuery({
     queryKey: ["rate-simulation", active],
-    queryFn: () => apiService.rateSimulationService.getById(active as string),
+    queryFn: () => rateSimulationService.getById(active as string),
     enabled: Boolean(active),
     refetchInterval: (query) =>
       shouldPoll(query.state.data as RateSimulation | undefined) ? POLL_INTERVAL_MS : false,
@@ -94,7 +94,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
     mutationFn: () => {
       const now = Math.floor(Date.now() / 1000);
 
-      return apiService.rateSimulationService.create({
+      return rateSimulationService.create({
         rateAgreementId: rateAgreementId as string,
         name: `${getValues("name") || "Agreement"} — last ${days} days`,
         partyType: getValues("partyType"),
@@ -113,8 +113,7 @@ export function SimulationPanel({ rateAgreementId }: SimulationPanelProps) {
 
   const { data: results } = useQuery({
     queryKey: ["rate-simulation-results", active],
-    queryFn: () =>
-      apiService.rateSimulationService.listResults(active as string, { changedOnly: true }),
+    queryFn: () => rateSimulationService.listResults(active as string, { changedOnly: true }),
     enabled: Boolean(active) && isTerminal(simulation),
   });
 

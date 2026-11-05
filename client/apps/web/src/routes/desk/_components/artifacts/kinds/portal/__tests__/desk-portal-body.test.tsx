@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   portalRunRecording: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({ apiService: { agentExtensionService: mocks } }));
+vi.mock("@/services/agent-extension", () => ({ agentExtensionService: mocks }));
 
 afterEach(() => {
   cleanup();

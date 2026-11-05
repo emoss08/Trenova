@@ -3,7 +3,7 @@ import { FormSaveDock } from "@/components/form-save-dock";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { sequenceConfig } from "@/lib/queries/sequence-config";
-import { apiService } from "@/services/api";
+import { sequenceConfigService } from "@/services/sequence-config";
 import {
   sequenceConfigDocumentSchema,
   sequenceTypes,
@@ -38,8 +38,7 @@ export default function SequenceConfigForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: sequenceConfig.get._def,
-    mutationFn: async (values: SequenceConfigDocument) =>
-      apiService.sequenceConfigService.update(values),
+    mutationFn: async (values: SequenceConfigDocument) => sequenceConfigService.update(values),
     resourceName: "Sequence Configuration",
     resetForm: reset,
     form,

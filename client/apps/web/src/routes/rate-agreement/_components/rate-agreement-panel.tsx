@@ -4,8 +4,7 @@ import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import { usePermission } from "@/hooks/use-permission";
 import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
-import { apiService } from "@/services/api";
-import type { RateAgreementReviewAction } from "@/services/rate";
+import { rateAgreementService, type RateAgreementReviewAction } from "@/services/rate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { rateAgreementTemplateIds, refineRateAgreementInputs } from "@/lib/rate-agreement-inputs";
 import { tariffInputsResolver } from "@/lib/tariff-inputs-resolver";
@@ -220,7 +219,7 @@ export function RateAgreementPanel({
     queryKey: "rate-agreement",
     id: row?.id,
     version: row?.version,
-    fetch: (id) => apiService.rateAgreementService.getById(id),
+    fetch: (id) => rateAgreementService.getById(id),
   });
 
   const formTabs = useMemo(
@@ -297,7 +296,7 @@ export function RateAgreementPanel({
               throw new Error("No Rate Agreement ID selected");
             }
 
-            return apiService.rateAgreementService.update(currentRow.id, values);
+            return rateAgreementService.update(currentRow.id, values);
           }}
         />
 
@@ -327,7 +326,7 @@ export function RateAgreementPanel({
         "Write the contract once, and every shipment on its lanes prices itself against it.",
       )}
       formTabs={formTabs}
-      mutationFn={(values) => apiService.rateAgreementService.create(values)}
+      mutationFn={(values) => rateAgreementService.create(values)}
     />
   );
 }

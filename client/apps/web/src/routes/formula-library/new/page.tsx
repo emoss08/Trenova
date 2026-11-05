@@ -4,7 +4,7 @@ import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
 import { invalidateFormulaLibrary } from "@/lib/queries/formula-library";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -35,7 +35,7 @@ export function FormulaLibraryCreatePage() {
 
   const { mutate } = useApiMutation({
     mutationFn: (values: FormulaLibraryFormValues) =>
-      apiService.formulaLibraryService.create({
+      formulaLibraryService.create({
         name: values.name.trim(),
         description: values.description ?? "",
         source: values.source,

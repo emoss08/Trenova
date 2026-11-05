@@ -87,3 +87,5 @@ export class CarrierAssignmentService {
     });
   }
 }
+
+export const carrierAssignmentService = new CarrierAssignmentService();

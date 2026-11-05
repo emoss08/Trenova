@@ -41,3 +41,5 @@ export class InvoiceShareService {
     return safeParse(shareInvoiceResultSchema, response, "ShareInvoiceResult");
   }
 }
+
+export const invoiceShareService = new InvoiceShareService();

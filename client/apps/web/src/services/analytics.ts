@@ -20,3 +20,5 @@ export class AnalyticsService {
     return response;
   }
 }
+
+export const analyticService = new AnalyticsService();

@@ -13,7 +13,7 @@ const shipmentService = vi.hoisted(() => ({
 
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { shipmentService } }));
+vi.mock("@/services/shipment", () => ({ shipmentService }));
 
 vi.mock("@trenova/shared/components/ui/toast", () => ({ toast }));
 

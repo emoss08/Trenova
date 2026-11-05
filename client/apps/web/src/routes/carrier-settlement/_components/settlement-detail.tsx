@@ -40,7 +40,7 @@ import {
   type CarrierSettlementDetail as SettlementDetailData,
   type CarrierSettlementLineRow,
 } from "@/lib/graphql/carrier-settlement";
-import { apiService } from "@/services/api";
+import { rateConfirmationService } from "@/services/rate-confirmation";
 import { documentContentUrl } from "@/services/document";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
@@ -831,7 +831,7 @@ function LinkedRateConfirmations({ settlement }: { settlement: SettlementDetailD
     queryKey: ["carrier-settlement-rate-cons", settlement.id, moveIds],
     queryFn: async () => {
       const lists = await Promise.all(
-        moveIds.map((moveId) => apiService.rateConfirmationService.listByMove(moveId)),
+        moveIds.map((moveId) => rateConfirmationService.listByMove(moveId)),
       );
       return lists.flat();
     },

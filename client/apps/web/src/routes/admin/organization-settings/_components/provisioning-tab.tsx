@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { organization } from "@/lib/queries/organization";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users01Icon } from "@trenova/shared/components/icons";
@@ -84,7 +84,7 @@ export function ProvisioningTab({
 
   const { mutate: deleteDirectory, isPending: isDeletingDirectory } = useMutation({
     mutationFn: async (directoryId: string) =>
-      apiService.organizationService.deleteSCIMDirectory(organizationId, directoryId),
+      organizationService.deleteSCIMDirectory(organizationId, directoryId),
     onSuccess: async (_data, deletedDirectoryId) => {
       await handleDirectoryDeleted(deletedDirectoryId);
     },

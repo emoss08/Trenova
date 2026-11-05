@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { SCIMGroupRoleMappingRow } from "@/lib/graphql/scim-group-role-mapping-table";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import type { DataTablePanelProps, TableSheetProps } from "@trenova/shared/types/data-table";
 import {
   scimGroupRoleMappingFormSchema,
@@ -122,7 +122,7 @@ export function SCIMGroupMappingCreatePanel({
       size="md"
       formComponent={<SCIMGroupMappingForm />}
       mutationFn={async (values) => {
-        const saved = await apiService.organizationService.createSCIMGroupRoleMapping(
+        const saved = await organizationService.createSCIMGroupRoleMapping(
           organizationId,
           directoryId,
           toSCIMGroupMapping(values, directoryId),
@@ -163,7 +163,7 @@ function SCIMGroupMappingEditPanel({
       size="md"
       formComponent={<SCIMGroupMappingForm />}
       mutationFn={async (values) => {
-        const saved = await apiService.organizationService.updateSCIMGroupRoleMapping(
+        const saved = await organizationService.updateSCIMGroupRoleMapping(
           organizationId,
           directoryId,
           toSCIMGroupMapping(values, directoryId),

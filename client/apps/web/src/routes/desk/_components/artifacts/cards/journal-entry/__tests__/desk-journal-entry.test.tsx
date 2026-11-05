@@ -28,8 +28,8 @@ vi.mock("@/lib/graphql/journal-review", () => ({
   approveJournalEntries: fetchers.approve,
   postJournalEntries: fetchers.post,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: { journalReversalService: { create: fetchers.requestReversal } },
+vi.mock("@/services/journal-reversal", () => ({
+  journalReversalService: { create: fetchers.requestReversal },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },

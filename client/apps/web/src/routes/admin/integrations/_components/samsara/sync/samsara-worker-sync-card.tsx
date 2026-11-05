@@ -21,7 +21,7 @@ import {
   generateDateTimeStringFromUnixTimestamp,
 } from "@trenova/shared/lib/date";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import { useSamsaraSyncStore } from "@/stores/samsara-sync";
 import { Resource } from "@trenova/shared/types/permission";
 import type { WorkerSyncLogLevel, WorkerSyncSummary } from "@/types/samsara";
@@ -317,7 +317,7 @@ export function SamsaraWorkerSyncCard({
   });
 
   const startSyncMutation = useMutation({
-    mutationFn: () => apiService.integrationService.startSamsaraWorkerSync(),
+    mutationFn: () => integrationService.startSamsaraWorkerSync(),
     onSuccess: (response) => {
       setTrackedWorkflowId(response.workflowId);
       setTrackedRunId(response.runId);
@@ -364,7 +364,7 @@ export function SamsaraWorkerSyncCard({
   });
 
   const detectDriftMutation = useMutation({
-    mutationFn: () => apiService.integrationService.detectSamsaraWorkerSyncDrift(),
+    mutationFn: () => integrationService.detectSamsaraWorkerSyncDrift(),
     onSuccess: async (response) => {
       appendLog(
         "info",
@@ -396,7 +396,7 @@ export function SamsaraWorkerSyncCard({
   });
 
   const repairDriftMutation = useMutation({
-    mutationFn: () => apiService.integrationService.repairSamsaraWorkerSyncDrift(),
+    mutationFn: () => integrationService.repairSamsaraWorkerSyncDrift(),
     onSuccess: async (response) => {
       appendLog(
         "success",
@@ -444,8 +444,7 @@ export function SamsaraWorkerSyncCard({
   });
 
   const retryWorkerMutation = useMutation({
-    mutationFn: (workerID: string) =>
-      apiService.integrationService.repairSamsaraWorkerSyncDrift([workerID]),
+    mutationFn: (workerID: string) => integrationService.repairSamsaraWorkerSyncDrift([workerID]),
     onMutate: (workerID) => {
       setRetryingWorkerID(workerID);
     },

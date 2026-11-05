@@ -20,7 +20,6 @@ vi.mock("@/lib/graphql/invoice", () => ({
   fetchInvoiceArContext: vi.fn(),
   fetchInvoicesByShipment: (shipmentId: string) => mocks.invoices(shipmentId),
 }));
-vi.mock("@/services/api", () => ({ apiService: {} }));
 
 afterEach(() => {
   cleanup();

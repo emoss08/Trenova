@@ -21,7 +21,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { JsonEditorField } from "@/components/fields/json-editor-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
-import { apiService } from "@/services/api";
+import { aiProviderService } from "@/services/ai-provider";
 import { DEFAULT_ADVISOR_MODEL } from "@/types/ai-provider";
 import type {
   AIProviderCatalog,
@@ -316,8 +316,8 @@ export function ProviderEditor({
         catalog: platformCatalog,
       });
       const result = saved
-        ? await apiService.aiProviderService.update(saved.id, request)
-        : await apiService.aiProviderService.create(request);
+        ? await aiProviderService.update(saved.id, request)
+        : await aiProviderService.create(request);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: aiProvider._def }),
         queryClient.invalidateQueries({ queryKey: aiControl._def }),

@@ -16,14 +16,12 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    fiscalYearService: {
-      closePreview: mocks.closePreview,
-      close: mocks.close,
-      reopen: vi.fn(),
-      activate: vi.fn(),
-    },
+vi.mock("@/services/fiscal-year", () => ({
+  fiscalYearService: {
+    closePreview: mocks.closePreview,
+    close: mocks.close,
+    reopen: vi.fn(),
+    activate: vi.fn(),
   },
 }));
 

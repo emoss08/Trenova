@@ -16,8 +16,6 @@ vi.mock("@trenova/shared/services/notification", () => ({
   },
 }));
 
-vi.mock("@/services/api", () => ({ apiService: { notificationService: {} } }));
-
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();

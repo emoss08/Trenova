@@ -1,7 +1,6 @@
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
-import { AssistantStreamError } from "@/services/assistant";
-import { apiService } from "@/services/api";
+import { agentDefinitionService, AssistantStreamError } from "@/services/assistant";
 import type { SaveAgentDefinitionRequest } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -132,7 +131,7 @@ export function TryPanel({
 
       const controller = new AbortController();
       controllers.current.add(controller);
-      void apiService.agentDefinitionService
+      void agentDefinitionService
         .dryRun(
           { agentId, draft, prompt },
           (event, data) => patch(id, (run) => ({ ...run, ...reduceDryRun(run, event, data) })),

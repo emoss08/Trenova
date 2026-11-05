@@ -14,7 +14,7 @@ vi.mock("@trenova/shared/lib/graphql", () => ({ requestGraphQL: mocks.requestGra
 vi.mock("@/hooks/use-post-invoice", () => ({
   usePostInvoice: () => ({ mutate: vi.fn(), isPending: false }),
 }));
-vi.mock("@/services/api", () => ({ apiService: { invoiceService: {} } }));
+vi.mock("@/services/invoice", () => ({ invoiceService: {} }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));

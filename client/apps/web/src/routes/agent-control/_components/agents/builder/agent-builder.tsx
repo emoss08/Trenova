@@ -8,7 +8,7 @@ import { agentSafety } from "@/lib/queries/agent-safety";
 import { aiControl } from "@/lib/queries/ai-control";
 import { aiProvider } from "@/lib/queries/ai-provider";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { agentDefinitionService } from "@/services/assistant";
 import type { AutonomyTier, SaveAgentDefinitionRequest } from "@/types/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -249,7 +249,7 @@ export function AgentBuilder({
     async (next: AgentFormValues): Promise<AgentFormValues> => {
       const access = accessOf(next);
       if (agent) {
-        await apiService.agentDefinitionService.update(
+        await agentDefinitionService.update(
           agent.id,
           toSaveRequest(next, accessToSave(access, savedAccess.current)),
         );
@@ -258,7 +258,7 @@ export function AgentBuilder({
         await refresh();
         return reloaded ? formValuesOf(reloaded) : next;
       }
-      await apiService.agentDefinitionService.create(
+      await agentDefinitionService.create(
         toSaveRequest(next, accessToSave(access, NEW_AGENT_ACCESS)),
       );
       await refresh();
@@ -393,7 +393,7 @@ export function AgentBuilder({
   );
 
   const duplicate = useCallback(async () => {
-    const copy = await apiService.agentDefinitionService.create(
+    const copy = await agentDefinitionService.create(
       toSaveRequest(
         { ...values, name: t("{0} copy", values.name.trim()), shadowMode: true },
         accessToSave(accessOf(values), NEW_AGENT_ACCESS),
@@ -405,7 +405,7 @@ export function AgentBuilder({
 
   const remove = async () => {
     if (!agent) return;
-    await apiService.agentDefinitionService.remove(agent.id);
+    await agentDefinitionService.remove(agent.id);
     await refresh();
     setRemoving(false);
     onClose();

@@ -12,7 +12,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type { CustomFieldDefinitionRow } from "@/lib/graphql/custom-field-definition-table";
-import { CustomFieldService } from "@/services/custom-field";
+import { customFieldService } from "@/services/custom-field";
 import type { DefinitionUsageStats } from "@/types/custom-field";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, SpinnerIcon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -25,8 +25,6 @@ type DeleteDefinitionDialogProps = {
   onOpenChange: (open: boolean) => void;
   definition: CustomFieldDefinitionRow | null;
 };
-
-const customFieldService = new CustomFieldService();
 
 export function DeleteDefinitionDialog({
   open,

@@ -18,13 +18,12 @@ const mocks = vi.hoisted(() => ({
   uploadOptions: { current: null as UploadOptions | null },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    documentService: {
-      getByResource: mocks.documents,
-      delete: vi.fn(),
-      bulkDelete: mocks.bulkDelete,
-    },
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService: {
+    getByResource: mocks.documents,
+    delete: vi.fn(),
+    bulkDelete: mocks.bulkDelete,
   },
 }));
 vi.mock("@/lib/queries/shipment", async (importOriginal) => ({

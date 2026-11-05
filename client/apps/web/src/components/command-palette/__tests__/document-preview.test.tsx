@@ -12,7 +12,10 @@ const { documentService, download } = vi.hoisted(() => ({
   download: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({ apiService: { documentService } }));
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService,
+}));
 
 vi.mock("@trenova/shared/lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@trenova/shared/lib/api")>();

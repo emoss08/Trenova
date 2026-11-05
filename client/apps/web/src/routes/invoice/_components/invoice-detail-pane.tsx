@@ -36,7 +36,8 @@ import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-
 import { invoice as invoiceQueries } from "@/lib/queries/invoice";
 import { invoiceAdjustment } from "@/lib/queries/invoice-adjustment";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { invoiceService } from "@/services/invoice";
+import { documentService } from "@/services/document";
 import type {
   Invoice,
   InvoiceEmailAttempt,
@@ -376,7 +377,7 @@ function InvoiceDeliveryTab({
   };
 
   const generateMutation = useMutation({
-    mutationFn: () => apiService.invoiceService.generatePdf(invoice.id),
+    mutationFn: () => invoiceService.generatePdf(invoice.id),
     onSuccess: () => {
       invalidateInvoiceDelivery();
     },
@@ -384,7 +385,7 @@ function InvoiceDeliveryTab({
   });
 
   const sendMutation = useMutation({
-    mutationFn: () => apiService.invoiceService.send(invoice.id),
+    mutationFn: () => invoiceService.send(invoice.id),
     onSuccess: () => {
       invalidateInvoiceDelivery();
       void queryClient.invalidateQueries(invoiceQueries.sendPlan(invoice.id));
@@ -406,7 +407,7 @@ function InvoiceDeliveryTab({
     if (!invoice.pdfDocumentId) {
       return;
     }
-    const downloadUrl = await apiService.documentService.getDownloadUrl(invoice.pdfDocumentId);
+    const downloadUrl = await documentService.getDownloadUrl(invoice.pdfDocumentId);
     window.open(downloadUrl, "_blank", "noopener,noreferrer");
   };
 
@@ -781,7 +782,7 @@ function InvoiceSendHistoryPanel({ invoiceId }: { invoiceId: string }) {
   const query = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam }) =>
-      apiService.invoiceService.listEmailAttempts(invoiceId, {
+      invoiceService.listEmailAttempts(invoiceId, {
         limit: INVOICE_SEND_HISTORY_PAGE_SIZE,
         offset: pageParam,
       }),

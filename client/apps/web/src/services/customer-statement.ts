@@ -43,3 +43,5 @@ export class CustomerStatementService {
     return parsed.statements;
   }
 }
+
+export const customerStatementService = new CustomerStatementService();

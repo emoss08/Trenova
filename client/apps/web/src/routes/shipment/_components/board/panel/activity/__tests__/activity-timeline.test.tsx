@@ -8,11 +8,9 @@ import { ActivityTimeline } from "../activity-timeline";
 
 const listShipmentEventsMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentEventService: {
-      list: listShipmentEventsMock,
-    },
+vi.mock("@/services/shipment-event", () => ({
+  shipmentEventService: {
+    list: listShipmentEventsMock,
   },
 }));
 
@@ -58,11 +56,11 @@ function renderTimeline() {
 describe("ActivityTimeline", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
-      function (this: HTMLElement) {
-        return this.tagName === "LI" ? ROW_HEIGHT : 0;
-      },
-    );
+    vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.tagName === "LI" ? ROW_HEIGHT : 0;
+    });
   });
 
   afterEach(() => {

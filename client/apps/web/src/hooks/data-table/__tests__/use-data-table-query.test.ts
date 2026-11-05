@@ -72,18 +72,25 @@ describe("data table GraphQL query fetching", () => {
     expect(body.variables.input).not.toHaveProperty("after");
   });
 
-  it("forwards the abort signal to fetch", async () => {
+  it("cancels the request when the caller's signal aborts", async () => {
     setCsrfToken("table-token");
     const controller = new AbortController();
-
-    await fetchDataTablePage({
-      pageSize: 25,
-      graphql: equipmentTableGraphQLConfigs.equipmentType,
-      signal: controller.signal,
+    let received: AbortSignal | null | undefined;
+    fetchMock.mockImplementationOnce(async (_url: string, init: RequestInit) => {
+      received = init.signal;
+      controller.abort();
+      throw new DOMException("Aborted", "AbortError");
     });
 
-    const init = fetchMock.mock.calls.at(-1)?.[1] as RequestInit | undefined;
-    expect(init?.signal).toBe(controller.signal);
+    await expect(
+      fetchDataTablePage({
+        pageSize: 25,
+        graphql: equipmentTableGraphQLConfigs.equipmentType,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+
+    expect(received?.aborted).toBe(true);
   });
 
   it("asks for the total count on the first page", async () => {

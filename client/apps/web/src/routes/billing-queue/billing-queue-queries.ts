@@ -8,7 +8,8 @@ import {
   type BillingTransferItemStatus,
 } from "@/lib/graphql/billing-transfer";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
+import { documentService } from "@/services/document";
 import { getStartOfDay } from "@trenova/shared/lib/date";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { api } from "@trenova/shared/lib/api";
@@ -60,7 +61,7 @@ export type BillingQueueListFilters = {
 export function billingQueueFilterPresetsQuery() {
   return {
     queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY] as const,
-    queryFn: () => apiService.billingQueueService.listFilterPresets(),
+    queryFn: () => billingQueueService.listFilterPresets(),
     staleTime: FILTER_PRESETS_STALE_TIME_MS,
   };
 }
@@ -168,7 +169,7 @@ export function shipmentDocumentsQuery(shipmentId: string) {
   return {
     queryKey: ["documents", "shipment", shipmentId, "includeDocumentType"] as const,
     queryFn: () =>
-      apiService.documentService.getByResource("shipment", shipmentId, undefined, {
+      documentService.getByResource("shipment", shipmentId, undefined, {
         includeDocumentType: "true",
       }),
   };

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { equipmentStatusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { tractorService } from "@/services/tractor";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Tractor } from "@/types/tractor";
@@ -24,7 +24,7 @@ export default function Table() {
     async (rows: TractorRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.tractorService.bulkUpdateStatus({
+        tractorService.bulkUpdateStatus({
           tractorIds: ids as string[],
           status: status as Tractor["status"],
         }),

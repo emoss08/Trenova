@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -28,7 +28,7 @@ export function PreviousRatesDialog({ open, onOpenChange, request }: PreviousRat
 
   const { data: rates, isLoading } = useQuery({
     queryKey: ["previous-rates", request],
-    queryFn: () => apiService.shipmentService.getPreviousRates(request),
+    queryFn: () => shipmentService.getPreviousRates(request),
     enabled: open && !!request.originLocationId && !!request.destinationLocationId,
   });
 

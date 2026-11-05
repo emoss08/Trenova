@@ -14,7 +14,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { formatCurrency, upperFirst } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { invoiceAdjustmentService } from "@/services/invoice-adjustment";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type {
   InvoiceAdjustment,
@@ -196,7 +196,7 @@ function InvoiceAdjustmentLatestCard({
 
   const approveMutation = useMutation({
     mutationFn: async (adjustmentId: InvoiceAdjustment["id"]) =>
-      apiService.invoiceAdjustmentService.approve(adjustmentId),
+      invoiceAdjustmentService.approve(adjustmentId),
     onSuccess: (adjustment) => {
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });
@@ -218,7 +218,7 @@ function InvoiceAdjustmentLatestCard({
     }: {
       adjustmentId: InvoiceAdjustment["id"];
       rejectReason: InvoiceAdjustment["rejectionReason"];
-    }) => apiService.invoiceAdjustmentService.reject(adjustmentId, rejectReason),
+    }) => invoiceAdjustmentService.reject(adjustmentId, rejectReason),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["invoice"] });
       void queryClient.invalidateQueries({ queryKey: ["invoice-adjustment"] });

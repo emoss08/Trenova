@@ -57,6 +57,7 @@ vi.mock("../use-board-actions", () => ({
   }),
 }));
 vi.mock("../record-actions", () => ({
+  preloadRecordActions: vi.fn(),
   useShipmentRecordActions: () => ({
     rowActions: [],
     edit: vi.fn(),

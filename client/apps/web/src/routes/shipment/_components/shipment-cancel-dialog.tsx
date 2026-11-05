@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -50,7 +50,7 @@ export function ShipmentCancelDialog({
 
   const { mutateAsync } = useApiMutation({
     mutationFn: (values: CancelFormValues) =>
-      apiService.shipmentService.cancel(shipmentId, values.cancelReason),
+      shipmentService.cancel(shipmentId, values.cancelReason),
     resourceName: "Shipment",
     form,
     onSuccess: () => {

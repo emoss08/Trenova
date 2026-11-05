@@ -15,7 +15,7 @@ import {
   parseCommaSeparatedList,
   parseWhitespaceSeparatedList,
 } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import type { IdentityProvider, IdentityProviderFormValues } from "@trenova/shared/types/iam";
 import {
   identityProviderCreateFormSchema,
@@ -27,7 +27,17 @@ import { Edit02Icon, Key01Icon, PlusIcon, Trash01Icon } from "@trenova/shared/co
 import { useQueryState, useQueryStates } from "nuqs";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
-import { ChipArrayField, EmptyState, ErrorState, MetaLine, PanelSearch, PanelToolbar, ProviderLogo, RowSkeleton, SecuritySection } from "./shared";
+import {
+  ChipArrayField,
+  EmptyState,
+  ErrorState,
+  MetaLine,
+  PanelSearch,
+  PanelToolbar,
+  ProviderLogo,
+  RowSkeleton,
+  SecuritySection,
+} from "./shared";
 import { useSecurityAccess } from "./use-security-access";
 import {
   emptyProvider,
@@ -54,7 +64,7 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
   const [panelParams, setPanelParams] = useQueryStates(identityProviderPanelSearchParamsParser);
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
-    queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
+    queryFn: async () => organizationService.listIdentityProviders(organizationId),
   });
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
 
@@ -137,7 +147,7 @@ const IdentityProviderListSection = memo(function IdentityProviderListSection({
 
   const { mutate: deleteProvider, isPending: isDeletingProvider } = useMutation({
     mutationFn: async (providerId: string) =>
-      apiService.organizationService.deleteIdentityProvider(organizationId, providerId),
+      organizationService.deleteIdentityProvider(organizationId, providerId),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: [identityProviderQueryKey(organizationId)],
@@ -295,10 +305,7 @@ function IdentityProviderPanelController({
       size="lg"
       formComponent={<IdentityProviderForm mode="edit" />}
       mutationFn={async (values) =>
-        apiService.organizationService.updateIdentityProvider(
-          organizationId,
-          toIdentityProvider(values),
-        )
+        organizationService.updateIdentityProvider(organizationId, toIdentityProvider(values))
       }
     />
   ) : (
@@ -315,10 +322,7 @@ function IdentityProviderPanelController({
       size="lg"
       formComponent={<IdentityProviderForm mode="create" />}
       mutationFn={async (values) =>
-        apiService.organizationService.createIdentityProvider(
-          organizationId,
-          toIdentityProvider(values),
-        )
+        organizationService.createIdentityProvider(organizationId, toIdentityProvider(values))
       }
     />
   );

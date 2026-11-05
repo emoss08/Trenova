@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { AssistantMessageAttachment as MessageAttachment } from "@/types/assistant";
 import type { DocumentContent } from "@trenova/shared/types/document";
 import { useQueries } from "@tanstack/react-query";
@@ -49,7 +49,7 @@ export function usePoorlyReadFiles(files: readonly MessageAttachment[]): Readonl
       queryKey: ["document-content", file.documentId],
       queryFn: async ({ signal }: { signal: AbortSignal }) => {
         try {
-          return await apiService.documentService.getContent(file.documentId, { signal });
+          return await documentService.getContent(file.documentId, { signal });
         } catch {
           return null;
         }

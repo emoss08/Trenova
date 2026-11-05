@@ -13,6 +13,7 @@ import { API_BASE_URL } from "./constants";
 import { reportPlanLimit } from "./plan-limit";
 import { reportSessionContextStale, withSessionContextHeaders } from "./session-context";
 import { filenameFromDisposition } from "./utils";
+import { withRequestDeadline } from "@trenova/shared/lib/request-errors";
 
 const CSRF_HEADER_NAME =
   (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
@@ -25,7 +26,7 @@ let csrfHeaderName = CSRF_HEADER_NAME;
 let csrfTokenRequest: Promise<string | null> | null = null;
 
 /** The wait a response asked for, in whole seconds; null when it asked for none. */
-function retryAfterOf(response: Response): number | null {
+export function retryAfterOf(response: Response): number | null {
   const raw = response.headers.get("Retry-After");
   if (raw === null || raw.trim() === "") {
     return null;
@@ -264,17 +265,22 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(url, {
-    ...options,
-    credentials: "include",
-    headers: await withSessionHeaders(method, headers, endpoint),
+  const sessionHeaders = await withSessionHeaders(method, headers, endpoint);
+
+  return withRequestDeadline(options.signal, async (signal) => {
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: sessionHeaders,
+      signal,
+    });
+
+    if (!response.ok) {
+      await rejectResponse(response, translate("Request failed"));
+    }
+
+    return readBody<T>(response);
   });
-
-  if (!response.ok) {
-    await rejectResponse(response, translate("Request failed"));
-  }
-
-  return readBody<T>(response);
 }
 
 /**

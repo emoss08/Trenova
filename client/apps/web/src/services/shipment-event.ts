@@ -19,3 +19,5 @@ export class ShipmentEventService {
     return safeParse(shipmentEventListSchema, response, "Shipment Event");
   }
 }
+
+export const shipmentEventService = new ShipmentEventService();

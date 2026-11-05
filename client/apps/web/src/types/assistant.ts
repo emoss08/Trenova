@@ -422,10 +422,6 @@ export const agentEventListSchema = z.object({
   events: z.array(agentEventDescriptorSchema),
 });
 
-export const previewPromptResponseSchema = z.object({
-  prompt: z.string(),
-});
-
 /** The most agents one agent may hand work to, as the server enforces it. */
 export const MAX_DELEGATES = 8;
 

@@ -1,5 +1,5 @@
 import { describeApiError } from "@/lib/api-error-message";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import type {
   FormulaPreviewRequest,
@@ -62,7 +62,7 @@ export function useLivePreview({
     Error,
     FormulaPreviewRequest
   >({
-    mutationFn: (request) => apiService.formulaTemplateService.preview(request),
+    mutationFn: (request) => formulaTemplateService.preview(request),
     onSuccess: (_response, request) => {
       setLastRunAt(Date.now());
       setLastRequest(request);

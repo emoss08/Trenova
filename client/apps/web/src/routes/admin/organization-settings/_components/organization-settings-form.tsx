@@ -15,7 +15,7 @@ import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
 import { organization } from "@/lib/queries/organization";
 import { userOrganization } from "@/lib/queries/user";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -234,10 +234,7 @@ function LogoForm({
 
   const handleLogoUpload = useCallback(
     async (file: File) => {
-      const updatedOrganization = await apiService.organizationService.uploadLogo(
-        organizationId,
-        file,
-      );
+      const updatedOrganization = await organizationService.uploadLogo(organizationId, file);
       await onLogoUpdated(updatedOrganization);
     },
     [onLogoUpdated, organizationId],
@@ -250,7 +247,7 @@ function LogoForm({
 
     setIsRemovingLogo(true);
     try {
-      const updated = await apiService.organizationService.deleteLogo(organizationId);
+      const updated = await organizationService.deleteLogo(organizationId);
       await onLogoUpdated(updated);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to remove logo";

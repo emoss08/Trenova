@@ -14,7 +14,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { apiService } from "@/services/api";
+import { tableConfigurationService } from "@/services/table-configuration";
 import {
   tableConfigurationFormSchema,
   type TableConfig,
@@ -112,8 +112,7 @@ export function DataTableSaveConfigDialog({
     unknown,
     TableConfigurationFormValues
   >({
-    mutationFn: (data: TableConfigurationFormValues) =>
-      apiService.tableConfigurationService.create(data),
+    mutationFn: (data: TableConfigurationFormValues) => tableConfigurationService.create(data),
     resourceName: "Table Configuration",
     form,
     onSuccess: (created) => {

@@ -11,7 +11,7 @@ import { FormulaLibraryNotFoundError } from "@/lib/graphql/formula-library";
 import { formulaLibrary, invalidateFormulaLibrary } from "@/lib/queries/formula-library";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
@@ -101,7 +101,7 @@ function FormulaLibraryEditor() {
 
   const { mutate } = useApiMutation({
     mutationFn: ({ values }: LibrarySave) =>
-      apiService.formulaLibraryService.update(id ?? "", {
+      formulaLibraryService.update(id ?? "", {
         name: values.name.trim(),
         description: values.description ?? "",
         source: values.source,

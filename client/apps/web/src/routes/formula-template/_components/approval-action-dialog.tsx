@@ -15,7 +15,7 @@ import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
 import { fromUserWallClock } from "@trenova/shared/lib/date";
 import { describeApiError } from "@/lib/api-error-message";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -165,17 +165,17 @@ export function ApprovalActionDialog({
 
       switch (action) {
         case "submit":
-          return apiService.formulaTemplateService.submit(templateId, trimmedComment);
+          return formulaTemplateService.submit(templateId, trimmedComment);
         case "approve":
-          return apiService.formulaTemplateService.approve(
+          return formulaTemplateService.approve(
             templateId,
             trimmedComment,
             fromUserWallClock(effectiveFrom),
           );
         case "reject":
-          return apiService.formulaTemplateService.reject(templateId, trimmedComment);
+          return formulaTemplateService.reject(templateId, trimmedComment);
         case "requestChanges":
-          return apiService.formulaTemplateService.requestChanges(templateId, trimmedComment);
+          return formulaTemplateService.requestChanges(templateId, trimmedComment);
       }
     },
     onSuccess: () => {

@@ -18,8 +18,9 @@ const fetchers = vi.hoisted(() => ({
 vi.mock("@/lib/graphql/report-desk-card", () => ({
   fetchReportRunDeskCard: fetchers.card,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { runArtifactReport: fetchers.rerun } },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { runArtifactReport: fetchers.rerun },
 }));
 vi.mock("@/lib/graphql/reports", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/reports")>()),

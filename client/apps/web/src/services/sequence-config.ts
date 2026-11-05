@@ -13,3 +13,5 @@ export class SequenceConfigService {
     return safeParse(sequenceConfigDocumentSchema, response, "SequenceConfigDocument");
   }
 }
+
+export const sequenceConfigService = new SequenceConfigService();

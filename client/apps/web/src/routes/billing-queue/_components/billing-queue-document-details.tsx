@@ -11,7 +11,8 @@ import { documentNeedsSignature } from "@/lib/document-signature";
 import type { ExtractedField, Extraction } from "@/lib/document-reading/extraction-payload";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { documentReading } from "@/lib/queries/document-reading";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
+import { billingQueueService } from "@/services/billing-queue";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -209,7 +210,7 @@ export function BillingQueueDocumentDetails({
 
   const save = useApiMutation({
     mutationFn: (values: FactsForm) =>
-      apiService.documentService.setDeliveryFacts(
+      documentService.setDeliveryFacts(
         document.id,
         {
           signedBy: values.signedBy,
@@ -236,7 +237,7 @@ export function BillingQueueDocumentDetails({
 
   const resolve = useApiMutation({
     mutationFn: ({ issueId, optionKey }: { issueId: string; optionKey: string }) =>
-      apiService.billingQueueService.resolveIssue(item?.id ?? "", issueId, optionKey),
+      billingQueueService.resolveIssue(item?.id ?? "", issueId, optionKey),
     resourceName: "BillingQueueItem",
     onSuccess: (next) => {
       if (item && next.review) {
@@ -247,7 +248,7 @@ export function BillingQueueDocumentDetails({
   });
 
   const readNow = useApiMutation({
-    mutationFn: () => apiService.documentService.reextract(document.id),
+    mutationFn: () => documentService.reextract(document.id),
     resourceName: "Document",
     onSuccess: () => {
       onReadStarted();
@@ -257,7 +258,7 @@ export function BillingQueueDocumentDetails({
   });
 
   const remove = useApiMutation({
-    mutationFn: () => apiService.documentService.delete(document.id),
+    mutationFn: () => documentService.delete(document.id),
     resourceName: "Document",
     onSuccess: () => {
       refreshDocuments();
@@ -268,7 +269,7 @@ export function BillingQueueDocumentDetails({
 
   const replace = useApiMutation({
     mutationFn: (file: File) =>
-      apiService.documentService.upload({
+      documentService.upload({
         file,
         resourceId: document.resourceId,
         resourceType: document.resourceType,

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError, useApiMutation } from "@/hooks/use-api-mutation";
 import { detention } from "@/lib/queries/detention";
-import { apiService } from "@/services/api";
+import { detentionService } from "@/services/detention";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import { useCallback } from "react";
@@ -28,7 +28,7 @@ export function useSendDetentionNotice(occurrenceId: string) {
   const invalidate = useInvalidateDetention();
 
   return useApiMutation<DetentionOccurrence, undefined>({
-    mutationFn: () => apiService.detentionService.sendNotice(occurrenceId),
+    mutationFn: () => detentionService.sendNotice(occurrenceId),
     onSuccess: () => {
       toast.success(t("Notice sent"), {
         description: t("The customer notice went out and was recorded as evidence."),
@@ -57,7 +57,7 @@ export function useSendDetentionNotices() {
   return useMutation<BulkNoticeResult, unknown, string[]>({
     mutationFn: async (occurrenceIds) => {
       const results = await Promise.allSettled(
-        occurrenceIds.map((id) => apiService.detentionService.sendNotice(id)),
+        occurrenceIds.map((id) => detentionService.sendNotice(id)),
       );
 
       const sent = results.filter((result) => result.status === "fulfilled").length;

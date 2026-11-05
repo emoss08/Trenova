@@ -15,15 +15,13 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    rateConfirmationService: {
-      listByMove: mocks.listByMove,
-      generate: vi.fn(),
-      send: mocks.send,
-      confirm: vi.fn(),
-      void: vi.fn(),
-    },
+vi.mock("@/services/rate-confirmation", () => ({
+  rateConfirmationService: {
+    listByMove: mocks.listByMove,
+    generate: vi.fn(),
+    send: mocks.send,
+    confirm: vi.fn(),
+    void: vi.fn(),
   },
 }));
 

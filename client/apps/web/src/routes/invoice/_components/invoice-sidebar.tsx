@@ -23,7 +23,7 @@ import {
 import { SelectionDock } from "@/components/selection-dock";
 import { useListSelection } from "@/hooks/use-list-selection";
 import { BULK_CONCURRENCY, notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
-import { apiService } from "@/services/api";
+import { invoiceService } from "@/services/invoice";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { billTypeChoices, invoiceScopeChoices, invoiceStatusChoices } from "@/lib/choices";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -147,9 +147,7 @@ export function InvoiceSidebar({
         const outcome = await settleAll(
           targets,
           (invoice) =>
-            kind === "post"
-              ? apiService.invoiceService.post(invoice.id)
-              : apiService.invoiceService.send(invoice.id),
+            kind === "post" ? invoiceService.post(invoice.id) : invoiceService.send(invoice.id),
           { concurrency: BULK_CONCURRENCY, label: invoiceLabel },
         );
         void queryClient.invalidateQueries({ queryKey: ["invoice"] });

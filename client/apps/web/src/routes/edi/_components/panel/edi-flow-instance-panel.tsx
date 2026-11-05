@@ -8,7 +8,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { EDIFlowInstanceRow } from "@/lib/graphql/edi-table";
 import { lading } from "@/lib/queries/lading";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -34,7 +34,7 @@ export function FlowInstancePanel({
   });
 
   const release = useApiMutation({
-    mutationFn: (instanceId: string) => apiService.ladingService.releaseFlowInstance(instanceId),
+    mutationFn: (instanceId: string) => ladingService.releaseFlowInstance(instanceId),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["edi-flow-instance-list"] }),
@@ -81,11 +81,7 @@ export function FlowInstancePanel({
             <EDIPartnerRef partner={row.partner} />
           </DetailField>
           <DetailField label={t("Load")}>
-            {summary
-              ? summary.load.exists
-                ? summary.load.state
-                : t("No load yet")
-              : "—"}
+            {summary ? (summary.load.exists ? summary.load.state : t("No load yet")) : "—"}
           </DetailField>
           <DetailField label={t("Next deadline")}>
             {row.wakeAt ? formatToUserTimezone(row.wakeAt) : "—"}

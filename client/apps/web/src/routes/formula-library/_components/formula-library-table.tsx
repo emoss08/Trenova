@@ -7,7 +7,7 @@ import {
   type FormulaLibraryRow,
 } from "@/lib/graphql/formula-library";
 import { invalidateFormulaLibrary } from "@/lib/queries/formula-library";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveIcon, Copy01Icon, FilePlus02Icon } from "@trenova/shared/components/icons";
 import {
@@ -43,7 +43,7 @@ export default function FormulaLibrariesDataTable() {
       const ids = rows.flatMap((row) => (row.id ? [row.id] : []));
       if (ids.length === 0) return;
       try {
-        const copies = await apiService.formulaLibraryService.duplicate(ids);
+        const copies = await formulaLibraryService.duplicate(ids);
         toast.success(
           t(
             "{0, plural, one {Duplicated # library as a draft} other {Duplicated # libraries as drafts}}",
@@ -73,7 +73,7 @@ export default function FormulaLibrariesDataTable() {
     const rows = confirming ? held.map((entry) => entry.item) : pendingArchive;
     setIsArchiving(true);
     const outcome = await archiveLibraries(rows, confirming, (row, confirmInUse) =>
-      apiService.formulaLibraryService.archive(row.id, { confirmInUse }),
+      formulaLibraryService.archive(row.id, { confirmInUse }),
     );
     setIsArchiving(false);
     await invalidateFormulaLibrary(queryClient);

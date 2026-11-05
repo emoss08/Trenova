@@ -4,7 +4,7 @@ import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaTemplate, invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import {
   formulaTemplateSchema,
   type FormulaTemplateFormValues,
@@ -34,7 +34,7 @@ export function FormulaStudioCreatePage() {
 
   const { mutate } = useApiMutation({
     mutationFn: async (values: FormulaTemplateFormValues) =>
-      apiService.formulaTemplateService.create({
+      formulaTemplateService.create({
         description: values.description ?? "",
         source: values.source,
       }),

@@ -5,7 +5,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { journalReversal } from "@/lib/queries/journal-reversal";
-import { apiService } from "@/services/api";
+import { journalReversalService } from "@/services/journal-reversal";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
@@ -49,7 +49,7 @@ function CreateReversalPanel({
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ReversalRequestValues) => {
-      return apiService.journalReversalService.create(reversalRequestBody(values));
+      return journalReversalService.create(reversalRequestBody(values));
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["journal-reversal-list"] });
@@ -121,7 +121,7 @@ function ReversalDetailPanel({
   }, [queryClient, reversal]);
 
   const { mutateAsync: approve, isPending: isApproving } = useApiMutation({
-    mutationFn: () => apiService.journalReversalService.approve(reversal!.id!),
+    mutationFn: () => journalReversalService.approve(reversal!.id!),
     onSuccess: () => {
       void invalidate();
     },
@@ -129,7 +129,7 @@ function ReversalDetailPanel({
   });
 
   const { mutateAsync: postReversal, isPending: isPosting } = useApiMutation({
-    mutationFn: () => apiService.journalReversalService.post(reversal!.id!),
+    mutationFn: () => journalReversalService.post(reversal!.id!),
     onSuccess: () => {
       void invalidate();
     },
@@ -137,7 +137,7 @@ function ReversalDetailPanel({
   });
 
   const { mutateAsync: reject, isPending: isRejecting } = useApiMutation({
-    mutationFn: () => apiService.journalReversalService.reject(reversal!.id!, rejectionReason),
+    mutationFn: () => journalReversalService.reject(reversal!.id!, rejectionReason),
     onSuccess: () => {
       setShowRejectInput(false);
       setRejectionReason("");
@@ -147,7 +147,7 @@ function ReversalDetailPanel({
   });
 
   const { mutateAsync: cancel, isPending: isCancelling } = useApiMutation({
-    mutationFn: () => apiService.journalReversalService.cancel(reversal!.id!, cancelReason),
+    mutationFn: () => journalReversalService.cancel(reversal!.id!, cancelReason),
     onSuccess: () => {
       setShowCancelInput(false);
       setCancelReason("");

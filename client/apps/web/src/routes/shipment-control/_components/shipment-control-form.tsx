@@ -16,7 +16,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { shipmentControl } from "@/lib/queries/shipment-control";
-import { apiService } from "@/services/api";
+import { shipmentControlService } from "@/services/shipment-control";
 import type { ShipmentControl } from "@/types/shipment-control";
 import { shipmentControlSchema } from "@/types/shipment-control";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +40,7 @@ export default function ShipmentControlForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: shipmentControl.get._def,
-    mutationFn: async (values: ShipmentControl) => apiService.shipmentControlService.update(values),
+    mutationFn: async (values: ShipmentControl) => shipmentControlService.update(values),
     resourceName: "Shipment Control",
     resetForm: reset,
     form,

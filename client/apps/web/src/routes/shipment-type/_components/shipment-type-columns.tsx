@@ -6,7 +6,7 @@ import {
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { shipmentTypeService } from "@/services/shipment-type";
 import type { ShipmentTypeRow } from "@/lib/graphql/shipment-type-table";
 import type { ShipmentType } from "@/types/shipment-type";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ function ShipmentTypeStatusCell({ row }: { row: ShipmentTypeRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: ShipmentType["status"]) => {
       if (!row.id) return;
-      await apiService.shipmentTypeService.patch(row.id, {
+      await shipmentTypeService.patch(row.id, {
         status: newStatus,
       });
 

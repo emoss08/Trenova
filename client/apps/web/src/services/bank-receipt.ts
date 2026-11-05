@@ -19,13 +19,11 @@ export class BankReceiptService {
     return api.get<MatchSuggestion[]>(`/accounting/bank-receipts/${id}/suggestions/`);
   }
 
-  async importReceipts(data: FormData) {
-    return api.post<BankReceipt[]>("/accounting/bank-receipts/", data);
-  }
-
   async match(id: string, customerPaymentId: string) {
     return api.post<BankReceipt>(`/accounting/bank-receipts/${id}/match/`, {
       customerPaymentId,
     });
   }
 }
+
+export const bankReceiptService = new BankReceiptService();

@@ -1,6 +1,6 @@
 import { fetchRateMatrixRecord, fetchRateMatrixVersionAxes } from "@/lib/graphql/rate-matrix";
 import { formulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { rateMatrixService } from "@/services/rate";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -16,7 +16,7 @@ export const rateMatrix = createQueryKeys("rateMatrix", {
   cells: (rateMatrixId: string, versionNumber: number | null) => ({
     queryKey: [rateMatrixId, versionNumber ?? "draft"],
     queryFn: async ({ signal }: Signal) =>
-      apiService.rateMatrixService.listCells(rateMatrixId, versionNumber, { signal }),
+      rateMatrixService.listCells(rateMatrixId, versionNumber, { signal }),
   }),
   /** One published version's axes. */
   versionAxes: (rateMatrixId: string, versionNumber: number) => ({
@@ -28,7 +28,7 @@ export const rateMatrix = createQueryKeys("rateMatrix", {
   reviewers: (rateMatrixId: string) => ({
     queryKey: [rateMatrixId],
     queryFn: async ({ signal }: Signal) =>
-      apiService.rateMatrixService.listReviewers(rateMatrixId, { signal }),
+      rateMatrixService.listReviewers(rateMatrixId, { signal }),
   }),
 });
 

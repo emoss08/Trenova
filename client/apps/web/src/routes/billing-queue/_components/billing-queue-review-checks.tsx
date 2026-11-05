@@ -2,7 +2,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { checkDetail, openIssuesOf } from "@/lib/billing-queue-checks";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -105,12 +105,12 @@ export function BillingQueueReviewChecks({
   };
   const resolve = useApiMutation({
     mutationFn: ({ issueId, optionKey }: { issueId: string; optionKey: string }) =>
-      apiService.billingQueueService.resolveIssue(item.id, issueId, optionKey),
+      billingQueueService.resolveIssue(item.id, issueId, optionKey),
     resourceName: "BillingQueueItem",
     onSuccess: settle,
   });
   const undo = useApiMutation({
-    mutationFn: (issueId: string) => apiService.billingQueueService.undoIssue(item.id, issueId),
+    mutationFn: (issueId: string) => billingQueueService.undoIssue(item.id, issueId),
     resourceName: "BillingQueueItem",
     onSuccess: settle,
   });

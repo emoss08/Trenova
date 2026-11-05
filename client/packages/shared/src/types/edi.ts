@@ -486,7 +486,6 @@ export const ediTransferChangeSchema = z.object({
 
 export type EDITransferChange = z.infer<typeof ediTransferChangeSchema>;
 
-
 export const ediDocumentTypeSchema = z.object({
   id: z.string(),
   code: z.string(),
@@ -500,8 +499,6 @@ export const ediDocumentTypeSchema = z.object({
 
 export type EDIDocumentType = z.infer<typeof ediDocumentTypeSchema>;
 
-
-
 export const ediDiagnosticSchema = z.object({
   severity: ediValidationSeveritySchema,
   code: z.string(),
@@ -513,7 +510,6 @@ export const ediDiagnosticSchema = z.object({
 });
 
 export type EDIDiagnostic = z.infer<typeof ediDiagnosticSchema>;
-
 
 export const ediDocumentPreviewSchema = z.object({
   rawX12: z.string(),
@@ -849,7 +845,6 @@ export type InspectX12Request = {
   diagnostics?: EDIDiagnostic[];
 };
 
-
 export const ediConnectionListSchema = createLimitOffsetResponse(ediConnectionSchema);
 export const ediShipmentLinkListSchema = createLimitOffsetResponse(ediShipmentLinkSchema);
 export const ediTransferChangeListSchema = createLimitOffsetResponse(ediTransferChangeSchema);
@@ -877,10 +872,6 @@ export const createInternalPartnerPairRequestSchema = z.object({
   targetEnabledForOutbound: z.boolean().default(true),
   targetSettings: z.record(z.string(), z.unknown()).default({}),
 });
-
-export type CreateInternalPartnerPairRequest = z.infer<
-  typeof createInternalPartnerPairRequestSchema
->;
 
 export type UpsertEDIPartnerRequest = {
   kind?: z.infer<typeof ediPartnerKindSchema>;
@@ -934,7 +925,6 @@ export type UpsertEDICommunicationProfileRequest = {
   secrets?: Record<string, string>;
   version?: number;
 };
-
 
 export type PreviewEDIDocumentRequest = {
   ediPartnerId: string;

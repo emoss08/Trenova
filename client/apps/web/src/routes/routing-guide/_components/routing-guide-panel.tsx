@@ -3,7 +3,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import type { RoutingGuideRow } from "@/lib/graphql/routing-guide-table";
-import { apiService } from "@/services/api";
+import { routingGuideService } from "@/services/routing-guide";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,7 @@ function DeleteGuideAction({ row, onDeleted }: { row: RoutingGuideRow; onDeleted
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: (guideId: string) => apiService.routingGuideService.delete(guideId),
+    mutationFn: (guideId: string) => routingGuideService.delete(guideId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
       onDeleted();
@@ -120,7 +120,7 @@ export function RoutingGuidePanel({
           if (!currentRow.id) {
             throw new Error("No Routing Guide ID selected");
           }
-          return apiService.routingGuideService.update(currentRow.id, values);
+          return routingGuideService.update(currentRow.id, values);
         }}
       />
     );
@@ -138,7 +138,7 @@ export function RoutingGuidePanel({
         "Rank the carriers a lane should waterfall through, with the rate and offer window for each.",
       )}
       formComponent={<RoutingGuideForm />}
-      mutationFn={(values) => apiService.routingGuideService.create(values)}
+      mutationFn={(values) => routingGuideService.create(values)}
     />
   );
 }

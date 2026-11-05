@@ -4,7 +4,7 @@ import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { userTableGraphQLConfig, type UserRow } from "@/lib/graphql/user-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import type { DockAction, RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
@@ -30,7 +30,7 @@ export default function UserTable() {
       const ids = rows.map((r) => r.id);
 
       toast.promise(
-        apiService.userService.bulkUpdateStatus({
+        userService.bulkUpdateStatus({
           userIds: ids as string[],
           status: status as User["status"],
         }),

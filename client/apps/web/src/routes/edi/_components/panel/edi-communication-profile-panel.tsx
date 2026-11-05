@@ -4,7 +4,7 @@ import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel, type FormTabConfig } from "@/components/tabbed-form-edit-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +78,7 @@ export function CommunicationProfilePanel({
   const testConnectionMutation = useMutation({
     mutationFn: () => {
       if (!profile) throw new Error("Profile is required");
-      return apiService.ediService.testProfileConnection(profile.id);
+      return ediService.testProfileConnection(profile.id);
     },
     onSuccess: (result) => notifyConnectionTestResult(result),
     onError: () => toast.error(t("The connection test could not be run")),
@@ -149,7 +149,7 @@ export function CommunicationProfilePanel({
           ) : undefined
         }
         mutationFn={async (values) => {
-          const result = await apiService.ediService.updateCommunicationProfile(
+          const result = await ediService.updateCommunicationProfile(
             profile!.id,
             toCommunicationProfileRequest(values, profile),
           );
@@ -174,7 +174,7 @@ export function CommunicationProfilePanel({
       size="xl"
       formTabs={formTabs}
       mutationFn={async (values) => {
-        const result = await apiService.ediService.createCommunicationProfile(
+        const result = await ediService.createCommunicationProfile(
           toCommunicationProfileRequest(values, null),
         );
         await invalidateEDICommunicationProfiles(queryClient);

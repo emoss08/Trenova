@@ -5,7 +5,7 @@ import { EditableDateField } from "@/components/editable-date-field";
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { trailerService } from "@/services/trailer";
 import type { Location } from "@trenova/shared/types/location";
 import type { TrailerRow } from "@/lib/graphql/equipment-table";
 import type { Trailer } from "@/types/trailer";
@@ -19,7 +19,7 @@ function StatusCell({ row }: { row: TrailerRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Trailer["status"]) => {
       if (!row.id) return;
-      await apiService.trailerService.patch(row.id, {
+      await trailerService.patch(row.id, {
         status: newStatus,
       });
 
@@ -45,7 +45,7 @@ function LastInspectionDateCell({ row }: { row: TrailerRow }) {
   const handleDateChange = useCallback(
     async (newDate: number) => {
       if (!row.id) return;
-      await apiService.trailerService.patch(row.id, {
+      await trailerService.patch(row.id, {
         lastInspectionDate: newDate,
       });
 

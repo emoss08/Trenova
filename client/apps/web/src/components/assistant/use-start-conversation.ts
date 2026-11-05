@@ -1,7 +1,7 @@
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
 import type { AssistantThread, ThreadOrigin } from "@/types/assistant";
@@ -34,8 +34,7 @@ export function useStartConversation({
   const setHandoff = useDeskHandoffStore((state) => state.setHandoff);
 
   const mutation = useApiMutation({
-    mutationFn: ({ agentId }: StartVariables) =>
-      apiService.assistantService.startThread(agentId, { origin }),
+    mutationFn: ({ agentId }: StartVariables) => assistantService.startThread(agentId, { origin }),
     onSuccess: async (thread, { agentId, question, extras }) => {
       setLastAgentId(agentId);
       if (extras && (extras.files.length > 0 || extras.mentions.length > 0 || extras.providerId)) {

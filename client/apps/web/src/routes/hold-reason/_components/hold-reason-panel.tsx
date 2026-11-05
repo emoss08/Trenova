@@ -12,7 +12,7 @@ import {
 } from "@/hooks/use-panel-action-preference";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { apiService } from "@/services/api";
+import { holdReasonService } from "@/services/hold-reason";
 import { holdReasonSchema, type HoldReason } from "@/types/hold-reason";
 import { TimeFormat } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,7 +64,7 @@ export function HoldReasonPanel({
       title={t("Hold reason")}
       formComponent={<HoldReasonForm />}
       mutationFn={async (values) => {
-        await apiService.holdReasonService.create(values);
+        await holdReasonService.create(values);
         return values;
       }}
     />
@@ -113,7 +113,7 @@ function HoldReasonEditPanel({ open, onOpenChange, row, form }: HoldReasonEditPa
         throw new Error("No Hold Reason ID selected");
       }
 
-      await apiService.holdReasonService.update(row.id, values);
+      await holdReasonService.update(row.id, values);
       return values;
     },
     onMutate: async (newValues) => {

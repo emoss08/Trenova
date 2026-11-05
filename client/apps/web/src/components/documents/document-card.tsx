@@ -3,7 +3,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { Document } from "@trenova/shared/types/document";
 import {
   BrainCircuitIcon,
@@ -84,7 +84,7 @@ export function DocumentCard({
     }
 
     const documentId = document.id;
-    void apiService.documentService
+    void documentService
       .getPreviewUrl(documentId)
       .then((url) => setFetchedPreview({ documentId, url }));
   }, [document.id, isPreviewReady]);

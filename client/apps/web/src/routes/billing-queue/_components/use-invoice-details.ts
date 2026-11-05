@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import type {
   BillingQueueInvoiceDetailsInput,
   BillingQueueItem,
@@ -53,8 +53,7 @@ export function useInvoiceDetails(item: BillingQueueItem) {
 
   const mutation = useApiMutation({
     scope: { id: `billing-queue-invoice-details:${item.id}` },
-    mutationFn: () =>
-      apiService.billingQueueService.updateInvoiceDetails(item.id, invoiceDetailsOf(latest())),
+    mutationFn: () => billingQueueService.updateInvoiceDetails(item.id, invoiceDetailsOf(latest())),
     resourceName: "BillingQueueItem",
     onSuccess: (next) => {
       queryClient.setQueryData<BillingQueueItem>(itemKey, (current) => {

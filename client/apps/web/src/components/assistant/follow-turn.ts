@@ -1,6 +1,5 @@
 import { ApiRequestError } from "@trenova/shared/lib/api";
-import { apiService } from "@/services/api";
-import { AssistantStreamError, type StartedTurn } from "@/services/assistant";
+import { assistantService, AssistantStreamError, type StartedTurn } from "@/services/assistant";
 import type { AssistantStreamEvent } from "@/types/assistant";
 import type { TurnLimit } from "./turn-stream";
 
@@ -46,7 +45,7 @@ export type RunTurnOptions = {
  * so a stop that fails has nobody to report to; the turn then ends on its own.
  */
 export function stopTurnQuietly(turnId: string): void {
-  void apiService.assistantService.stopTurn(turnId).catch(() => undefined);
+  void assistantService.stopTurn(turnId).catch(() => undefined);
 }
 
 /**
@@ -106,7 +105,7 @@ export async function followTurn(
   options: Pick<RunTurnOptions, "signal" | "onEvent">,
 ): Promise<void> {
   await followStream(
-    (apply, attach) => apiService.assistantService.attachTurn(turnId, apply, attach),
+    (apply, attach) => assistantService.attachTurn(turnId, apply, attach),
     options,
   );
 }

@@ -8,7 +8,7 @@ import type {
   FormulaLibraryRecordVersion,
 } from "@/lib/graphql/formula-library";
 import { invalidateFormulaLibrary } from "@/lib/queries/formula-library";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { useQueryClient } from "@tanstack/react-query";
 import { ClockRewindIcon, GitCompareIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -155,7 +155,7 @@ function RollbackDialog({
   const [message, setMessage] = useState("");
   const { mutate, isPending } = useApiMutation({
     mutationFn: (version: number) =>
-      apiService.formulaLibraryService.rollback(library.id, {
+      formulaLibraryService.rollback(library.id, {
         targetVersion: version,
         changeMessage: message.trim() || undefined,
       }),

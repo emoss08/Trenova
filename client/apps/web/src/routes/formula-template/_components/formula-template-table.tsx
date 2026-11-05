@@ -14,7 +14,7 @@ import {
 } from "@/lib/formula-template-export";
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,7 +78,7 @@ export default function FormulaTemplatesDataTable() {
 
   const handleInstallStandards = useCallback(async () => {
     setIsInstalling(true);
-    await apiService.formulaTemplateService
+    await formulaTemplateService
       .installStandards()
       .then((result) => {
         if (result.installed.length === 0) {
@@ -124,7 +124,7 @@ export default function FormulaTemplatesDataTable() {
       if (!id) return;
 
       toast.promise(
-        apiService.formulaTemplateService.bulkDuplicate({
+        formulaTemplateService.bulkDuplicate({
           templateIds: [id],
         }),
         {
@@ -166,7 +166,7 @@ export default function FormulaTemplatesDataTable() {
     if (ids.length === 0) return;
 
     setIsArchiving(true);
-    await apiService.formulaTemplateService
+    await formulaTemplateService
       .bulkUpdateStatus({
         templateIds: ids,
         status: "Inactive",
@@ -241,9 +241,7 @@ export default function FormulaTemplatesDataTable() {
   const handleBulkExport = useCallback(
     async (rows: FormulaTemplateRow[]) => {
       try {
-        const templates = await Promise.all(
-          rows.map((row) => apiService.formulaTemplateService.get(row.id)),
-        );
+        const templates = await Promise.all(rows.map((row) => formulaTemplateService.get(row.id)));
         const exportData = buildBulkExport(templates);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
@@ -264,7 +262,7 @@ export default function FormulaTemplatesDataTable() {
   const handleConfirmDuplicate = useCallback(async () => {
     const ids = pendingDuplicateRows.map((r) => r.id);
     setIsDuplicating(true);
-    await apiService.formulaTemplateService
+    await formulaTemplateService
       .bulkDuplicate({
         templateIds: ids,
       })

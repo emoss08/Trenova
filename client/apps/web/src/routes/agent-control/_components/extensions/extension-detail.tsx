@@ -5,7 +5,8 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
+import { agentDefinitionService } from "@/services/assistant";
 import {
   AgentExtensionCapability,
   type AgentExtensionAvailability,
@@ -109,7 +110,7 @@ export function useExtensionControl(item: AgentExtensionCatalogItem | null): Ext
   const mutation = useApiMutation({
     mutationFn: ({ patch }: { patch: ConfigPatch; onSaved?: () => void }) => {
       if (!config) throw new Error(t("The settings have not loaded yet"));
-      return apiService.agentExtensionService.updateConfig(type, {
+      return agentExtensionService.updateConfig(type, {
         enabled: patch.enabled ?? config.enabled,
         availability: patch.availability ?? config.availability,
         configuration: { ...currentConfiguration(config), ...patch.configuration },
@@ -171,7 +172,7 @@ export function ExtensionDetail({
 
   const give = useApiMutation({
     mutationFn: ({ agent, holds }: { agent: AgentDefinitionRow; holds: boolean }) =>
-      apiService.agentDefinitionService.update(
+      agentDefinitionService.update(
         agent.id,
         toSaveRequest({
           ...toAgentPanelRow(agent),
@@ -187,7 +188,7 @@ export function ExtensionDetail({
   const runTest = async () => {
     setTest({ state: "run" });
     try {
-      const result = await apiService.agentExtensionService.test(item.type);
+      const result = await agentExtensionService.test(item.type);
       setTest({
         state: result.success ? "ok" : "fail",
         message: result.message,

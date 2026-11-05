@@ -9,8 +9,9 @@ import { DeskReportPreviewBody } from "../desk-report-preview-body";
 
 const fetchers = vi.hoisted(() => ({ rerun: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { runArtifactReport: fetchers.rerun } },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { runArtifactReport: fetchers.rerun },
 }));
 
 /** A report_preview artifact as the server writes it: columns, rows keyed by label, totals. */

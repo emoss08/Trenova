@@ -29,3 +29,5 @@ export class CarrierTrackingService {
     return safeParse(publicCheckCallResultSchema, response, "PublicCheckCallResult");
   }
 }
+
+export const carrierTrackingService = new CarrierTrackingService();

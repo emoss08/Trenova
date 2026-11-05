@@ -71,3 +71,5 @@ export class CollectionService {
     return safeParse(collectionAccountViewSchema, response, "CollectionAccountView");
   }
 }
+
+export const collectionService = new CollectionService();

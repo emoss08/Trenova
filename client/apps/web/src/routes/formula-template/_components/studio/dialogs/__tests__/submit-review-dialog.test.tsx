@@ -13,9 +13,7 @@ const mocks = vi.hoisted(() => ({
   approvalImpact: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { formulaTemplateService: mocks },
-}));
+vi.mock("@/services/formula-template", () => ({ formulaTemplateService: mocks }));
 
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn() }),

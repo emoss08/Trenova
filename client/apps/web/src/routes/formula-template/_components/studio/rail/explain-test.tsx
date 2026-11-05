@@ -1,7 +1,7 @@
 import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { TickedText } from "@/components/tariff-studio/ticked-text";
 import { describeApiError } from "@/lib/api-error-message";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -25,7 +25,7 @@ export function ExplainTest({ name }: { name: string }) {
   const explain = useMutation({
     mutationFn: () => {
       const content = draftContent();
-      return apiService.formulaTemplateService
+      return formulaTemplateService
         .explainTest(content, name)
         .then((answer) => ({ answer, source: content.source }));
     },

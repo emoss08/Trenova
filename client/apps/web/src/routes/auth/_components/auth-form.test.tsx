@@ -41,13 +41,11 @@ vi.mock("@trenova/shared/services/auth", () => ({
   },
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    userService: {
-      getUserOrganizations: mocks.getUserOrganizations,
-      switchOrganization: mocks.switchOrganization,
-      currentUser: mocks.currentUser,
-    },
+vi.mock("@trenova/shared/services/user", () => ({
+  userService: {
+    getUserOrganizations: mocks.getUserOrganizations,
+    switchOrganization: mocks.switchOrganization,
+    currentUser: mocks.currentUser,
   },
 }));
 

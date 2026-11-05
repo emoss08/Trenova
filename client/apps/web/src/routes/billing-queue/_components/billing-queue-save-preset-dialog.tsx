@@ -12,7 +12,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Input } from "@trenova/shared/components/ui/input";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useRegister } from "@/hooks/use-register";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import {
   billingQueueFilterPresetInputSchema,
   type BillingQueueFilterPresetInput,
@@ -62,7 +62,7 @@ export function BillingQueueSavePresetDialog({ open, onOpenChange, filters }: Pr
 
   const { mutateAsync } = useApiMutation({
     mutationFn: (values: BillingQueueFilterPresetInput) =>
-      apiService.billingQueueService.createFilterPreset({
+      billingQueueService.createFilterPreset({
         ...values,
         filters: cleanFilters,
       }),

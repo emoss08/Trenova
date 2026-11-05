@@ -13,8 +13,8 @@ const mocks = vi.hoisted(() => ({
   granted: new Set<string>(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { documentControlService: { get: mocks.get, update: mocks.update } },
+vi.mock("@/services/document-control", () => ({
+  documentControlService: { get: mocks.get, update: mocks.update },
 }));
 
 vi.mock("@/lib/graphql/capture", () => ({

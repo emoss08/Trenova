@@ -17,7 +17,7 @@ import {
 import { resolutionTypeChoices, workItemStatusChoices } from "@/lib/choices";
 import { bankReceipt } from "@/lib/queries/bank-receipt";
 import { bankReceiptWorkItem } from "@/lib/queries/bank-receipt-work-item";
-import { apiService } from "@/services/api";
+import { bankReceiptWorkItemService } from "@/services/bank-receipt-work-item";
 import type {
   BankReceiptWorkItem,
   ResolutionType,
@@ -90,7 +90,7 @@ export function BankReceiptQueuePage() {
           { field: "status", operator: "eq", value: statusFilter },
         ]);
       }
-      return apiService.bankReceiptWorkItemService.list(params);
+      return bankReceiptWorkItemService.list(params);
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _, lastPageParam) => {
@@ -144,7 +144,7 @@ export function BankReceiptQueuePage() {
 
   const assignMutation = useMutation({
     mutationFn: async ({ id, userId }: { id: string; userId: string }) =>
-      apiService.bankReceiptWorkItemService.assign(id, userId),
+      bankReceiptWorkItemService.assign(id, userId),
     onSuccess: () => {
       invalidateAll();
     },
@@ -152,7 +152,7 @@ export function BankReceiptQueuePage() {
   });
 
   const startReviewMutation = useMutation({
-    mutationFn: async (id: string) => apiService.bankReceiptWorkItemService.startReview(id),
+    mutationFn: async (id: string) => bankReceiptWorkItemService.startReview(id),
     onSuccess: () => {
       invalidateAll();
     },
@@ -168,7 +168,7 @@ export function BankReceiptQueuePage() {
       id: string;
       resolutionType: string;
       resolutionNote: string;
-    }) => apiService.bankReceiptWorkItemService.resolve(id, { resolutionType, resolutionNote }),
+    }) => bankReceiptWorkItemService.resolve(id, { resolutionType, resolutionNote }),
     onSuccess: () => {
       invalidateAll();
     },
@@ -177,7 +177,7 @@ export function BankReceiptQueuePage() {
 
   const dismissMutation = useMutation({
     mutationFn: async ({ id, resolutionNote }: { id: string; resolutionNote: string }) =>
-      apiService.bankReceiptWorkItemService.dismiss(id, { resolutionNote }),
+      bankReceiptWorkItemService.dismiss(id, { resolutionNote }),
     onSuccess: () => {
       invalidateAll();
     },

@@ -16,7 +16,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { findChoice, serviceFailureStatusChoices, serviceFailureTypeChoices } from "@/lib/choices";
 import { serviceFailure } from "@/lib/queries/service-failure";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { serviceFailureService } from "@/services/service-failure";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -70,7 +70,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
   });
 
   const evaluateMutation = useMutation({
-    mutationFn: () => apiService.serviceFailureService.evaluateShipment(shipmentId),
+    mutationFn: () => serviceFailureService.evaluateShipment(shipmentId),
     onSuccess: (result) => {
       const summary = {
         created: result.createdIds.length,
@@ -111,14 +111,14 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
         version: failure.version ?? 0,
       };
       if (action === "review") {
-        return apiService.serviceFailureService.review(failure.id ?? "", payload);
+        return serviceFailureService.review(failure.id ?? "", payload);
       }
       if (action === "resolve") {
-        return apiService.serviceFailureService.resolve(failure.id ?? "", payload);
+        return serviceFailureService.resolve(failure.id ?? "", payload);
       }
       const notes = window.prompt("Enter a void reason");
       if (!notes?.trim()) return Promise.resolve(failure);
-      return apiService.serviceFailureService.void(failure.id ?? "", {
+      return serviceFailureService.void(failure.id ?? "", {
         ...payload,
         notes: notes.trim(),
       });

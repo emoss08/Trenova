@@ -7,7 +7,7 @@ import { CarrierShoppingPanel } from "../carrier-shopping-panel";
 
 const { shop } = vi.hoisted(() => ({ shop: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { rateQuoteService: { shop } } }));
+vi.mock("@/services/rate", () => ({ rateQuoteService: { shop } }));
 
 afterEach(() => {
   cleanup();

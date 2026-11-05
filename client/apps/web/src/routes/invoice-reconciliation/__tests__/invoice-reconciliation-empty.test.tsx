@@ -12,13 +12,11 @@ const mocks = vi.hoisted(() => ({
   getSummary: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    invoiceAdjustmentService: {
-      listReconciliationExceptions: mocks.listReconciliationExceptions,
-      getSummary: mocks.getSummary,
-      getById: vi.fn(),
-    },
+vi.mock("@/services/invoice-adjustment", () => ({
+  invoiceAdjustmentService: {
+    listReconciliationExceptions: mocks.listReconciliationExceptions,
+    getSummary: mocks.getSummary,
+    getById: vi.fn(),
   },
 }));
 vi.mock("@/components/billing/billing-workspace-layout", () => ({

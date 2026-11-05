@@ -12,7 +12,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { customerStatement } from "@/lib/queries/customer-statement";
-import { apiService } from "@/services/api";
+import { customerStatementService } from "@/services/customer-statement";
 import type { StatementRange } from "@/types/customer-statement";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -45,7 +45,7 @@ export function SendStatementDialog({
   const [note, setNote] = useState("");
 
   const { mutate, isPending } = useApiMutation({
-    mutationFn: () => apiService.customerStatementService.send(customerId, range, note.trim()),
+    mutationFn: () => customerStatementService.send(customerId, range, note.trim()),
     resourceName: "CustomerStatement",
     onSuccess: (result) => {
       void queryClient.invalidateQueries({

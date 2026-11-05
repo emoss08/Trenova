@@ -18,7 +18,8 @@ import {
   PENDING_DOCUMENTS_REFETCH_MS,
   resourceDocumentsQuery,
 } from "@/lib/resource-documents";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
+import { shipmentService } from "@/services/shipment";
 import type { Document, DocumentPacketSummary } from "@trenova/shared/types/document";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type {
@@ -204,7 +205,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", resourceType, resourceId],
-    queryFn: () => apiService.documentService.getPacketSummary(resourceType, resourceId),
+    queryFn: () => documentService.getPacketSummary(resourceType, resourceId),
     enabled: !!resourceId,
   });
   const versionDocumentID = versionDocument?.id;
@@ -212,9 +213,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const { data: versionHistory = [], isLoading: isLoadingVersions } = useQuery({
     queryKey: ["document-versions", versionDocumentID],
     queryFn: () =>
-      versionDocumentID
-        ? apiService.documentService.getVersions(versionDocumentID)
-        : Promise.resolve([]),
+      versionDocumentID ? documentService.getVersions(versionDocumentID) : Promise.resolve([]),
     enabled: !!versionDocumentID,
   });
 
@@ -240,7 +239,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           void queryClient
             .fetchQuery<ShipmentBillingReadiness>({
               queryKey: ["shipment", "billing-readiness", resourceId],
-              queryFn: () => apiService.shipmentService.getBillingReadiness(resourceId),
+              queryFn: () => shipmentService.getBillingReadiness(resourceId),
             })
             .then((nextReadiness) => {
               const nextMissing = nextReadiness.missingRequirements[0];
@@ -262,7 +261,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["documents", resourceType, resourceId],
@@ -284,7 +283,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   });
 
   const { mutateAsync: bulkDelete, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
+    mutationFn: (documentIds: string[]) => documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
         queryKey: ["documents", resourceType, resourceId],
@@ -340,7 +339,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     isPending: isApprovingDocument,
     variables: approvingDocumentId,
   } = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.approve(documentId),
+    mutationFn: (documentId: string) => documentService.approve(documentId),
     onSuccess: () => {
       invalidateDocumentState();
     },
@@ -355,7 +354,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   );
 
   const restoreVersionMutation = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.restoreVersion(documentId),
+    mutationFn: (documentId: string) => documentService.restoreVersion(documentId),
     onSuccess: () => {
       invalidateDocumentState();
     },
@@ -420,7 +419,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const handlePreview = useCallback(
     async (document: Document) => {
       try {
-        const url = await apiService.documentService.getViewUrl(document.id);
+        const url = await documentService.getViewUrl(document.id);
         window.open(url, "_blank");
       } catch {
         toast.error(t("Failed to open document"));
@@ -432,7 +431,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const handleDownload = useCallback(
     async (document: Document) => {
       try {
-        const url = await apiService.documentService.getDownloadUrl(document.id);
+        const url = await documentService.getDownloadUrl(document.id);
         window.open(url, "_blank");
       } catch {
         toast.error(t("Failed to get download URL"));

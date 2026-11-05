@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import type { QueueOutcome } from "@/services/assistant";
+import { assistantService, type QueueOutcome } from "@/services/assistant";
 import type {
   AssistantEntityRef,
   AssistantPageContext,
@@ -95,7 +94,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
     async (content: string, payload: ComposerPayload, mode: QueueMode) => {
       const mentions = [...payload.mentions];
       try {
-        const outcome = await apiService.assistantService.enqueue(threadId, content, {
+        const outcome = await assistantService.enqueue(threadId, content, {
           context: context(),
           surface,
           providerId,
@@ -125,7 +124,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
         current.map((known) => (known.id === item.id ? { ...known, content } : known)),
       );
       try {
-        const saved = await apiService.assistantService.editQueued(threadId, item, content);
+        const saved = await assistantService.editQueued(threadId, item, content);
         write((current) => current.map((known) => (known.id === saved.id ? saved : known)));
         return true;
       } catch (error) {
@@ -140,7 +139,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
     async (item: QueuedMessage) => {
       write((current) => current.filter((known) => known.id !== item.id));
       try {
-        await apiService.assistantService.removeQueued(threadId, item.id);
+        await assistantService.removeQueued(threadId, item.id);
       } catch (error) {
         failed(t("The message could not be removed"), error);
       }
@@ -160,7 +159,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
       [ordered[from], ordered[to]] = [ordered[to], ordered[from]];
       write(() => ordered);
       try {
-        const saved = await apiService.assistantService.reorderQueue(
+        const saved = await assistantService.reorderQueue(
           threadId,
           ordered.map((known) => known.id),
         );
@@ -175,7 +174,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
   const sendNow = useCallback(
     async (item: QueuedMessage) => {
       try {
-        const outcome = await apiService.assistantService.sendQueued(threadId, item.id);
+        const outcome = await assistantService.sendQueued(threadId, item.id);
         if (outcome.turn) {
           write((current) => current.filter((known) => known.id !== item.id));
         }

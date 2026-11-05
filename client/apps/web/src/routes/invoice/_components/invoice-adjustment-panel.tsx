@@ -11,7 +11,7 @@ import {
 import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { invoiceAdjustmentService } from "@/services/invoice-adjustment";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import type { InvoiceAdjustment, InvoiceAdjustmentPreview } from "@/types/invoice-adjustment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -112,8 +112,7 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
   }, [draft, form]);
 
   const createDraftMutation = useMutation({
-    mutationFn: async () =>
-      await apiService.invoiceAdjustmentService.createDraft({ invoiceId: invoice.id }),
+    mutationFn: async () => await invoiceAdjustmentService.createDraft({ invoiceId: invoice.id }),
     onSuccess: (result) => {
       setDraft(result);
     },
@@ -140,12 +139,12 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     resourceName: "invoice adjustment preview",
     mutationFn: async (values: AdjustmentFormValues) => {
       const currentDraft = await ensureDraft();
-      const updated = await apiService.invoiceAdjustmentService.updateDraft(
+      const updated = await invoiceAdjustmentService.updateDraft(
         currentDraft.id,
         buildPayload(values, lines),
       );
       setDraft(updated);
-      return apiService.invoiceAdjustmentService.previewDraft(updated.id);
+      return invoiceAdjustmentService.previewDraft(updated.id);
     },
     onSuccess: (result) => {
       clearErrors();
@@ -163,12 +162,12 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
     resourceName: "invoice adjustment submit",
     mutationFn: async (values: AdjustmentFormValues) => {
       const currentDraft = await ensureDraft();
-      const updated = await apiService.invoiceAdjustmentService.updateDraft(
+      const updated = await invoiceAdjustmentService.updateDraft(
         currentDraft.id,
         buildPayload(values, lines),
       );
       setDraft(updated);
-      return apiService.invoiceAdjustmentService.submitDraft(updated.id);
+      return invoiceAdjustmentService.submitDraft(updated.id);
     },
     onSuccess: (result) => {
       clearErrors();

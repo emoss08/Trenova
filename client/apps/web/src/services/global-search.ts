@@ -55,3 +55,5 @@ export class GlobalSearchService {
     });
   }
 }
+
+export const globalSearchService = new GlobalSearchService();

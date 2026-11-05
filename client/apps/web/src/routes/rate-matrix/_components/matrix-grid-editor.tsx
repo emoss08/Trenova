@@ -4,7 +4,7 @@ import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { matrixCoverage } from "@trenova/shared/rules/matrix";
 import { rateMatrix } from "@/lib/queries/rate-matrix";
-import { apiService } from "@/services/api";
+import { rateMatrixService } from "@/services/rate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -230,7 +230,7 @@ export function MatrixGridEditor({ rateMatrixId, version }: MatrixGridEditorProp
   const unfit = Object.values(drafts).filter((text) => !cellTextFits(text, wholeOnly)).length;
 
   const save = useMutation({
-    mutationFn: () => apiService.rateMatrixService.replaceCells(rateMatrixId as string, cells),
+    mutationFn: () => rateMatrixService.replaceCells(rateMatrixId as string, cells),
     onSuccess: async () => {
       setDirty(false);
       await Promise.all([

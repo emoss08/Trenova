@@ -6,7 +6,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { assignBillingQueueBillerGraphQL } from "@/lib/graphql/billing-queue";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -287,8 +287,7 @@ function ActivityLog({ itemId, meId }: { itemId: string; meId: string | undefine
   const t = useT();
   const query = useInfiniteQuery({
     queryKey: billingQueue.activity(itemId).queryKey,
-    queryFn: ({ pageParam }) =>
-      apiService.billingQueueService.getActivity(itemId, pageParam ?? undefined),
+    queryFn: ({ pageParam }) => billingQueueService.getActivity(itemId, pageParam ?? undefined),
     initialPageParam: null as { at: number; id: string } | null,
     getNextPageParam: (page) => {
       const last = page.items.at(-1);
@@ -452,28 +451,28 @@ export function DeskBillingItem({
     mutationFn: (input: {
       status: "Approved" | "OnHold";
       holdReasonCode?: BillingQueueHoldReason;
-    }) => apiService.billingQueueService.updateStatus(itemId, input),
+    }) => billingQueueService.updateStatus(itemId, input),
     resourceName: "BillingQueueItem",
     onSuccess: () => settle(),
   });
   const release = useApiMutation({
-    mutationFn: () => apiService.billingQueueService.release(itemId),
+    mutationFn: () => billingQueueService.release(itemId),
     resourceName: "BillingQueueItem",
     onSuccess: () => settle(),
   });
   const resolve = useApiMutation({
     mutationFn: ({ issueId, optionKey }: { issueId: string; optionKey: string }) =>
-      apiService.billingQueueService.resolveIssue(itemId, issueId, optionKey),
+      billingQueueService.resolveIssue(itemId, issueId, optionKey),
     resourceName: "BillingQueueItem",
     onSuccess: (next) => settle(next),
   });
   const undo = useApiMutation({
-    mutationFn: (issueId: string) => apiService.billingQueueService.undoIssue(itemId, issueId),
+    mutationFn: (issueId: string) => billingQueueService.undoIssue(itemId, issueId),
     resourceName: "BillingQueueItem",
     onSuccess: (next) => settle(next),
   });
   const post = useApiMutation({
-    mutationFn: () => apiService.billingQueueService.post(itemId),
+    mutationFn: () => billingQueueService.post(itemId),
     resourceName: "BillingQueueItem",
     onSuccess: (result) => {
       setPosted(result);

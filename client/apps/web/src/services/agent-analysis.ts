@@ -31,3 +31,5 @@ export class AgentAnalysisService {
     return safeParse(analysisRunSchema, response, translate("Analysis"));
   }
 }
+
+export const agentAnalysisService = new AgentAnalysisService();

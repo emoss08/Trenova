@@ -3,6 +3,7 @@ import { ApiRequestError } from "@trenova/shared/lib/api";
 import { errorReferenceDetails } from "@trenova/shared/lib/error-presentation";
 import { isExplainedError } from "@trenova/shared/lib/explained-errors";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { RequestTimeoutError } from "@trenova/shared/lib/request-errors";
 import {
   type NormalizedApiError,
   type ValidationError,
@@ -98,6 +99,8 @@ function normalizeMutationError(error: unknown): NormalizedApiError | null {
   return null;
 }
 
+const announced = new WeakSet<object>();
+
 export function handleMutationError<T extends FieldValues>({
   error,
   form,
@@ -107,6 +110,23 @@ export function handleMutationError<T extends FieldValues>({
   // organization switch); a toast saying "Access denied" or "Error" on top of it would only
   // contradict it.
   if (isExplainedError(error)) {
+    return;
+  }
+  // A surface with no form of its own that catches this next does not repeat the toast. A
+  // form still gets its field errors, however many times the same error reaches it.
+  if (typeof error === "object" && error !== null) {
+    if (!form && announced.has(error)) return;
+    announced.add(error);
+  }
+
+  // The deadline says nothing about the write itself. Calling it a failure invites a second
+  // submit of a change that may already have landed.
+  if (error instanceof RequestTimeoutError) {
+    toast.error(translate("This may not have saved"), {
+      description: translate(
+        "The server didn't answer in time. Check whether the change went through before trying again.",
+      ),
+    });
     return;
   }
 

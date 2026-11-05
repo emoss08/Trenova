@@ -2,7 +2,6 @@ import {
   AcknowledgeShipmentCommentDocument,
   ApproveShipmentRatingReviewDocument,
   AutoRateShipmentDocument,
-  CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
   CalculateShipmentTotalsDocument,
   CancelShipmentDocument,
@@ -40,7 +39,6 @@ import {
   UpdateShipmentDocument,
   type BillType,
   type FieldFilterInput,
-  type FilterGroupInput,
   type ShipmentAdditionalChargeInput,
   type ShipmentCommentInput,
   type ShipmentCommentUpdateInput,
@@ -447,17 +445,6 @@ export async function autoRateShipmentGraphQL(shipmentId: Shipment["id"]) {
     variables: { id: shipmentId },
   });
   return data.autoRateShipment;
-}
-
-export async function calculateShipmentDistanceGraphQL(payload: Shipment) {
-  const data = await requestShipmentGraphQL({
-    document: CalculateShipmentDistanceDocument,
-    operationName: "CalculateShipmentDistance",
-    variables: {
-      input: toShipmentInput(payload),
-    },
-  });
-  return data.calculateShipmentDistance;
 }
 
 export async function recalculateShipmentDistanceGraphQL(shipmentId: Shipment["id"]) {

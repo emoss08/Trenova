@@ -29,7 +29,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { documentControl } from "@/lib/queries/document-control";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,6 +44,7 @@ import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { isBlockedByProvider, processingSummary } from "./rate-confirmation-import-status";
+import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
 
 type ShipmentRateConfirmationImportPanelProps = {
   open: boolean;
@@ -178,9 +179,7 @@ export function ShipmentRateConfirmationImportPanel({
   const { data: importedDocument } = useQuery({
     queryKey: ["shipment-import-document", uploadedDocumentId],
     queryFn: () =>
-      uploadedDocumentId
-        ? apiService.documentService.getById(uploadedDocumentId)
-        : Promise.resolve(null),
+      uploadedDocumentId ? documentService.getById(uploadedDocumentId) : Promise.resolve(null),
     enabled: !!uploadedDocumentId,
     refetchInterval: (query) => {
       const document = query.state.data;
@@ -196,15 +195,11 @@ export function ShipmentRateConfirmationImportPanel({
     },
   });
 
-  const { data: importedDraft } = useQuery({
+  const { data: importedDraft, isError: draftReadFailed } = useQuery({
     queryKey: ["shipment-import-draft", uploadedDocumentId, importedDocument?.shipmentDraftStatus],
     queryFn: async () => {
       if (!uploadedDocumentId) return null;
-      try {
-        return await apiService.documentService.getShipmentDraft(uploadedDocumentId);
-      } catch {
-        return null;
-      }
+      return nullWhenAbsent(documentService.getShipmentDraft(uploadedDocumentId));
     },
     enabled:
       !!uploadedDocumentId &&
@@ -212,7 +207,7 @@ export function ShipmentRateConfirmationImportPanel({
       importedDocument.shipmentDraftStatus !== "Unavailable",
     refetchInterval: (query) => {
       const draft = query.state.data;
-      if (!uploadedDocumentId) return false;
+      if (!uploadedDocumentId || query.state.status === "error") return false;
       if (!draft || draft.status === "Pending") return 1500;
       return false;
     },
@@ -225,7 +220,7 @@ export function ShipmentRateConfirmationImportPanel({
         queryKey: documentControl.extractionStatus().queryKey,
         refetchType: "all",
       });
-      await apiService.documentService.reextract(uploadedDocumentId);
+      await documentService.reextract(uploadedDocumentId);
     },
     onSuccess: () => {
       if (uploadedDocumentId) {
@@ -269,6 +264,9 @@ export function ShipmentRateConfirmationImportPanel({
         importedDocument.contentError || "We could not extract text from this rate confirmation."
       );
     }
+    if (draftReadFailed) {
+      return translate("We couldn't check on this draft. Try again in a moment.");
+    }
     if (importedDraft?.status === "Failed") {
       return (
         importedDraft.failureMessage ||
@@ -285,7 +283,7 @@ export function ShipmentRateConfirmationImportPanel({
       return "This rate confirmation did not produce a usable shipment draft.";
     }
     return null;
-  }, [blockedByProvider, importedDocument, importedDraft]);
+  }, [blockedByProvider, draftReadFailed, importedDocument, importedDraft]);
 
   const currentStep = useMemo<ImportStep>(() => {
     if (createdShipmentId) {

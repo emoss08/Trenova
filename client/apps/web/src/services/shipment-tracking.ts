@@ -38,3 +38,5 @@ export class ShipmentTrackingService {
     return `${API_BASE_URL}${linkPath(token)}proof-of-delivery/`;
   }
 }
+
+export const shipmentTrackingService = new ShipmentTrackingService();

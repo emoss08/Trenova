@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import { withSessionHeaders } from "@trenova/shared/lib/api";
+import { retryAfterOf, withSessionHeaders } from "@trenova/shared/lib/api";
+import { ResponseContractError, withRequestDeadline } from "@trenova/shared/lib/request-errors";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { withIdempotencyKeyHeader } from "@trenova/shared/lib/idempotency";
 import { reportPlanLimit } from "@trenova/shared/lib/plan-limit";
@@ -145,6 +146,8 @@ type GraphQLRequestErrorOptions = {
   graphQLErrors?: NormalizedGraphQLError[];
   kind: GraphQLRequestErrorKind;
   message: string;
+  /** Seconds the server asked the caller to wait before trying again, from Retry-After. */
+  retryAfter?: number | null;
   status?: number;
 };
 
@@ -155,14 +158,22 @@ export class GraphQLRequestError extends Error {
   public readonly graphQLErrors: NormalizedGraphQLError[];
   public readonly kind: GraphQLRequestErrorKind;
   public readonly params?: unknown;
+  public readonly retryAfter: number | null;
   public readonly status?: number;
   public readonly traceId?: string;
   public readonly type?: string;
 
-  public constructor({ graphQLErrors = [], kind, message, status }: GraphQLRequestErrorOptions) {
+  public constructor({
+    graphQLErrors = [],
+    kind,
+    message,
+    retryAfter = null,
+    status,
+  }: GraphQLRequestErrorOptions) {
     super(message);
     this.name = "GraphQLRequestError";
     this.kind = kind;
+    this.retryAfter = retryAfter;
     this.status = status;
     this.graphQLErrors = graphQLErrors;
 
@@ -535,6 +546,17 @@ export function graphQLErrorMessage(error: unknown, fallback: string): string {
 // requestGraphQLResult exposes the full response: the data and any errors that came
 // back beside it. Prefer requestGraphQL unless the caller actually renders the
 // partial-failure state, since this shape forces every caller to reach through .data.
+// A body that is not JSON (a proxy's HTML error page) reads as empty, so the status decides.
+// Anything else is a failed read, a cancellation or the deadline, and stays what it is.
+async function readPayload<TData>(response: Response): Promise<GraphQLResponse<TData>> {
+  try {
+    return (await response.json()) as GraphQLResponse<TData>;
+  } catch (error) {
+    if (error instanceof SyntaxError) return {};
+    throw error;
+  }
+}
+
 export async function requestGraphQLResult<TDocument extends TypedGraphQLDocument<unknown, never>>(
   params: TypedGraphQLRequestParams<TDocument>,
 ): Promise<GraphQLResult<ResultOf<TDocument>>>;
@@ -554,19 +576,23 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
     variables,
   );
 
-  const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
-    body: JSON.stringify(body),
-    credentials: "include",
-    headers: await withSessionHeaders(
-      "POST",
-      withIdempotencyKeyHeader({ "Content-Type": "application/json" }, idempotencyKey),
-      "/graphql",
-    ),
-    method: "POST",
-    signal,
-  });
+  const headers = await withSessionHeaders(
+    "POST",
+    withIdempotencyKeyHeader({ "Content-Type": "application/json" }, idempotencyKey),
+    "/graphql",
+  );
 
-  const payload = (await response.json().catch(() => ({}))) as GraphQLResponse<TData>;
+  const { payload, response } = await withRequestDeadline(signal, async (deadline) => {
+    const response = await fetch(resolveGraphQLURL(API_BASE_URL, operationLabel), {
+      body: JSON.stringify(body),
+      credentials: "include",
+      headers,
+      method: "POST",
+      signal: deadline,
+    });
+
+    return { payload: await readPayload<TData>(response), response };
+  });
   const graphQLErrors = responseErrors(payload);
 
   // An expired session has to reach the auth store from here. The router only
@@ -587,6 +613,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
         message:
           graphQLErrors[0]?.message ??
           translate("GraphQL request failed with HTTP {0}", response.status),
+        retryAfter: retryAfterOf(response),
         status: response.status,
       }),
     );
@@ -632,7 +659,7 @@ export async function requestGraphQLResult<TData, TVariables = Record<string, un
     );
   }
 
-  throw new Error("GraphQL response did not include data");
+  throw new ResponseContractError(operationLabel ?? "GraphQL response");
 }
 
 export async function requestGraphQL<TDocument extends TypedGraphQLDocument<unknown, never>>(

@@ -1,6 +1,6 @@
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { DisplayColumn } from "@/components/assistant/readable-values";
 import { isRecordEntityType } from "@/config/record-links";
 import type { ArtifactRows } from "@/types/assistant";
@@ -129,7 +129,7 @@ export function useTablePages({
       readAt: readAt ?? 0,
     }).queryKey,
     queryFn: ({ pageParam, signal }) =>
-      apiService.assistantService.artifactRows(
+      assistantService.artifactRows(
         threadId,
         artifactId,
         {

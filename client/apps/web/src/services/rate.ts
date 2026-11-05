@@ -13,7 +13,6 @@ import {
   rateIncreasePlanSchema,
   rateSimulationSchema,
   shopResultSchema,
-  rateZoneSchema,
   type RateAgreement,
   type RateAgreementLanePage,
   type RateAgreementLaneSummary,
@@ -25,7 +24,6 @@ import {
   type RateMatrixCell,
   type RateQuote,
   type RatedShipment,
-  type RateZone,
   type RateImportBatch,
   type RateImportRow,
   type RateSimulation,
@@ -207,26 +205,6 @@ export class RateAgreementService {
     });
 
     return safeParse(rateAgreementSchema, response, "Rate Agreement");
-  }
-}
-
-export class RateZoneService {
-  public async getById(id: string): Promise<RateZone> {
-    const response = await api.get<RateZone>(`/rate-zones/${id}/`);
-
-    return safeParse(rateZoneSchema, response, "Rate Zone");
-  }
-
-  public async create(data: RateZone): Promise<RateZone> {
-    const response = await api.post<RateZone>("/rate-zones/", data);
-
-    return safeParse(rateZoneSchema, response, "Rate Zone");
-  }
-
-  public async update(id: string, data: RateZone): Promise<RateZone> {
-    const response = await api.put<RateZone>(`/rate-zones/${id}/`, data);
-
-    return safeParse(rateZoneSchema, response, "Rate Zone");
   }
 }
 
@@ -531,3 +509,13 @@ export class RateImportService {
     return response?.results ?? [];
   }
 }
+
+export const rateAgreementService = new RateAgreementService();
+
+export const rateMatrixService = new RateMatrixService();
+
+export const rateSimulationService = new RateSimulationService();
+
+export const rateImportService = new RateImportService();
+
+export const rateQuoteService = new RateQuoteService();

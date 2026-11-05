@@ -47,3 +47,5 @@ export class InvoiceRunService {
     return safeParse(commitInvoiceRunResultSchema, response, "CommitInvoiceRunResult");
   }
 }
+
+export const invoiceRunService = new InvoiceRunService();

@@ -15,3 +15,5 @@ export class DocumentControlService {
     return safeParse(documentControlSchema, response, "Document Control");
   }
 }
+
+export const documentControlService = new DocumentControlService();

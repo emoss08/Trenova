@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { organization } from "@/lib/queries/organization";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import { Settings01Icon } from "@trenova/shared/components/icons";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -17,7 +17,7 @@ export function RoleActivationSetting({ organizationId }: { organizationId: stri
 
   const save = useApiMutation({
     mutationFn: (requireRoleActivation: boolean) =>
-      apiService.organizationService.updateAccessSettings(organizationId, {
+      organizationService.updateAccessSettings(organizationId, {
         requireRoleActivation,
         version: settingsQuery.data?.version ?? 0,
       }),

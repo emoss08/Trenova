@@ -6,7 +6,7 @@ import {
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentClassChoices, statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { equipmentTypeService } from "@/services/equipment-type";
 import type { EquipmentType } from "@/types/equipment-type";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -19,7 +19,7 @@ function EquipmentTypeStatusCell({ row }: { row: EquipmentType }) {
   const handleStatusChange = useCallback(
     async (newStatus: EquipmentType["status"]) => {
       if (!row.id) return;
-      await apiService.equipmentTypeService.patch(row.id, {
+      await equipmentTypeService.patch(row.id, {
         status: newStatus,
       });
 

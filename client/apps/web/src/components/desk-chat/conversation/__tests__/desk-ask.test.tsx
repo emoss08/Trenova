@@ -9,8 +9,9 @@ import { DeskAskDock, DeskAskRecord, deskAskPlaceholder } from "../desk-ask";
 
 const mocks = vi.hoisted(() => ({ searchMentions: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { assistantService: { searchMentions: mocks.searchMentions } },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: { searchMentions: mocks.searchMentions },
 }));
 
 afterEach(() => {

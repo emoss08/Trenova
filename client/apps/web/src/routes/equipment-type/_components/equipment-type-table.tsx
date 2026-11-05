@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
 import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
-import { apiService } from "@/services/api";
+import { equipmentTypeService } from "@/services/equipment-type";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import type { EquipmentType } from "@/types/equipment-type";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function EquipmentTypeTable() {
     async (rows: EquipmentType[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.equipmentTypeService.bulkUpdateStatus({
+        equipmentTypeService.bulkUpdateStatus({
           equipmentTypeIds: ids as string[],
           status: status as EquipmentType["status"],
         }),

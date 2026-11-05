@@ -1,6 +1,6 @@
 import { pageImage } from "@/lib/queries/document-page";
-import { apiService } from "@/services/api";
 import {
+  billingQueueService,
   billingQueuePacketPageEndpoint,
   billingQueuePacketThumbnailEndpoint,
 } from "@/services/billing-queue";
@@ -15,8 +15,7 @@ export const billingQueuePacket = createQueryKeys("billingQueuePacket", {
   /** Assembles the item's packet afresh each time a viewer opens it. */
   preview: (itemId: string) => ({
     queryKey: [itemId],
-    queryFn: async ({ signal }) =>
-      apiService.billingQueueService.getPacketPreview(itemId, { signal }),
+    queryFn: async ({ signal }) => billingQueueService.getPacketPreview(itemId, { signal }),
   }),
   /** A page of one assembly of the packet: a new build draws its pages afresh. */
   page: (itemId: string, build: string, page: number) => ({
@@ -33,7 +32,6 @@ export const billingQueuePacket = createQueryKeys("billingQueuePacket", {
   /** The checks of the assembly the server holds; a build other than the one shown is stale. */
   checks: (itemId: string, build: string) => ({
     queryKey: [itemId, build, "checks"],
-    queryFn: async ({ signal }) =>
-      apiService.billingQueueService.getPacketChecks(itemId, { signal }),
+    queryFn: async ({ signal }) => billingQueueService.getPacketChecks(itemId, { signal }),
   }),
 });

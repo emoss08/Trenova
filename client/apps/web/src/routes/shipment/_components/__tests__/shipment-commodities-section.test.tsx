@@ -14,8 +14,8 @@ const { getUIPolicy, checkHazmatSegregation } = vi.hoisted(() => ({
   checkHazmatSegregation: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { shipmentService: { getUIPolicy, checkHazmatSegregation } },
+vi.mock("@/services/shipment", () => ({
+  shipmentService: { getUIPolicy, checkHazmatSegregation },
 }));
 vi.mock("@/components/autocomplete-fields", () => ({
   CommodityAutocompleteField: () => null,

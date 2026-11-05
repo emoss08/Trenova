@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { RequestTimeoutError } from "@trenova/shared/lib/request-errors";
 import { retryDelay, shouldRetry } from "@/lib/query-retry";
 
 const PROBLEM_BASE = "https://trenova.app/problems/";
@@ -36,6 +37,14 @@ function transportError(status: number, problemType?: string): GraphQLRequestErr
         ]
       : [],
   });
+}
+
+function rateLimited(retryAfter: number | null): ApiRequestError {
+  return new ApiRequestError(
+    429,
+    { type: `${PROBLEM_BASE}rate-limit-exceeded`, title: "Too many requests", status: 429 },
+    retryAfter,
+  );
 }
 
 describe("shouldRetry", () => {
@@ -128,6 +137,23 @@ describe("shouldRetry", () => {
     expect(shouldRetry(0, new TypeError("Failed to fetch"))).toBe(true);
   });
 
+  it("does not replay a bug in a query function", () => {
+    expect(shouldRetry(0, new TypeError("Cannot read properties of undefined"))).toBe(false);
+  });
+
+  it("retries a request that passed its deadline", () => {
+    expect(shouldRetry(0, new RequestTimeoutError())).toBe(true);
+  });
+
+  it("retries a rate limit that says how long to wait, within reason", () => {
+    expect(shouldRetry(0, rateLimited(5))).toBe(true);
+    expect(shouldRetry(0, rateLimited(120))).toBe(false);
+  });
+
+  it("does not retry a rate limit that gives no wait", () => {
+    expect(shouldRetry(0, rateLimited(null))).toBe(false);
+  });
+
   it("retries the REST client's synthetic status-0 network error", () => {
     const error = new ApiRequestError(0, {
       type: `${PROBLEM_BASE}internal-error`,
@@ -150,6 +176,20 @@ describe("shouldRetry", () => {
 });
 
 describe("retryDelay", () => {
+  it("waits as long as the server asked, whichever transport carried it", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    expect(retryDelay(0, rateLimited(5))).toBe(5_000);
+    expect(
+      retryDelay(
+        0,
+        new GraphQLRequestError({ kind: "transport", message: "", retryAfter: 2, status: 429 }),
+      ),
+    ).toBe(2_000);
+
+    vi.restoreAllMocks();
+  });
+
   it("grows exponentially and stays within the jitter window", () => {
     const random = vi.spyOn(Math, "random");
 

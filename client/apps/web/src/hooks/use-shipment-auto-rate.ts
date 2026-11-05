@@ -1,10 +1,11 @@
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { canResolveContract, toRatingPreviewPayload } from "@/lib/shipment-rating-payload";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { AdditionalCharge, ContractRate, Shipment } from "@trenova/shared/types/shipment";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 /**
  * The lane a contract is resolved by. Nothing else about a shipment changes
@@ -137,17 +138,18 @@ export function useShipmentAutoRate({ enabled }: { enabled: boolean }) {
 
     setIsRating(true);
 
-    apiService.shipmentService
+    shipmentService
       .previewContractRate(toRatingPreviewPayload(values))
       .then((rate) => {
         if (controller.signal.aborted) return;
         applyContractRate(rate);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         // A lane no contract covers is the normal case for an organization
         // that has not written its agreements yet, and it is not something to
         // interrupt somebody typing a shipment with. The rater picks a rating
-        // method by hand, exactly as before.
+        // method by hand, exactly as before. Only a server fault is reported.
+        reportFailure(error, { source: "background", operation: "previewContractRate" });
         attemptedRef.current = "";
       })
       .finally(() => {

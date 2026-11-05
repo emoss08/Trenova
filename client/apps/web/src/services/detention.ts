@@ -342,3 +342,9 @@ export class DetentionPolicyService {
     return safeParse(previewResultSchema, response.detentionPolicyPreview, "Detention Preview");
   }
 }
+
+export const detentionService = new DetentionService();
+
+export const detentionPolicyService = new DetentionPolicyService();
+
+export const detentionAnalyticsService = new DetentionAnalyticsService();

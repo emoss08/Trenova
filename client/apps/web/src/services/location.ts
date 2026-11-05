@@ -34,3 +34,5 @@ export class LocationService {
     return safeParse(locationSchema, response, "Location");
   }
 }
+
+export const locationService = new LocationService();

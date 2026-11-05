@@ -2,7 +2,7 @@ import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, profilePictureCropConfig } from "@/lib/images/upload-config";
 import { user } from "@/lib/queries/user";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { useQueryClient } from "@tanstack/react-query";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -70,7 +70,7 @@ export function useProfilePicture(): ProfilePictureControls {
 
   const upload = useCallback(
     async (file: File) => {
-      const updated = await apiService.userService.uploadMyProfilePicture(file);
+      const updated = await userService.uploadMyProfilePicture(file);
       await sync(updated);
       feedback.message(t("Photo updated"));
     },
@@ -81,7 +81,7 @@ export function useProfilePicture(): ProfilePictureControls {
     if (removing) return;
     setRemoving(true);
     try {
-      const updated = await apiService.userService.deleteMyProfilePicture();
+      const updated = await userService.deleteMyProfilePicture();
       await sync(updated);
       feedback.message(t("Photo removed"));
     } catch (error) {

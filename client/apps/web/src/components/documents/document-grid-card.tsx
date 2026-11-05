@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { Document } from "@trenova/shared/types/document";
 import {
   CheckCircleIcon,
@@ -124,7 +124,7 @@ export function DocumentGridCard({
     }
 
     const documentId = document.id;
-    void apiService.documentService
+    void documentService
       .getPreviewUrl(documentId)
       .then((url) => setFetchedPreview({ documentId, url }));
   }, [document.id, isPreviewReady]);

@@ -15,8 +15,7 @@ import {
   DISPATCH_MOVE_CANDIDATES_KEY,
   DISPATCH_SHIPMENT_TENDERS_KEY,
 } from "@/lib/queries/dispatch-console";
-import { apiService } from "@/services/api";
-import { isOverridableInsuranceWarningError } from "@/services/tender";
+import { tenderService, isOverridableInsuranceWarningError } from "@/services/tender";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import type {
   DispatchAssignMoveInput,
@@ -178,8 +177,7 @@ export function useDispatchActions() {
   }, [queryClient, invalidateBoard]);
 
   const waterfallMutation = useMutation({
-    mutationFn: (payload: WaterfallTenderPayload) =>
-      apiService.tenderService.createWaterfall(payload),
+    mutationFn: (payload: WaterfallTenderPayload) => tenderService.createWaterfall(payload),
     onSuccess: (result) => {
       // Screened-out routing guide carriers change what the dispatcher actually
       // got, so the outcome is reported as a warning rather than a plain success.
@@ -202,7 +200,7 @@ export function useDispatchActions() {
   });
 
   const spotTenderMutation = useMutation({
-    mutationFn: (payload: SpotTenderPayload) => apiService.tenderService.createSpot(payload),
+    mutationFn: (payload: SpotTenderPayload) => tenderService.createSpot(payload),
     onSuccess: (tender) => {
       toast.success(
         tender.mode === "SpotBroadcast"
@@ -229,7 +227,7 @@ export function useDispatchActions() {
 
   const cancelTenderMutation = useMutation({
     mutationFn: (params: { tenderId: string; reason: string }) =>
-      apiService.tenderService.cancel(params.tenderId, params.reason),
+      tenderService.cancel(params.tenderId, params.reason),
     onSuccess: () => {
       invalidateTenders();
     },
@@ -238,7 +236,7 @@ export function useDispatchActions() {
 
   const recordOfferResponseMutation = useMutation({
     mutationFn: (params: RecordOfferResponseParams) =>
-      apiService.tenderService.recordResponse(params.offerId, params.payload),
+      tenderService.recordResponse(params.offerId, params.payload),
     onSuccess: () => {
       invalidateTenders();
     },
@@ -247,7 +245,7 @@ export function useDispatchActions() {
 
   const bounceTenderMutation = useMutation({
     mutationFn: (params: { tenderId: string; payload: BounceTenderPayload }) =>
-      apiService.tenderService.bounce(params.tenderId, params.payload),
+      tenderService.bounce(params.tenderId, params.payload),
     onSuccess: () => {
       toast.success(t("Carrier backout recorded"), {
         description: t(

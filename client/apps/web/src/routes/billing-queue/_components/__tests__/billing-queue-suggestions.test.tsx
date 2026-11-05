@@ -7,8 +7,9 @@ import { BillingQueueSuggestions } from "../billing-queue-suggestions";
 
 const mocks = vi.hoisted(() => ({ recommendations: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { getRecommendations: mocks.recommendations } },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { getRecommendations: mocks.recommendations },
 }));
 vi.mock("@trenova/shared/stores/auth-store", () => ({
   useAuthStore: (select: (state: { user: { id: string } }) => unknown) =>

@@ -30,3 +30,5 @@ export class JournalReversalService {
     });
   }
 }
+
+export const journalReversalService = new JournalReversalService();

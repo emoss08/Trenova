@@ -2,7 +2,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
 import { webWatchCadenceLabel, webWatchStatusAttrs } from "@/lib/web-watch";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import type { WebWatch, WebWatchFindingsResponse } from "@/types/agent-extension";
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
@@ -124,7 +124,7 @@ function WebWatchDetail({ watch, canUpdate }: { watch: WebWatch; canUpdate: bool
   const findings = useQuery(agentExtension.webWatchFindings(watch.id));
   const stop = useApiMutation<WebWatch, undefined>({
     resourceName: t("Web watch"),
-    mutationFn: () => apiService.agentExtensionService.stopWebWatch(watch.id),
+    mutationFn: () => agentExtensionService.stopWebWatch(watch.id),
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: agentExtension.webWatches._def }),

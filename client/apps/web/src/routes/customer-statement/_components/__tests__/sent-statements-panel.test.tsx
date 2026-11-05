@@ -5,9 +5,7 @@ import { SentStatementsPanel } from "../sent-statements-panel";
 
 const { listSent } = vi.hoisted(() => ({ listSent: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { customerStatementService: { listSent } },
-}));
+vi.mock("@/services/customer-statement", () => ({ customerStatementService: { listSent } }));
 
 afterEach(() => {
   cleanup();

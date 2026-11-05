@@ -12,48 +12,7 @@ import { AccessorialChargePanel } from "@/components/accessorial-charge/accessor
 export default function AccessorialChargeTable() {
   const t = useT();
 
-  //   const queryClient = useQueryClient();
   const columns = useMemo(() => getColumns(t), [t]);
-
-  //   const handleBulkStatusUpdate = useCallback(
-  //     async (rows: EquipmentType[], status: string) => {
-  //       const ids = rows.map((r) => r.id);
-  //       toast.promise(
-  //         apiService.equipmentTypeService.bulkUpdateStatus({
-  //           equipmentTypeIds: ids as string[],
-  //           status: status as EquipmentType["status"],
-  //         }),
-  //         {
-  //           loading: "Updating status...",
-  //           success: "Status updated successfully",
-  //           error: "Failed to update status",
-  //           finally: async () => {
-  //             await queryClient.invalidateQueries({
-  //               queryKey: ["equipment-type-list"],
-  //               refetchType: "all",
-  //             });
-  //           },
-  //         },
-  //       );
-  //     },
-  //     [queryClient],
-  //   );
-
-  //   const dockActions = useMemo<DockAction<EquipmentType>[]>(
-  //     () => [
-  //       {
-  //         id: "status-update",
-  //         type: "select",
-  //         label: "Update status",
-  //         loadingLabel: "Updating...",
-  //         icon: CircleCheckIcon,
-  //         options: statusChoices,
-  //         onSelect: handleBulkStatusUpdate,
-  //         clearSelectionOnSuccess: true,
-  //       },
-  //     ],
-  //     [handleBulkStatusUpdate],
-  //   );
 
   return (
     <DataTable<AccessorialChargeRow>
@@ -63,7 +22,6 @@ export default function AccessorialChargeTable() {
       graphql={accessorialChargeTableGraphQLConfig}
       resource={Resource.AccessorialCharge}
       columns={columns}
-      //   dockActions={dockActions}
       enableRowSelection
       TablePanel={AccessorialChargePanel}
     />

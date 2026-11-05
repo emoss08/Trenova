@@ -2,8 +2,7 @@ import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import { artifactCsvUrl } from "@/services/assistant";
+import { assistantService, artifactCsvUrl } from "@/services/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { translateLabel } from "@trenova/shared/i18n/labels";
@@ -47,7 +46,7 @@ export function DeskReportPreviewBody({
   const { allowed: mayRun } = usePermission(Resource.Report, Operation.Export);
   const runnable = mayRun && path !== "" && typeof artifact.payload.readWith === "object";
   const runFull = useApiMutation({
-    mutationFn: () => apiService.assistantService.runArtifactReport(artifact.threadId, artifact.id),
+    mutationFn: () => assistantService.runArtifactReport(artifact.threadId, artifact.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: assistant.artifacts(artifact.threadId).queryKey,

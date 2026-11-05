@@ -5,7 +5,7 @@ import { TextChipsField } from "@/components/fields/text-chips-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { agentExtension } from "@/lib/queries/agent-extension";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import {
   portalSiteFormSchema,
   type PortalSite,
@@ -67,8 +67,8 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
     mutationFn: (values) => {
       const request = siteRequestOf(values, site);
       return site
-        ? apiService.agentExtensionService.updatePortalSite(site.id, request)
-        : apiService.agentExtensionService.createPortalSite(request);
+        ? agentExtensionService.updatePortalSite(site.id, request)
+        : agentExtensionService.createPortalSite(request);
     },
     onSuccess: async () => {
       onOpenChange(false);
@@ -230,7 +230,9 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
                   control={control}
                   name="enabled"
                   label={t("Available to agents")}
-                  description={t("Turn it off to keep the site and its history without agents using it.")}
+                  description={t(
+                    "Turn it off to keep the site and its history without agents using it.",
+                  )}
                 />
               </FormControl>
             </FormGroup>

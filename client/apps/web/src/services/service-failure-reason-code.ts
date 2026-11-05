@@ -60,12 +60,6 @@ export class ServiceFailureReasonCodeService {
     );
     return safeParse(serviceFailureReasonCodeSchema, response, "ServiceFailureReasonCode");
   }
-
-  async reorder(reasonIds: string[]) {
-    const response = await api.post<ServiceFailureReasonCode[]>(
-      "/service-failure-reason-codes/reorder/",
-      { reasonIds },
-    );
-    return safeParse(serviceFailureReasonCodeSchema.array(), response, "ServiceFailureReasonCodes");
-  }
 }
+
+export const serviceFailureReasonCodeService = new ServiceFailureReasonCodeService();

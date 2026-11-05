@@ -14,12 +14,10 @@ const mocks = vi.hoisted(() => ({
   onBack: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    userService: {
-      switchOrganization: mocks.switchOrganization,
-      currentUser: mocks.currentUser,
-    },
+vi.mock("@trenova/shared/services/user", () => ({
+  userService: {
+    switchOrganization: mocks.switchOrganization,
+    currentUser: mocks.currentUser,
   },
 }));
 

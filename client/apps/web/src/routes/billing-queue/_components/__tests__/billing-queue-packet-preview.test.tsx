@@ -15,14 +15,13 @@ const mocks = vi.hoisted(() => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: {
-      getPacketPreview: mocks.getPacketPreview,
-      getPacketChecks: mocks.getPacketChecks,
-      getById: mocks.getById,
-      updateInvoiceDetails: mocks.updateInvoiceDetails,
-    },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: {
+    getPacketPreview: mocks.getPacketPreview,
+    getPacketChecks: mocks.getPacketChecks,
+    getById: mocks.getById,
+    updateInvoiceDetails: mocks.updateInvoiceDetails,
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: mocks.toast }));

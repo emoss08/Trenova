@@ -13,8 +13,9 @@ const { reassignCharge, toastSuccess } = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { reassignCharge } },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { reassignCharge },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: toastSuccess, error: vi.fn() },

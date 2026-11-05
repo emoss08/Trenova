@@ -1,6 +1,6 @@
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { isRatable, toRatingPreviewPayload } from "@/lib/shipment-rating-payload";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type {
   AdditionalCharge,
   Shipment,
@@ -206,7 +206,7 @@ export function useShipmentTotalsPreview() {
 
     const payload = toRatingPreviewPayload(getValues());
 
-    apiService.shipmentService
+    shipmentService
       .calculateTotals(payload, controller.signal)
       .then((result) => {
         if (controller.signal.aborted) return;

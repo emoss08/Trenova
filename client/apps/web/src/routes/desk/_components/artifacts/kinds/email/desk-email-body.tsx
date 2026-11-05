@@ -1,7 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { markProposalEdits } from "@/lib/proposal-cache";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -63,11 +63,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
 
   const save = useApiMutation({
     mutationFn: (modifications: Record<string, unknown>) =>
-      apiService.assistantService.saveProposalEdits(
-        artifact.threadId,
-        artifact.proposalId,
-        modifications,
-      ),
+      assistantService.saveProposalEdits(artifact.threadId, artifact.proposalId, modifications),
     onSuccess: (edits) => {
       markProposalEdits(queryClient, edits.proposalId, edits.pendingModifications ?? null);
       setTyped({});

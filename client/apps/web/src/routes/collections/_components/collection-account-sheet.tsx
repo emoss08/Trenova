@@ -24,7 +24,7 @@ import {
   promisePaidShare,
 } from "@/lib/collection-labels";
 import { collection } from "@/lib/queries/collection";
-import { apiService } from "@/services/api";
+import { collectionService } from "@/services/collection";
 import type { CollectionAccountView, CollectionActivity } from "@/types/collection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -212,7 +212,7 @@ function AssignmentPanel({
 
   const assign = useApiMutation({
     mutationFn: (collectorId: string | null) =>
-      apiService.collectionService.assignCollector(customerId, collectorId),
+      collectionService.assignCollector(customerId, collectorId),
     resourceName: "CollectionAccount",
     form,
     onSuccess: (next) => {
@@ -220,8 +220,7 @@ function AssignmentPanel({
     },
   });
   const schedule = useApiMutation({
-    mutationFn: (date: number | null) =>
-      apiService.collectionService.scheduleFollowUp(customerId, date, ""),
+    mutationFn: (date: number | null) => collectionService.scheduleFollowUp(customerId, date, ""),
     resourceName: "CollectionAccount",
     form,
     onSuccess: (next) => {
@@ -282,7 +281,7 @@ function HistoryPanel({ customerId, view }: { customerId: string; view: Collecti
     if (!last) return;
     setLoading(true);
     try {
-      const page = await apiService.collectionService.getAccount(customerId, {
+      const page = await collectionService.getAccount(customerId, {
         createdAt: last.createdAt,
         id: last.id,
       });

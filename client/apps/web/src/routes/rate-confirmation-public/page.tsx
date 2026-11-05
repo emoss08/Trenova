@@ -5,7 +5,7 @@ import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/publ
 import { PublicPageShell } from "@/components/public-page/public-page-shell";
 import { StatusCard } from "@/components/public-page/status-card";
 import { SummaryRow } from "@/components/public-page/summary-row";
-import { RateConfirmationService } from "@/services/rate-confirmation";
+import { rateConfirmationService } from "@/services/rate-confirmation";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -25,8 +25,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useParams } from "react-router";
-
-const rateConfirmationService = new RateConfirmationService();
 
 type SignerPayload = { signerName: string; signerTitle: string };
 

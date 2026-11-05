@@ -32,3 +32,5 @@ export class CarrierService {
     return safeParse(carrierSchema, response, "Carrier");
   }
 }
+
+export const carrierService = new CarrierService();

@@ -2,6 +2,7 @@ import type { ToastDetail } from "@trenova/shared/components/ui/toast-store";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
+import { RequestTimeoutError, ResponseContractError } from "@trenova/shared/lib/request-errors";
 import { isRecord } from "@trenova/shared/lib/utils";
 import type { NormalizedApiError, ProblemType } from "@trenova/shared/types/errors";
 import { RETRYABLE_PROBLEM_TYPES, apiProblem } from "@trenova/shared/types/errors";
@@ -21,6 +22,7 @@ export type ErrorKind =
   | "timeout"
   | "server"
   | "request"
+  | "contract"
   | "unexpected";
 
 export type ErrorTone = "neutral" | "info" | "warning" | "danger";
@@ -67,6 +69,7 @@ const KIND_TONE: Record<ErrorKind, ErrorTone> = {
   timeout: "warning",
   server: "danger",
   request: "warning",
+  contract: "danger",
   unexpected: "danger",
 };
 
@@ -191,6 +194,14 @@ export function describeError(error: unknown): ErrorDescription {
     });
   }
 
+  if (error instanceof RequestTimeoutError) {
+    return describe("timeout", { name: error.name, message: error.message, stack: error.stack });
+  }
+
+  if (error instanceof ResponseContractError) {
+    return describe("contract", { name: error.name, message: error.message, stack: error.stack });
+  }
+
   if (error instanceof ApiRequestError || error instanceof GraphQLRequestError) {
     return describeApiError(error, error.normalize());
   }
@@ -229,6 +240,25 @@ export function describeError(error: unknown): ErrorDescription {
  */
 export function errorReferenceDetails(traceId: string | undefined): ToastDetail[] | undefined {
   return traceId ? [{ label: translate("Reference"), value: traceId, monospace: true }] : undefined;
+}
+
+/** A record that is not there, or that this person may not read: an answer, not a failure. */
+export function isAbsence(error: unknown): boolean {
+  const { kind } = describeError(error);
+  return kind === "not-found" || kind === "forbidden";
+}
+
+/**
+ * Reads something that may not exist. Only its absence becomes null: a failure stays one, so
+ * a screen never says "nothing here" when the truth is that it could not find out.
+ */
+export async function nullWhenAbsent<T>(read: Promise<T>): Promise<T | null> {
+  try {
+    return await read;
+  } catch (error) {
+    if (isAbsence(error)) return null;
+    throw error;
+  }
 }
 
 export function isSessionExpiry(error: unknown): boolean {

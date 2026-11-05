@@ -4,7 +4,7 @@ import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useEditRecordReset } from "@/hooks/use-edit-record-reset";
 import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
 import { rateMatrix } from "@/lib/queries/rate-matrix";
-import { apiService } from "@/services/api";
+import { rateMatrixService } from "@/services/rate";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -56,7 +56,7 @@ export function RateMatrixPanel({
     queryKey: "rate-matrix",
     id: row?.id,
     version: row?.version,
-    fetch: (id) => apiService.rateMatrixService.getById(id),
+    fetch: (id) => rateMatrixService.getById(id),
   });
 
   const formTabs = useMemo(
@@ -117,7 +117,7 @@ export function RateMatrixPanel({
             throw new Error("No Rate Matrix ID selected");
           }
 
-          const saved = await apiService.rateMatrixService.update(currentRow.id, values);
+          const saved = await rateMatrixService.update(currentRow.id, values);
           // A change to the draft moves its review state, which the Versions tab shows.
           void queryClient.invalidateQueries({ queryKey: rateMatrix._def });
           return saved;
@@ -138,7 +138,7 @@ export function RateMatrixPanel({
         "Enter a published tariff as the grid it was published as, and point any lane at it.",
       )}
       formTabs={formTabs}
-      mutationFn={(values) => apiService.rateMatrixService.create(values)}
+      mutationFn={(values) => rateMatrixService.create(values)}
     />
   );
 }

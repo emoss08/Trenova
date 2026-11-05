@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import {
   Loading02Icon,
   PrinterIcon,
@@ -55,7 +55,7 @@ export default function LoadPlannerDialog({
       const blob = buildLoadPlanBlob(data, shipmentMeta);
       const fileName = `load-plan-${shipmentMeta.proNumber || "draft"}.html`;
       const file = new File([blob], fileName, { type: "text/html" });
-      await apiService.documentService.upload({
+      await documentService.upload({
         file,
         resourceId: shipmentMeta.shipmentId,
         resourceType: "shipment",

@@ -1,6 +1,6 @@
 import { fetchFormulaLibrary } from "@/lib/graphql/formula-library";
 import { formulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -15,29 +15,26 @@ export const formulaLibrary = createQueryKeys("formulaLibrary", {
   versionDiff: (libraryId: string, fromVersion: number, toVersion: number) => ({
     queryKey: [libraryId, fromVersion, toVersion],
     queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.compareVersions(libraryId, fromVersion, toVersion, {
+      formulaLibraryService.compareVersions(libraryId, fromVersion, toVersion, {
         signal,
       }),
   }),
   readiness: (libraryId: string) => ({
     queryKey: [libraryId],
-    queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.readiness(libraryId, { signal }),
+    queryFn: async ({ signal }: Signal) => formulaLibraryService.readiness(libraryId, { signal }),
   }),
   reviewDiff: (libraryId: string) => ({
     queryKey: [libraryId],
-    queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.reviewDiff(libraryId, { signal }),
+    queryFn: async ({ signal }: Signal) => formulaLibraryService.reviewDiff(libraryId, { signal }),
   }),
   reviewers: (libraryId: string) => ({
     queryKey: [libraryId],
     queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.listReviewers(libraryId, { signal }),
+      formulaLibraryService.listReviewers(libraryId, { signal }),
   }),
   usages: (libraryId: string) => ({
     queryKey: [libraryId],
-    queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.usages(libraryId, { signal }),
+    queryFn: async ({ signal }: Signal) => formulaLibraryService.usages(libraryId, { signal }),
   }),
 });
 

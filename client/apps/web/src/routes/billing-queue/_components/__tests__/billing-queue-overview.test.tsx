@@ -10,14 +10,13 @@ const mocks = vi.hoisted(() => ({
   stats: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: {
-      getAssist: mocks.assist,
-      getBrief: mocks.brief,
-      getNovaGeneration: mocks.generation,
-      getStats: mocks.stats,
-    },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: {
+    getAssist: mocks.assist,
+    getBrief: mocks.brief,
+    getNovaGeneration: mocks.generation,
+    getStats: mocks.stats,
   },
 }));
 

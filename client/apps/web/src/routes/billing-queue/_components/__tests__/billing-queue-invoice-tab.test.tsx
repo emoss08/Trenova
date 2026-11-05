@@ -7,8 +7,9 @@ import { BillingQueueInvoiceTab } from "../billing-queue-invoice-tab";
 
 const mocks = vi.hoisted(() => ({ updateInvoiceDetails: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { updateInvoiceDetails: mocks.updateInvoiceDetails } },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { updateInvoiceDetails: mocks.updateInvoiceDetails },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),

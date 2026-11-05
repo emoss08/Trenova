@@ -1,7 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
-import type { ImportTemplatePayload, ImportTemplatesRequest } from "@/services/formula-template";
+import {
+  formulaTemplateService,
+  type ImportTemplatePayload,
+  type ImportTemplatesRequest,
+} from "@/services/formula-template";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -99,7 +102,7 @@ export function ImportTemplateDialog({
 
   const { mutate, isPending } = useMutation<ImportTemplatesResponse, Error, ImportTemplatesRequest>(
     {
-      mutationFn: (request) => apiService.formulaTemplateService.importTemplates(request),
+      mutationFn: (request) => formulaTemplateService.importTemplates(request),
       onSuccess: async (response) => {
         const renamedCount = Object.keys(response.renamed ?? {}).length;
         toast.success(

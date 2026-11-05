@@ -3,7 +3,7 @@ import { isTestItem } from "@/lib/tariff-outline";
 import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import type { SourceProposal } from "@/types/page-draft";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import {
@@ -168,7 +168,7 @@ export function ProposalCard({
     queries: loads.map((load) => ({
       queryKey: ["formula-proposal-price", next.source, load.key],
       queryFn: ({ signal }: { signal?: AbortSignal }) =>
-        apiService.formulaTemplateService.preview(
+        formulaTemplateService.preview(
           { source: next.source, ...(load.shipmentId ? { shipmentId: load.shipmentId } : {}) },
           { signal },
         ),

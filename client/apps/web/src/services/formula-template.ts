@@ -26,7 +26,6 @@ import {
   type BacktestResponse,
   type BulkDuplicateFormulaTemplateRequest,
   type BulkUpdateStatusRequest,
-  type CreateVersionRequest,
   type ForkLineage,
   type ForkRequest,
   type FormulaDraftContent,
@@ -279,14 +278,6 @@ export class FormulaTemplateService {
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
-  public async createVersion(
-    templateId: string,
-    data: CreateVersionRequest,
-  ): Promise<FormulaTemplateVersion> {
-    const response = await api.post<unknown>(`${BASE}/${templateId}/versions`, data);
-    return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
-  }
-
   public async rollback(templateId: string, data: RollbackRequest): Promise<FormulaTemplate> {
     const response = await api.post<unknown>(`${BASE}/${templateId}/rollback`, data);
     return safeParse(formulaTemplateSchema, response, "Formula Template");
@@ -518,3 +509,5 @@ export class FormulaTemplateService {
     return safeParse(reviewDiffResponseSchema, response, "Formula Template Review Diff");
   }
 }
+
+export const formulaTemplateService = new FormulaTemplateService();

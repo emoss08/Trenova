@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { invoiceRunService } from "@/services/invoice-run";
 import type { QueryClient } from "@tanstack/react-query";
 
 export const STATEMENT_LIST_KEY = "statement-list";
@@ -14,14 +14,14 @@ export const STATEMENT_DETAIL_KEY = "statement-detail";
 export function statementListQuery() {
   return {
     queryKey: [STATEMENT_LIST_KEY] as const,
-    queryFn: () => apiService.invoiceRunService.listStatements(),
+    queryFn: () => invoiceRunService.listStatements(),
   };
 }
 
 export function statementDetailQuery(customerId: string | null) {
   return {
     queryKey: [STATEMENT_DETAIL_KEY, customerId] as const,
-    queryFn: () => apiService.invoiceRunService.getStatement(customerId as string),
+    queryFn: () => invoiceRunService.getStatement(customerId as string),
     enabled: !!customerId,
   };
 }

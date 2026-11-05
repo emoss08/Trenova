@@ -5,3 +5,5 @@ export class StoredMileageService {
     await api.delete(`/stored-mileages/${id}/`);
   }
 }
+
+export const storedMileageService = new StoredMileageService();

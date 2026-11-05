@@ -14,7 +14,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { distanceProfileDistanceUnitChoices } from "@/lib/choices";
 import { distanceControl } from "@/lib/queries/distance-control";
-import { apiService } from "@/services/api";
+import { distanceControlService } from "@/services/distance-control";
 import {
   distanceControlSchema,
   type DistanceControl,
@@ -89,7 +89,7 @@ export default function DistanceControlForm() {
     DistanceControlInput
   >({
     queryKey: distanceControl.get._def,
-    mutationFn: async (values: DistanceControl) => apiService.distanceControlService.patch(values),
+    mutationFn: async (values: DistanceControl) => distanceControlService.patch(values),
     resourceName: "Distance Control",
     resetForm: reset,
     form,

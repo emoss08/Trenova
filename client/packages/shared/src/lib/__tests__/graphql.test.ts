@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
+import { ResponseContractError } from "@trenova/shared/lib/request-errors";
 import {
   documentContainsMutation,
   GraphQLRequestError,
@@ -152,9 +153,15 @@ describe("requestGraphQL", () => {
     });
   });
 
-  it("forwards the abort signal to fetch", async () => {
+  it("cancels the request when the caller's signal aborts", async () => {
     setCsrfToken("graphql-token");
     const controller = new AbortController();
+    let received: AbortSignal | null | undefined;
+    fetchMock.mockImplementationOnce(async (_url: string, init: RequestInit) => {
+      received = init.signal;
+      controller.abort();
+      return new Response(JSON.stringify({ data: { ok: true } }));
+    });
 
     await requestGraphQL({
       document: "query Test { ok }",
@@ -162,8 +169,37 @@ describe("requestGraphQL", () => {
       signal: controller.signal,
     });
 
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(init.signal).toBe(controller.signal);
+    expect(received?.aborted).toBe(true);
+  });
+
+  it("keeps a failed read of the body as that failure, not an empty response", async () => {
+    setCsrfToken("graphql-token");
+    const read = new TypeError("network error");
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.reject(read) });
+
+    await expect(requestGraphQL({ document: "query Test { ok }" })).rejects.toBe(read);
+  });
+
+  it("reads a body that is not JSON as empty, so the status decides", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(new Response("<html>Bad gateway</html>", { status: 502 }));
+
+    await expect(requestGraphQL({ document: "query Test { ok }" })).rejects.toMatchObject({
+      kind: "transport",
+      status: 502,
+    });
+  });
+
+  it("carries the server's Retry-After on a refused request", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(
+      new Response("{}", { status: 429, headers: { "Retry-After": "5" } }),
+    );
+
+    await expect(requestGraphQL({ document: "query Test { ok }" })).rejects.toMatchObject({
+      retryAfter: 5,
+      status: 429,
+    });
   });
 
   it("treats a hash-only mutation as a failure when the response is partial", async () => {
@@ -332,7 +368,7 @@ describe("requestGraphQL", () => {
         document: "query Test { ok }",
         operationName: "Test",
       }),
-    ).rejects.toThrow("GraphQL response did not include data");
+    ).rejects.toBeInstanceOf(ResponseContractError);
   });
 });
 

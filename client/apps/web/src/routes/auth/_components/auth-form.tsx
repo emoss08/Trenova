@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { clearSessionCache } from "@/lib/session-cache";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PermissionManifest } from "@trenova/shared/types/permission";
@@ -112,7 +112,7 @@ export function AuthForm({
         return;
       }
 
-      const availableOrganizations = await apiService.userService.getUserOrganizations();
+      const availableOrganizations = await userService.getUserOrganizations();
       setOrganizations(availableOrganizations);
 
       if (availableOrganizations.length > 1) {

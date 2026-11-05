@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import {
   ChevronRightIcon,
   ClockRewindIcon,
@@ -348,7 +348,7 @@ function Replays({
   const start = useApiMutation({
     mutationFn: () => {
       const to = Math.floor(Date.now() / 1000);
-      return apiService.ladingService.startReplay(version.id, {
+      return ladingService.startReplay(version.id, {
         map: mapName,
         from: to - days * DAY,
         to,
@@ -442,7 +442,11 @@ function Replays({
           <Skeleton className="h-7 w-full" />
         </div>
       ) : replays.isError ? (
-        <PanelFailure icon={XCircleIcon} tone="danger" title={t("The replays could not be loaded")} />
+        <PanelFailure
+          icon={XCircleIcon}
+          tone="danger"
+          title={t("The replays could not be loaded")}
+        />
       ) : list.length === 0 ? (
         <PanelSheet
           sketch={<ReplaysSketch />}
@@ -465,15 +469,9 @@ function Replays({
                 <span />
                 <span>{t("Map")}</span>
                 <span>{t("Period")}</span>
-                <span className="text-right">
-                  {t("Same")}
-                </span>
-                <span className="text-right">
-                  {t("Differ")}
-                </span>
-                <span className="text-right">
-                  {t("Rejected")}
-                </span>
+                <span className="text-right">{t("Same")}</span>
+                <span className="text-right">{t("Differ")}</span>
+                <span className="text-right">{t("Rejected")}</span>
               </div>
               <ul aria-label={t("Replays")}>
                 {list.map((replay) => (
@@ -491,9 +489,7 @@ function Replays({
                       <span>
                         <StatusIcon status={replayStatus(replay)} />
                       </span>
-                      <span className="truncate font-mono text-xs">
-                        {replay.map}
-                      </span>
+                      <span className="truncate font-mono text-xs">{replay.map}</span>
                       <span className="text-muted-foreground truncate text-xs">
                         {t(
                           "{0} to {1}",
@@ -848,9 +844,7 @@ function Shadow({
                   <span>{t("Set")}</span>
                   <span>{t("Message")}</span>
                   <span>{t("Received")}</span>
-                  <span className="text-right">
-                    {t("Result")}
-                  </span>
+                  <span className="text-right">{t("Result")}</span>
                 </div>
                 <ul aria-label={t("Shadow messages")}>
                   {list.map((result) => (
@@ -862,18 +856,16 @@ function Shadow({
                         className={cn(
                           "ui-focus-ring grid w-full items-center gap-3 border-b px-3 py-1.5 text-left text-xs",
                           SHADOW_COLUMNS,
-                          result.id === selected?.id ? "bg-surface-active" : "hover:bg-surface-hover",
+                          result.id === selected?.id
+                            ? "bg-surface-active"
+                            : "hover:bg-surface-hover",
                         )}
                       >
                         <span>
                           <StatusIcon status={shadowStatus(result)} />
                         </span>
-                        <span className="font-mono">
-                          {result.transactionSet}
-                        </span>
-                        <span className="truncate font-mono">
-                          {result.messageId}
-                        </span>
+                        <span className="font-mono">{result.transactionSet}</span>
+                        <span className="truncate font-mono">{result.messageId}</span>
                         <span className="text-muted-foreground truncate">
                           {formatToUserTimezone(result.createdAt)}
                         </span>

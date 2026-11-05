@@ -9,7 +9,7 @@ import { ReviewHistoryView } from "@/components/tariff-studio/review-history-vie
 import { describeApiError } from "@/lib/api-error-message";
 import type { FormulaLibraryRecord } from "@/lib/graphql/formula-library";
 import { formulaLibrary, invalidateFormulaLibrary } from "@/lib/queries/formula-library";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
@@ -88,7 +88,7 @@ export function LibrarySubmitDialog({
 
   const submit = useMutation({
     mutationFn: () =>
-      apiService.formulaLibraryService.submit(library.id, {
+      formulaLibraryService.submit(library.id, {
         comment: "",
         reviewerId: reviewerId ?? undefined,
         reviewerNote: note.trim(),
@@ -305,9 +305,9 @@ export function LibraryDecisionDialog({
   const mutation = useMutation({
     mutationFn: (action: LibraryDecision) => {
       const text = comment.trim();
-      if (action === "approve") return apiService.formulaLibraryService.approve(library.id, text);
-      if (action === "reject") return apiService.formulaLibraryService.reject(library.id, text);
-      return apiService.formulaLibraryService.requestChanges(library.id, text);
+      if (action === "approve") return formulaLibraryService.approve(library.id, text);
+      if (action === "reject") return formulaLibraryService.reject(library.id, text);
+      return formulaLibraryService.requestChanges(library.id, text);
     },
     onSuccess: async (_, action) => {
       toast.success(DECISIONS[action].copy.done);

@@ -15,7 +15,15 @@ const billingQueueService = vi.hoisted(() => ({
 }));
 const documentService = vi.hoisted(() => ({ getByResource: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { billingQueueService, documentService } }));
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService,
+}));
+
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService,
+}));
 vi.mock("@/lib/graphql/select-options", () => ({
   fetchGraphQLSelectOptions: vi.fn().mockResolvedValue({ results: [] }),
 }));

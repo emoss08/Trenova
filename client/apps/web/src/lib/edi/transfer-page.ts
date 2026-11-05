@@ -1,6 +1,7 @@
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { transferDirection } from "./transfer-sides";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 /**
  * Where a tender's record link should have landed when the tender is one the
@@ -15,12 +16,13 @@ export async function sentTransferPath(url: URL, signal?: AbortSignal): Promise<
   const id = url.searchParams.get("panelEntityId");
   if (!id) return null;
   try {
-    const transfer = await apiService.ediService.getTransfer(id, { signal });
+    const transfer = await ediService.getTransfer(id, { signal });
     const organizationId = useAuthStore.getState().user?.currentOrganizationId;
     return transferDirection(transfer, organizationId) === "outbound"
       ? `/edi/transfers/outbound${url.search}`
       : null;
-  } catch {
+  } catch (error) {
+    reportFailure(error, { source: "background", operation: "getTransfer" });
     return null;
   }
 }

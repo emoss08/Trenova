@@ -8,16 +8,15 @@ const mocks = vi.hoisted(() => ({
   createUploadSession: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    documentService: {
-      createUploadSession: mocks.createUploadSession,
-      getUploadSession: vi.fn(),
-      getUploadPartTargets: vi.fn(),
-      completeUploadSession: vi.fn(),
-      cancelUploadSession: vi.fn().mockResolvedValue(undefined),
-      getById: vi.fn(),
-    },
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService: {
+    createUploadSession: mocks.createUploadSession,
+    getUploadSession: vi.fn(),
+    getUploadPartTargets: vi.fn(),
+    completeUploadSession: vi.fn(),
+    cancelUploadSession: vi.fn().mockResolvedValue(undefined),
+    getById: vi.fn(),
   },
 }));
 

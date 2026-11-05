@@ -49,3 +49,5 @@ export class APIKeyService {
     return api.get<ResourceCategory[]>("/api-keys/allowed-resources");
   }
 }
+
+export const apiKeyService = new APIKeyService();

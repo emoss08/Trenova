@@ -6,7 +6,7 @@ import { Form, FormSection } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { ManualJournalRow } from "@/lib/graphql/manual-journal-table";
 import { manualJournal } from "@/lib/queries/manual-journal";
-import { apiService } from "@/services/api";
+import { manualJournalService } from "@/services/manual-journal";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { ManualJournal, ManualJournalLine } from "@/types/manual-journal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ function CreatePanel({
     JournalFormValues
   >({
     mutationFn: async (data: JournalFormValues) =>
-      apiService.manualJournalService.createDraft(data as unknown as Partial<ManualJournal>),
+      manualJournalService.createDraft(data as unknown as Partial<ManualJournal>),
     form,
     resourceName: "manual journal",
     onSuccess: () => {
@@ -151,10 +151,7 @@ function EditPanel({
   const saveMutation = useApiMutation<ManualJournal, JournalFormValues, unknown, JournalFormValues>(
     {
       mutationFn: async (data: JournalFormValues) =>
-        apiService.manualJournalService.updateDraft(
-          row!.id!,
-          data as unknown as Partial<ManualJournal>,
-        ),
+        manualJournalService.updateDraft(row!.id!, data as unknown as Partial<ManualJournal>),
       form,
       resourceName: "manual journal",
       onSuccess: () => {
@@ -164,7 +161,7 @@ function EditPanel({
   );
 
   const submitMutation = useApiMutation<ManualJournal, undefined>({
-    mutationFn: async () => apiService.manualJournalService.submit(row!.id!),
+    mutationFn: async () => manualJournalService.submit(row!.id!),
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
@@ -172,7 +169,7 @@ function EditPanel({
   });
 
   const approveMutation = useApiMutation<ManualJournal, undefined>({
-    mutationFn: async () => apiService.manualJournalService.approve(row!.id!),
+    mutationFn: async () => manualJournalService.approve(row!.id!),
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
@@ -180,7 +177,7 @@ function EditPanel({
   });
 
   const postMutation = useApiMutation<ManualJournal, undefined>({
-    mutationFn: async () => apiService.manualJournalService.post(row!.id!),
+    mutationFn: async () => manualJournalService.post(row!.id!),
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
@@ -188,7 +185,7 @@ function EditPanel({
   });
 
   const rejectMutation = useApiMutation<ManualJournal, undefined>({
-    mutationFn: async () => apiService.manualJournalService.reject(row!.id!, rejectReason),
+    mutationFn: async () => manualJournalService.reject(row!.id!, rejectReason),
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();
@@ -197,7 +194,7 @@ function EditPanel({
   });
 
   const cancelMutation = useApiMutation<ManualJournal, undefined>({
-    mutationFn: async () => apiService.manualJournalService.cancel(row!.id!, cancelReason),
+    mutationFn: async () => manualJournalService.cancel(row!.id!, cancelReason),
     resourceName: "manual journal",
     onSuccess: () => {
       invalidateQueries();

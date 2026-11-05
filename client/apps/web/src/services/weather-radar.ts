@@ -13,3 +13,5 @@ export class WeatherRadarService {
     return response.json() as Promise<RainViewerData>;
   }
 }
+
+export const weatherRadarService = new WeatherRadarService();

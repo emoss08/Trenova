@@ -88,3 +88,5 @@ export class IntegrationService {
     return safeParse(syncWorkflowStatusResponseSchema, response, "Sync Workflow Status");
   }
 }
+
+export const integrationService = new IntegrationService();

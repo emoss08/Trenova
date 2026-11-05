@@ -7,7 +7,7 @@ import { documentNeedsSignature } from "@/lib/document-signature";
 import { sortUploadFiles } from "@/lib/document-upload-files";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { shipment } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { UploadState } from "@/types/upload";
 import { SelectionDock } from "@/components/selection-dock";
 import {
@@ -174,7 +174,7 @@ export function BillingQueueDocumentsTab({
   });
 
   const { mutateAsync: deleteDocuments } = useMutation({
-    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
+    mutationFn: (documentIds: string[]) => documentService.bulkDelete(documentIds),
     onSuccess: ({ errorCount }) => {
       if (errorCount > 0) {
         toast.error(

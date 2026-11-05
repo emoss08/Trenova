@@ -11,6 +11,7 @@ import { StatusScreen } from "./errors/status-screen";
 import { Button } from "./ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Home02Icon } from "@trenova/shared/components/icons";
+import { reportFailure } from "@trenova/shared/lib/failure-reporter";
 
 type ErrorStateBoundaryProps = {
   children: ReactNode;
@@ -33,6 +34,7 @@ export function ErrorStateBoundary({
   const handleError = useCallback(
     (error: unknown, info: React.ErrorInfo) => {
       setComponentStack(info.componentStack ?? null);
+      reportFailure(error, { source: "boundary" });
       if (onError && error instanceof Error) {
         onError(error, info);
       }

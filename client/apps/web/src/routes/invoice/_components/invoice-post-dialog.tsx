@@ -21,7 +21,7 @@ import {
 import { usePostInvoice } from "@/hooks/use-post-invoice";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { apiService } from "@/services/api";
+import { invoiceService } from "@/services/invoice";
 import type { InvoicePostPreview } from "@trenova/shared/types/invoice";
 import { useQuery } from "@tanstack/react-query";
 
@@ -52,7 +52,7 @@ export function InvoicePostDialog({
     refetch,
   } = useQuery({
     queryKey: invoicePostPreviewQueryKey(invoiceId),
-    queryFn: () => apiService.invoiceService.getPostPreview(invoiceId),
+    queryFn: () => invoiceService.getPostPreview(invoiceId),
     enabled: open,
     staleTime: 0,
     gcTime: 0,

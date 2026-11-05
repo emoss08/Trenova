@@ -7,9 +7,7 @@ import { LogActivityForm } from "../log-activity-form";
 
 const { logActivity } = vi.hoisted(() => ({ logActivity: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { collectionService: { logActivity } },
-}));
+vi.mock("@/services/collection", () => ({ collectionService: { logActivity } }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));

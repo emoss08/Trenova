@@ -48,8 +48,9 @@ vi.mock("@/components/assistant/use-ask", () => ({
   }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { globalSearchService: { search: globalSearch } },
+vi.mock("@/services/global-search", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/global-search")>()),
+  globalSearchService: { search: globalSearch },
 }));
 
 vi.mock("@/components/assistant/use-page-context", () => ({

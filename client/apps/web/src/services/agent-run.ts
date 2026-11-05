@@ -33,3 +33,5 @@ export class AgentRunService {
     return safeParse(agentRunSchema, response, "Agent Run");
   }
 }
+
+export const agentRunService = new AgentRunService();

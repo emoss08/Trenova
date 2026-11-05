@@ -67,40 +67,6 @@ export class ServiceFailureService {
     );
   }
 
-  async evaluateStop(params: {
-    shipmentId: string;
-    shipmentMoveId?: string;
-    stopId: string;
-    force?: boolean;
-  }) {
-    const search = new URLSearchParams();
-    if (params.shipmentMoveId) search.set("shipmentMoveId", params.shipmentMoveId);
-    if (params.force) search.set("force", "true");
-
-    const response = await api.post(
-      `/service-failures/evaluate-stop/${params.shipmentId}/${params.stopId}/${
-        search.size ? `?${search.toString()}` : ""
-      }`,
-    );
-    return safeParse(
-      serviceFailureEvaluationResultSchema,
-      response,
-      "ServiceFailureEvaluationResult",
-    );
-  }
-
-  async bulkEvaluate(shipmentIds: string[], force = false) {
-    const response = await api.post("/service-failures/bulk-evaluate/", {
-      shipmentIds,
-      force,
-    });
-    return safeParse(
-      serviceFailureEvaluationResultSchema,
-      response,
-      "ServiceFailureEvaluationResult",
-    );
-  }
-
   async update(id: string, data: ServiceFailureUpdate) {
     const response = await api.put<ServiceFailure>(`/service-failures/${id}/`, data);
     return safeParse(serviceFailureSchema, response, "ServiceFailure");
@@ -153,3 +119,5 @@ export class ServiceFailureService {
     return safeParse(serviceFailureSchema, response, "ServiceFailure");
   }
 }
+
+export const serviceFailureService = new ServiceFailureService();

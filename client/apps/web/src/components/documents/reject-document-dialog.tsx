@@ -6,7 +6,7 @@ import {
   rejectDocumentFormSchema,
   type RejectDocumentFormValues,
 } from "@/lib/document-review";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -63,7 +63,7 @@ export function RejectDocumentDialog({
       if (!document) {
         throw new Error("No document selected");
       }
-      return apiService.documentService.reject(document.id, values.reason);
+      return documentService.reject(document.id, values.reason);
     },
     onSuccess: (rejected) => {
       onRejected?.(rejected);

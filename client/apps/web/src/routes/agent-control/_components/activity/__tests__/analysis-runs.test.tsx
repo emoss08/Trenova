@@ -15,12 +15,10 @@ const listRuns =
   >();
 const runOf = vi.fn<(runId: string) => Promise<AnalysisRun>>();
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    agentAnalysisService: {
-      listRuns: (params: Parameters<typeof listRuns>[0]) => listRuns(params),
-      run: (runId: string) => runOf(runId),
-    },
+vi.mock("@/services/agent-analysis", () => ({
+  agentAnalysisService: {
+    listRuns: (params: Parameters<typeof listRuns>[0]) => listRuns(params),
+    run: (runId: string) => runOf(runId),
   },
 }));
 

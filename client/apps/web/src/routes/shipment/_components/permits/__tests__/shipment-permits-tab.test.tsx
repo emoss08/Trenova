@@ -15,10 +15,8 @@ const { getPermitAssessment, listPermitRequirements, listPermits, recordDialog }
   }),
 );
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: { getPermitAssessment, listPermitRequirements, listPermits },
-  },
+vi.mock("@/services/shipment", () => ({
+  shipmentService: { getPermitAssessment, listPermitRequirements, listPermits },
 }));
 vi.mock("../../permit-dialogs", () => ({
   PermitRecordDialog: (props: { open: boolean; requirement: { id: string } | null }) => {

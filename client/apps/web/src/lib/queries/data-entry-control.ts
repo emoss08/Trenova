@@ -1,9 +1,9 @@
-import { apiService } from "@/services/api";
+import { dataEntryControlService } from "@/services/data-entry-control";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const dataEntryControl = createQueryKeys("dataEntryControl", {
   get: () => ({
     queryKey: ["get"],
-    queryFn: async () => apiService.dataEntryControlService.get(),
+    queryFn: async () => dataEntryControlService.get(),
   }),
 });

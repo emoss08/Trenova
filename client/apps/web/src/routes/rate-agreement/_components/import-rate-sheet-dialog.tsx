@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { RateAgreementAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { downloadCsv } from "@/lib/data-table-export";
-import { apiService } from "@/services/api";
+import { rateImportService } from "@/services/rate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -98,7 +98,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
   const { mutate: upload, isPending: isUploading } = useMutation({
     mutationFn: (payload: RateImportUploadValues & { file: File }) =>
-      apiService.rateImportService.upload(payload),
+      rateImportService.upload(payload),
     onSuccess: async (created) => {
       setBatch(created);
       setFileProblems([]);
@@ -110,7 +110,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
   });
 
   const { mutate: commit, isPending: isCommitting } = useMutation({
-    mutationFn: () => apiService.rateImportService.commit(batch?.id as string),
+    mutationFn: () => rateImportService.commit(batch?.id as string),
     onSuccess: async (applied) => {
       setBatch(applied);
       await queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });
@@ -120,7 +120,7 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
   });
 
   const { mutate: discard } = useMutation({
-    mutationFn: () => apiService.rateImportService.discard(batch?.id as string),
+    mutationFn: () => rateImportService.discard(batch?.id as string),
     onSuccess: (discarded) => {
       setBatch(discarded);
       void queryClient.invalidateQueries({ queryKey: ["rate-imports", discarded.rateAgreementId] });
@@ -130,12 +130,12 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
   const { data: failedRows } = useQuery({
     queryKey: ["rate-import-failed-rows", batch?.id],
-    queryFn: () => apiService.rateImportService.listFailedRows(batch?.id as string),
+    queryFn: () => rateImportService.listFailedRows(batch?.id as string),
     enabled: Boolean(batch?.id) && (batch?.errorCount ?? 0) > 0,
   });
 
   const { mutate: downloadTemplate, isPending: isDownloading } = useMutation({
-    mutationFn: () => apiService.rateImportService.template(),
+    mutationFn: () => rateImportService.template(),
     onSuccess: ({ fileName, content }) => downloadCsv(content, fileName),
     onError: () => toast.error(t("The template could not be downloaded")),
   });

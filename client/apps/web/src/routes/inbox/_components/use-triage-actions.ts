@@ -75,7 +75,7 @@ import {
   postmarkSecret,
   webhookUrl,
 } from "@/routes/admin/inbound-mailboxes/_components/webhook-url";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useTriageStore } from "@/stores/triage-store";
 import type { AssistantThread } from "@/types/assistant";
@@ -996,7 +996,7 @@ export function useTriageActionsController(): TriageActions {
           },
         ),
       startDeskConversation: (agentId, message) =>
-        apiService.assistantService
+        assistantService
           .startThread(agentId, {
             origin: "Desk",
             title: message.subject.trim() === "" ? t("About an inbound message") : message.subject,

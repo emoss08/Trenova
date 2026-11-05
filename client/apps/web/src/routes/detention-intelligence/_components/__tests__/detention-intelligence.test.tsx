@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({ fetchDetentionIntelligence: vi.fn() }));
 vi.mock("@/lib/graphql/detention-intelligence", () => ({
   fetchDetentionIntelligence: mocks.fetchDetentionIntelligence,
 }));
-vi.mock("@/services/api", () => ({ apiService: {} }));
 
 afterEach(() => {
   cleanup();

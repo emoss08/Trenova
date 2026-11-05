@@ -30,3 +30,5 @@ export class DocumentPacketRuleService {
     await api.delete(`/document-packet-rules/${id}/`);
   }
 }
+
+export const documentPacketRuleService = new DocumentPacketRuleService();

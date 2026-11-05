@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useSingleFlight } from "@/hooks/use-single-flight";
 import { documentContentUrl } from "@/services/document";
-import { apiService } from "@/services/api";
+import { rateConfirmationService } from "@/services/rate-confirmation";
 import { RateConfirmationStatusBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -59,7 +59,7 @@ export function RateConfirmationActions({
 
   const { data: rateConfirmations, isLoading } = useQuery({
     queryKey: rateConfirmationQueryKey(moveId),
-    queryFn: () => apiService.rateConfirmationService.listByMove(moveId),
+    queryFn: () => rateConfirmationService.listByMove(moveId),
   });
 
   // A move can accumulate rate confirmations from replaced assignments; only the
@@ -74,7 +74,7 @@ export function RateConfirmationActions({
   };
 
   const generateMutation = useMutation({
-    mutationFn: () => apiService.rateConfirmationService.generate(moveId),
+    mutationFn: () => rateConfirmationService.generate(moveId),
     onSuccess: () => {
       invalidate();
     },
@@ -83,7 +83,7 @@ export function RateConfirmationActions({
   });
 
   const sendMutation = useMutation({
-    mutationFn: (rateConId: string) => apiService.rateConfirmationService.send(rateConId),
+    mutationFn: (rateConId: string) => rateConfirmationService.send(rateConId),
     onSuccess: (rateCon) => {
       toast.success(
         rateCon.sentToEmails
@@ -287,8 +287,7 @@ function MarkConfirmedDialog({
   const [confirmedByName, setConfirmedByName] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () =>
-      apiService.rateConfirmationService.confirm(rateConfirmation.id, confirmedByName.trim()),
+    mutationFn: () => rateConfirmationService.confirm(rateConfirmation.id, confirmedByName.trim()),
     onSuccess: () => {
       setConfirmedByName("");
       onOpenChange(false);
@@ -346,7 +345,7 @@ function VoidRateConfirmationDialog({
   const [reason, setReason] = useState("");
 
   const mutation = useMutation({
-    mutationFn: () => apiService.rateConfirmationService.void(rateConfirmation.id, reason.trim()),
+    mutationFn: () => rateConfirmationService.void(rateConfirmation.id, reason.trim()),
     onSuccess: () => {
       setReason("");
       onOpenChange(false);

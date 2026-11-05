@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { ChangeMyPassword } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +50,7 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
   const { mutateAsync, isPending } = useApiMutation({
     // Written as an arrow rather than a bound method reference: binding erases the
     // return type to unknown, which leaves setUser below with nothing to infer from.
-    mutationFn: (data: ChangeMyPassword) => apiService.userService.changeMyPassword(data),
+    mutationFn: (data: ChangeMyPassword) => userService.changeMyPassword(data),
     form,
     resourceName: "Password",
     onSuccess: (user) => {

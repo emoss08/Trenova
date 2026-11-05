@@ -20,7 +20,7 @@ import {
   shiftCleared,
   shiftQueueCounts,
 } from "@/lib/watchtower-cache";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -219,7 +219,7 @@ export function useWatchtowerActions({
       return;
     }
     setAsking(true);
-    apiService.assistantService
+    assistantService
       .startThread(askAgent.id, {
         origin: "Watchtower",
         title: item.title,

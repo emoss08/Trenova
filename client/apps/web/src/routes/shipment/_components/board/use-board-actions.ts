@@ -13,7 +13,7 @@ import {
   undoShipmentSuggestionDecisionGraphQL,
 } from "@/lib/graphql/shipment-board";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
-import { apiService } from "@/services/api";
+import { detentionService } from "@/services/detention";
 import type {
   ShipmentSuggestionDecision,
   TenderShipmentItemInput,
@@ -124,7 +124,7 @@ export function useBoardActions() {
   });
 
   const approveDetention = useMutation({
-    mutationFn: (occurrenceId: string) => apiService.detentionService.approve(occurrenceId),
+    mutationFn: (occurrenceId: string) => detentionService.approve(occurrenceId),
     onSettled: refresh,
     onError: (error) =>
       toast.error(t("Detention was not approved"), { description: errorMessage(error) }),

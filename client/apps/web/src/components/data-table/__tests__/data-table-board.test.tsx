@@ -867,8 +867,8 @@ function ShowAHundredRows() {
 }
 
 describe("DataTable while a page of another size loads", () => {
-  const queryClient = createQueryClient();
-  const tree = (
+  let queryClient: QueryClient;
+  const tree = () => (
     <QueryClientProvider client={queryClient}>
       <NuqsTestingAdapter hasMemory>
         <ShowAHundredRows />
@@ -884,6 +884,7 @@ describe("DataTable while a page of another size loads", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createQueryClient();
     useDataTableQueryMock.mockImplementation((...args: unknown[]) => ({
       ...defaultQueryResult,
       isPlaceholderData: (args[2] as { pageSize: number }).pageSize === 100,
@@ -891,13 +892,13 @@ describe("DataTable while a page of another size loads", () => {
   });
 
   it("says how many rows are coming over the old rows, and holds the pager's figures", async () => {
-    render(tree);
+    render(tree());
     expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Show 100" }));
 
     expect(await screen.findByText("Loading 100 rows")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain("Loading 100 rows");
+    expect(screen.getByText("Loading 100 rows").closest('[role="status"]')).not.toBeNull();
     expect(screen.getByText("Alice")).toBeTruthy();
     expect(document.querySelector('[data-slot="pager-figures"]')).not.toBeNull();
     expect(document.querySelector('[data-slot="pager-page"]')).not.toBeNull();
@@ -905,12 +906,12 @@ describe("DataTable while a page of another size loads", () => {
   });
 
   it("clears the overlay and the pager's placeholders when the page lands", async () => {
-    const { rerender } = render(tree);
+    const { rerender } = render(tree());
     fireEvent.click(screen.getByRole("button", { name: "Show 100" }));
     await screen.findByText("Loading 100 rows");
 
     useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
-    rerender(tree);
+    rerender(tree());
 
     expect(screen.queryByText("Loading 100 rows")).toBeNull();
     expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
@@ -922,7 +923,7 @@ describe("DataTable while a page of another size loads", () => {
       isPlaceholderData: true,
     }));
 
-    render(tree);
+    render(tree());
 
     expect(document.querySelector('[data-slot="table-page-loading"]')).toBeNull();
     expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
@@ -991,10 +992,11 @@ describe("DataTable's totals row", () => {
   });
 
   it("is left out when every group is collapsed and no rows are left to total", () => {
-    useDataTableQueryMock.mockImplementation(() => ({
+    const nothingLeft = {
       ...defaultQueryResult,
       data: { ...defaultQueryResult.data, results: [], count: 0 },
-    }));
+    };
+    useDataTableQueryMock.mockImplementation(() => nothingLeft);
 
     renderDataTable(
       {

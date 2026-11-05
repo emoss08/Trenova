@@ -159,3 +159,5 @@ export class TenderService {
     });
   }
 }
+
+export const tenderService = new TenderService();

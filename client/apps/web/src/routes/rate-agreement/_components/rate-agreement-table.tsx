@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
 import { rateAgreementTableGraphQLConfig, type RateAgreementRow } from "@/lib/graphql/rate-tables";
-import { apiService } from "@/services/api";
+import { rateAgreementService } from "@/services/rate";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -26,7 +26,7 @@ export default function RateAgreementTable() {
   const [increaseSelection, setIncreaseSelection] = useState<RateAgreementRow[]>([]);
 
   const { mutate: duplicateAgreement } = useMutation({
-    mutationFn: (id: string) => apiService.rateAgreementService.duplicate(id),
+    mutationFn: (id: string) => rateAgreementService.duplicate(id),
     onSuccess: (copy) => {
       toast.success(t("Duplicated as {0} — a fresh draft, ready to edit", copy.code));
       void queryClient.invalidateQueries({ queryKey: ["rate-agreement-list"] });

@@ -28,3 +28,5 @@ export class ServiceTypeService {
     return safeParse(serviceTypeSchema, response, "ServiceType");
   }
 }
+
+export const serviceTypeService = new ServiceTypeService();

@@ -25,3 +25,5 @@ export class CustomFieldService {
     await api.delete(`/custom-fields/definitions/${id}/`);
   }
 }
+
+export const customFieldService = new CustomFieldService();

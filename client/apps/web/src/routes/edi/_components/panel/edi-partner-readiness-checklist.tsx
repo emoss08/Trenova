@@ -3,7 +3,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { EDIPartnerReadinessBadge } from "@trenova/shared/components/status-badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import type { EDIPartner } from "@trenova/shared/types/edi";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircleIcon, CircleIcon } from "@trenova/shared/components/icons";
@@ -39,7 +39,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
   const partnerId = partner.id ?? "";
   const { data, isPending, isError } = useQuery({
     queryKey: ["edi-partner-readiness-detail", partnerId],
-    queryFn: () => apiService.ediService.getPartnerReadiness(partnerId),
+    queryFn: () => ediService.getPartnerReadiness(partnerId),
     enabled: partnerId !== "",
   });
 

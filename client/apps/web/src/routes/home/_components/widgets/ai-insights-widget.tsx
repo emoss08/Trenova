@@ -5,7 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { insight as insightQueries } from "@/lib/queries/insight";
-import { apiService } from "@/services/api";
+import { insightService } from "@/services/insight";
 import type { Insight, InsightMetric, InsightSeverity } from "@/types/insight";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -93,7 +93,7 @@ function InsightCard({ insight, now }: { insight: Insight; now: number }) {
   const stale = isStale(insight, now);
 
   const dismissMutation = useApiMutation({
-    mutationFn: () => apiService.insightService.dismiss(insight.id),
+    mutationFn: () => insightService.dismiss(insight.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: insightQueries.active(INSIGHT_LIMIT).queryKey,

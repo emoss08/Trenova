@@ -4,7 +4,7 @@ import { EntityRefCell } from "@/components/data-table/_components/entity-ref-li
 import { EditableEquipmentStatusBadge } from "@/components/editable-equipment-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { equipmentStatusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { tractorService } from "@/services/tractor";
 import type { TractorRow } from "@/lib/graphql/equipment-table";
 import type { Tractor } from "@/types/tractor";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ function StatusCell({ row }: { row: TractorRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Tractor["status"]) => {
       if (!row.id) return;
-      await apiService.tractorService.patch(row.id, {
+      await tractorService.patch(row.id, {
         status: newStatus,
       });
 

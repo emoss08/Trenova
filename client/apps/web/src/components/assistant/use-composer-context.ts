@@ -1,5 +1,5 @@
 import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { apiService } from "@/services/api";
+import { globalSearchService } from "@/services/global-search";
 import type { AssistantEntityRef } from "@/types/assistant";
 import type { UploadState } from "@/types/upload";
 import { useCallback, useMemo, useState } from "react";
@@ -96,7 +96,7 @@ export function useComposerContext(threadId: string) {
   }, [clearAll]);
 
   const searchMentions = useCallback(async (query: string): Promise<MentionCandidate[]> => {
-    const response = await apiService.globalSearchService.search(query, MENTION_RESULT_LIMIT);
+    const response = await globalSearchService.search(query, MENTION_RESULT_LIMIT);
 
     return response.groups.flatMap((group) =>
       group.hits.map<MentionCandidate>((hit) => ({

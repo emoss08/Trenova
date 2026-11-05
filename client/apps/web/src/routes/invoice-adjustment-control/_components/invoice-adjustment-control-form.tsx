@@ -25,7 +25,7 @@ import {
   writeOffApprovalPolicyChoices,
 } from "@/lib/choices";
 import { invoiceAdjustmentControl } from "@/lib/queries/invoice-adjustment-control";
-import { apiService } from "@/services/api";
+import { invoiceAdjustmentControlService } from "@/services/invoice-adjustment-control";
 import {
   type InvoiceAdjustmentControl,
   invoiceAdjustmentControlSchema,
@@ -57,7 +57,7 @@ export default function InvoiceAdjustmentControlForm() {
   >({
     queryKey: invoiceAdjustmentControl.get._def,
     mutationFn: async (values: InvoiceAdjustmentControl) =>
-      apiService.invoiceAdjustmentControlService.update(values),
+      invoiceAdjustmentControlService.update(values),
     resourceName: "Invoice Adjustment Control",
     resetForm: reset,
     form,

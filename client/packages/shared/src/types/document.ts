@@ -145,14 +145,6 @@ export type Document = z.infer<typeof documentSchema>;
 
 export const uploadDocumentResponseSchema = documentSchema;
 
-export const bulkUploadDocumentResponseSchema = z.object({
-  documents: z.array(documentSchema),
-  errorCount: z.number(),
-  successCount: z.number(),
-});
-
-export type BulkUploadDocumentResponse = z.infer<typeof bulkUploadDocumentResponseSchema>;
-
 export const downloadUrlResponseSchema = z.object({
   url: z.string(),
 });
@@ -451,13 +443,6 @@ export interface UploadDocumentParams {
   description?: string;
   tags?: string[];
   documentTypeId?: string;
-  lineageId?: string;
-}
-
-export interface BulkUploadDocumentParams {
-  files: File[];
-  resourceId: string;
-  resourceType: string;
   lineageId?: string;
 }
 

@@ -9,7 +9,7 @@ import { accountingSync } from "@/lib/queries/accounting-sync";
 import { invalidateInvoiceQueries, invoice as invoiceQueries } from "@/lib/queries/invoice";
 import { InvoicePostDialog } from "@/routes/invoice/_components/invoice-post-dialog";
 import { InvoiceVoidDialog } from "@/routes/invoice/_components/invoice-void-dialog";
-import { apiService } from "@/services/api";
+import { invoiceService } from "@/services/invoice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -238,12 +238,12 @@ function InvoiceCard({
   const settle = () => invalidateInvoiceQueries(queryClient);
   const sendEmail = useApiMutation({
     resourceName: "invoice",
-    mutationFn: () => apiService.invoiceService.send(id),
+    mutationFn: () => invoiceService.send(id),
     onSuccess: () => settle(),
   });
   const makePdf = useApiMutation({
     resourceName: "invoice PDF",
-    mutationFn: () => apiService.invoiceService.generatePdf(id),
+    mutationFn: () => invoiceService.generatePdf(id),
     onSuccess: () => {
       settle();
       toast.success(t("{0} PDF generation started", record.number));

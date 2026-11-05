@@ -87,3 +87,5 @@ export class RecurringShipmentService {
     };
   }
 }
+
+export const recurringShipmentService = new RecurringShipmentService();

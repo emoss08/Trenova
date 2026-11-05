@@ -53,14 +53,13 @@ vi.mock("../../billing-queue-queries", async (importOriginal) => {
   };
 });
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: {
-      getAssist: mocks.assist,
-      getRecommendations: mocks.recommendations,
-      composeSearch: mocks.composeSearch,
-      deleteFilterPreset: vi.fn(),
-    },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: {
+    getAssist: mocks.assist,
+    getRecommendations: mocks.recommendations,
+    composeSearch: mocks.composeSearch,
+    deleteFilterPreset: vi.fn(),
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({

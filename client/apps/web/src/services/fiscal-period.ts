@@ -32,3 +32,5 @@ export class FiscalPeriodService {
     return api.put<FiscalPeriod>(`/fiscal-periods/${id}/unlock/`);
   }
 }
+
+export const fiscalPeriodService = new FiscalPeriodService();

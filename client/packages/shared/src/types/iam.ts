@@ -2,7 +2,6 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod/v4";
 import { optionalIdSchema } from "./helpers";
 import { roleSchema } from "./role";
-import { createLimitOffsetResponse } from "./server";
 
 const stringArraySchema = z
   .array(z.string())
@@ -140,8 +139,6 @@ export const scimGroupRoleMappingSchema = z.object({
 });
 
 export type SCIMGroupRoleMapping = z.infer<typeof scimGroupRoleMappingSchema>;
-export const scimGroupRoleMappingListSchema = createLimitOffsetResponse(scimGroupRoleMappingSchema);
-export type SCIMGroupRoleMappingListResponse = z.infer<typeof scimGroupRoleMappingListSchema>;
 
 export const scimGroupRoleMappingsSchema = z.array(scimGroupRoleMappingSchema);
 
@@ -396,7 +393,10 @@ export const securityUnenrolledMemberSchema = z.object({
   userId: z.string(),
   name: z.string(),
   emailAddress: z.string(),
-  lastLoginAt: z.number().nullish().transform((value) => value ?? null),
+  lastLoginAt: z
+    .number()
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export type SecurityUnenrolledMember = z.infer<typeof securityUnenrolledMemberSchema>;

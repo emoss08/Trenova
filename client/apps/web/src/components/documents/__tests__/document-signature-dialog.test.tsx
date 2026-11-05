@@ -7,8 +7,9 @@ import { DocumentSignatureDialog } from "../document-signature-dialog";
 
 const { setSignature } = vi.hoisted(() => ({ setSignature: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { documentService: { setSignature } },
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService: { setSignature },
 }));
 
 afterEach(cleanup);

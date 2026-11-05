@@ -11,7 +11,7 @@ import {
 import { Label } from "@trenova/shared/components/ui/label";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { collectionService } from "@/services/collection";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -38,7 +38,7 @@ export function SendReminderDialog({
   const [note, setNote] = useState("");
 
   const { mutate, isPending } = useApiMutation({
-    mutationFn: () => apiService.collectionService.sendReminder(customerId, note.trim()),
+    mutationFn: () => collectionService.sendReminder(customerId, note.trim()),
     resourceName: "PaymentReminder",
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["collection"] });

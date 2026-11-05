@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -55,8 +55,8 @@ export function OrganizationSelection({
       // Staying put still needs a round trip: currentUser refreshes memberships that the
       // login response predates, and switching resets the session's active roles.
       const user = selectedOrganization.isCurrent
-        ? await apiService.userService.currentUser()
-        : await apiService.userService.switchOrganization({
+        ? await userService.currentUser()
+        : await userService.switchOrganization({
             organizationId: selectedOrganization.id,
           });
       setUser(user);

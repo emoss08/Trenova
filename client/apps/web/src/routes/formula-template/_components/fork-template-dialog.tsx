@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import {
   forkRequestSchema,
   type ForkRequest,
@@ -81,7 +81,7 @@ export function ForkTemplateDialog({
   const onSubmit = async (values: ForkRequest) => {
     if (!template?.id) return;
 
-    await apiService.formulaTemplateService
+    await formulaTemplateService
       .fork(template.id, values)
       .then((forkedTemplate) => {
         void invalidateFormulaTemplate(queryClient);

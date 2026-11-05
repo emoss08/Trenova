@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { api } from "@trenova/shared/lib/api";
 import type { Document } from "@trenova/shared/types/document";
 import { QueryClient } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe("prefetchRecordPreview", () => {
   it("warms a document's record but never draws its page, which the server logs as a view", async () => {
-    const getById = vi.spyOn(apiService.documentService, "getById").mockResolvedValue({
+    const getById = vi.spyOn(documentService, "getById").mockResolvedValue({
       id: "doc_1",
       fileType: "application/pdf",
       originalName: "Rate Confirmation.pdf",

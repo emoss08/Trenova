@@ -10,11 +10,9 @@ import { RateIncreaseDialog } from "../rate-increase-dialog";
 const previewRateIncrease = vi.fn();
 const applyRateIncrease = vi.fn();
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    get rateAgreementService() {
-      return { previewRateIncrease, applyRateIncrease };
-    },
+vi.mock("@/services/rate", () => ({
+  get rateAgreementService() {
+    return { previewRateIncrease, applyRateIncrease };
   },
 }));
 

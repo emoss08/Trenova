@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@trenova/shared/compon
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { EDITransferRow } from "@/lib/graphql/edi-table";
 import { edi } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMappingProfileItem, EDITransferStatus } from "@trenova/shared/types/edi";
@@ -61,7 +61,7 @@ export function EDITransferReviewPanel({
 
   const approveMutation = useApiMutation({
     mutationFn: () =>
-      apiService.ediService.approveTransfer(transfer!.id, {
+      ediService.approveTransfer(transfer!.id, {
         mappings: Object.values(inlineMappings),
       }),
     onSuccess: async () => {
@@ -72,7 +72,7 @@ export function EDITransferReviewPanel({
   });
 
   const rejectMutation = useApiMutation({
-    mutationFn: (reason: string) => apiService.ediService.rejectTransfer(transfer!.id, { reason }),
+    mutationFn: (reason: string) => ediService.rejectTransfer(transfer!.id, { reason }),
     onSuccess: async () => {
       setRejectDialogOpen(false);
       await invalidateEDITransfers(queryClient, transfer?.id);
@@ -82,7 +82,7 @@ export function EDITransferReviewPanel({
   });
 
   const cancelMutation = useApiMutation({
-    mutationFn: () => apiService.ediService.cancelTransfer(transfer!.id),
+    mutationFn: () => ediService.cancelTransfer(transfer!.id),
     onSuccess: async () => {
       await invalidateEDITransfers(queryClient, transfer?.id);
       onOpenChange(false);

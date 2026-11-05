@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -37,7 +37,7 @@ export function BacktestDialog({
   const backtest = useQuery({
     queryKey: ["formula-template-backtest", template.id, source],
     queryFn: () =>
-      apiService.formulaTemplateService.backtest(template.id ?? "", {
+      formulaTemplateService.backtest(template.id ?? "", {
         source,
         limit: BACKTEST_LIMIT,
       }),

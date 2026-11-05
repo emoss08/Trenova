@@ -37,7 +37,7 @@ import {
 import { accountingControl } from "@/lib/queries/accounting-control";
 import { integration } from "@/lib/queries/integration";
 import { OANDAExchangeRatesIntegrationModal } from "@/routes/admin/integrations/_components/oanda/oanda-integration-modal";
-import { apiService } from "@/services/api";
+import { accountingControlService } from "@/services/accounting-control";
 import type { AccountingControl, JournalSourceEvent } from "@/types/accounting-control";
 import { accountingControlSchema } from "@/types/accounting-control";
 import { Resource } from "@trenova/shared/types/permission";
@@ -78,8 +78,7 @@ export default function AccountingControlForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: accountingControl.get._def,
-    mutationFn: async (values: AccountingControl) =>
-      apiService.accountingControlService.update(values),
+    mutationFn: async (values: AccountingControl) => accountingControlService.update(values),
     resourceName: "Accounting Control",
     resetForm: reset,
     form,

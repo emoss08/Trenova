@@ -6,7 +6,7 @@ import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal
 import { TraceView } from "@/components/tariff-bill/trace-view";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import { describeApiError } from "@/lib/api-error-message";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertCircleIcon,
@@ -56,7 +56,7 @@ function SaveAsTest() {
       const source = getValues("source") ?? "";
       const inputs = presentInputs(previewInputs.getValues("inputs") as TariffInputValues);
       if (usingShipment) {
-        const response = await apiService.formulaTemplateService.scaffoldTest({
+        const response = await formulaTemplateService.scaffoldTest({
           source,
           shipmentId: preview.shipmentId,
           inputs,

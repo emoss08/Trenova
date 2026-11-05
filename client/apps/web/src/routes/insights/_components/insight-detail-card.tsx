@@ -5,7 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { insightService } from "@/services/insight";
 import type { Insight, InsightMetric } from "@/types/insight";
 import {
   formatMetricChange,
@@ -50,13 +50,13 @@ export function InsightDetailCard({
   const stale = isStale(insight, now);
 
   const dismissMutation = useApiMutation({
-    mutationFn: () => apiService.insightService.dismiss(insight.id),
+    mutationFn: () => insightService.dismiss(insight.id),
     onSuccess: onChanged,
     resourceName: "Insight",
   });
 
   const restoreMutation = useApiMutation({
-    mutationFn: () => apiService.insightService.restore(insight.id),
+    mutationFn: () => insightService.restore(insight.id),
     onSuccess: onChanged,
     resourceName: "Insight",
   });

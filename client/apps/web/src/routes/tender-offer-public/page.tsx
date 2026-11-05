@@ -4,7 +4,7 @@ import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/publ
 import { PublicPageShell } from "@/components/public-page/public-page-shell";
 import { StatusCard } from "@/components/public-page/status-card";
 import { SummaryRow } from "@/components/public-page/summary-row";
-import { TenderService } from "@/services/tender";
+import { tenderService } from "@/services/tender";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@trenova/shared/components/ui/card";
 import { Separator } from "@trenova/shared/components/ui/separator";
@@ -28,8 +28,6 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router";
-
-const tenderService = new TenderService();
 
 type OfferIntent = "accept" | "decline" | null;
 

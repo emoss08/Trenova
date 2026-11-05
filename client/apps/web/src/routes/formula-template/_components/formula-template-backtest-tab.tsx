@@ -8,7 +8,7 @@ import {
 } from "@/components/data-table/data-table-virtual-rows";
 import { downloadCsv, exportFilename } from "@/lib/data-table-export";
 import { formulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -297,7 +297,7 @@ export default function FormulaTemplateBacktestTab({
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiService.formulaTemplateService.backtest(template?.id ?? "", {
+      formulaTemplateService.backtest(template?.id ?? "", {
         ...(source === "editor" ? { source: editorSource } : { versionNumber }),
         limit,
       }),

@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
 import type {
   AssistantEntityRef,
   AssistantPageContext,
@@ -8,7 +7,7 @@ import type {
 } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { StartedAsk } from "@/services/assistant";
+import { assistantService, type StartedAsk } from "@/services/assistant";
 import { followStream, turnFailureDetail } from "./follow-turn";
 import { registerTurnReader } from "./turn-readers";
 import { initialTurnState, isTurnActive, advanceTurn, type TurnState } from "./turn-stream";
@@ -48,7 +47,7 @@ async function questionMentions(
 
 /** Takes back a palette question; nobody is left to tell if it fails. */
 function stopAskQuietly(askId: string): void {
-  void apiService.assistantService.stopAsk(askId).catch(() => undefined);
+  void assistantService.stopAsk(askId).catch(() => undefined);
 }
 
 /**
@@ -119,7 +118,7 @@ export function useAsk() {
         if (options.findMentions) {
           setTurn((state) => (state ? { ...state, mentions: [...mentions] } : state));
         }
-        started = await apiService.assistantService.startAsk(
+        started = await assistantService.startAsk(
           content,
           { context: options.context, mentions },
           { signal: withdraw.signal },
@@ -150,7 +149,7 @@ export function useAsk() {
 
       try {
         await followStream(
-          (apply, attach) => apiService.assistantService.attachAsk(started.askId, apply, attach),
+          (apply, attach) => assistantService.attachAsk(started.askId, apply, attach),
           { signal: controller.signal, onEvent },
         );
       } catch (error) {
@@ -208,9 +207,9 @@ export function useAsk() {
     }
 
     const keeping = (async () => {
-      const kept = await apiService.assistantService.keepAsk(current.id);
+      const kept = await assistantService.keepAsk(current.id);
       if (kept.unanswered !== "") {
-        await apiService.assistantService.startTurn(kept.thread.id, kept.unanswered);
+        await assistantService.startTurn(kept.thread.id, kept.unanswered);
       }
       await queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey });
 

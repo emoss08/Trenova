@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/table";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { edi } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { EDIConnection } from "@trenova/shared/types/edi";
@@ -40,7 +40,7 @@ export function PendingConnectionsPanel() {
       connection.targetOrganizationId === currentOrganizationId,
   );
   const acceptMutation = useApiMutation({
-    mutationFn: (connectionId: string) => apiService.ediService.acceptConnection(connectionId),
+    mutationFn: (connectionId: string) => ediService.acceptConnection(connectionId),
     onSuccess: async () => {
       await invalidateEDIConnections(queryClient);
     },
@@ -48,7 +48,7 @@ export function PendingConnectionsPanel() {
   });
   const rejectMutation = useApiMutation({
     mutationFn: ({ connection, reason }: { connection: EDIConnection; reason: string }) =>
-      apiService.ediService.rejectConnection(connection.id, { reason }),
+      ediService.rejectConnection(connection.id, { reason }),
     onSuccess: async () => {
       setRejecting(null);
       await invalidateEDIConnections(queryClient);

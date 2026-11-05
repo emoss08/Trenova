@@ -11,8 +11,6 @@ const { responses } = vi.hoisted(() => ({
   responses: new Map<string, unknown>(),
 }));
 
-vi.mock("@/services/api", () => ({ apiService: {} }));
-
 vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
   return {

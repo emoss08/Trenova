@@ -1333,7 +1333,6 @@
         "AIRetrievalReindexEstimate",
         "AIRetrievalStatus",
         "AIRoutePreview",
-        "AITrainingExportHistory",
         "AITuneUps",
         "AIUsageDaily",
         "AIUsageFeatures",
@@ -1390,7 +1389,6 @@
         "ApproveAgentMemorySuggestion",
         "ApproveAgentOrganizationProfileGuidance",
         "BulkEditFields",
-        "CancelExtractionEvalRun",
         "ClearMyAIFeedback",
         "ConfirmDeskMemory",
         "CreateAgentEvalCase",
@@ -1400,7 +1398,6 @@
         "DataTableInsightFields",
         "DecideAgentPlan",
         "DecideAgentProposal",
-        "DeleteExtractionEvalCase",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissAIProviderFailure",
@@ -1411,20 +1408,7 @@
         "DraftAgentFromDescription",
         "ExportTableView",
         "ExtractionAccuracy",
-        "ExtractionEvalCaseDetail",
-        "ExtractionEvalCaseTable",
-        "ExtractionEvalRefreeze",
-        "ExtractionEvalResultDetail",
-        "ExtractionEvalResultTable",
-        "ExtractionEvalRunDetail",
-        "ExtractionEvalRunTable",
         "ExtractionProviderTrends",
-        "ExtractionRollout",
-        "ExtractionRolloutReport",
-        "ExtractionShadowReport",
-        "ExtractionShadowResultDetail",
-        "ExtractionShadowResultTable",
-        "ExtractionShadowSettings",
         "MyAIFeedback",
         "MyAgentProfile",
         "MyBulkEdit",
@@ -1433,8 +1417,6 @@
         "MyTableLayout",
         "PatchAIProvider",
         "PreviewBulkEdit",
-        "PromoteAICorrection",
-        "RefreezeExtractionEvalCases",
         "RegenerateAgentOrganizationProfile",
         "RegenerateMyAgentProfile",
         "ReindexAIRetrievalSource",
@@ -1459,7 +1441,6 @@
         "SetDeskMemoryStatus",
         "SetMyAIFeedback",
         "StartBulkEdit",
-        "StartExtractionEvalRun",
         "TestAIProviderDraft",
         "TightenAgentInstructions",
         "UndoMyBulkEdit",
@@ -1467,10 +1448,7 @@
         "UpdateAgentControl",
         "UpdateAgentEvalCase",
         "UpdateAgentMemory",
-        "UpdateAgentQualityControl",
-        "UpdateExtractionEvalCase",
-        "UpdateExtractionRollout",
-        "UpdateExtractionShadowSettings"
+        "UpdateAgentQualityControl"
       ],
       "rest": [
         {
@@ -1508,10 +1486,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -2226,10 +2200,6 @@
         },
         {
           "method": "GET",
-          "path": "/custom-fields/definitions/:param/usage/"
-        },
-        {
-          "method": "GET",
           "path": "/tables/"
         },
         {
@@ -2347,10 +2317,6 @@
           "path": "/distance-overrides/:param/"
         },
         {
-          "method": "PATCH",
-          "path": "/distance-overrides/:param/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -2388,10 +2354,6 @@
       "rest": [
         {
           "method": "DELETE",
-          "path": "/distance-profiles/:param/"
-        },
-        {
-          "method": "PATCH",
           "path": "/distance-profiles/:param/"
         },
         {
@@ -4048,23 +4010,7 @@
       ],
       "rest": [
         {
-          "method": "POST",
-          "path": "/document-packet-rules/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-packet-rules/:param"
-        },
-        {
           "method": "DELETE",
-          "path": "/document-packet-rules/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-packet-rules/:param/"
-        },
-        {
-          "method": "PUT",
           "path": "/document-packet-rules/:param/"
         },
         {
@@ -4324,10 +4270,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -4734,10 +4676,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -5181,10 +5119,6 @@
           "path": "/agent-definitions/event-kinds/"
         },
         {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
-        },
-        {
           "method": "GET",
           "path": "/agent-definitions/system/:param/"
         },
@@ -5588,10 +5522,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -6452,8 +6382,44 @@
           "path": "/billing-queue/:param/activity/"
         },
         {
+          "method": "PUT",
+          "path": "/billing-queue/:param/assign/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/charges/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/invoice-details/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/reassign-charge/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/"
         },
         {
           "method": "GET",
@@ -6464,16 +6430,44 @@
           "path": "/billing-queue/brief/"
         },
         {
+          "method": "POST",
+          "path": "/billing-queue/bulk/"
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
         },
         {
           "method": "GET",
           "path": "/billing-queue/filter-presets/"
         },
         {
+          "method": "POST",
+          "path": "/billing-queue/filter-presets/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/billing-queue/filter-presets/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/nova-generation/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/pod-signatures/redetect/"
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/search-intent/"
         },
         {
           "method": "GET",
@@ -6774,7 +6768,15 @@
         },
         {
           "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
           "path": "/billing-queue/:param/reassign-charge/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
         },
         {
           "method": "PUT",
@@ -7656,6 +7658,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
@@ -7764,10 +7767,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -8488,6 +8487,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
@@ -8590,10 +8590,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -9384,6 +9380,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DismissDeskMemory",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -9493,10 +9490,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -10175,7 +10168,8 @@
         }
       ],
       "operations": [
-        "DeskDetentionCard"
+        "DeskDetentionCard",
+        "DetentionIntelligence"
       ],
       "rest": []
     },
@@ -10189,7 +10183,8 @@
         }
       ],
       "operations": [
-        "DeskDetentionCard"
+        "DeskDetentionCard",
+        "DetentionIntelligence"
       ],
       "rest": []
     },
@@ -13029,6 +13024,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "EquipmentTypeTable",
         "ExportTableView",
         "GrantCarrierIntelOverride",
@@ -13405,6 +13401,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "EquipmentTypeTable",
         "ExportTableView",
         "GrantCarrierIntelOverride",
@@ -13990,6 +13987,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "DiscardFuelPurchaseImport",
         "ExportTableView",
         "FuelPurchaseImportRows",
@@ -14880,6 +14878,7 @@
         "DeskWorkerCredentials",
         "DeskWorkerHos",
         "DeskWorkerStanding",
+        "DetentionIntelligence",
         "DriverQualificationFile",
         "EffectiveWorkerPayAssignment",
         "EndBenefitEnrollment",
@@ -16602,6 +16601,7 @@
         "DeskLocationDwell",
         "DeskLocationPolicies",
         "DeskServiceFailureCard",
+        "DetentionIntelligence",
         "DispatchAssignMoves",
         "DispatchPlanAutoAssign",
         "ExportTableView",
@@ -16641,6 +16641,7 @@
         "ShipmentQuickFilterCounts",
         "ShipmentStageSummary",
         "ShipmentSuggestions",
+        "ShipmentTimeline",
         "ShipmentWatchlist",
         "StartBulkEdit",
         "TelematicsFormMappings",
@@ -17069,10 +17070,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",
@@ -17564,10 +17561,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/"
         },
         {
           "method": "GET",

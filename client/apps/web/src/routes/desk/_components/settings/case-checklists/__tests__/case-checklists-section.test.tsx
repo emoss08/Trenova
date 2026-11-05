@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { caseChecklistService } from "@/services/case-checklist";
 import type { ChecklistTemplate, ChecklistTemplates, TemplateItem } from "@/types/case-checklist";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -51,19 +51,19 @@ function listing(): ChecklistTemplates {
 }
 
 function renderSection({ readOnly = false } = {}) {
-  vi.spyOn(apiService.caseChecklistService, "list").mockResolvedValue(listing());
-  const save = vi
-    .spyOn(apiService.caseChecklistService, "save")
-    .mockImplementation(async (body) => ({
-      ...template(),
-      ...body,
-      id: body.id ?? "cct_new",
-      customerId: body.customerId ?? "",
-      customerName: "",
-      version: body.version + 1,
-    }));
+  vi.spyOn(caseChecklistService, "list").mockResolvedValue(listing());
+  const save = vi.spyOn(caseChecklistService, "save").mockImplementation(async (body) => ({
+    ...template(),
+    ...body,
+    id: body.id ?? "cct_new",
+    customerId: body.customerId ?? "",
+    customerName: "",
+    version: body.version + 1,
+  }));
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <MemoryRouter>
         <CaseChecklistsSection readOnly={readOnly} />
       </MemoryRouter>
@@ -121,7 +121,9 @@ describe("CaseChecklistsSection", () => {
     await screen.findByText("Customer notified");
 
     fireEvent.click(screen.getByRole("button", { name: "Reorder" }));
-    const handle = screen.getByRole("button", { name: "Move Customer notified. Use the arrow keys." });
+    const handle = screen.getByRole("button", {
+      name: "Move Customer notified. Use the arrow keys.",
+    });
     act(() => handle.focus());
     fireEvent.keyDown(handle, { key: "ArrowUp" });
 

@@ -1337,27 +1337,6 @@ mutation AutoRateShipment($id: ID!) {
   }
 }
 
-mutation CalculateShipmentDistance($input: ShipmentInput!) {
-  calculateShipmentDistance(input: $input) {
-    shipmentId
-    totalDistance
-    moves {
-      moveId
-      moveIndex
-      distance
-      source
-      provider
-      routingType
-      dataVersion
-      distanceUnits
-      distanceProfileId
-      distanceProfileName
-      warnings
-      calculatedAt
-    }
-  }
-}
-
 mutation RecalculateShipmentDistance($shipmentId: ID!) {
   recalculateShipmentDistance(shipmentId: $shipmentId) {
     shipmentId

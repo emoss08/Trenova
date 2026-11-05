@@ -11,7 +11,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import {
   billingQueueAssignSchema,
   type BillingQueueAssignInput,
@@ -66,9 +66,7 @@ export function BillingQueueAssignDialog({
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: BillingQueueAssignInput) => {
       if (single) {
-        await Promise.all(
-          targets.map((target) => apiService.billingQueueService.assign(target.id, values)),
-        );
+        await Promise.all(targets.map((target) => billingQueueService.assign(target.id, values)));
         return;
       }
       await run(

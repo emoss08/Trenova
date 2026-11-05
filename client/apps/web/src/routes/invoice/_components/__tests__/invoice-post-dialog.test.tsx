@@ -10,9 +10,7 @@ const { getPostPreview, post } = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { invoiceService: { getPostPreview, post } },
-}));
+vi.mock("@/services/invoice", () => ({ invoiceService: { getPostPreview, post } }));
 
 afterEach(() => {
   cleanup();

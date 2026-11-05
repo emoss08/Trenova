@@ -10,7 +10,7 @@ import { usePermissions } from "@/hooks/use-permission";
 import { describeCron } from "@/lib/cron";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { recurringShipment } from "@/lib/queries/recurring-shipment";
-import { apiService } from "@/services/api";
+import { recurringShipmentService } from "@/services/recurring-shipment";
 import { Resource } from "@trenova/shared/types/permission";
 import type { RecurringShipment } from "@/types/recurring-shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
@@ -81,7 +81,7 @@ function MatchBanner({ series, onDismiss }: { series: RecurringShipment; onDismi
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      const result = await apiService.recurringShipmentService.generate(series.id as string);
+      const result = await recurringShipmentService.generate(series.id as string);
       toast.success(
         result.shipment?.proNumber
           ? t('Shipment {0} generated from "{1}"', result.shipment.proNumber, series.name)

@@ -15,7 +15,7 @@ import {
   storedMileageTableGraphQLConfig,
   type StoredMileageRow,
 } from "@/lib/graphql/stored-mileage-table";
-import { StoredMileageService } from "@/services/stored-mileage";
+import { storedMileageService } from "@/services/stored-mileage";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,8 +24,6 @@ import { useMemo, useRef, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./stored-mileage-columns";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-const storedMileageService = new StoredMileageService();
 
 export default function StoredMileageTable() {
   const t = useT();

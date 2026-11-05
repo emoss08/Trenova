@@ -64,3 +64,5 @@ export class FleetCodeService {
     return response.patchFleetCode;
   }
 }
+
+export const fleetCodeService = new FleetCodeService();

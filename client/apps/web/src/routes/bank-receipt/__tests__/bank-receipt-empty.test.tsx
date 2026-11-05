@@ -9,15 +9,13 @@ import { BankReceiptPage } from "../page";
 
 const mocks = vi.hoisted(() => ({ getExceptions: vi.fn(), getSummary: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    bankReceiptService: {
-      getExceptions: mocks.getExceptions,
-      getSummary: mocks.getSummary,
-      getById: vi.fn(),
-      getSuggestions: vi.fn(),
-      match: vi.fn(),
-    },
+vi.mock("@/services/bank-receipt", () => ({
+  bankReceiptService: {
+    getExceptions: mocks.getExceptions,
+    getSummary: mocks.getSummary,
+    getById: vi.fn(),
+    getSuggestions: vi.fn(),
+    match: vi.fn(),
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({

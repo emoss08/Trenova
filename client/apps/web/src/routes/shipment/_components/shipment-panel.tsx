@@ -1,7 +1,10 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
+import { shipmentCommentService } from "@/services/shipment-comment";
+import { serviceFailureService } from "@/services/service-failure";
+import { shipmentService } from "@/services/shipment";
 import { rulesResolver } from "@/lib/rules-resolver";
 import { refineShipmentInputs, shipmentTemplateIds } from "@/lib/shipment-tariff-inputs";
 import { tariffInputsResolver } from "@/lib/tariff-inputs-resolver";
@@ -60,7 +63,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
 
   const { data: owner, isLoading } = useQuery({
     queryKey: ["user", ownerId],
-    queryFn: () => apiService.userService.get(ownerId!),
+    queryFn: () => userService.get(ownerId!),
     enabled: !!ownerId,
     staleTime: 5 * 60 * 1000,
   });
@@ -192,14 +195,14 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
 
   const { data: commentCountData } = useQuery({
     queryKey: ["shipment-comment-count", row?.id],
-    queryFn: () => apiService.shipmentCommentService.getCount(row!.id!),
+    queryFn: () => shipmentCommentService.getCount(row!.id!),
     enabled: !!row?.id && mode === "edit",
     staleTime: 30_000,
   });
   const commentCount = commentCountData?.count ?? 0;
   const { data: serviceFailures } = useQuery({
     queryKey: ["shipment-service-failure-count", row?.id],
-    queryFn: () => apiService.serviceFailureService.listByShipment(row!.id!, "limit=100"),
+    queryFn: () => serviceFailureService.listByShipment(row!.id!, "limit=100"),
     enabled: !!row?.id && mode === "edit",
     staleTime: 30_000,
   });
@@ -322,7 +325,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         formComponent={<ShipmentForm />}
         tabs={extraTabs}
         mutationFn={(values, currentRow) =>
-          apiService.shipmentService.update(currentRow.id!, values as ShipmentUpdateInput)
+          shipmentService.update(currentRow.id!, values as ShipmentUpdateInput)
         }
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
         headerActions={
@@ -361,7 +364,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       formComponent={<ShipmentForm />}
       mutationFn={(values) =>
         withIdempotencyKey(values, (idempotencyKey) =>
-          apiService.shipmentService.create(values as ShipmentCreateInput, { idempotencyKey }),
+          shipmentService.create(values as ShipmentCreateInput, { idempotencyKey }),
         )
       }
       useDock

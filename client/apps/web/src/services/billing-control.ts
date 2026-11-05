@@ -15,3 +15,5 @@ export class BillingControlService {
     return safeParse(billingControlSchema, response, "Billing Control");
   }
 }
+
+export const billingControlService = new BillingControlService();

@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantThread, ThreadBudget } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
@@ -22,7 +22,7 @@ export function useRequestMore(threadId: string) {
   return useCallback(
     async (kind: RequestKind) => {
       try {
-        const { sent } = await apiService.assistantService.requestMore(threadId, kind);
+        const { sent } = await assistantService.requestMore(threadId, kind);
         if (sent > 0) {
           toast.success(t("{0, plural, one {Asked # admin} other {Asked # admins}}", sent), {
             description: t("They'll see it in their notifications."),

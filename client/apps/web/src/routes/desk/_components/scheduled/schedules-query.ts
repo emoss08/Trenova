@@ -1,5 +1,5 @@
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { ConversationScheduleList } from "@/types/assistant";
 import { infiniteQueryOptions } from "@tanstack/react-query";
 
@@ -31,7 +31,7 @@ export function allSchedulesQuery() {
     queryKey: assistant.allSchedules().queryKey,
     initialPageParam: 0,
     queryFn: ({ pageParam, signal }) =>
-      apiService.assistantService.listSchedules({
+      assistantService.listSchedules({
         signal,
         limit: SCHEDULE_PAGE_SIZE,
         offset: pageParam,

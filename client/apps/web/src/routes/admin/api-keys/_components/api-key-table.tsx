@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiKeyTableGraphQLConfig, type ApiKeyRow } from "@/lib/graphql/api-key-table";
-import { apiService } from "@/services/api";
+import { apiKeyService } from "@/services/api-key";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,7 @@ export default function APIKeyTable() {
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
 
   const revokeMutation = useApiMutation({
-    mutationFn: async (id: ApiKeyRow["id"]) => apiService.apiKeyService.revoke(id),
+    mutationFn: async (id: ApiKeyRow["id"]) => apiKeyService.revoke(id),
     onSuccess: async () => {
       setRevokeDialogOpen(false);
       setSelectedKey(null);

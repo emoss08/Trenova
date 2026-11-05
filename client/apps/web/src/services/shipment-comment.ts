@@ -88,3 +88,5 @@ export class ShipmentCommentService {
     return safeParse(shipmentCommentSchema, response, "Shipment Comment");
   }
 }
+
+export const shipmentCommentService = new ShipmentCommentService();

@@ -51,3 +51,5 @@ export class AccessorialChargeService {
     return response.patchAccessorialCharge;
   }
 }
+
+export const accessorialChargeService = new AccessorialChargeService();

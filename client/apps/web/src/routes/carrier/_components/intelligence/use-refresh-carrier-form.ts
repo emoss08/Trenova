@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
+import { carrierService } from "@/services/carrier";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -25,7 +25,7 @@ export function useRefreshCarrierForm(carrierId: string) {
     }
 
     try {
-      const carrier = await apiService.carrierService.getById(carrierId);
+      const carrier = await carrierService.getById(carrierId);
       reset(carrier);
     } catch {
       toast.warning(t("The carrier record changed"), {

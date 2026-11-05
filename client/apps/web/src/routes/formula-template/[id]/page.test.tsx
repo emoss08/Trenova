@@ -13,10 +13,8 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    formulaTemplateService: { get: mocks.get, update: mocks.update },
-  },
+vi.mock("@/services/formula-template", () => ({
+  formulaTemplateService: { get: mocks.get, update: mocks.update },
 }));
 
 // The studio stands in as the one field a save reads and the reset writes back, so the test

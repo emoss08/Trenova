@@ -10,7 +10,7 @@ import {
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
 import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
-import { apiService } from "@/services/api";
+import { serviceFailureService } from "@/services/service-failure";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   serviceFailureUpdateSchema,
@@ -128,7 +128,7 @@ export function ServiceFailurePanel({
     unknown,
     ServiceFailureUpdate
   >({
-    mutationFn: async ({ values }) => apiService.serviceFailureService.update(values.id, values),
+    mutationFn: async ({ values }) => serviceFailureService.update(values.id, values),
     onSuccess: (_data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({

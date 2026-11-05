@@ -5,7 +5,7 @@ import {
 import { InputField } from "@/components/fields/input-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { portalCodePrompt } from "@/lib/portal-run";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import {
   portalSignInCodeFormSchema,
   type PortalRun,
@@ -58,8 +58,7 @@ export function PortalCodeForm({
   >({
     form,
     resourceName: t("Sign-in code"),
-    mutationFn: (values) =>
-      apiService.agentExtensionService.sendPortalSignInCode(runId, values.code),
+    mutationFn: (values) => agentExtensionService.sendPortalSignInCode(runId, values.code),
     onSuccess: async () => {
       reset({ code: "" });
       await invalidate();

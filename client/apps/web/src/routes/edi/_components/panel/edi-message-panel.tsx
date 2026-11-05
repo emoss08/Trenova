@@ -11,7 +11,7 @@ import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { EDIMessageRow } from "@/lib/graphql/edi-table";
 import { edi } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIMessageDeliveryStatus } from "@trenova/shared/types/edi";
@@ -41,7 +41,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
   const detail = message ?? row;
 
   const retryMutation = useApiMutation({
-    mutationFn: (messageId: string) => apiService.ediService.retryMessageDelivery(messageId),
+    mutationFn: (messageId: string) => ediService.retryMessageDelivery(messageId),
     onSuccess: async () => {
       await invalidateEDIMessages(queryClient, row?.id);
     },
@@ -49,7 +49,7 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
   });
 
   const replayMutation = useApiMutation({
-    mutationFn: (messageId: string) => apiService.ediService.replayMessageDelivery(messageId),
+    mutationFn: (messageId: string) => ediService.replayMessageDelivery(messageId),
     onSuccess: async () => {
       await invalidateEDIMessages(queryClient, row?.id);
     },

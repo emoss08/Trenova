@@ -1,6 +1,6 @@
 import { CarrierTrackingLink } from "@/components/carrier-assignment/carrier-tracking-link";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
-import { apiService } from "@/services/api";
+import { assignmentService } from "@/services/assignment";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRightIcon, User01Icon, UserPlus01Icon } from "@trenova/shared/components/icons";
 import {
@@ -240,7 +240,7 @@ function DriverCoverage({ assignment }: { assignment: Assignment }) {
   );
   const { data: fetched } = useQuery({
     queryKey: ["assignment", assignment.id],
-    queryFn: () => apiService.assignmentService.get(assignment.id!),
+    queryFn: () => assignmentService.get(assignment.id!),
     enabled: !!assignment.id && !embedded,
     staleTime: 5 * 60 * 1000,
   });

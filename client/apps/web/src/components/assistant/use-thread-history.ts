@@ -1,5 +1,5 @@
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { flattenHistory, hasOlderPages, oldestSequence, threadLength } from "./thread-history";
@@ -16,7 +16,7 @@ export function threadHistoryQueryOptions(threadId: string) {
   return infiniteQueryOptions({
     queryKey: assistant.messages(threadId).queryKey,
     queryFn: ({ pageParam, signal }) =>
-      apiService.assistantService.listMessages(threadId, {
+      assistantService.listMessages(threadId, {
         limit: HISTORY_PAGE_SIZE,
         before: pageParam,
         signal,

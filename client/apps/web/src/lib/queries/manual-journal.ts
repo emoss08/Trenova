@@ -1,11 +1,11 @@
 import { fetchDeskManualJournal } from "@/lib/graphql/journal-cards";
-import { apiService } from "@/services/api";
+import { manualJournalService } from "@/services/manual-journal";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const manualJournal = createQueryKeys("manualJournal", {
   get: (id: string) => ({
     queryKey: ["get", id],
-    queryFn: async () => apiService.manualJournalService.getById(id),
+    queryFn: async () => manualJournalService.getById(id),
   }),
   card: (id: string) => ({
     queryKey: ["card", id],

@@ -25,15 +25,14 @@ const stopAsk = vi.hoisted(() => vi.fn(async (_askId: string) => undefined));
 const keepAsk = vi.hoisted(() => vi.fn<(askId: string) => Promise<KeptAsk>>());
 const startTurn = vi.hoisted(() => vi.fn(async (_threadId: string, _content: string) => ({})));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      startAsk: (...args: Parameters<StartAsk>) => startAsk(...args),
-      attachAsk: (...args: Parameters<Attach>) => attachAsk(...args),
-      stopAsk: (askId: string) => stopAsk(askId),
-      keepAsk: (askId: string) => keepAsk(askId),
-      startTurn: (threadId: string, content: string) => startTurn(threadId, content),
-    },
+vi.mock("@/services/assistant", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/assistant")>()),
+  assistantService: {
+    startAsk: (...args: Parameters<StartAsk>) => startAsk(...args),
+    attachAsk: (...args: Parameters<Attach>) => attachAsk(...args),
+    stopAsk: (askId: string) => stopAsk(askId),
+    keepAsk: (askId: string) => keepAsk(askId),
+    startTurn: (threadId: string, content: string) => startTurn(threadId, content),
   },
 }));
 

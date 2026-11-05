@@ -1,5 +1,5 @@
 import { BillView } from "@/components/tariff-bill/bill-view";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -42,7 +42,7 @@ export function AutoRateDialog() {
   const rateLocked = Boolean(useWatch({ control, name: "rateLocked" }));
 
   const mutation = useMutation({
-    mutationFn: () => apiService.shipmentService.autoRate(shipmentId ?? ""),
+    mutationFn: () => shipmentService.autoRate(shipmentId ?? ""),
     onSuccess: ({ shipment, contractRate }) => {
       if (!contractRate.applied) {
         toast.error(t("No contract covers this lane"), {

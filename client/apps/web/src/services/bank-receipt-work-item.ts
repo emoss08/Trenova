@@ -45,3 +45,5 @@ export class BankReceiptWorkItemService {
     );
   }
 }
+
+export const bankReceiptWorkItemService = new BankReceiptWorkItemService();

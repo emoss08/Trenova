@@ -28,3 +28,5 @@ export class ShipmentTypeService {
     return safeParse(shipmentTypeSchema, response, "Shipment Type");
   }
 }
+
+export const shipmentTypeService = new ShipmentTypeService();

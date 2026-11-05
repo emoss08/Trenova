@@ -19,7 +19,7 @@ import type {
 } from "@/lib/graphql/select-options";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import type { BillingQueueFilterPreset } from "@trenova/shared/types/billing-queue";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -142,7 +142,7 @@ export function BillingQueueFilters() {
   ];
 
   const deletePreset = useApiMutation({
-    mutationFn: (id: string) => apiService.billingQueueService.deleteFilterPreset(id),
+    mutationFn: (id: string) => billingQueueService.deleteFilterPreset(id),
     resourceName: "BillingQueueFilterPreset",
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [BILLING_QUEUE_FILTER_PRESETS_KEY] });

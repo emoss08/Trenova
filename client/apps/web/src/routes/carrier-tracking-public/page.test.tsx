@@ -14,9 +14,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/carrier-tracking", () => ({
-  CarrierTrackingService: class {
-    getPublicTracking = mocks.getPublicTracking;
-    postCheckCall = mocks.postCheckCall;
+  carrierTrackingService: {
+    getPublicTracking: mocks.getPublicTracking,
+    postCheckCall: mocks.postCheckCall,
   },
 }));
 

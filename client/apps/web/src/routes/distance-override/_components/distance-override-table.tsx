@@ -15,7 +15,7 @@ import {
   distanceOverrideTableGraphQLConfig,
   type DistanceOverrideRow,
 } from "@/lib/graphql/distance-override-table";
-import { DistanceOverrideService } from "@/services/distance-override";
+import { distanceOverrideService } from "@/services/distance-override";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,8 +25,6 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./distance-override-columns";
 import { DistanceOverridePanel } from "./distance-override-panel";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-const distanceOverrideService = new DistanceOverrideService();
 
 export default function DistanceOverrideTable() {
   const t = useT();

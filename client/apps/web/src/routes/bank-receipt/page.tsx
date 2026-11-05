@@ -4,7 +4,7 @@ import { BillingDetailUnselected, BillingListEmpty } from "@/components/billing/
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { bankReceipt } from "@/lib/queries/bank-receipt";
-import { apiService } from "@/services/api";
+import { bankReceiptService } from "@/services/bank-receipt";
 import type { BankReceipt, BankReceiptStatus, MatchSuggestion } from "@/types/bank-receipt";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -75,7 +75,7 @@ export function BankReceiptPage() {
       if (status) {
         params.status = status;
       }
-      return apiService.bankReceiptService.getExceptions(params);
+      return bankReceiptService.getExceptions(params);
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _, lastPageParam) => {
@@ -298,7 +298,7 @@ function ReceiptDetail({
 
   const matchMutation = useMutation({
     mutationFn: async (customerPaymentId: string) =>
-      apiService.bankReceiptService.match(receipt.id!, customerPaymentId),
+      bankReceiptService.match(receipt.id!, customerPaymentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["bankReceipt"] });
     },

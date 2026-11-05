@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { equipmentManufacturerTableGraphQLConfig } from "@/lib/graphql/equipment-manufacturer-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { equipmentManufacturerService } from "@/services/equipment-manufacturer";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function EquipmentManufacturerTable() {
     async (rows: EquipmentManufacturer[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.equipmentManufacturerService.bulkUpdateStatus({
+        equipmentManufacturerService.bulkUpdateStatus({
           equipmentManufacturerIds: ids as string[],
           status: status as EquipmentManufacturer["status"],
         }),

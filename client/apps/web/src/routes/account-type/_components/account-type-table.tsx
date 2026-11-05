@@ -5,7 +5,7 @@ import {
   type AccountTypeRow,
 } from "@/lib/graphql/account-type-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { accountTypeService } from "@/services/account-type";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { AccountType } from "@/types/account-type";
@@ -27,7 +27,7 @@ export default function AccountTypeTable() {
     async (rows: AccountTypeRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.accountTypeService.bulkUpdateStatus({
+        accountTypeService.bulkUpdateStatus({
           accountTypeIds: ids as string[],
           status: status as AccountType["status"],
         }),

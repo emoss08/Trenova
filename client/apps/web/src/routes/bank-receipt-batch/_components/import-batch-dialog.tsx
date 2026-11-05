@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { bankReceiptBatchService } from "@/services/bank-receipt-batch";
 import { parseAmountToMinor } from "@trenova/shared/lib/money";
 import type { BatchDetailResponse, CreateBatchRequest } from "@/types/bank-receipt-batch";
 import { useQueryClient } from "@tanstack/react-query";
@@ -62,7 +62,7 @@ export function ImportBatchDialog({ open, onOpenChange }: ImportBatchDialogProps
     unknown,
     ImportBatchFormValues
   >({
-    mutationFn: async (data: CreateBatchRequest) => apiService.bankReceiptBatchService.create(data),
+    mutationFn: async (data: CreateBatchRequest) => bankReceiptBatchService.create(data),
     form,
     resourceName: "Import Batch",
     onSuccess: (result) => {

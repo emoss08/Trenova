@@ -14,7 +14,7 @@ import {
   downloadJson,
   getExportFilename,
 } from "@/lib/formula-template-export";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import type { FormulaTemplate } from "@trenova/shared/types/formula-template";
 import { Download01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
@@ -36,9 +36,9 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
     if (!template?.id) return;
 
     setIsExporting(true);
-    const templatePromise = apiService.formulaTemplateService.get(template.id);
+    const templatePromise = formulaTemplateService.get(template.id);
     const versionsPromise = includeVersionHistory
-      ? apiService.formulaTemplateService
+      ? formulaTemplateService
           .listVersions(template.id, { limit: 1000 })
           .then((response) => response.results)
       : Promise.resolve(undefined);

@@ -13,3 +13,5 @@ export class DistanceControlService {
     return safeParse(distanceControlSchema, response, "Distance Control");
   }
 }
+
+export const distanceControlService = new DistanceControlService();

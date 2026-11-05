@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { hazardousMaterialTableGraphQLConfig } from "@/lib/graphql/hazardous-material-table";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { hazardousMaterialService } from "@/services/hazardous-material";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function HazardousMaterialTable() {
     async (rows: HazardousMaterial[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.hazardousMaterialService.bulkUpdateStatus({
+        hazardousMaterialService.bulkUpdateStatus({
           hazardousMaterialIds: ids as string[],
           status: status as HazardousMaterial["status"],
         }),

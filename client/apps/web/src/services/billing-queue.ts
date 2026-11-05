@@ -306,15 +306,9 @@ export class BillingQueueService {
     return safeParse(billingQueueFilterPresetSchema, response, "BillingQueueFilterPreset");
   }
 
-  public async updateFilterPreset(id: string, payload: BillingQueueFilterPresetInput) {
-    const response = await api.put<BillingQueueFilterPreset>(
-      `/billing-queue/filter-presets/${id}/`,
-      payload,
-    );
-    return safeParse(billingQueueFilterPresetSchema, response, "BillingQueueFilterPreset");
-  }
-
   public async deleteFilterPreset(id: string) {
     await api.delete(`/billing-queue/filter-presets/${id}/`);
   }
 }
+
+export const billingQueueService = new BillingQueueService();

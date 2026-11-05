@@ -11,7 +11,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { EDIInboundFileRow } from "@/lib/graphql/edi-table";
 import { edi } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { EDIInboundFileStatus } from "@trenova/shared/types/edi";
@@ -44,7 +44,7 @@ export function InboundFilePanel({
   const detail = file ?? row;
 
   const reprocessMutation = useApiMutation({
-    mutationFn: (fileId: string) => apiService.ediService.reprocessInboundFile(fileId),
+    mutationFn: (fileId: string) => ediService.reprocessInboundFile(fileId),
     onSuccess: async () => {
       await invalidateEDIInboundFiles(queryClient, row?.id);
     },

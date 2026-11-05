@@ -9,9 +9,7 @@ const { send, success } = vi.hoisted(() => ({
   success: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { customerStatementService: { send } },
-}));
+vi.mock("@/services/customer-statement", () => ({ customerStatementService: { send } }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({ toast: { success, error: vi.fn() } }));
 
 afterEach(() => {

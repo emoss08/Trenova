@@ -78,3 +78,5 @@ export class RoutingGuideService {
     await api.delete(`/routing-guides/${guideId}/`);
   }
 }
+
+export const routingGuideService = new RoutingGuideService();

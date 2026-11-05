@@ -13,9 +13,7 @@ import { AutoRateDialog } from "../auto-rate-dialog";
 
 const { autoRate, toastError } = vi.hoisted(() => ({ autoRate: vi.fn(), toastError: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { shipmentService: { autoRate } },
-}));
+vi.mock("@/services/shipment", () => ({ shipmentService: { autoRate } }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: toastError, success: vi.fn() },
 }));

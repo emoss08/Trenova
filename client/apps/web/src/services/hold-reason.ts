@@ -45,3 +45,5 @@ export class HoldReasonService {
     return response.updateHoldReason;
   }
 }
+
+export const holdReasonService = new HoldReasonService();

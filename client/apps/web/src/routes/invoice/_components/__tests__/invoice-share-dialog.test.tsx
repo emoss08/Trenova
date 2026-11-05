@@ -23,13 +23,11 @@ const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    invoiceShareService: {
-      list: mocks.list,
-      share: mocks.share,
-      candidates: mocks.candidates,
-    },
+vi.mock("@/services/invoice-share", () => ({
+  invoiceShareService: {
+    list: mocks.list,
+    share: mocks.share,
+    candidates: mocks.candidates,
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({

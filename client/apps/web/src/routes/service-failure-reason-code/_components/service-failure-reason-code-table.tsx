@@ -5,7 +5,7 @@ import {
   serviceFailureReasonCodeTableGraphQLConfig,
   type ServiceFailureReasonCodeRow,
 } from "@/lib/graphql/service-failure-reason-code-table";
-import { apiService } from "@/services/api";
+import { serviceFailureReasonCodeService } from "@/services/service-failure-reason-code";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -26,12 +26,12 @@ export default function ServiceFailureReasonCodeTable() {
   };
 
   const handleArchive = async (row: Row<ServiceFailureReasonCodeRow>) => {
-    await apiService.serviceFailureReasonCodeService.archive(row.original.id);
+    await serviceFailureReasonCodeService.archive(row.original.id);
     invalidate();
   };
 
   const handleActivate = async (row: Row<ServiceFailureReasonCodeRow>) => {
-    await apiService.serviceFailureReasonCodeService.activate(row.original.id);
+    await serviceFailureReasonCodeService.activate(row.original.id);
     invalidate();
   };
 

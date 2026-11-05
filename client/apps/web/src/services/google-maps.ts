@@ -26,3 +26,5 @@ export class GoogleMapsService {
     return safeParse(autocompleteLocationResultSchema, response, "AutocompleteLocationResult");
   }
 }
+
+export const googleMapsService = new GoogleMapsService();

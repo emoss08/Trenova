@@ -2,7 +2,7 @@ import { InputField } from "@/components/fields/input-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { invalidateInvoiceQueries, invoice as invoiceQueries } from "@/lib/queries/invoice";
-import { apiService } from "@/services/api";
+import { invoiceService } from "@/services/invoice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -111,7 +111,7 @@ export function InvoiceDeliveryDialog({
     form,
     resourceName: "invoice",
     mutationFn: (values) =>
-      apiService.invoiceService.updateDraft(invoice.id, {
+      invoiceService.updateDraft(invoice.id, {
         emailTo: splitEmailList(values.to),
         emailCc: splitEmailList(values.cc),
         emailBcc: splitEmailList(values.bcc),

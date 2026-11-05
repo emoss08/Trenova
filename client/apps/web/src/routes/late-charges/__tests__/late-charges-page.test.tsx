@@ -17,8 +17,8 @@ vi.mock("@/lib/graphql/accounts-receivable", () => ({
   fetchLateChargePreview: mocks.preview,
   assessLateCharges: mocks.assess,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: { billingControlService: { get: mocks.billingControl } },
+vi.mock("@/services/billing-control", () => ({
+  billingControlService: { get: mocks.billingControl },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },

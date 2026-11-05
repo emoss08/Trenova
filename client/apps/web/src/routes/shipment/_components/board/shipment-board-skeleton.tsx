@@ -38,6 +38,7 @@ export type BoardSkeletonColumn = {
   label: string;
   size: number;
   sortable: boolean;
+  alignEnd?: boolean;
 };
 
 /**
@@ -56,7 +57,7 @@ export function boardSkeletonColumns(t: TranslateFn): BoardSkeletonColumn[] {
     { id: "driver", label: t("Coverage"), size: 200, sortable: false },
     { id: "eta", label: t("ETA"), size: 150, sortable: true },
     { id: "revenue", label: t("Revenue"), size: 180, sortable: true },
-    { id: "margin", label: t("Margin"), size: 120, sortable: false },
+    { id: "margin", label: t("Margin"), size: 120, sortable: false, alignEnd: true },
     { id: "actions", label: "", size: 72, sortable: false },
   ];
 }
@@ -119,7 +120,7 @@ function BoardTableSkeleton({ grouped }: { grouped: boolean }) {
                     <SwitchVertical01Icon className="size-3.5" />
                   </span>
                 ) : (
-                  column.label
+                  <div className={column.alignEnd ? "text-right" : undefined}>{column.label}</div>
                 )}
               </TableHead>
             ))}

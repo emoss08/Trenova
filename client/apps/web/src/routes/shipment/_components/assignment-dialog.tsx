@@ -13,7 +13,8 @@ import { CarrierShoppingPanel } from "@/components/carrier-assignment/carrier-sh
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
-import { apiService } from "@/services/api";
+import { assignmentService } from "@/services/assignment";
+import { carrierAssignmentService } from "@/services/carrier-assignment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ShopOption } from "@trenova/shared/types/rate";
@@ -180,8 +181,8 @@ export function AssignmentDialog({
   const { mutateAsync } = useMutation({
     mutationFn: (payload: AssignmentPayload) =>
       isEditing
-        ? apiService.assignmentService.reassign(moveId, payload)
-        : apiService.assignmentService.assignToMove(moveId, payload),
+        ? assignmentService.reassign(moveId, payload)
+        : assignmentService.assignToMove(moveId, payload),
     onSuccess: (data: Assignment) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onAssigned?.(data);
@@ -213,7 +214,7 @@ export function AssignmentDialog({
     async (values: AssignmentPayload) => {
       setComplianceViolations([]);
       try {
-        await apiService.assignmentService.checkWorkerCompliance(moveId, {
+        await assignmentService.checkWorkerCompliance(moveId, {
           primaryWorkerId: values.primaryWorkerId,
           secondaryWorkerId: values.secondaryWorkerId,
         });
@@ -533,14 +534,14 @@ function CarrierAssignmentTab({
     refetch: refetchEligibility,
   } = useQuery({
     queryKey: ["carrier-assignment-preview", moveId, carrierId],
-    queryFn: () => apiService.carrierAssignmentService.preview(moveId, carrierId),
+    queryFn: () => carrierAssignmentService.preview(moveId, carrierId),
     enabled: !!carrierId,
     staleTime: 30_000,
   });
 
   const { mutateAsync } = useMutation({
     mutationFn: (payload: CarrierAssignmentPayload) =>
-      apiService.carrierAssignmentService.assign(moveId, payload, { replace: isReplacing }),
+      carrierAssignmentService.assign(moveId, payload, { replace: isReplacing }),
     onSuccess: (carrierAssignment: CarrierAssignment) => {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       onCarrierAssigned?.(carrierAssignment);

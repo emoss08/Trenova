@@ -1,5 +1,5 @@
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { MentionCandidateRecord, MentionPageKind } from "@/types/assistant";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
@@ -23,7 +23,7 @@ export function useCaseRecords(search: string, kind: MentionPageKind) {
   const result = useInfiniteQuery({
     queryKey: assistant.caseRecords(query, kind).queryKey,
     queryFn: ({ pageParam, signal }) =>
-      apiService.assistantService.searchMentionPage(query, kind, {
+      assistantService.searchMentionPage(query, kind, {
         offset: pageParam,
         limit: CASE_RECORD_PAGE,
         signal,

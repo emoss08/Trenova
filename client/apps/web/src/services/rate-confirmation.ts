@@ -77,3 +77,5 @@ export class RateConfirmationService {
     });
   }
 }
+
+export const rateConfirmationService = new RateConfirmationService();

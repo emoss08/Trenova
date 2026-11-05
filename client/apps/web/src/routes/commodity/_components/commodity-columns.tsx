@@ -4,7 +4,7 @@ import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { BooleanBadge } from "@trenova/shared/components/status-badge";
 import { freightClassChoices, statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { commodityService } from "@/services/commodity";
 import type { CommodityRow } from "@/lib/graphql/commodity-table";
 import type { Commodity } from "@trenova/shared/types/commodity";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ function CommodityStatusCell({ row }: { row: CommodityRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Commodity["status"]) => {
       if (!row.id) return;
-      await apiService.commodityService.patch(row.id, {
+      await commodityService.patch(row.id, {
         status: newStatus,
       });
 

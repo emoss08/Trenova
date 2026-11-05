@@ -10,7 +10,7 @@ import { CAPABILITIES, getProfile } from "@trenova/shared/lib/capability";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { customer } from "@/lib/queries/customer";
 import { shipment } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
@@ -134,7 +134,7 @@ export function BOLField() {
 
     bolCheckTimer.current = setTimeout(async () => {
       try {
-        await apiService.shipmentService.checkForDuplicateBOLs(bol, shipmentId);
+        await shipmentService.checkForDuplicateBOLs(bol, shipmentId);
         clearErrors("bol");
       } catch (err) {
         if (err instanceof ApiRequestError && err.data.errors?.length) {

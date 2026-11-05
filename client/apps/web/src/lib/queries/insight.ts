@@ -1,4 +1,4 @@
-import { apiService, type BrowseInsightsParams } from "@/services/api";
+import { insightService, type BrowseInsightsParams } from "@/services/insight";
 import type { InsightSurface } from "@/types/insight";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -7,14 +7,14 @@ export const insight = createQueryKeys("insight", {
   // whole view never share a cache entry.
   active: (limit: number, surface?: InsightSurface) => ({
     queryKey: ["insights-active", limit, surface ?? "all"],
-    queryFn: () => apiService.insightService.list(limit, surface),
+    queryFn: () => insightService.list(limit, surface),
   }),
   detail: (id: string) => ({
     queryKey: ["insight-detail", id],
-    queryFn: () => apiService.insightService.detail(id),
+    queryFn: () => insightService.detail(id),
   }),
   browse: (params: BrowseInsightsParams) => ({
     queryKey: ["insights-browse", params],
-    queryFn: () => apiService.insightService.browse(params),
+    queryFn: () => insightService.browse(params),
   }),
 });

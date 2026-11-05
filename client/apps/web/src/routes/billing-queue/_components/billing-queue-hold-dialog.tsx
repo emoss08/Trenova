@@ -19,7 +19,7 @@ import {
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { HOLD_REASONS, holdReasonLabel } from "@/lib/billing-queue-checks";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import type { BillingQueueHoldReason } from "@trenova/shared/types/billing-queue";
 import { useState } from "react";
 import type { BillingQueueTarget } from "./billing-queue-assign-dialog";
@@ -59,7 +59,7 @@ export function BillingQueueHoldDialog({
       if (targets.length === 1 || !run) {
         await Promise.all(
           targets.map((target) =>
-            apiService.billingQueueService.updateStatus(target.id, {
+            billingQueueService.updateStatus(target.id, {
               status: "OnHold",
               holdReasonCode,
               reviewNotes: reviewNotes || undefined,

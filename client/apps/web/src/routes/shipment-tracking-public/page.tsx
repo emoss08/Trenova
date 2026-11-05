@@ -1,12 +1,8 @@
 import { Metadata } from "@/components/metadata";
 import { publicLinkErrorKind } from "@/components/public-page/error-kind";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
-import { ShipmentTrackingService } from "@/services/shipment-tracking";
-import {
-  AlertTriangleIcon,
-  ClockIcon,
-  SlashCircle01Icon,
-} from "@trenova/shared/components/icons";
+import { shipmentTrackingService } from "@/services/shipment-tracking";
+import { AlertTriangleIcon, ClockIcon, SlashCircle01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +10,6 @@ import { useParams } from "react-router";
 import { TrackingTopBar, TrackingView } from "./_components/tracking-view";
 import { TrackingViewSkeleton } from "./_components/tracking-view-skeleton";
 
-const shipmentTrackingService = new ShipmentTrackingService();
 const REFRESH_MS = 2 * 60 * 1000;
 
 function Message({

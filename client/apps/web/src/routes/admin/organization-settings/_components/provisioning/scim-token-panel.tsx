@@ -13,7 +13,7 @@ import {
 import { CopyableSecret } from "@/components/copyable-secret";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { toTitleCase } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { memo, useState } from "react";
@@ -46,12 +46,12 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
 
   const tokensQuery = useQuery({
     queryKey: ["scim-tokens", organizationId, directoryId],
-    queryFn: async () => apiService.organizationService.listSCIMTokens(organizationId, directoryId),
+    queryFn: async () => organizationService.listSCIMTokens(organizationId, directoryId),
     enabled: Boolean(directoryId),
   });
   const { mutate: createToken, isPending: isCreatingToken } = useMutation({
     mutationFn: async () =>
-      apiService.organizationService.createSCIMToken(organizationId, directoryId, tokenName),
+      organizationService.createSCIMToken(organizationId, directoryId, tokenName),
     onSuccess: async (response) => {
       setCreatedToken(response.token);
       setTokenName("");
@@ -60,7 +60,7 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   });
   const { mutate: revokeToken } = useMutation({
     mutationFn: async (tokenId: string) =>
-      apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
+      organizationService.revokeSCIMToken(organizationId, tokenId),
     onSuccess: async () => {
       await onProvisioningChange();
     },

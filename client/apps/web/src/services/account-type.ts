@@ -62,3 +62,5 @@ export class AccountTypeService {
     return response.patchAccountType;
   }
 }
+
+export const accountTypeService = new AccountTypeService();

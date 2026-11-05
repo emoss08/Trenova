@@ -8,7 +8,7 @@ import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   formulaTemplateSchema,
@@ -88,7 +88,7 @@ function FormulaTemplateEditor() {
 
   const { mutate } = useApiMutation({
     mutationFn: async ({ values }: TemplateSave) => {
-      return apiService.formulaTemplateService.update(id ?? "", {
+      return formulaTemplateService.update(id ?? "", {
         description: values.description ?? "",
         source: values.source,
         version: seat.version ?? undefined,

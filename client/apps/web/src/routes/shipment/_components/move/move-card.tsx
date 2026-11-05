@@ -3,7 +3,9 @@ import { useEtaLabels } from "@/hooks/use-eta-labels";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { fieldErrorMessages } from "@/lib/form-errors";
 import { shipment } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { assignmentService } from "@/services/assignment";
+import { carrierAssignmentService } from "@/services/carrier-assignment";
+import { shipmentService } from "@/services/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building07Icon,
@@ -155,7 +157,7 @@ export function MoveCard({
   };
 
   const unassignMutation = useMutation({
-    mutationFn: () => apiService.assignmentService.unassign(moveId!),
+    mutationFn: () => assignmentService.unassign(moveId!),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.assignment`, null);
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
@@ -166,7 +168,7 @@ export function MoveCard({
   });
 
   const cancelCarrierMutation = useMutation({
-    mutationFn: (reason: string) => apiService.carrierAssignmentService.cancel(moveId!, reason),
+    mutationFn: (reason: string) => carrierAssignmentService.cancel(moveId!, reason),
     onSuccess: () => {
       setValue(`moves.${moveIndex}.carrierAssignment`, null);
       setValue(`moves.${moveIndex}.coverageType`, "unassigned");
@@ -191,7 +193,7 @@ export function MoveCard({
     }) => {
       const payload = { action, ...(occurredAt !== undefined ? { occurredAt } : {}) };
       return withIdempotencyKey({ moveId, stopId, ...payload }, (idempotencyKey) =>
-        apiService.assignmentService.recordStopActual(moveId!, stopId, payload, {
+        assignmentService.recordStopActual(moveId!, stopId, payload, {
           idempotencyKey,
         }),
       );
@@ -210,7 +212,7 @@ export function MoveCard({
   });
 
   const recalculateDistanceMutation = useMutation({
-    mutationFn: () => apiService.shipmentService.recalculateDistance(shipmentId!),
+    mutationFn: () => shipmentService.recalculateDistance(shipmentId!),
     onSuccess: () => {
       refreshShipmentLists();
       toast.success(t("Distance recalculated"));

@@ -9,7 +9,8 @@ import {
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { aiControl } from "@/lib/queries/ai-control";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { agentDefinitionService } from "@/services/assistant";
+import { agentRunService } from "@/services/agent-run";
 import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -193,7 +194,7 @@ export default function AgentsTab() {
       agent: AgentDefinitionRow;
       patch: { enabled?: boolean; shadowMode?: boolean; simulationMode?: boolean };
     }) =>
-      apiService.agentDefinitionService.update(agent.id, {
+      agentDefinitionService.update(agent.id, {
         ...toSaveRequest(toAgentPanelRow(agent)),
         ...patch,
       }),
@@ -205,7 +206,7 @@ export default function AgentsTab() {
 
   const run = useApiMutation({
     mutationFn: (agent: AgentDefinitionRow) =>
-      apiService.agentRunService.start({ agentDefinitionId: agent.id }),
+      agentRunService.start({ agentDefinitionId: agent.id }),
     onSuccess: async (_run, agent) => {
       toast.success(t("{0} is running", agent.name));
       await refresh();
@@ -214,7 +215,7 @@ export default function AgentsTab() {
   });
 
   const remove = useApiMutation({
-    mutationFn: (agent: AgentDefinitionRow) => apiService.agentDefinitionService.remove(agent.id),
+    mutationFn: (agent: AgentDefinitionRow) => agentDefinitionService.remove(agent.id),
     onSuccess: async () => {
       setRemoving(null);
       void setOpenId(null);

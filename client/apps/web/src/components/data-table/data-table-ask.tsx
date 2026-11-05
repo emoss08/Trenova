@@ -6,8 +6,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FieldFilter, SortField } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiService } from "@/services/api";
-import { TABLE_CATALOGUE_KEY } from "@/services/table-query";
+import { tableQueryService, TABLE_CATALOGUE_KEY } from "@/services/table-query";
 import type { ComposedTableQuery } from "@/types/table-query";
 import {
   AlertTriangleIcon,
@@ -53,7 +52,7 @@ export function DataTableAsk({
   // only when the server ships, so one cached request answers for every table.
   const catalogue = useQuery({
     queryKey: TABLE_CATALOGUE_KEY,
-    queryFn: ({ signal }) => apiService.tableQueryService.catalogue({ signal }),
+    queryFn: ({ signal }) => tableQueryService.catalogue({ signal }),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const askable = (catalogue.data?.results ?? []).some((entry) => entry.resource === resource);
@@ -67,7 +66,7 @@ export function DataTableAsk({
     isPending,
   } = useMutation({
     mutationFn: (asked: string) =>
-      apiService.tableQueryService.compose(resource, {
+      tableQueryService.compose(resource, {
         prompt: asked,
         current: { query, fieldFilters, sort },
       }),

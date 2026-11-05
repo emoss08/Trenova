@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
+import { agentExtensionService } from "@/services/agent-extension";
 import type { AgentWait, AgentWaitList } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
@@ -50,7 +51,7 @@ export function useConversationWaits(threadId: string, enabled: boolean) {
     (wait: AgentWait) =>
       close(
         wait,
-        () => apiService.assistantService.cancelWait(threadId, wait.id),
+        () => assistantService.cancelWait(threadId, wait.id),
         t("The wait could not be cancelled"),
       ),
     [close, t, threadId],
@@ -64,7 +65,7 @@ export function useConversationWaits(threadId: string, enabled: boolean) {
       }
       await close(
         wait,
-        () => apiService.agentExtensionService.stopWebWatch(watchId),
+        () => agentExtensionService.stopWebWatch(watchId),
         t("The web watch could not be stopped"),
       );
       void queryClient.invalidateQueries({ queryKey: agentExtension.webWatches._def });

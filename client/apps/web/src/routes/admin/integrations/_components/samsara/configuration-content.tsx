@@ -10,7 +10,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckIcon, Copy01Icon } from "@trenova/shared/components/icons";
@@ -86,7 +86,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
 
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
-      apiService.integrationService.updateConfig("Samsara", payload),
+      integrationService.updateConfig("Samsara", payload),
     form,
     resourceName: "Samsara configuration",
     onSuccess: async () => {
@@ -103,7 +103,7 @@ export function SamsaraConfigurationContent({ open }: { open: boolean }) {
     },
   });
   const testMutation = useMutation({
-    mutationFn: () => apiService.integrationService.testConnection("Samsara"),
+    mutationFn: () => integrationService.testConnection("Samsara"),
     onSuccess: () => {
       setValue("enabled", true, { shouldDirty: true });
       toast.success(t("Samsara connection successful"));

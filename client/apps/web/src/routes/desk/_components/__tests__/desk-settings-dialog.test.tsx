@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { caseChecklistService } from "@/services/case-checklist";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
@@ -32,7 +32,7 @@ function grant(permissions: Record<string, number>) {
 }
 
 function renderDialog(initialSection?: "checklists", agents: { id: string; name: string }[] = []) {
-  vi.spyOn(apiService.caseChecklistService, "list").mockResolvedValue({
+  vi.spyOn(caseChecklistService, "list").mockResolvedValue({
     kind: "ReadyToBill",
     organization: {
       id: "",

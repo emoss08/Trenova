@@ -3,7 +3,7 @@ import { DataTableDescription } from "@/components/data-table/_components/data-t
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { equipmentManufacturerService } from "@/services/equipment-manufacturer";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -15,7 +15,7 @@ function EquipmentManufacturerStatusCell({ row }: { row: EquipmentManufacturer }
   const handleStatusChange = useCallback(
     async (newStatus: EquipmentManufacturer["status"]) => {
       if (!row.id) return;
-      await apiService.equipmentManufacturerService.patch(row.id, {
+      await equipmentManufacturerService.patch(row.id, {
         status: newStatus,
       });
 

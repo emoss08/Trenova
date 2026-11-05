@@ -1,6 +1,6 @@
 import { assistant } from "@/lib/queries/assistant";
 import { updateCachedThread } from "@/lib/thread-list";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantStreamEvent, AssistantThread, ContextUsage } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -167,7 +167,7 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
     cancelledEarly.current = false;
     dispatch({ type: "request", before: view.used, after: view.used - view.frees });
     try {
-      const started = await apiService.assistantService.compactThread(thread.id);
+      const started = await assistantService.compactThread(thread.id);
       if (cancelledEarly.current) {
         stopTurnQuietly(started.turnId);
         return;
@@ -216,7 +216,7 @@ export function useCompaction(thread: AssistantThread, busy: boolean) {
     async (on: boolean) => {
       keepUsage(null, !on);
       try {
-        await apiService.assistantService.updateThread(thread.id, { autoCompact: on });
+        await assistantService.updateThread(thread.id, { autoCompact: on });
       } catch {
         keepUsage(null, on);
         toast.error(t("The setting could not be saved"));

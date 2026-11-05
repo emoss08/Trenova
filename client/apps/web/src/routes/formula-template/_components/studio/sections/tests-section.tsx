@@ -7,7 +7,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
-import { apiService } from "@/services/api";
+import { formulaTemplateService } from "@/services/formula-template";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -39,7 +39,7 @@ export function TestsSection() {
   const [suggested, setSuggested] = useState<SuggestedTestsState | null>(null);
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   const suggest = useMutation({
-    mutationFn: () => apiService.formulaTemplateService.suggestTests(draftContent()),
+    mutationFn: () => formulaTemplateService.suggestTests(draftContent()),
     onMutate: () => {
       setSuggested({ status: "loading" });
       setAdded(new Set());

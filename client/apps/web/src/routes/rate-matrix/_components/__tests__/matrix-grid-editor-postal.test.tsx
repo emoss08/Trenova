@@ -9,11 +9,9 @@ import { MatrixGridEditor, type MatrixGridVersion } from "../matrix-grid-editor"
 const listCells = vi.fn();
 const replaceCells = vi.fn();
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    get rateMatrixService() {
-      return { listCells, replaceCells };
-    },
+vi.mock("@/services/rate", () => ({
+  get rateMatrixService() {
+    return { listCells, replaceCells };
   },
 }));
 

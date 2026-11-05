@@ -17,3 +17,5 @@ export class DistanceProfileService {
     return safeParse(distanceProfileSchema, response, "Distance Profile");
   }
 }
+
+export const distanceProfileService = new DistanceProfileService();

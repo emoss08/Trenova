@@ -6,7 +6,7 @@ import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { capture } from "@/lib/queries/capture";
 import { documentControl } from "@/lib/queries/document-control";
 import { usePermission } from "@/hooks/use-permission";
-import { apiService } from "@/services/api";
+import { documentControlService } from "@/services/document-control";
 import { documentControlSchema, type DocumentControl } from "@/types/document-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -45,7 +45,7 @@ export default function CaptureSettingsForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: documentControl.get._def,
-    mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
+    mutationFn: async (values: DocumentControl) => documentControlService.update(values),
     resourceName: "Capture settings",
     resetForm: reset,
     form,

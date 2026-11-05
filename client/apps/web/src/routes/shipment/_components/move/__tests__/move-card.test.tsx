@@ -22,12 +22,9 @@ const { getUIPolicy, getEta, fetchGraphQLSelectedOption, getAssignment, assignme
     assignmentDialog: vi.fn(),
   }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: { getUIPolicy, getEta },
-    assignmentService: { get: getAssignment },
-  },
-}));
+vi.mock("@/services/shipment", () => ({ shipmentService: { getUIPolicy, getEta } }));
+
+vi.mock("@/services/assignment", () => ({ assignmentService: { get: getAssignment } }));
 vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/select-options")>()),
   fetchGraphQLSelectedOption,

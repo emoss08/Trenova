@@ -9,7 +9,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -54,7 +54,7 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
 
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
-      apiService.integrationService.updateConfig("OpenWeatherMap", payload),
+      integrationService.updateConfig("OpenWeatherMap", payload),
     form,
     resourceName: "OpenWeatherMap configuration",
     onSuccess: async () => {

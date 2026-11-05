@@ -79,3 +79,5 @@ export class HazardousMaterialService {
     return response.patchHazardousMaterial;
   }
 }
+
+export const hazardousMaterialService = new HazardousMaterialService();

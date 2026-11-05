@@ -12,7 +12,7 @@ import {
 } from "@/lib/graphql/factoring";
 import { invalidateFactoringQueries } from "@/lib/queries/factoring";
 import { resourceDocumentsQuery } from "@/lib/resource-documents";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -208,7 +208,7 @@ export function AcknowledgeFactoringNoaDialog({
   const upload = useMutation({
     mutationFn: async (file: File) => {
       if (!noa) throw new Error("No notice selected");
-      return apiService.documentService.upload({
+      return documentService.upload({
         file,
         resourceId: noa.id,
         resourceType: FACTORING_NOA_DOCUMENT_RESOURCE,

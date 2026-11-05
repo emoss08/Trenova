@@ -4,7 +4,7 @@ import {
   periodRange,
   standaloneShipmentCount,
 } from "@/lib/billing-schedule";
-import { apiService } from "@/services/api";
+import { invoiceRunService } from "@/services/invoice-run";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -78,7 +78,7 @@ export function StatementDetail({
 
   const bill = useMutation({
     mutationFn: (reason: string) =>
-      apiService.invoiceRunService.billStatementNow(customerId as string, reason, [...heldIds]),
+      invoiceRunService.billStatementNow(customerId as string, reason, [...heldIds]),
     onSuccess: (result) => {
       setBillOpen(false);
       setHeldIds(new Set());

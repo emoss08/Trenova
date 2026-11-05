@@ -1,6 +1,6 @@
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { ConversationSchedule } from "@/types/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,13 +44,7 @@ export function DeskScheduleEditDialog({
   );
 }
 
-function EditForm({
-  schedule,
-  onClose,
-}: {
-  schedule: ConversationSchedule;
-  onClose: () => void;
-}) {
+function EditForm({ schedule, onClose }: { schedule: ConversationSchedule; onClose: () => void }) {
   const t = useT();
   const queryClient = useQueryClient();
   const form = useForm<ScheduleEditValues>({
@@ -62,8 +56,7 @@ function EditForm({
   const mutation = useApiMutation({
     form,
     resourceName: "Schedule",
-    mutationFn: (values: ScheduleEditValues) =>
-      apiService.assistantService.editSchedule(schedule.id, values),
+    mutationFn: (values: ScheduleEditValues) => assistantService.editSchedule(schedule.id, values),
     onSuccess: (saved) => {
       storeSchedule(queryClient, schedule, saved);
       onClose();

@@ -11,12 +11,10 @@ const { checkForDuplicateBOLs, getUIPolicy, billingRules } = vi.hoisted(() => ({
   billingRules: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: {
-      checkForDuplicateBOLs,
-      getUIPolicy,
-    },
+vi.mock("@/services/shipment", () => ({
+  shipmentService: {
+    checkForDuplicateBOLs,
+    getUIPolicy,
   },
 }));
 

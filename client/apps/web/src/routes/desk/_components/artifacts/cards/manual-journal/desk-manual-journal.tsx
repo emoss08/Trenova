@@ -5,7 +5,7 @@ import { usePermission } from "@/hooks/use-permission";
 import type { DeskManualJournalCard } from "@/lib/graphql/journal-cards";
 import { journalEntry } from "@/lib/queries/journal-entry";
 import { manualJournal } from "@/lib/queries/manual-journal";
-import { apiService } from "@/services/api";
+import { manualJournalService } from "@/services/manual-journal";
 import type { ManualJournal } from "@/types/manual-journal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -166,7 +166,7 @@ function ManualJournalCard({
     void queryClient.invalidateQueries({ queryKey: journalEntry._def });
   };
   const submit = useApiMutation<ManualJournal, undefined>({
-    mutationFn: () => apiService.manualJournalService.submit(id),
+    mutationFn: () => manualJournalService.submit(id),
     onSuccess: () => {
       invalidate();
     },
@@ -174,9 +174,9 @@ function ManualJournalCard({
   });
   const approveAndPost = useApiMutation<ManualJournal, undefined>({
     mutationFn: async () => {
-      await apiService.manualJournalService.approve(id);
+      await manualJournalService.approve(id);
       try {
-        return await apiService.manualJournalService.post(id);
+        return await manualJournalService.post(id);
       } catch (error) {
         invalidate();
         throw error;
@@ -188,14 +188,14 @@ function ManualJournalCard({
     resourceName: "Manual Journal",
   });
   const post = useApiMutation<ManualJournal, undefined>({
-    mutationFn: () => apiService.manualJournalService.post(id),
+    mutationFn: () => manualJournalService.post(id),
     onSuccess: () => {
       invalidate();
     },
     resourceName: "Manual Journal",
   });
   const reject = useApiMutation<ManualJournal, string>({
-    mutationFn: (reason) => apiService.manualJournalService.reject(id, reason),
+    mutationFn: (reason) => manualJournalService.reject(id, reason),
     onSuccess: () => {
       setAsking(null);
       invalidate();
@@ -203,7 +203,7 @@ function ManualJournalCard({
     resourceName: "Manual Journal",
   });
   const cancel = useApiMutation<ManualJournal, string>({
-    mutationFn: (reason) => apiService.manualJournalService.cancel(id, reason),
+    mutationFn: (reason) => manualJournalService.cancel(id, reason),
     onSuccess: () => {
       setAsking(null);
       invalidate();

@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Label } from "@trenova/shared/components/ui/label";
@@ -36,7 +36,7 @@ export function LadingCreateProject({
 
   const create = useApiMutation({
     mutationFn: () =>
-      apiService.ladingService.createProject({
+      ladingService.createProject({
         partnerId,
         role,
         sets: SETS.filter((set) => sets.includes(set)),

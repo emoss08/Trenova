@@ -3,7 +3,7 @@ import { EmailProfileAutocompleteField } from "@/components/autocomplete-fields"
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { email } from "@/lib/queries/email";
-import { apiService } from "@/services/api";
+import { emailService } from "@/services/email";
 import type { EmailProfileAssignment } from "@trenova/shared/types/email";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -70,7 +70,7 @@ export function PurposeAssignmentsPanel() {
 
   const saveAssignments = useMutation({
     mutationFn: (values: PurposeAssignmentsFormValues) =>
-      apiService.emailService.updateAssignments(toPayload(values)),
+      emailService.updateAssignments(toPayload(values)),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: email.assignments().queryKey });
     },

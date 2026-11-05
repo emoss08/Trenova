@@ -8,11 +8,9 @@ vi.mock("@/lib/graphql/shipment", () => ({
   getShipmentPageAnalyticsGraphQL: getShipmentPageAnalyticsGraphQLMock,
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    analyticService: {
-      get: analyticsServiceGetMock,
-    },
+vi.mock("@/services/analytics", () => ({
+  analyticService: {
+    get: analyticsServiceGetMock,
   },
 }));
 

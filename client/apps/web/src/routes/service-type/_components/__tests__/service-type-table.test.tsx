@@ -34,12 +34,10 @@ vi.mock("../service-type-panel", () => ({
   ServiceTypePanel: () => null,
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    serviceTypeService: {
-      patch: patchMock,
-      bulkUpdateStatus: vi.fn(),
-    },
+vi.mock("@/services/service-type", () => ({
+  serviceTypeService: {
+    patch: patchMock,
+    bulkUpdateStatus: vi.fn(),
   },
 }));
 

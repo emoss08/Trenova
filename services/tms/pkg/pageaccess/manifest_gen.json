@@ -1,5 +1,5 @@
 {
-  "version": "sha256:79f39fd33dda434b3b27e62c04fa3793b3d2308f3953cf8231d98f9d315dd9ea",
+  "version": "sha256:e950ab78c0f9d568cf8486c270fbee7f3621920dede1f62f887f06f855a6ed49",
   "screens": [
     {
       "path": "/",
@@ -2098,7 +2098,6 @@
         "AIRetrievalReindexEstimate",
         "AIRetrievalStatus",
         "AIRoutePreview",
-        "AITrainingExportHistory",
         "AITuneUps",
         "AIUsageDaily",
         "AIUsageFeatures",
@@ -2155,7 +2154,6 @@
         "ApproveAgentMemorySuggestion",
         "ApproveAgentOrganizationProfileGuidance",
         "BulkEditFields",
-        "CancelExtractionEvalRun",
         "ClearMyAIFeedback",
         "ConfirmDeskMemory",
         "CreateAgentEvalCase",
@@ -2165,7 +2163,6 @@
         "DataTableInsightFields",
         "DecideAgentPlan",
         "DecideAgentProposal",
-        "DeleteExtractionEvalCase",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissAIProviderFailure",
@@ -2176,20 +2173,7 @@
         "DraftAgentFromDescription",
         "ExportTableView",
         "ExtractionAccuracy",
-        "ExtractionEvalCaseDetail",
-        "ExtractionEvalCaseTable",
-        "ExtractionEvalRefreeze",
-        "ExtractionEvalResultDetail",
-        "ExtractionEvalResultTable",
-        "ExtractionEvalRunDetail",
-        "ExtractionEvalRunTable",
         "ExtractionProviderTrends",
-        "ExtractionRollout",
-        "ExtractionRolloutReport",
-        "ExtractionShadowReport",
-        "ExtractionShadowResultDetail",
-        "ExtractionShadowResultTable",
-        "ExtractionShadowSettings",
         "MyAIFeedback",
         "MyAgentProfile",
         "MyBulkEdit",
@@ -2198,8 +2182,6 @@
         "MyTableLayout",
         "PatchAIProvider",
         "PreviewBulkEdit",
-        "PromoteAICorrection",
-        "RefreezeExtractionEvalCases",
         "RegenerateAgentOrganizationProfile",
         "RegenerateMyAgentProfile",
         "ReindexAIRetrievalSource",
@@ -2224,7 +2206,6 @@
         "SetDeskMemoryStatus",
         "SetMyAIFeedback",
         "StartBulkEdit",
-        "StartExtractionEvalRun",
         "TestAIProviderDraft",
         "TightenAgentInstructions",
         "UndoMyBulkEdit",
@@ -2232,10 +2213,7 @@
         "UpdateAgentControl",
         "UpdateAgentEvalCase",
         "UpdateAgentMemory",
-        "UpdateAgentQualityControl",
-        "UpdateExtractionEvalCase",
-        "UpdateExtractionRollout",
-        "UpdateExtractionShadowSettings"
+        "UpdateAgentQualityControl"
       ],
       "endpoints": [
         {
@@ -2311,16 +2289,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -3653,11 +3621,6 @@
         },
         {
           "method": "GET",
-          "path": "/custom-fields/definitions/:param/usage/",
-          "requires": []
-        },
-        {
-          "method": "GET",
           "path": "/tables/",
           "requires": []
         },
@@ -3838,16 +3801,6 @@
           ]
         },
         {
-          "method": "PATCH",
-          "path": "/distance-overrides/:param/",
-          "requires": [
-            {
-              "resource": "distance_override",
-              "operation": "update"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/tables/",
           "requires": []
@@ -3900,16 +3853,6 @@
             {
               "resource": "distance_profile",
               "operation": "delete"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/distance-profiles/:param/",
-          "requires": [
-            {
-              "resource": "distance_profile",
-              "operation": "update"
             }
           ]
         },
@@ -6635,42 +6578,12 @@
       ],
       "endpoints": [
         {
-          "method": "POST",
-          "path": "/document-packet-rules/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-packet-rules/:param",
-          "requires": []
-        },
-        {
           "method": "DELETE",
           "path": "/document-packet-rules/:param/",
           "requires": [
             {
               "resource": "document_type",
               "operation": "delete"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/document-packet-rules/:param/",
-          "requires": []
-        },
-        {
-          "method": "PUT",
-          "path": "/document-packet-rules/:param/",
-          "requires": [
-            {
-              "resource": "document_type",
-              "operation": "update"
             }
           ]
         },
@@ -7046,16 +6959,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -7812,16 +7715,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -8628,16 +8521,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/agent-definitions/system/:param/",
           "requires": [
@@ -9385,16 +9268,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -10949,9 +10822,99 @@
           ]
         },
         {
+          "method": "PUT",
+          "path": "/billing-queue/:param/assign/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "assign"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/charges/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/invoice-details/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/:param/neighbors/:param",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/reassign-charge/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
         },
         {
           "method": "GET",
@@ -10974,12 +10937,32 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/billing-queue/bulk/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/bulk/:param/",
           "requires": [
             {
               "resource": "billing_queue",
               "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
             }
           ]
         },
@@ -10994,8 +10977,62 @@
           ]
         },
         {
+          "method": "POST",
+          "path": "/billing-queue/filter-presets/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/billing-queue/filter-presets/:param/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/nova-generation/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/pod-signatures/redetect/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            },
+            {
+              "resource": "document",
+              "operation": "update"
+            }
+          ]
+        },
+        {
           "method": "GET",
           "path": "/billing-queue/recommendations/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/search-intent/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -11686,7 +11723,27 @@
         },
         {
           "method": "POST",
+          "path": "/billing-queue/:param/post/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/billing-queue/:param/reassign-charge/",
+          "requires": [
+            {
+              "resource": "billing_queue",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/",
           "requires": [
             {
               "resource": "billing_queue",
@@ -13399,6 +13456,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
@@ -13586,16 +13644,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -15084,6 +15132,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
@@ -15265,16 +15314,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -16824,6 +16863,7 @@
         "DeskWorkerHos",
         "DeskWorkerStanding",
         "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
         "DismissDeskMemory",
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
@@ -17012,16 +17052,6 @@
         {
           "method": "GET",
           "path": "/agent-definitions/event-kinds/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
           "requires": [
             {
               "resource": "agent_definition",
@@ -18479,7 +18509,8 @@
         }
       ],
       "operations": [
-        "DeskDetentionCard"
+        "DeskDetentionCard",
+        "DetentionIntelligence"
       ],
       "endpoints": [],
       "reads": [
@@ -18501,7 +18532,8 @@
         }
       ],
       "operations": [
-        "DeskDetentionCard"
+        "DeskDetentionCard",
+        "DetentionIntelligence"
       ],
       "endpoints": [],
       "reads": [
@@ -24254,6 +24286,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "EquipmentTypeTable",
         "ExportTableView",
         "GrantCarrierIntelOverride",
@@ -25049,6 +25082,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "EquipmentTypeTable",
         "ExportTableView",
         "GrantCarrierIntelOverride",
@@ -26101,6 +26135,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DetentionIntelligence",
         "DiscardFuelPurchaseImport",
         "ExportTableView",
         "FuelPurchaseImportRows",
@@ -27527,6 +27562,7 @@
         "DeskWorkerCredentials",
         "DeskWorkerHos",
         "DeskWorkerStanding",
+        "DetentionIntelligence",
         "DriverQualificationFile",
         "EffectiveWorkerPayAssignment",
         "EndBenefitEnrollment",
@@ -30267,6 +30303,7 @@
         "DeskLocationDwell",
         "DeskLocationPolicies",
         "DeskServiceFailureCard",
+        "DetentionIntelligence",
         "DispatchAssignMoves",
         "DispatchPlanAutoAssign",
         "ExportTableView",
@@ -30306,6 +30343,7 @@
         "ShipmentQuickFilterCounts",
         "ShipmentStageSummary",
         "ShipmentSuggestions",
+        "ShipmentTimeline",
         "ShipmentWatchlist",
         "StartBulkEdit",
         "TelematicsFormMappings",
@@ -31269,16 +31307,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/agent-definitions/system/:param/",
           "requires": [
@@ -32219,16 +32247,6 @@
           ]
         },
         {
-          "method": "POST",
-          "path": "/agent-definitions/preview-prompt/",
-          "requires": [
-            {
-              "resource": "agent_definition",
-              "operation": "read"
-            }
-          ]
-        },
-        {
           "method": "GET",
           "path": "/agent-definitions/system/:param/",
           "requires": [
@@ -33150,13 +33168,6 @@
     },
     {
       "name": "AIRoutePreview",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "AITrainingExportHistory",
       "type": "query",
       "reads": [],
       "linked": [],
@@ -34889,13 +34900,6 @@
       "declared": []
     },
     {
-      "name": "CancelExtractionEvalRun",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
       "name": "CancelFactoringSubmission",
       "type": "mutation",
       "reads": [],
@@ -36370,13 +36374,6 @@
       "declared": []
     },
     {
-      "name": "DeleteExtractionEvalCase",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
       "name": "DeleteFuelIndexPrice",
       "type": "mutation",
       "reads": [],
@@ -37251,6 +37248,13 @@
     {
       "name": "DetachPayEventFromSettlement",
       "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DetentionIntelligence",
+      "type": "query",
       "reads": [],
       "linked": [],
       "declared": []
@@ -38149,98 +38153,7 @@
       "declared": []
     },
     {
-      "name": "ExtractionEvalCaseDetail",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalCaseTable",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalRefreeze",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalResultDetail",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalResultTable",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalRunDetail",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionEvalRunTable",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
       "name": "ExtractionProviderTrends",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionRollout",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionRolloutReport",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionShadowReport",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionShadowResultDetail",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionShadowResultTable",
-      "type": "query",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "ExtractionShadowSettings",
       "type": "query",
       "reads": [],
       "linked": [],
@@ -39460,80 +39373,14 @@
       ],
       "linked": [
         {
-          "kind": "accessorial_charge",
-          "fields": [
-            "businessUnitId",
-            "code",
-            "createdAt",
-            "description",
-            "method",
-            "organizationId",
-            "rateUnit",
-            "status",
-            "updatedAt",
-            "version"
-          ]
-        },
-        {
           "kind": "carrier",
           "fields": [
-            "code",
             "name",
             "scac"
           ]
         },
         {
-          "kind": "commodity",
-          "fields": [
-            "businessUnitId",
-            "createdAt",
-            "description",
-            "fragile",
-            "freightClass",
-            "hazardousMaterialId",
-            "linearFeetPerUnit",
-            "loadingInstructions",
-            "maxQuantityPerShipment",
-            "maxTemperature",
-            "minTemperature",
-            "name",
-            "organizationId",
-            "stackable",
-            "status",
-            "updatedAt",
-            "version",
-            "weightPerUnit"
-          ]
-        },
-        {
           "kind": "customer",
-          "fields": [
-            "addressLine1",
-            "addressLine2",
-            "allowConsolidation",
-            "businessUnitId",
-            "city",
-            "code",
-            "consolidationPriority",
-            "createdAt",
-            "ediPartner",
-            "exclusiveConsolidation",
-            "externalId",
-            "isGeocoded",
-            "latitude",
-            "longitude",
-            "name",
-            "organizationId",
-            "placeId",
-            "postalCode",
-            "stateId",
-            "status",
-            "updatedAt",
-            "version"
-          ]
-        },
-        {
-          "kind": "edi",
           "fields": [
             "code",
             "name"
@@ -39542,18 +39389,12 @@
         {
           "kind": "location",
           "fields": [
-            "addressLine1",
-            "addressLine2",
             "city",
             "code",
             "latitude",
-            "locationCategoryId",
             "longitude",
             "name",
-            "postalCode",
-            "state",
-            "stateId",
-            "status"
+            "state"
           ]
         },
         {
@@ -39563,27 +39404,10 @@
           ]
         },
         {
-          "kind": "trailer",
-          "fields": [
-            "code",
-            "equipmentTypeId"
-          ]
-        },
-        {
-          "kind": "user",
-          "fields": [
-            "name",
-            "profilePicUrl",
-            "thumbnailUrl",
-            "username"
-          ]
-        },
-        {
           "kind": "worker",
           "fields": [
             "firstName",
             "lastName",
-            "profilePicUrl",
             "wholeName"
           ]
         }
@@ -40150,13 +39974,6 @@
       "declared": []
     },
     {
-      "name": "PromoteAICorrection",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
       "name": "PtoBalanceSummary",
       "type": "query",
       "reads": [],
@@ -40504,13 +40321,6 @@
           ]
         }
       ],
-      "declared": []
-    },
-    {
-      "name": "RefreezeExtractionEvalCases",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
       "declared": []
     },
     {
@@ -41666,24 +41476,8 @@
       ],
       "linked": [
         {
-          "kind": "accessorial_charge",
-          "fields": [
-            "businessUnitId",
-            "code",
-            "createdAt",
-            "description",
-            "method",
-            "organizationId",
-            "rateUnit",
-            "status",
-            "updatedAt",
-            "version"
-          ]
-        },
-        {
           "kind": "carrier",
           "fields": [
-            "code",
             "name",
             "scac"
           ]
@@ -41691,51 +41485,14 @@
         {
           "kind": "commodity",
           "fields": [
-            "businessUnitId",
-            "createdAt",
-            "description",
-            "fragile",
-            "freightClass",
-            "hazardousMaterialId",
-            "linearFeetPerUnit",
-            "loadingInstructions",
-            "maxQuantityPerShipment",
-            "maxTemperature",
-            "minTemperature",
-            "name",
-            "organizationId",
-            "stackable",
-            "status",
-            "updatedAt",
-            "version",
-            "weightPerUnit"
+            "name"
           ]
         },
         {
           "kind": "customer",
           "fields": [
-            "addressLine1",
-            "addressLine2",
-            "allowConsolidation",
-            "businessUnitId",
-            "city",
-            "code",
-            "consolidationPriority",
-            "createdAt",
             "ediPartner",
-            "exclusiveConsolidation",
-            "externalId",
-            "isGeocoded",
-            "latitude",
-            "longitude",
-            "name",
-            "organizationId",
-            "placeId",
-            "postalCode",
-            "stateId",
-            "status",
-            "updatedAt",
-            "version"
+            "name"
           ]
         },
         {
@@ -41748,18 +41505,9 @@
         {
           "kind": "location",
           "fields": [
-            "addressLine1",
-            "addressLine2",
             "city",
             "code",
-            "latitude",
-            "locationCategoryId",
-            "longitude",
-            "name",
-            "postalCode",
-            "state",
-            "stateId",
-            "status"
+            "name"
           ]
         },
         {
@@ -41769,28 +41517,10 @@
           ]
         },
         {
-          "kind": "trailer",
-          "fields": [
-            "code",
-            "equipmentTypeId"
-          ]
-        },
-        {
-          "kind": "user",
-          "fields": [
-            "name",
-            "profilePicUrl",
-            "thumbnailUrl",
-            "username"
-          ]
-        },
-        {
           "kind": "worker",
           "fields": [
             "firstName",
-            "lastName",
-            "profilePicUrl",
-            "wholeName"
+            "lastName"
           ]
         }
       ],
@@ -42028,6 +41758,55 @@
       "declared": []
     },
     {
+      "name": "ShipmentTimeline",
+      "type": "query",
+      "reads": [
+        "shipment"
+      ],
+      "linked": [
+        {
+          "kind": "carrier",
+          "fields": [
+            "name",
+            "scac"
+          ]
+        },
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "location",
+          "fields": [
+            "city",
+            "code",
+            "latitude",
+            "longitude",
+            "name",
+            "state"
+          ]
+        },
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        },
+        {
+          "kind": "worker",
+          "fields": [
+            "firstName",
+            "lastName",
+            "wholeName"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "ShipmentTypeTable",
       "type": "query",
       "reads": [
@@ -42125,13 +41904,6 @@
     },
     {
       "name": "StartBulkEdit",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "StartExtractionEvalRun",
       "type": "mutation",
       "reads": [],
       "linked": [],
@@ -42818,27 +42590,6 @@
     },
     {
       "name": "UpdateEmploymentVerification",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateExtractionEvalCase",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateExtractionRollout",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateExtractionShadowSettings",
       "type": "mutation",
       "reads": [],
       "linked": [],

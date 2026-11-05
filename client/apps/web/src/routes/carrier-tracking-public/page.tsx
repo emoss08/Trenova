@@ -8,7 +8,7 @@ import {
   nextStopAction,
   type CheckCallPostFailure,
 } from "@/lib/carrier-tracking";
-import { CarrierTrackingService } from "@/services/carrier-tracking";
+import { carrierTrackingService } from "@/services/carrier-tracking";
 import {
   AlertTriangleIcon,
   CheckCircleIcon,
@@ -36,8 +36,6 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useId, useRef, useState } from "react";
 import { useParams } from "react-router";
-
-const carrierTrackingService = new CarrierTrackingService();
 
 const LIMITS = { city: 100, stateCode: 10, delayReason: 255, note: 1000, contactName: 100 };
 

@@ -5,7 +5,7 @@ import {
   normalizeCommentFilter,
   type LocalShipmentComment,
 } from "@/lib/shipment-comment-cache";
-import { apiService } from "@/services/api";
+import { shipmentCommentService } from "@/services/shipment-comment";
 import type { ShipmentCommentFilter } from "@/types/shipment-comment";
 
 export const COMMENT_PAGE_SIZE = 20;
@@ -21,7 +21,7 @@ export function useShipmentCommentList(
   const listQuery = useInfiniteQuery({
     queryKey: commentKeys.list(shipmentId, normalizedFilter),
     queryFn: ({ pageParam }) =>
-      apiService.shipmentCommentService.list(shipmentId, {
+      shipmentCommentService.list(shipmentId, {
         limit: COMMENT_PAGE_SIZE,
         after: pageParam,
         filter: normalizedFilter,
@@ -58,7 +58,7 @@ export function useShipmentCommentList(
 export function useShipmentCommentCount(shipmentId: string) {
   const countQuery = useQuery({
     queryKey: commentKeys.count(shipmentId),
-    queryFn: () => apiService.shipmentCommentService.getCount(shipmentId),
+    queryFn: () => shipmentCommentService.getCount(shipmentId),
     enabled: !!shipmentId,
     staleTime: 30_000,
   });
@@ -73,7 +73,7 @@ export function usePinnedShipmentComments(shipmentId: string) {
   const pinnedQuery = useQuery({
     queryKey: commentKeys.pinned(shipmentId),
     queryFn: () =>
-      apiService.shipmentCommentService.list(shipmentId, {
+      shipmentCommentService.list(shipmentId, {
         limit: PINNED_FETCH_LIMIT,
         filter: { pinnedOnly: true },
       }),
@@ -100,7 +100,7 @@ export function useShipmentCommentReplies(
   const repliesQuery = useInfiniteQuery({
     queryKey: commentKeys.replies(shipmentId, parentCommentId),
     queryFn: ({ pageParam }) =>
-      apiService.shipmentCommentService.listReplies(shipmentId, parentCommentId, {
+      shipmentCommentService.listReplies(shipmentId, parentCommentId, {
         limit: REPLY_PAGE_SIZE,
         after: pageParam,
       }),

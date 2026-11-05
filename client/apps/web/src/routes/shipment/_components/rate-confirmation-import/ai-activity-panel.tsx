@@ -1,6 +1,6 @@
 import { PageAssistant } from "@/components/assistant/page-assistant";
 import type { PageBinding, PageRequest } from "@/components/assistant/use-thread-model";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { PageDraftEdit } from "@/types/page-draft";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -114,7 +114,7 @@ export default function AIActivityPanel({
   );
 
   const open = useCallback(
-    () => apiService.documentService.openImportAssistantThread(documentId),
+    () => documentService.openImportAssistantThread(documentId),
     [documentId],
   );
 
@@ -145,7 +145,7 @@ export default function AIActivityPanel({
 
   const historyQuery = useQuery({
     queryKey: ["import-assistant-history", documentId],
-    queryFn: () => apiService.documentService.getImportAssistantHistory(documentId),
+    queryFn: () => documentService.getImportAssistantHistory(documentId),
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
   });

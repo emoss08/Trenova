@@ -1,5 +1,5 @@
 import { TariffNovaPane } from "@/components/tariff-studio/nova-pane";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useLibraryStudio } from "./library-studio-context";
 
@@ -15,7 +15,7 @@ export function LibraryNovaPane() {
       kind="library"
       recordId={library?.id ?? null}
       unsavedKey={unsavedNovaKey}
-      openThread={(id) => apiService.formulaLibraryService.openAssistantThread(id)}
+      openThread={(id) => formulaLibraryService.openAssistantThread(id)}
       request={novaRequest}
       onRequestSent={clearNovaRequest}
       onWorkingChange={setNovaBusy}

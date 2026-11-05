@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { Document } from "@trenova/shared/types/document";
 import { queryOptions } from "@tanstack/react-query";
 
@@ -15,7 +15,7 @@ export function resourceDocumentsQuery(resourceType: string, resourceId: string,
   return queryOptions({
     queryKey: ["documents", resourceType, resourceId, search] as const,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, search, {
+      documentService.getByResource(resourceType, resourceId, search, {
         includeDocumentType: "true",
       }),
   });

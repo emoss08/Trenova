@@ -1,5 +1,5 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { journalReversalService } from "@/services/journal-reversal";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -63,7 +63,7 @@ export function RequestReversalDialog({
 
   const request = useApiMutation({
     mutationFn: async (values: ReversalRequestValues) =>
-      apiService.journalReversalService.create(reversalRequestBody(values)),
+      journalReversalService.create(reversalRequestBody(values)),
     onSuccess: () => {
       onOpenChange(false);
       onDone();

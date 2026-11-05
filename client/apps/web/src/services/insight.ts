@@ -94,3 +94,5 @@ export class InsightService {
     return safeParse(insightSchema, response, "Insight");
   }
 }
+
+export const insightService = new InsightService();

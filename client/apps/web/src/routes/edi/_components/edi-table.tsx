@@ -9,7 +9,7 @@ import {
   type EDIFlowInstanceRow,
   type EDITransferRow,
 } from "@/lib/graphql/edi-table";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { DataTablePanelProps, DockAction } from "@trenova/shared/types/data-table";
@@ -152,9 +152,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         toast.info(t("None of the selected transfers are awaiting review"));
         return;
       }
-      const result = await apiService.ediService.bulkApproveTransfers(
-        eligible.map((row) => row.id),
-      );
+      const result = await ediService.bulkApproveTransfers(eligible.map((row) => row.id));
       await invalidateEDITransfers(queryClient);
       notifyEDIBulkOutcome(result, {
         succeeded: (count) =>
@@ -193,7 +191,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     async (reason: string) => {
       setRejectPending(true);
       try {
-        const result = await apiService.ediService.bulkRejectTransfers(
+        const result = await ediService.bulkRejectTransfers(
           rejectRows.map((row) => row.id),
           reason,
         );
@@ -306,9 +304,7 @@ function MessagesWorkspace() {
         toast.info(t("None of the selected messages are retryable"));
         return;
       }
-      const result = await apiService.ediService.bulkRetryMessageDelivery(
-        eligible.map((row) => row.id),
-      );
+      const result = await ediService.bulkRetryMessageDelivery(eligible.map((row) => row.id));
       await invalidateEDIMessages(queryClient);
       notifyEDIBulkOutcome(result, {
         succeeded: (count) =>
@@ -380,9 +376,7 @@ function InboundFilesWorkspace() {
         toast.info(t("None of the selected files can be reprocessed"));
         return;
       }
-      const result = await apiService.ediService.bulkReprocessInboundFiles(
-        eligible.map((row) => row.id),
-      );
+      const result = await ediService.bulkReprocessInboundFiles(eligible.map((row) => row.id));
       await invalidateEDIInboundFiles(queryClient);
       notifyEDIBulkOutcome(result, {
         succeeded: (count) => t("Reprocessed {0, plural, one {# file} other {# files}}", count),

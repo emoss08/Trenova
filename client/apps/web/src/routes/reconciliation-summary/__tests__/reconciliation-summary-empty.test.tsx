@@ -6,8 +6,8 @@ import { ReconciliationSummaryPage } from "../page";
 
 const mocks = vi.hoisted(() => ({ getSummary: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { bankReceiptService: { getSummary: mocks.getSummary } },
+vi.mock("@/services/bank-receipt", () => ({
+  bankReceiptService: { getSummary: mocks.getSummary },
 }));
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
 

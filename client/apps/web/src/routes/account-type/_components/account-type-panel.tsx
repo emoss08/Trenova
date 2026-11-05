@@ -3,7 +3,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { AccountTypeRow } from "@/lib/graphql/account-type-table";
-import { apiService } from "@/services/api";
+import { accountTypeService } from "@/services/account-type";
 import { accountTypeSchema } from "@/types/account-type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,9 +41,7 @@ export function AccountTypePanel({
         title={t("Account type")}
         fieldKey="code"
         formComponent={<AccountTypeForm />}
-        mutationFn={(values, currentRow) =>
-          apiService.accountTypeService.update(currentRow.id, values)
-        }
+        mutationFn={(values, currentRow) => accountTypeService.update(currentRow.id, values)}
       />
     );
   }
@@ -56,7 +54,7 @@ export function AccountTypePanel({
       queryKey="account-type-list"
       title={t("Account type")}
       formComponent={<AccountTypeForm />}
-      mutationFn={(values) => apiService.accountTypeService.create(values)}
+      mutationFn={(values) => accountTypeService.create(values)}
     />
   );
 }

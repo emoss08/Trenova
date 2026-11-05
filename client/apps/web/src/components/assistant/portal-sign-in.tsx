@@ -2,7 +2,7 @@ import { ExternalLink } from "@/components/link";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { agentExtension } from "@/lib/queries/agent-extension";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import type { PortalLiveView, PortalRun } from "@/types/agent-extension";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BrowserIcon } from "@trenova/shared/components/icons";
@@ -38,7 +38,7 @@ export function PortalLiveBrowser({
 }) {
   const t = useT();
   const live = useMutation<PortalLiveView, Error>({
-    mutationFn: () => apiService.agentExtensionService.portalRunLive(runId),
+    mutationFn: () => agentExtensionService.portalRunLive(runId),
   });
   const address = live.data?.liveUrl ?? "";
 
@@ -82,7 +82,7 @@ export function PortalSignInYourself({ runId }: { runId: string }) {
   const invalidate = useInvalidatePortalRun();
   const { mutate, isPending } = useApiMutation<PortalRun, undefined>({
     resourceName: t("Portal task"),
-    mutationFn: () => apiService.agentExtensionService.confirmPortalSignIn(runId),
+    mutationFn: () => agentExtensionService.confirmPortalSignIn(runId),
     onSuccess: invalidate,
   });
 

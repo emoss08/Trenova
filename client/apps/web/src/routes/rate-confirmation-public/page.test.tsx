@@ -14,9 +14,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/rate-confirmation", () => ({
-  RateConfirmationService: class {
-    getPublicRateConfirmation = mocks.getPublicRateConfirmation;
-    confirmPublicRateConfirmation = mocks.confirmPublicRateConfirmation;
+  rateConfirmationService: {
+    getPublicRateConfirmation: mocks.getPublicRateConfirmation,
+    confirmPublicRateConfirmation: mocks.confirmPublicRateConfirmation,
   },
 }));
 

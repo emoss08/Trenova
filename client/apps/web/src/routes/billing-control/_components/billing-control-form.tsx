@@ -29,7 +29,7 @@ import {
   unratedShipmentDispositionChoices,
 } from "@/lib/choices";
 import { billingControl } from "@/lib/queries/billing-control";
-import { apiService } from "@/services/api";
+import { billingControlService } from "@/services/billing-control";
 import type { BillingControl } from "@/types/billing-control";
 import { billingControlSchema } from "@/types/billing-control";
 import { MonthlyStatementsCard } from "./monthly-statements-card";
@@ -60,7 +60,7 @@ export default function BillingControlForm() {
     BillingControl
   >({
     queryKey: billingControl.get._def,
-    mutationFn: async (values: BillingControl) => apiService.billingControlService.update(values),
+    mutationFn: async (values: BillingControl) => billingControlService.update(values),
     resourceName: "Billing Control",
     resetForm: reset,
     form,

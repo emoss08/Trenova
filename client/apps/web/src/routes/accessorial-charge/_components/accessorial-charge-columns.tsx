@@ -8,7 +8,7 @@ import { type BadgeClassAttrProps } from "@trenova/shared/components/status-badg
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { accessorialChargeMethodChoices, statusChoices } from "@/lib/choices";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { accessorialChargeService } from "@/services/accessorial-charge";
 import type { AccessorialChargeRow } from "@/lib/graphql/accessorial-charge-table";
 import type { AccessorialCharge, RateUnit } from "@trenova/shared/types/accessorial-charge";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,7 +68,7 @@ function AccessorialChargeStatusCell({ row }: { row: AccessorialChargeRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: AccessorialCharge["status"]) => {
       if (!row.id) return;
-      await apiService.accessorialChargeService.patch(row.id, {
+      await accessorialChargeService.patch(row.id, {
         status: newStatus,
       });
 

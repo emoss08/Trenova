@@ -30,11 +30,6 @@ export class InvoiceService {
     return safeParse(invoiceSchema, response, "Invoice");
   }
 
-  public async createFromShipments(shipmentIds: string[]) {
-    const response = await api.post<Invoice>("/billing/invoices/from-shipments/", { shipmentIds });
-    return safeParse(invoiceSchema, response, "Invoice");
-  }
-
   public async updateDraft(id: string, data: UpdateInvoiceDraft) {
     const payload = updateInvoiceDraftSchema.parse(data);
     const response = await api.patch<Invoice>(`/billing/invoices/${id}/`, payload);
@@ -87,3 +82,5 @@ function toStringParams(params: { limit?: number; offset?: number }) {
       .map(([key, value]) => [key, String(value)]),
   );
 }
+
+export const invoiceService = new InvoiceService();

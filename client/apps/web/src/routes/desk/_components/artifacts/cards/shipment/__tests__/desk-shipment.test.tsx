@@ -27,12 +27,13 @@ const service = vi.hoisted(() => ({ get: vi.fn(), getBillingReadiness: vi.fn() }
 const eventService = vi.hoisted(() => ({ list: vi.fn() }));
 const documentService = vi.hoisted(() => ({ getByResource: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: service,
-    shipmentEventService: eventService,
-    documentService,
-  },
+vi.mock("@/services/shipment", () => ({ shipmentService: service }));
+
+vi.mock("@/services/shipment-event", () => ({ shipmentEventService: eventService }));
+
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService,
 }));
 
 const NOW = Math.floor(Date.now() / 1000);

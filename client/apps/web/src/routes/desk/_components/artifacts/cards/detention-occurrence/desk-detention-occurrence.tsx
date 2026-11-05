@@ -12,7 +12,7 @@ import {
   useInvalidateDetention,
   useSendDetentionNotice,
 } from "@/routes/detention-desk/_components/use-detention-actions";
-import { apiService } from "@/services/api";
+import { detentionService } from "@/services/detention";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
@@ -179,7 +179,7 @@ function DetentionOccurrenceCard({
   const [disputing, setDisputing] = useState(false);
 
   const approve = useApiMutation<DetentionOccurrence, undefined>({
-    mutationFn: () => apiService.detentionService.approve(id),
+    mutationFn: () => detentionService.approve(id),
     onSuccess: () => {
       invalidate();
     },

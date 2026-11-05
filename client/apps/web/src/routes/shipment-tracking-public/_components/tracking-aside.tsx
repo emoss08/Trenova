@@ -1,10 +1,6 @@
 import { dayAndTime, holdLabel, shows } from "@/lib/shipment-tracking";
-import { ShipmentTrackingService } from "@/services/shipment-tracking";
-import {
-  AlertTriangleIcon,
-  Download01Icon,
-  File06Icon,
-} from "@trenova/shared/components/icons";
+import { shipmentTrackingService } from "@/services/shipment-tracking";
+import { AlertTriangleIcon, Download01Icon, File06Icon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -12,8 +8,6 @@ import { formatSecondsAgo, formatUnixDateTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import type { PublicShipmentView } from "@trenova/shared/types/shipment-tracking";
-
-const shipmentTrackingService = new ShipmentTrackingService();
 
 function Heading({ children }: { children: React.ReactNode }) {
   return <h2 className="text-sm font-semibold">{children}</h2>;
@@ -32,10 +26,7 @@ function Updates({ view, now }: { view: PublicShipmentView; now: number }) {
         {view.notes.map((note, index) => (
           <li key={`${note.postedAt}-${index}`} className="grid grid-cols-[8px_1fr] gap-x-3">
             <span
-              className={cn(
-                "mt-1.5 size-2 rounded-full",
-                index === 0 ? "st-dot" : "bg-border",
-              )}
+              className={cn("mt-1.5 size-2 rounded-full", index === 0 ? "st-dot" : "bg-border")}
             />
             <div className="flex flex-col gap-1">
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{note.text}</p>
@@ -56,7 +47,8 @@ function Updates({ view, now }: { view: PublicShipmentView; now: number }) {
 function Details({ view }: { view: PublicShipmentView }) {
   const t = useT();
   const items: { label: string; value: string }[] = [];
-  if (view.customerReference) items.push({ label: t("Your reference"), value: view.customerReference });
+  if (view.customerReference)
+    items.push({ label: t("Your reference"), value: view.customerReference });
   if (view.bol) items.push({ label: t("BOL"), value: view.bol });
   if (view.carrierName) items.push({ label: t("Carrier"), value: view.carrierName });
   if (view.equipment) items.push({ label: t("Equipment"), value: view.equipment });

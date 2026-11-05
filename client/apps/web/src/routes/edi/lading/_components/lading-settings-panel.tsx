@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
-import { apiService } from "@/services/api";
+import { ladingService } from "@/services/edi/lading";
 import { Lock01Icon, ReverseLeftIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -15,9 +15,7 @@ import type { LadingProject, LadingVersion } from "@trenova/shared/types/lading"
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  PanelSheet,
-} from "./lading-panel-kit";
+import { PanelSheet } from "./lading-panel-kit";
 import { SettingsSketch } from "./lading-panel-sketches";
 import { settingDraft, settingUnit, settingValue, type SettingDraft } from "./studio-model";
 
@@ -95,7 +93,7 @@ function SettingsForm({
 
   const save = useApiMutation({
     mutationFn: () =>
-      apiService.ladingService.updateSettings(
+      ladingService.updateSettings(
         project.id,
         Object.fromEntries(values.map((entry) => [entry.setting.name, entry.value])),
         project.version,
@@ -120,7 +118,9 @@ function SettingsForm({
         <Alert variant="info" size="sm" className="rounded-none border-x-0 border-t-0">
           <Lock01Icon />
           <AlertDescription>
-            {t("Settings are changed on the active version. Activate this one to change them here.")}
+            {t(
+              "Settings are changed on the active version. Activate this one to change them here.",
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -166,7 +166,10 @@ function SettingsForm({
                   </Badge>
                 </span>
               </div>
-              <div role="cell" className="col-start-1 flex min-w-0 flex-col gap-1 md:col-start-auto">
+              <div
+                role="cell"
+                className="col-start-1 flex min-w-0 flex-col gap-1 md:col-start-auto"
+              >
                 {setting.type === "Bool" ? (
                   <span className="flex h-7 items-center gap-2">
                     <Switch
@@ -211,7 +214,10 @@ function SettingsForm({
                   </span>
                 ) : null}
               </div>
-              <div role="cell" className="col-start-2 row-start-1 md:col-start-auto md:row-start-auto">
+              <div
+                role="cell"
+                className="col-start-2 row-start-1 md:col-start-auto md:row-start-auto"
+              >
                 {editable && draft !== blank(setting) ? (
                   <Button
                     type="button"

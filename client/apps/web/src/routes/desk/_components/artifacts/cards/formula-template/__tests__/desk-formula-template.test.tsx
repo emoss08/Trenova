@@ -19,7 +19,7 @@ const service = vi.hoisted(() => ({
 }));
 const access = vi.hoisted(() => ({ write: true }));
 
-vi.mock("@/services/api", () => ({ apiService: { formulaTemplateService: service } }));
+vi.mock("@/services/formula-template", () => ({ formulaTemplateService: service }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: access.write, isLoading: false }),
 }));

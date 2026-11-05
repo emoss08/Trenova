@@ -1,5 +1,5 @@
 import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
-import { apiService } from "@/services/api";
+import { analyticService } from "@/services/analytics";
 import type { AnalyticsPage } from "@/types/analytics";
 
 async function getAnalyticsPage(page: AnalyticsPage) {
@@ -7,7 +7,7 @@ async function getAnalyticsPage(page: AnalyticsPage) {
   if (page === "shipment-management") {
     return getShipmentPageAnalyticsGraphQL({ timezone });
   }
-  return apiService.analyticService.get({ page, timezone });
+  return analyticService.get({ page, timezone });
 }
 
 export const analytics = {

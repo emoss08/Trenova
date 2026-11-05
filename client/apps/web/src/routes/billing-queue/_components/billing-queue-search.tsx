@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { Input } from "@trenova/shared/components/ui/input";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
@@ -48,8 +48,7 @@ export function BillingQueueSearch() {
   const asking = canAsk && isSentence(params.query);
 
   const compose = useApiMutation({
-    mutationFn: (text: string) =>
-      apiService.billingQueueService.composeSearch(text, todayInUserCalendar()),
+    mutationFn: (text: string) => billingQueueService.composeSearch(text, todayInUserCalendar()),
     resourceName: "BillingQueueItem",
     onSuccess: (intent: BillingQueueSearchIntent) => {
       setPayerName(intent.payerName ?? null);

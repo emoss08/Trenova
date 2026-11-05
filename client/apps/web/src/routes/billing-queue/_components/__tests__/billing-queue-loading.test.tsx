@@ -14,11 +14,13 @@ const mocks = vi.hoisted(() => ({
   getStatement: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: { getById: mocks.getById },
-    invoiceRunService: { getStatement: mocks.getStatement },
-  },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { getById: mocks.getById },
+}));
+
+vi.mock("@/services/invoice-run", () => ({
+  invoiceRunService: { getStatement: mocks.getStatement },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },

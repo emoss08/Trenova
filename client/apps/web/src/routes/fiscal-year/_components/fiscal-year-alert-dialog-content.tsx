@@ -16,7 +16,7 @@ import { formatMinor } from "@trenova/shared/lib/benefits";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
 import type { FiscalYearAction } from "@/lib/fiscal-year-actions";
-import { apiService } from "@/services/api";
+import { fiscalYearService } from "@/services/fiscal-year";
 import type {
   FiscalYear,
   FiscalYearClosePlan,
@@ -96,7 +96,7 @@ export function FiscalYearActivateAlertDialogContent({
   const invalidate = useFiscalYearInvalidation();
 
   const { mutate, isPending } = useApiMutation({
-    mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.activate(id),
+    mutationFn: async (id: FiscalYearRow["id"]) => fiscalYearService.activate(id),
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
       onCompleted?.(updated);
@@ -140,13 +140,13 @@ export function FiscalYearCloseAlertDialogContent({ record, onClose, onCompleted
     isError,
   } = useQuery({
     queryKey: ["fiscal-year-close-preview", record?.id],
-    queryFn: () => apiService.fiscalYearService.closePreview(record.id),
+    queryFn: () => fiscalYearService.closePreview(record.id),
     enabled: !!record?.id,
     staleTime: 0,
   });
 
   const { mutate, isPending } = useApiMutation({
-    mutationFn: async (id: FiscalYearRow["id"]) => apiService.fiscalYearService.close(id),
+    mutationFn: async (id: FiscalYearRow["id"]) => fiscalYearService.close(id),
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
       onCompleted?.(updated);
@@ -213,8 +213,7 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose, onComplete
   const [reason, setReason] = useState("");
 
   const { mutate, isPending } = useApiMutation({
-    mutationFn: async (reopenReason: string) =>
-      apiService.fiscalYearService.reopen(record.id, reopenReason),
+    mutationFn: async (reopenReason: string) => fiscalYearService.reopen(record.id, reopenReason),
     resourceName: "Fiscal Year",
     onSuccess: (updated: FiscalYear) => {
       onCompleted?.(updated);

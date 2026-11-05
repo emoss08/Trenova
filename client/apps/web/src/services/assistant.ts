@@ -8,7 +8,6 @@ import {
   agentDefinitionSchema,
   agentEventListSchema,
   agentTemplateListSchema,
-  previewPromptResponseSchema,
   toolCatalogSchema,
   toolTrustListSchema,
   assistantMessagePageSchema,
@@ -1153,12 +1152,6 @@ export class AgentDefinitionService {
       (message) => onMessage(message.event, message.data),
       options.signal,
     );
-  }
-
-  public async previewPrompt(payload: SaveAgentDefinitionRequest) {
-    const request = saveAgentDefinitionRequestSchema.parse(payload);
-    const response = await api.post("/agent-definitions/preview-prompt/", request);
-    return safeParse(previewPromptResponseSchema, response, "Agent Prompt");
   }
 
   public async get(id: AgentDefinition["id"]) {

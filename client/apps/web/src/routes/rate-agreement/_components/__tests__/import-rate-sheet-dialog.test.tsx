@@ -14,11 +14,9 @@ const discard = vi.fn();
 const listFailedRows = vi.fn().mockResolvedValue([]);
 const downloadCsv = vi.fn();
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    get rateImportService() {
-      return { template, upload, commit, discard, listFailedRows };
-    },
+vi.mock("@/services/rate", () => ({
+  get rateImportService() {
+    return { template, upload, commit, discard, listFailedRows };
   },
 }));
 

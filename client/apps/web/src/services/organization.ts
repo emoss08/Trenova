@@ -10,7 +10,6 @@ import {
   provisioningAuditRecordsSchema,
   riskDecisionsSchema,
   scimDirectorySchema,
-  scimGroupRoleMappingListSchema,
   scimGroupRoleMappingSchema,
   scimTokenCreateResponseSchema,
   scimTokensSchema,
@@ -19,7 +18,6 @@ import {
   type IdentityProvider,
   type SCIMDirectory,
   type SCIMGroupRoleMapping,
-  type SCIMGroupRoleMappingListResponse,
 } from "@trenova/shared/types/iam";
 import {
   microsoftSSOConfigSchema,
@@ -35,21 +33,6 @@ import {
 
 export class OrganizationService {
   readonly base_url = "/organizations";
-
-  public async getByID(
-    organizationId: string,
-    opts: { includeState?: boolean; includeBu?: boolean } = {},
-  ) {
-    const query = new URLSearchParams();
-    query.set("includeState", String(opts.includeState ?? true));
-    query.set("includeBu", String(opts.includeBu ?? false));
-
-    const response = await api.get<OrganizationSettings>(
-      `${this.base_url}/${organizationId}?${query.toString()}`,
-    );
-
-    return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
-  }
 
   public async update(organizationId: string, data: OrganizationSettings) {
     const response = await api.put<OrganizationSettings>(
@@ -191,21 +174,6 @@ export class OrganizationService {
     return safeParse(scimTokenCreateResponseSchema.omit({ token: true }), response, "SCIMToken");
   }
 
-  public async listSCIMGroupRoleMappings(
-    organizationId: string,
-    directoryId: string,
-    params?: { limit?: number; offset?: number },
-  ) {
-    const searchParams = new URLSearchParams();
-    if (params?.limit != null) searchParams.set("limit", String(params.limit));
-    if (params?.offset != null) searchParams.set("offset", String(params.offset));
-    const qs = searchParams.toString();
-    const response = await api.get<SCIMGroupRoleMappingListResponse>(
-      `${this.base_url}/${organizationId}/iam/scim/directories/${directoryId}/group-role-mappings${qs ? `?${qs}` : ""}`,
-    );
-    return safeParse(scimGroupRoleMappingListSchema, response, "SCIMGroupRoleMappings");
-  }
-
   public async createSCIMGroupRoleMapping(
     organizationId: string,
     directoryId: string,
@@ -228,16 +196,6 @@ export class OrganizationService {
       data,
     );
     return safeParse(scimGroupRoleMappingSchema, response, "SCIMGroupRoleMapping");
-  }
-
-  public async deleteSCIMGroupRoleMapping(
-    organizationId: string,
-    directoryId: string,
-    mappingId: string,
-  ) {
-    await api.delete(
-      `${this.base_url}/${organizationId}/iam/scim/directories/${directoryId}/group-role-mappings/${mappingId}`,
-    );
   }
 
   public async listProvisioningAudit(organizationId: string) {

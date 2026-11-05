@@ -1,6 +1,6 @@
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantThread } from "@/types/assistant";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -22,7 +22,7 @@ function usePinnedFacts(thread: AssistantThread) {
 
   return useMutation({
     mutationFn: (facts: readonly string[]) =>
-      apiService.assistantService.updateThread(thread.id, { pinnedFacts: facts }),
+      assistantService.updateThread(thread.id, { pinnedFacts: facts }),
     onMutate: async (facts) => {
       await queryClient.cancelQueries({ queryKey: threadKey });
       const previous = queryClient.getQueryData<AssistantThread>(threadKey);

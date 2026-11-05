@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
+import { rateAgreementService } from "@/services/rate";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -40,8 +40,7 @@ export function LaneHistoryPopover({
 
   const { data: history, isLoading } = useQuery({
     queryKey: ["rate-agreement-rule-history", rateAgreementId, laneKey],
-    queryFn: () =>
-      apiService.rateAgreementService.listRuleHistory(rateAgreementId as string, laneKey),
+    queryFn: () => rateAgreementService.listRuleHistory(rateAgreementId as string, laneKey),
     enabled: open && Boolean(rateAgreementId) && Boolean(laneKey),
   });
 

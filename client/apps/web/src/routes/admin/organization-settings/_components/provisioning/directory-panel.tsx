@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import {
   scimDirectoryFormSchema,
   type SCIMDirectory,
@@ -67,7 +67,7 @@ export function SCIMDirectoryPanel({
         size="md"
         formComponent={<SCIMDirectoryForm />}
         mutationFn={async (values) => {
-          const saved = await apiService.organizationService.updateSCIMDirectory(
+          const saved = await organizationService.updateSCIMDirectory(
             organizationId,
             toSCIMDirectory(values),
           );
@@ -89,7 +89,7 @@ export function SCIMDirectoryPanel({
       size="md"
       formComponent={<SCIMDirectoryForm />}
       mutationFn={async (values) => {
-        const saved = await apiService.organizationService.createSCIMDirectory(
+        const saved = await organizationService.createSCIMDirectory(
           organizationId,
           toSCIMDirectory(values),
         );

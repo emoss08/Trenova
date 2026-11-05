@@ -2,8 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import { artifactCsvUrl } from "@/services/assistant";
+import { assistantService, artifactCsvUrl } from "@/services/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -629,7 +628,7 @@ export function DeskWorkspace({
 
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
-      apiService.assistantService.pinArtifact(threadId, id, pinned),
+      assistantService.pinArtifact(threadId, id, pinned),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: assistant.artifacts(threadId).queryKey }),
     resourceName: "Artifact",

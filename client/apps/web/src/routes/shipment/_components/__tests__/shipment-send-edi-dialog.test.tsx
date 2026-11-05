@@ -7,11 +7,9 @@ import { ShipmentSendEDIDialog } from "../shipment-send-edi-dialog";
 
 const submitLoadTender = vi.fn().mockResolvedValue({});
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    get ediService() {
-      return { submitLoadTender };
-    },
+vi.mock("@/services/edi", () => ({
+  get ediService() {
+    return { submitLoadTender };
   },
 }));
 

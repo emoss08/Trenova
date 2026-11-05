@@ -15,6 +15,7 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 
 /** A figure the dock shows beside the count, already formatted. */
 export type SelectionDockTotal = {
@@ -69,7 +70,7 @@ export function SelectionDock<TData>({
               handleClearSelection();
             }
           })
-          .catch(() => undefined)
+          .catch((error: unknown) => handleMutationError({ error }))
           .finally(() => {
             setLoadingActions((prev) => {
               const next = new Set(prev);
@@ -101,7 +102,7 @@ export function SelectionDock<TData>({
               handleClearSelection();
             }
           })
-          .catch(() => undefined)
+          .catch((error: unknown) => handleMutationError({ error }))
           .finally(() => {
             setLoadingActions((prev) => {
               const next = new Set(prev);

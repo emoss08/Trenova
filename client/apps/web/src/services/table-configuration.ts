@@ -184,3 +184,5 @@ export class TableConfigurationService {
     });
   }
 }
+
+export const tableConfigurationService = new TableConfigurationService();

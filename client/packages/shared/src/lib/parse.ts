@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { ResponseContractError } from "@trenova/shared/lib/request-errors";
 import type { ZodSchema } from "zod";
 
 export async function safeParse<T>(
@@ -17,7 +18,7 @@ export async function safeParse<T>(
       },
     );
 
-    throw result.error;
+    throw new ResponseContractError(label ?? "response", result.error.issues);
   }
 
   return result.data;

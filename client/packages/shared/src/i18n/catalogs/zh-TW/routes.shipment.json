@@ -798,6 +798,7 @@
   "We are extracting text, classifying the document, and assembling the shipment draft.": "我們正在擷取文字、分類文件並組建運單草稿。",
   "We are queuing OCR and intelligence work for this rate confirmation.": "我們正在為此運價確認書排入 OCR 與智慧分析作業。",
   "We are still evaluating the uploaded document.": "我們仍在評估已上傳的文件。",
+  "We couldn't check on this draft. Try again in a moment.": "無法檢查此草稿。請稍後再試。",
   "Weather alerts": "天氣警報",
   "Weight (lbs)": "重量（磅）",
   "What the state actually charged, so the estimated fees on this load can be reconciled against actuals.": "該州實際收取的金額，以便將此貨載的預估費用與實際數對帳。",

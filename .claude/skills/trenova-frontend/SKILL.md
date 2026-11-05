@@ -27,7 +27,7 @@ without a reason that a reviewer would accept.
 | Desk artifacts or cards | `docs/engineering/desk-artifacts.md` |
 | The formula editor | `docs/engineering/formula-language-service.md` |
 | Realtime updates in the browser | `docs/engineering/realtime.md` |
-| Anything in `apps/web` | `client/apps/web/CLAUDE.md` (Effect, tests, formatting, GraphQL transport) |
+| Anything in `apps/web` | `client/apps/web/CLAUDE.md` (errors, tests, formatting, GraphQL transport) |
 
 Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 
@@ -49,11 +49,12 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   `pageAssistantThreadKey`, imported from `page-assistant.tsx`, once put the entire Desk chat
   into the rate confirmation preview. Put shared keys and helpers in a module of their own
   (`page-assistant-thread-key.ts`, `capture-cover-sheet-print.ts`).
-  The same holds for services: `apiService` (`services/api.ts`) constructs every service, so
-  code the shell reaches imports the service's own singleton (`assistantService` from
-  `@/services/assistant`), never `apiService` (web-build.md, "What a first visit downloads").
-- Effect is confined to the API client and SSE client. Components, hooks and forms stay
-  Effect-free; forms use zod.
+  The same holds for services: a service module exports its own instance, and code imports
+  that one (`shipmentService` from `@/services/shipment`), so a page downloads only the
+  services it calls. Never construct a service outside its module, and never gather them into
+  one object (web-build.md, "What a first visit downloads").
+- Forms use zod. Errors are classified by `describeError`, never by status codes at a call site
+  (`client/apps/web/CLAUDE.md`, "Errors").
 
 ## Pages and loading states
 

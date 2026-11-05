@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { statusChoices } from "@/lib/choices";
 import { customerTableGraphQLConfig, type CustomerRow } from "@/lib/graphql/customer-table";
-import { apiService } from "@/services/api";
+import { customerService } from "@/services/customer";
 import type { Customer } from "@trenova/shared/types/customer";
 import type { DockAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
@@ -24,7 +24,7 @@ export default function CustomerTable() {
     async (rows: CustomerRow[], status: string) => {
       const ids = rows.map((r) => r.id);
       toast.promise(
-        apiService.customerService.bulkUpdateStatus({
+        customerService.bulkUpdateStatus({
           customerIds: ids,
           status: status as Customer["status"],
         }),

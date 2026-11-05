@@ -8,8 +8,8 @@ import { BankReceiptBatchPage } from "../page";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), getById: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { bankReceiptBatchService: { list: mocks.list, getById: mocks.getById } },
+vi.mock("@/services/bank-receipt-batch", () => ({
+  bankReceiptBatchService: { list: mocks.list, getById: mocks.getById },
 }));
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
 vi.mock("../_components/import-batch-dialog", () => ({

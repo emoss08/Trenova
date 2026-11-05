@@ -15,7 +15,8 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { ShipmentForm } from "@/routes/shipment/_components/shipment-form";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
+import { documentService } from "@/services/document";
 import type {
   Document,
   DocumentIntelligenceField,
@@ -237,7 +238,7 @@ export function DocumentShipmentDraftReviewDialog({
   const createShipment = useMutation({
     mutationFn: async (values: ShipmentCreateInput) => {
       const shipment = await withIdempotencyKey(values, (idempotencyKey) =>
-        apiService.shipmentService.create(values, { idempotencyKey }),
+        shipmentService.create(values, { idempotencyKey }),
       );
       const shipmentId = shipment.id;
       if (!shipmentId) {
@@ -247,7 +248,7 @@ export function DocumentShipmentDraftReviewDialog({
 
       if (document) {
         try {
-          await apiService.documentService.attachToShipment(document.id, shipmentId);
+          await documentService.attachToShipment(document.id, shipmentId);
         } catch (error) {
           attachError = error instanceof Error ? error : new Error("Failed to attach document");
         }

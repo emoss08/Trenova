@@ -23,15 +23,13 @@ vi.mock("@/lib/graphql/invoice-adjustment", () => ({
   approveInvoiceAdjustment: mocks.approve,
   rejectInvoiceAdjustment: mocks.reject,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: {
-    invoiceAdjustmentService: {
-      listApprovals: mocks.rest,
-      getSummary: mocks.rest,
-      getById: mocks.rest,
-      approve: mocks.rest,
-      reject: mocks.rest,
-    },
+vi.mock("@/services/invoice-adjustment", () => ({
+  invoiceAdjustmentService: {
+    listApprovals: mocks.rest,
+    getSummary: mocks.rest,
+    getById: mocks.rest,
+    approve: mocks.rest,
+    reject: mocks.rest,
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({

@@ -5,8 +5,11 @@ import { useAccessibleAdminLinks } from "@/hooks/use-accessible-admin-links";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { pageFavorite } from "@/lib/queries/page-favorite";
-import { apiService } from "@/services/api";
-import type { GlobalSearchEntityType, GlobalSearchGroup } from "@/services/global-search";
+import {
+  globalSearchService,
+  type GlobalSearchEntityType,
+  type GlobalSearchGroup,
+} from "@/services/global-search";
 import { useRecentRecords } from "@/stores/recent-records-store";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
@@ -355,7 +358,7 @@ export function paletteSearchQuery(query: string, scope: PaletteScope) {
   return queryOptions({
     queryKey: ["global-search", trimmed, scope, limit, entityTypes] as const,
     queryFn: async ({ signal }) => {
-      const found = await apiService.globalSearchService.search(trimmed, limit, entityTypes, {
+      const found = await globalSearchService.search(trimmed, limit, entityTypes, {
         signal,
       });
       return { ...found, query: trimmed };

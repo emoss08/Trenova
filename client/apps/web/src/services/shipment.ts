@@ -1,6 +1,5 @@
 import {
   autoRateShipmentGraphQL,
-  calculateShipmentDistanceGraphQL,
   calculateShipmentLoadingOptimizationGraphQL,
   calculateShipmentTotalsGraphQL,
   cancelShipmentGraphQL,
@@ -146,11 +145,6 @@ export class ShipmentService {
     return safeParse(shipmentTotalsResponseSchema, response, "Shipment Totals");
   }
 
-  public async calculateDistance(payload: Shipment, _signal?: AbortSignal) {
-    const response = await calculateShipmentDistanceGraphQL(payload);
-    return safeParse(shipmentDistanceResponseSchema, response, "Shipment Distance");
-  }
-
   public async recalculateDistance(shipmentId: Shipment["id"]) {
     const response = await recalculateShipmentDistanceGraphQL(shipmentId);
     return safeParse(shipmentDistanceResponseSchema, response, "Shipment Distance");
@@ -167,16 +161,6 @@ export class ShipmentService {
   public async getPreviousRates(request: GetPreviousRatesRequest) {
     const response = await getShipmentPreviousRatesGraphQL(request);
     return safeParse(previousRatesResponseSchema, response, "Previous Rates");
-  }
-
-  public async delayShipments() {
-    const response = await api.post<Shipment[]>("/shipments/delay/", {});
-    return response;
-  }
-
-  public async getDelayedShipments() {
-    const response = await api.get<Shipment[]>("/shipments/delayed/");
-    return response;
   }
 
   public async getUIPolicy() {
@@ -253,3 +237,5 @@ export class ShipmentService {
     return safeParse(permitRequirementSchema, response, "Permit Requirement");
   }
 }
+
+export const shipmentService = new ShipmentService();

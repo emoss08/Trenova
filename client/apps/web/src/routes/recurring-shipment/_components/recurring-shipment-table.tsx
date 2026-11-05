@@ -4,7 +4,7 @@ import {
   recurringShipmentTableGraphQLConfig,
   type RecurringShipmentRow,
 } from "@/lib/graphql/recurring-shipment-table";
-import { apiService } from "@/services/api";
+import { recurringShipmentService } from "@/services/recurring-shipment";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,7 +32,7 @@ export default function RecurringShipmentTable() {
 
   const handleGenerateNow = useCallback(
     (series: RecurringShipmentRow) => {
-      toast.promise(apiService.recurringShipmentService.generate(series.id), {
+      toast.promise(recurringShipmentService.generate(series.id), {
         loading: t("Generating shipment..."),
         success: (result) =>
           result.shipment?.proNumber
@@ -48,18 +48,15 @@ export default function RecurringShipmentTable() {
   const handleToggleStatus = useCallback(
     (series: RecurringShipmentRow) => {
       const nextStatus = series.status === "Paused" ? "Active" : "Paused";
-      toast.promise(
-        apiService.recurringShipmentService.updateStatus(series.id, nextStatus, series.version),
-        {
-          loading: nextStatus === "Paused" ? t("Pausing series...") : t("Resuming series..."),
-          success:
-            nextStatus === "Paused"
-              ? t('"{0}" paused — no shipments will generate until resumed', series.name)
-              : t('"{0}" resumed — the schedule restarts from the next future pickup', series.name),
-          error: t("Failed to update series status"),
-          finally: invalidate,
-        },
-      );
+      toast.promise(recurringShipmentService.updateStatus(series.id, nextStatus, series.version), {
+        loading: nextStatus === "Paused" ? t("Pausing series...") : t("Resuming series..."),
+        success:
+          nextStatus === "Paused"
+            ? t('"{0}" paused — no shipments will generate until resumed', series.name)
+            : t('"{0}" resumed — the schedule restarts from the next future pickup', series.name),
+        error: t("Failed to update series status"),
+        finally: invalidate,
+      });
     },
     [invalidate, t],
   );

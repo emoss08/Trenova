@@ -6,7 +6,7 @@ import {
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { serviceTypeService } from "@/services/service-type";
 import type { ServiceTypeRow } from "@/lib/graphql/service-type-table";
 import type { ServiceType } from "@/types/service-type";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ function ServiceTypeStatusCell({ row }: { row: ServiceTypeRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: ServiceType["status"]) => {
       if (!row.id) return;
-      await apiService.serviceTypeService.patch(row.id, {
+      await serviceTypeService.patch(row.id, {
         status: newStatus,
       });
 

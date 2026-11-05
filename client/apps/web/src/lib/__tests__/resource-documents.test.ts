@@ -4,7 +4,10 @@ import { hasPendingDocumentWork, resourceDocumentsQuery } from "../resource-docu
 
 const documentService = vi.hoisted(() => ({ getByResource: vi.fn() }));
 
-vi.mock("@/services/api", () => ({ apiService: { documentService } }));
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService,
+}));
 
 function document(fields: Partial<Document>): Document {
   return {

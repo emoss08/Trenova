@@ -64,3 +64,5 @@ export class EquipmentManufacturerService {
     return response.patchEquipmentManufacturer;
   }
 }
+
+export const equipmentManufacturerService = new EquipmentManufacturerService();

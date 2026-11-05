@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { DataScopeSelect } from "@/components/permissions/data-scope-select";
 import type { ResourceCategory, ResourceDefinition } from "@/lib/role-api";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { apiKeyService } from "@/services/api-key";
 import type { ApiKeyPermissionInput } from "@/types/api-key";
 import type { DataScope } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
@@ -44,7 +44,7 @@ export function APIKeyPermissionsEditor() {
 
   const { data: resourceCategories = [], isLoading } = useQuery({
     queryKey: ["api-key-allowed-resources"],
-    queryFn: () => apiService.apiKeyService.getAllowedResources(),
+    queryFn: () => apiKeyService.getAllowedResources(),
     staleTime: 1000 * 60 * 30,
   });
 

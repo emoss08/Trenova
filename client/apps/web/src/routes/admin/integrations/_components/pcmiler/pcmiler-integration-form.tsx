@@ -12,7 +12,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -52,7 +52,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
 
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
-      apiService.integrationService.updateConfig(INTEGRATION_TYPE, payload),
+      integrationService.updateConfig(INTEGRATION_TYPE, payload),
     form,
     resourceName: "PC*Miler configuration",
     onSuccess: async () => {
@@ -66,7 +66,7 @@ export function PCMilerIntegrationForm({ open, onClose }: { open: boolean; onClo
   });
 
   const testConnectionMutation = useMutation({
-    mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
+    mutationFn: () => integrationService.testConnection(INTEGRATION_TYPE),
     onSuccess: async () => {
       toast.success(t("PC*Miler connection successful"));
       await queryClient.invalidateQueries({ queryKey: integration.catalog().queryKey });

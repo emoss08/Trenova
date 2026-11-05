@@ -5,7 +5,7 @@ import { ar } from "@/lib/queries/ar";
 import { invoice } from "@/lib/queries/invoice";
 import { shipment } from "@/lib/queries/shipment";
 import { telematics } from "@/lib/queries/telematics";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import {
   CommandPaletteCustomerPreviewDocument,
   type CommandPaletteCustomerPreviewQuery,
@@ -77,7 +77,7 @@ export function workerHosQuery(id: string) {
 export function documentPreviewQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-preview", id] as const,
-    queryFn: () => apiService.documentService.getById(id),
+    queryFn: () => documentService.getById(id),
     staleTime: PREVIEW_STALE_TIME,
   };
 }
@@ -91,7 +91,7 @@ export function hasPages(document: Pick<Document, "fileType" | "originalName">):
 export function documentExtractionQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-extraction", id] as const,
-    queryFn: () => apiService.documentService.getShipmentDraft(id),
+    queryFn: () => documentService.getShipmentDraft(id),
     staleTime: PREVIEW_STALE_TIME,
   };
 }

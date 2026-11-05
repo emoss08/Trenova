@@ -12,7 +12,6 @@ import {
   ediCommunicationProfileSchema,
   ediConnectionListSchema,
   ediConnectionSchema,
-  ediDocumentPreviewSchema,
   ediMessageInspectionSchema,
   ediInboundFileInspectionSchema,
   ediInboundFileSchema,
@@ -22,22 +21,12 @@ import {
   ediTransferListSchema,
   ediTransferSchema,
   type EDITransfer,
-  internalPartnerPairSchema,
   type ApproveEDITransferRequest,
   type CreateEDIConnectionRequest,
-  type CreateInternalPartnerPairRequest,
   type EDIConnectionActionRequest,
   type EDIMappingProfileItem,
-  type GenerateEDIDocumentRequest,
-  type InspectX12Request,
-  type PreviewEDIDocumentRequest,
-  ediShipmentLinkListSchema,
-  ediShipmentLinkSchema,
   type RejectEDITransferRequest,
   type SubmitLoadTenderRequest,
-  ediTransferChangeListSchema,
-  ediTransferChangeSchema,
-  ediX12InspectionSchema,
   type UpsertEDICommunicationProfileRequest,
   type UpsertEDIPartnerRequest,
 } from "@trenova/shared/types/edi";
@@ -67,16 +56,6 @@ export class EDIService {
     return safeParse(ediConnectionSchema, response, "EDIConnection");
   }
 
-  public async suspendConnection(connectionId: string) {
-    const response = await api.post(`/edi/connections/${connectionId}/suspend/`);
-    return safeParse(ediConnectionSchema, response, "EDIConnection");
-  }
-
-  public async revokeConnection(connectionId: string) {
-    const response = await api.post(`/edi/connections/${connectionId}/revoke/`);
-    return safeParse(ediConnectionSchema, response, "EDIConnection");
-  }
-
   public async createCommunicationProfile(request: UpsertEDICommunicationProfileRequest) {
     const response = await api.post("/edi/communication-profiles/", request);
     return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
@@ -88,16 +67,6 @@ export class EDIService {
   ) {
     const response = await api.put(`/edi/communication-profiles/${profileId}/`, request);
     return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
-  }
-
-  public async previewDocument(request: PreviewEDIDocumentRequest) {
-    const response = await api.post("/edi/documents/preview/", request);
-    return safeParse(ediDocumentPreviewSchema, response, "EDIDocumentPreview");
-  }
-
-  public async generateDocument(request: GenerateEDIDocumentRequest) {
-    const response = await api.post("/edi/documents/generate/", request);
-    return safeParse(ediMessageSchema, response, "EDIMessage");
   }
 
   public async listMessages(query = "") {
@@ -181,11 +150,6 @@ export class EDIService {
     return safeParse(ediInboundFileSchema, response, "EDIInboundFile");
   }
 
-  public async inspectX12(request: InspectX12Request) {
-    const response = await api.post("/edi/x12/inspect/", request);
-    return safeParse(ediX12InspectionSchema, response, "EDIX12Inspection");
-  }
-
   public async getPartnerReadiness(partnerId: string) {
     const response = await api.get(`/edi/partners/${partnerId}/readiness/`);
     return safeParse(ediPartnerReadinessSchema, response, "EDIPartnerReadiness");
@@ -199,11 +163,6 @@ export class EDIService {
   public async createPartner(request: UpsertEDIPartnerRequest) {
     const response = await api.post("/edi/partners/", request);
     return safeParse(ediPartnerSchema, response, "EDIPartner");
-  }
-
-  public async createInternalPair(request: CreateInternalPartnerPairRequest) {
-    const response = await api.post("/edi/partners/internal-pairs/", request);
-    return safeParse(internalPartnerPairSchema, response, "InternalPartnerPair");
   }
 
   public async updatePartner(partnerId: string, request: UpsertEDIPartnerRequest) {
@@ -295,39 +254,6 @@ export class EDIService {
     const response = await api.post(`/edi/transfers/${transferId}/cancel/`);
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
-
-  public async expireTransfer(transferId: string) {
-    const response = await api.post(`/edi/transfers/${transferId}/expire/`);
-    return safeParse(ediTransferSchema, response, "EDITransfer");
-  }
-
-  public async listShipmentLinks(query: string) {
-    const response = await api.get(`/edi/shipment-links/${query}`);
-    return safeParse(ediShipmentLinkListSchema, response, "EDIShipmentLinkList");
-  }
-
-  public async getShipmentLink(linkId: string) {
-    const response = await api.get(`/edi/shipment-links/${linkId}/`);
-    return safeParse(ediShipmentLinkSchema, response, "EDIShipmentLink");
-  }
-
-  public async listTransferChanges(query: string) {
-    const response = await api.get(`/edi/transfer-changes/${query}`);
-    return safeParse(ediTransferChangeListSchema, response, "EDITransferChangeList");
-  }
-
-  public async getTransferChange(changeId: string) {
-    const response = await api.get(`/edi/transfer-changes/${changeId}/`);
-    return safeParse(ediTransferChangeSchema, response, "EDITransferChange");
-  }
-
-  public async applyTransferChange(changeId: string, reason?: string) {
-    const response = await api.post(`/edi/transfer-changes/${changeId}/apply/`, { reason });
-    return safeParse(ediTransferChangeSchema, response, "EDITransferChange");
-  }
-
-  public async rejectTransferChange(changeId: string, reason?: string) {
-    const response = await api.post(`/edi/transfer-changes/${changeId}/reject/`, { reason });
-    return safeParse(ediTransferChangeSchema, response, "EDITransferChange");
-  }
 }
+
+export const ediService = new EDIService();

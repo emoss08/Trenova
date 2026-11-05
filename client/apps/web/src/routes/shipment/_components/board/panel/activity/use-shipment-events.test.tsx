@@ -6,11 +6,9 @@ import { useShipmentEventsInfinite } from "./use-shipment-events";
 
 const listShipmentEventsMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentEventService: {
-      list: listShipmentEventsMock,
-    },
+vi.mock("@/services/shipment-event", () => ({
+  shipmentEventService: {
+    list: listShipmentEventsMock,
   },
 }));
 

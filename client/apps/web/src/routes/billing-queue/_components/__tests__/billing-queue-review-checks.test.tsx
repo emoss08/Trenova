@@ -22,10 +22,9 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: mocks.canUpdate, isLoading: false }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: { resolveIssue: mocks.resolveIssue, undoIssue: mocks.undoIssue },
-  },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { resolveIssue: mocks.resolveIssue, undoIssue: mocks.undoIssue },
 }));
 
 afterEach(() => {

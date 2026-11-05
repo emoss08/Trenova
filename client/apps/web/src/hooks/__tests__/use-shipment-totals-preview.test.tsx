@@ -7,11 +7,9 @@ import { useShipmentTotalsPreview } from "../use-shipment-totals-preview";
 
 const calculateTotalsMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: {
-      calculateTotals: calculateTotalsMock,
-    },
+vi.mock("@/services/shipment", () => ({
+  shipmentService: {
+    calculateTotals: calculateTotalsMock,
   },
 }));
 

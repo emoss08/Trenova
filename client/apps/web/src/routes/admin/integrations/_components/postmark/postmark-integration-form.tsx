@@ -19,7 +19,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
-import { apiService } from "@/services/api";
+import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -85,7 +85,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
 
   const saveMutation = useApiMutation({
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
-      apiService.integrationService.updateConfig("Postmark", payload),
+      integrationService.updateConfig("Postmark", payload),
     form,
     resourceName: "Postmark configuration",
     onSuccess: async () => {

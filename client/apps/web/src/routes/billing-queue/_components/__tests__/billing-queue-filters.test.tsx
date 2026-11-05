@@ -7,12 +7,11 @@ import { BillingQueueFilters } from "../billing-queue-filters";
 
 const listFilterPresets = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    billingQueueService: {
-      listFilterPresets,
-      deleteFilterPreset: vi.fn(),
-    },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: {
+    listFilterPresets,
+    deleteFilterPreset: vi.fn(),
   },
 }));
 vi.mock("@/lib/graphql/select-options", async (importOriginal) => ({

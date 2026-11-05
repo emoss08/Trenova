@@ -23,10 +23,8 @@ vi.mock("@/lib/graphql/edi-partner-card", () => ({
   fetchDeskEdiPartner: fetchers.partner,
   fetchEdiPartnerMessages: fetchers.messages,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: {
-    ediService: { testProfileConnection: fetchers.test, pollProfile: fetchers.poll },
-  },
+vi.mock("@/services/edi", () => ({
+  ediService: { testProfileConnection: fetchers.test, pollProfile: fetchers.poll },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },

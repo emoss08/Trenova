@@ -15,3 +15,5 @@ export class ShipmentControlService {
     return safeParse(shipmentControlSchema, response, "Shipment Control");
   }
 }
+
+export const shipmentControlService = new ShipmentControlService();

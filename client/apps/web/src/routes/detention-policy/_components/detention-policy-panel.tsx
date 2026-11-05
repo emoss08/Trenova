@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { TabbedFormCreatePanel } from "@/components/tabbed-form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
-import { apiService } from "@/services/api";
+import { detentionPolicyService } from "@/services/detention";
 import type { DetentionPolicyRow } from "@/lib/graphql/detention-policy-table";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { detentionPolicySchema, type DetentionPolicy } from "@trenova/shared/types/detention";
@@ -113,7 +113,7 @@ export function DetentionPolicyPanel({
         fieldKey="name"
         formTabs={formTabs}
         mutationFn={(values, currentRow) => {
-          return apiService.detentionPolicyService.update(currentRow.id, values);
+          return detentionPolicyService.update(currentRow.id, values);
         }}
       />
     );
@@ -130,7 +130,7 @@ export function DetentionPolicyPanel({
         "Encode the contract's detention terms and see what they would charge before they touch a shipment.",
       )}
       formTabs={formTabs}
-      mutationFn={(values) => apiService.detentionPolicyService.create(values)}
+      mutationFn={(values) => detentionPolicyService.create(values)}
     />
   );
 }

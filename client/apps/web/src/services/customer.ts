@@ -186,3 +186,5 @@ export class CustomerService {
     return response.patchCustomer;
   }
 }
+
+export const customerService = new CustomerService();

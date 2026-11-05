@@ -3,7 +3,7 @@ import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import type { CommunicationProfileFormValues } from "@/routes/edi/_components/edi-schemas";
 import type { EDICertificateSummary } from "@trenova/shared/types/edi";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
@@ -42,7 +42,7 @@ export function EDICertificateField({
 
   const inspection = useQuery({
     queryKey: ["edi-certificate-inspection", debouncedValue],
-    queryFn: () => apiService.ediService.inspectCertificate(debouncedValue),
+    queryFn: () => ediService.inspectCertificate(debouncedValue),
     enabled: debouncedValue.length > 0,
     staleTime: Infinity,
     retry: false,

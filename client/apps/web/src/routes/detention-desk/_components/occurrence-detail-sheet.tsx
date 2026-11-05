@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { deliveryStatusLabel, noticeKindLabel } from "@/lib/detention-labels";
 import { detention } from "@/lib/queries/detention";
-import { apiService } from "@/services/api";
+import { detentionService } from "@/services/detention";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
@@ -295,7 +295,7 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
   const { copy, isCopied } = useCopyToClipboard();
 
   const approve = useApiMutation<DetentionOccurrence, undefined>({
-    mutationFn: () => apiService.detentionService.approve(occurrence.id),
+    mutationFn: () => detentionService.approve(occurrence.id),
     onSuccess: () => {
       onDone();
     },
@@ -306,7 +306,7 @@ function OccurrenceActions({ detail, onDone }: { detail: OccurrenceDetail; onDon
 
   const copyPacket = useApiMutation<boolean, undefined>({
     mutationFn: async () => {
-      const packet = await apiService.detentionService.disputePacket(occurrence.id);
+      const packet = await detentionService.disputePacket(occurrence.id);
       return copy(JSON.stringify(packet, null, 2));
     },
     resourceName: "Dispute Packet",

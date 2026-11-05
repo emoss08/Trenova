@@ -1,5 +1,5 @@
 import { DataTableAsk } from "@/components/data-table/data-table-ask";
-import { apiService } from "@/services/api";
+import { tableQueryService } from "@/services/table-query";
 import type { ComposedTableQuery } from "@/types/table-query";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -52,8 +52,8 @@ const catalogueMock = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
-  apiService.tableQueryService.compose = composeMock;
-  apiService.tableQueryService.catalogue = catalogueMock;
+  tableQueryService.compose = composeMock;
+  tableQueryService.catalogue = catalogueMock;
   catalogueMock.mockResolvedValue({
     results: [{ resource: "shipment", entity: "shipments", summary: "", fields: [] }],
     count: 1,

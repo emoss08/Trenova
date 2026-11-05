@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { FiscalPeriodAction } from "@/lib/fiscal-period-actions";
-import { apiService } from "@/services/api";
+import { fiscalPeriodService } from "@/services/fiscal-period";
 import type { FiscalPeriod } from "@/types/fiscal-period";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import {
@@ -131,7 +131,7 @@ function actionCopy(action: FiscalPeriodAction, period: FiscalPeriod, t: Transla
 }
 
 function runAction(action: FiscalPeriodAction, periodId: FiscalPeriod["id"], reason: string) {
-  const service = apiService.fiscalPeriodService;
+  const service = fiscalPeriodService;
   switch (action) {
     case "activate":
       return service.activate(periodId);
@@ -169,7 +169,7 @@ function FiscalPeriodActionDialogContent({
 
   const closeCheck = useQuery({
     queryKey: ["fiscal-period-close-blockers", period.id],
-    queryFn: () => apiService.fiscalPeriodService.closeBlockers(period.id),
+    queryFn: () => fiscalPeriodService.closeBlockers(period.id),
     enabled: checksClose,
     staleTime: 0,
   });

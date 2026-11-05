@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
 import {
   followTurn,
   runTurn,
@@ -9,7 +8,7 @@ import {
   turnFailureDetail,
   turnLimitOf,
 } from "./follow-turn";
-import type { ActiveTurn } from "@/services/assistant";
+import { assistantService, type ActiveTurn } from "@/services/assistant";
 import type {
   AssistantEntityRef,
   AssistantPageContext,
@@ -412,7 +411,7 @@ export function useAssistantTurn(
   /** The reply the server is producing for this conversation, if any. */
   const activeTurn = useCallback(async (): Promise<ActiveTurn | null> => {
     try {
-      return await apiService.assistantService.activeTurn(threadId);
+      return await assistantService.activeTurn(threadId);
     } catch {
       return null;
     }
@@ -522,7 +521,7 @@ export function useAssistantTurn(
         const next = await follow(initial, (onEvent, signal) =>
           runTurn(
             (startSignal) =>
-              apiService.assistantService.startTurn(
+              assistantService.startTurn(
                 threadId,
                 content,
                 {

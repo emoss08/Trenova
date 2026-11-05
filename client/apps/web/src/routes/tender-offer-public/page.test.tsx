@@ -16,11 +16,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/services/tender", () => ({
-  TenderService: class {
-    getPublicOffer = mocks.getPublicOffer;
-    acceptPublicOffer = mocks.acceptPublicOffer;
-    declinePublicOffer = mocks.declinePublicOffer;
-    counterPublicOffer = mocks.counterPublicOffer;
+  tenderService: {
+    getPublicOffer: mocks.getPublicOffer,
+    acceptPublicOffer: mocks.acceptPublicOffer,
+    declinePublicOffer: mocks.declinePublicOffer,
+    counterPublicOffer: mocks.counterPublicOffer,
   },
 }));
 

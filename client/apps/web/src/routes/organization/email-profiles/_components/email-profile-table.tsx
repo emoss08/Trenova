@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
-import { apiService } from "@/services/api";
+import { emailService } from "@/services/email";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { testEmailProfileRequestSchema, type EmailProfile } from "@trenova/shared/types/email";
 import { Resource } from "@trenova/shared/types/permission";
@@ -49,7 +49,7 @@ export default function EmailProfileTable() {
       if (!profile.id) {
         throw new Error("Email profile ID is required");
       }
-      await apiService.emailService.deleteProfile(profile.id);
+      await emailService.deleteProfile(profile.id);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [emailProfileQueryKey] });
@@ -69,7 +69,7 @@ export default function EmailProfileTable() {
       if (!profile.id) {
         throw new Error("Email profile ID is required");
       }
-      return apiService.emailService.testProfile(
+      return emailService.testProfile(
         profile.id,
         testEmailProfileRequestSchema.parse({
           to,

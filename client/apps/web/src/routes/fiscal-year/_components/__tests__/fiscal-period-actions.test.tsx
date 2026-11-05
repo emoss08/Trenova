@@ -36,16 +36,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    fiscalPeriodService: {
-      activate: mocks.activate,
-      close: mocks.close,
-      closeBlockers: mocks.closeBlockers,
-      lock: mocks.lock,
-      reopen: mocks.reopen,
-      unlock: mocks.unlock,
-    },
+vi.mock("@/services/fiscal-period", () => ({
+  fiscalPeriodService: {
+    activate: mocks.activate,
+    close: mocks.close,
+    closeBlockers: mocks.closeBlockers,
+    lock: mocks.lock,
+    reopen: mocks.reopen,
+    unlock: mocks.unlock,
   },
 }));
 

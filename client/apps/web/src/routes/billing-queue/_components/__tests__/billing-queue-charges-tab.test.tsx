@@ -27,8 +27,9 @@ const { updateCharges, reassignCharge, resolveIssue, getById } = vi.hoisted(() =
   getById: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { billingQueueService: { updateCharges, reassignCharge, resolveIssue, getById } },
+vi.mock("@/services/billing-queue", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/billing-queue")>()),
+  billingQueueService: { updateCharges, reassignCharge, resolveIssue, getById },
 }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),

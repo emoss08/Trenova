@@ -20,11 +20,7 @@ const { billingRules, getUIPolicy } = vi.hoisted(() => ({
   getUIPolicy: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    shipmentService: { getUIPolicy },
-  },
-}));
+vi.mock("@/services/shipment", () => ({ shipmentService: { getUIPolicy } }));
 vi.mock("@trenova/shared/lib/graphql", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@trenova/shared/lib/graphql")>();
   return {

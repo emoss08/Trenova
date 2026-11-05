@@ -3,7 +3,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { FleetCodeRow } from "@/lib/graphql/fleet-code-table";
-import { apiService } from "@/services/api";
+import { fleetCodeService } from "@/services/fleet-code";
 import { fleetCodeSchema } from "@trenova/shared/types/fleet-code";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,9 +41,7 @@ export function FleetCodePanel({
         title={t("Fleet code")}
         fieldKey="code"
         formComponent={<FleetCodeForm />}
-        mutationFn={(values, currentRow) =>
-          apiService.fleetCodeService.update(currentRow.id, values)
-        }
+        mutationFn={(values, currentRow) => fleetCodeService.update(currentRow.id, values)}
       />
     );
   }
@@ -56,7 +54,7 @@ export function FleetCodePanel({
       queryKey="fleet-code-list"
       title={t("Fleet code")}
       formComponent={<FleetCodeForm />}
-      mutationFn={(values) => apiService.fleetCodeService.create(values)}
+      mutationFn={(values) => fleetCodeService.create(values)}
     />
   );
 }

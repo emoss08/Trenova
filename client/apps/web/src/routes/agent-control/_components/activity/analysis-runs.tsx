@@ -2,8 +2,7 @@ import { AnalysisResult } from "@/components/assistant/analysis-result";
 import { analysisRunStatusAttrs, analysisViewOf } from "@/lib/analysis-run";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
 import { ANALYSIS_RUNS_PAGE, agentAnalysis } from "@/lib/queries/agent-analysis";
-import { apiService } from "@/services/api";
-import type { AnalysisRunsCursor } from "@/services/agent-analysis";
+import { agentAnalysisService, type AnalysisRunsCursor } from "@/services/agent-analysis";
 import type { AnalysisRunSummary } from "@/types/analysis";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
@@ -29,10 +28,7 @@ export function AnalysisRuns() {
   const runs = useInfiniteQuery({
     queryKey: agentAnalysis.runs().queryKey,
     queryFn: ({ pageParam, signal }) =>
-      apiService.agentAnalysisService.listRuns(
-        { cursor: pageParam, limit: ANALYSIS_RUNS_PAGE },
-        { signal },
-      ),
+      agentAnalysisService.listRuns({ cursor: pageParam, limit: ANALYSIS_RUNS_PAGE }, { signal }),
     initialPageParam: null as AnalysisRunsCursor | null,
     getNextPageParam: (page): AnalysisRunsCursor | null =>
       page.nextBefore > 0 && page.nextBeforeId !== ""

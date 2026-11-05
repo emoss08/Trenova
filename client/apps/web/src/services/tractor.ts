@@ -24,3 +24,5 @@ export class TractorService {
     return safeParse(bulkUpdateTractorStatusResponseSchema, response, "Bulk Update Tractor Status");
   }
 }
+
+export const tractorService = new TractorService();

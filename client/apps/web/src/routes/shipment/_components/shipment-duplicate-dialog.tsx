@@ -12,7 +12,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type { DuplicateShipmentRequest } from "@trenova/shared/types/shipment";
 import { duplicateShipmentRequestSchema } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -53,8 +53,7 @@ export function ShipmentDuplicateDialog({
   } = form;
 
   const { mutateAsync } = useApiMutation({
-    mutationFn: (payload: DuplicateShipmentRequest) =>
-      apiService.shipmentService.duplicate(payload),
+    mutationFn: (payload: DuplicateShipmentRequest) => shipmentService.duplicate(payload),
     resourceName: "Shipment",
     form,
     onSuccess: () => {

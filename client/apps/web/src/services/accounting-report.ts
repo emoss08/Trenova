@@ -16,3 +16,5 @@ export class AccountingReportService {
     return api.get<BalanceSheet>(`/accounting/statements/balance-sheet/${fiscalPeriodId}/`);
   }
 }
+
+export const accountingReportService = new AccountingReportService();

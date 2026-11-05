@@ -5,7 +5,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { pageAssistantThreadKey } from "@/components/assistant/page-assistant-thread-key";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
+import { shipmentService } from "@/services/shipment";
 import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "@trenova/shared/components/icons";
@@ -21,6 +22,7 @@ import { SuccessPhase } from "./success-phase";
 import type { ReconciliationPhase, RequiredFieldsForm } from "./types";
 import { UploadPhase } from "./upload-phase";
 import { useReconciliationState } from "./use-reconciliation-state";
+import { nullWhenAbsent } from "@trenova/shared/lib/error-presentation";
 
 const IMPORT_RESOURCE_TYPE = "shipment_import";
 
@@ -61,9 +63,7 @@ export function ImportWorkspace() {
   const { data: importedDocument } = useQuery({
     queryKey: ["shipment-import-document", uploadedDocumentId],
     queryFn: () =>
-      uploadedDocumentId
-        ? apiService.documentService.getById(uploadedDocumentId)
-        : Promise.resolve(null),
+      uploadedDocumentId ? documentService.getById(uploadedDocumentId) : Promise.resolve(null),
     enabled: !!uploadedDocumentId,
     refetchInterval: (query) => {
       const doc = query.state.data;
@@ -77,15 +77,11 @@ export function ImportWorkspace() {
     },
   });
 
-  const { data: importedDraft } = useQuery({
+  const { data: importedDraft, isError: draftReadFailed } = useQuery({
     queryKey: ["shipment-import-draft", uploadedDocumentId, importedDocument?.shipmentDraftStatus],
     queryFn: async () => {
       if (!uploadedDocumentId) return null;
-      try {
-        return await apiService.documentService.getShipmentDraft(uploadedDocumentId);
-      } catch {
-        return null;
-      }
+      return nullWhenAbsent(documentService.getShipmentDraft(uploadedDocumentId));
     },
     enabled:
       !!uploadedDocumentId &&
@@ -93,7 +89,7 @@ export function ImportWorkspace() {
       importedDocument.shipmentDraftStatus !== "Unavailable",
     refetchInterval: (query) => {
       const draft = query.state.data;
-      if (!uploadedDocumentId) return false;
+      if (!uploadedDocumentId || query.state.status === "error") return false;
       if (!draft || draft.status === "Pending") return 1500;
       return false;
     },
@@ -102,7 +98,7 @@ export function ImportWorkspace() {
   const retryExtraction = useMutation({
     mutationFn: async () => {
       if (!uploadedDocumentId) return;
-      await apiService.documentService.reextract(uploadedDocumentId);
+      await documentService.reextract(uploadedDocumentId);
     },
     onSuccess: () => {
       if (uploadedDocumentId) {
@@ -194,7 +190,7 @@ export function ImportWorkspace() {
 
       const parsed = shipmentCreateSchema.parse(input);
       const shipment = await withIdempotencyKey(parsed, (idempotencyKey) =>
-        apiService.shipmentService.create(parsed, { idempotencyKey }),
+        shipmentService.create(parsed, { idempotencyKey }),
       );
       const shipmentId = shipment.id;
       if (!shipmentId) {
@@ -204,7 +200,7 @@ export function ImportWorkspace() {
       let attachError: Error | null = null;
       if (importedDocument) {
         try {
-          await apiService.documentService.attachToShipment(importedDocument.id, shipmentId);
+          await documentService.attachToShipment(importedDocument.id, shipmentId);
         } catch (error) {
           attachError = error instanceof Error ? error : new Error("Failed to attach document");
         }
@@ -359,6 +355,7 @@ export function ImportWorkspace() {
         <ProcessingPhase
           document={importedDocument}
           draft={importedDraft}
+          draftReadFailed={draftReadFailed}
           fileName={importedDocument?.originalName ?? currentUpload?.file.name}
           onRetryExtraction={() => retryExtraction.mutate()}
           isRetrying={retryExtraction.isPending}

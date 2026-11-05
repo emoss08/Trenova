@@ -7,7 +7,7 @@ import {
 import { organization } from "@/lib/queries/organization";
 import { PERMISSION_CATALOG_STALE_TIME, permissionCatalog } from "@/lib/queries/permission-catalog";
 import { cn } from "@trenova/shared/lib/utils";
-import { apiService } from "@/services/api";
+import { organizationService } from "@/services/organization";
 import type { AccessPolicy } from "@trenova/shared/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -94,7 +94,7 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
 
   const { mutate: removeAccessPolicy } = useMutation({
     mutationFn: async (policyId: string) =>
-      apiService.organizationService.deleteAccessPolicy(organizationId, policyId),
+      organizationService.deleteAccessPolicy(organizationId, policyId),
     onSuccess: async () => {
       await invalidateAccessPolicies();
     },

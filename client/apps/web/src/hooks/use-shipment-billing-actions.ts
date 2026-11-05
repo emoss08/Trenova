@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { canMarkShipmentReadyToBill, canTransferShipmentToBilling } from "@/lib/shipment-utils";
 import { SHIPMENT_LIST_KEY } from "@/routes/shipment/_components/shipment-queries";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -51,8 +51,8 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
 
   const { mutateAsync: markReadyToBill } = useApiMutation({
     mutationFn: async (shipmentId: string) => {
-      const shipment = await apiService.shipmentService.get(shipmentId);
-      return apiService.shipmentService.update(shipmentId, {
+      const shipment = await shipmentService.get(shipmentId);
+      return shipmentService.update(shipmentId, {
         ...shipment,
         status: "ReadyToInvoice",
       });
@@ -62,7 +62,7 @@ export function useShipmentBillingActions(): ShipmentBillingActions {
   });
 
   const { mutateAsync: transferToBilling } = useApiMutation({
-    mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
+    mutationFn: (shipmentId: string) => shipmentService.transferToBilling(shipmentId),
     onSettled: (_data, _error, shipmentId) => invalidateShipment(shipmentId),
     resourceName: "Shipment",
   });

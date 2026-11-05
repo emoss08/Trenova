@@ -6,7 +6,7 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { aiControl } from "@/lib/queries/ai-control";
 import { aiProvider } from "@/lib/queries/ai-provider";
-import { apiService } from "@/services/api";
+import { aiProviderService } from "@/services/ai-provider";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
@@ -56,7 +56,7 @@ function FailureRow({
   );
 
   const test = useApiMutation({
-    mutationFn: () => apiService.aiProviderService.test(failure.providerId),
+    mutationFn: () => aiProviderService.test(failure.providerId),
     resourceName: t("AI provider"),
     onSuccess: async (result) => {
       if (result.success) {

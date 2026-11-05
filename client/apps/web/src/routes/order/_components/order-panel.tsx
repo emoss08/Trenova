@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { apiService } from "@/services/api";
+import { userService } from "@trenova/shared/services/user";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { createOrder, updateOrder } from "@/lib/graphql/order";
 import type { OrderRow } from "@/lib/graphql/order-table";
@@ -21,7 +21,7 @@ function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
 
   const { data: owner, isLoading } = useQuery({
     queryKey: ["user", ownerId],
-    queryFn: () => apiService.userService.get(ownerId!),
+    queryFn: () => userService.get(ownerId!),
     enabled: !!ownerId,
     staleTime: 5 * 60 * 1000,
   });

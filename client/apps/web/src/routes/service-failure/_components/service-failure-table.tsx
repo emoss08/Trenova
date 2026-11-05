@@ -5,7 +5,7 @@ import {
   createServiceFailureTableGraphQLConfig,
   type ServiceFailureRow,
 } from "@/lib/graphql/service-failure-table";
-import { apiService } from "@/services/api";
+import { serviceFailureService } from "@/services/service-failure";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,15 +56,15 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
 
     switch (action) {
       case "review":
-        await apiService.serviceFailureService.review(entity.id, payload);
+        await serviceFailureService.review(entity.id, payload);
         break;
       case "resolve":
-        await apiService.serviceFailureService.resolve(entity.id, payload);
+        await serviceFailureService.resolve(entity.id, payload);
         break;
       case "void": {
         const notes = window.prompt("Enter a void reason");
         if (!notes?.trim()) return;
-        await apiService.serviceFailureService.void(entity.id, {
+        await serviceFailureService.void(entity.id, {
           ...payload,
           notes: notes.trim(),
         });
@@ -75,7 +75,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
   };
 
   const handleBuildEDI = async (row: Row<ServiceFailureRow>) => {
-    const result = await apiService.serviceFailureService.buildEDI214Payload(row.original.id);
+    const result = await serviceFailureService.buildEDI214Payload(row.original.id);
     await navigator.clipboard?.writeText(JSON.stringify(result.payload, null, 2));
     const diagnostics = result.diagnostics.length;
     toast.success(t("EDI 214 payload generated"), {

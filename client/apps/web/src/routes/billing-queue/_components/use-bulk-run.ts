@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { billingQueue } from "@/lib/queries/billing-queue";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import type {
   BillingQueueApprovalRun,
   BulkRunAction,
@@ -42,7 +42,7 @@ export function useBulkRun() {
   const markReverted = (id: string) => setRevertedRunIds((current) => new Set([...current, id]));
 
   const undo = useApiMutation({
-    mutationFn: (id: string) => apiService.billingQueueService.undoBulk(id),
+    mutationFn: (id: string) => billingQueueService.undoBulk(id),
     resourceName: "BillingQueueItem",
     onSuccess: (run) => {
       announced.current.add(run.id);
@@ -62,7 +62,7 @@ export function useBulkRun() {
       action: BulkRunAction;
       itemIds: string[];
       params: BulkRunParams;
-    }) => apiService.billingQueueService.startBulk(action, itemIds, crypto.randomUUID(), params),
+    }) => billingQueueService.startBulk(action, itemIds, crypto.randomUUID(), params),
     resourceName: "BillingQueueItem",
     onSuccess: (run) => {
       setRunId(run.id);

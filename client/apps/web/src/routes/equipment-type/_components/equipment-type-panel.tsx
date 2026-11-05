@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { apiService } from "@/services/api";
+import { equipmentTypeService } from "@/services/equipment-type";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { equipmentTypeSchema, type EquipmentType } from "@/types/equipment-type";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,7 +44,7 @@ export function EquipmentTypePanel({
             throw new Error("No Equipment Type ID selected");
           }
 
-          return apiService.equipmentTypeService.update(currentRow.id, values);
+          return equipmentTypeService.update(currentRow.id, values);
         }}
       />
     );
@@ -58,7 +58,7 @@ export function EquipmentTypePanel({
       queryKey="equipment-type-list"
       title={t("Equipment type")}
       formComponent={<EquipTypeForm />}
-      mutationFn={(values) => apiService.equipmentTypeService.create(values)}
+      mutationFn={(values) => equipmentTypeService.create(values)}
     />
   );
 }

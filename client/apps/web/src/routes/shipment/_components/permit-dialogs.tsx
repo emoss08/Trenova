@@ -8,7 +8,7 @@ import { NumberField } from "@/components/fields/number-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { permitViewQueryKeys } from "@/lib/queries/shipment";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -115,8 +115,8 @@ export function PermitRecordDialog({
   const mutation = useApiMutation({
     mutationFn: async (values: PermitCreateInput) =>
       isEdit && permit?.id
-        ? apiService.shipmentService.updatePermit(shipmentId, permit.id, values)
-        : apiService.shipmentService.createPermit(shipmentId, values),
+        ? shipmentService.updatePermit(shipmentId, permit.id, values)
+        : shipmentService.createPermit(shipmentId, values),
     onSuccess: () => {
       invalidate();
       reset();
@@ -281,11 +281,7 @@ export function PermitWaiveDialog({
 
   const mutation = useApiMutation({
     mutationFn: async (values: WaiveRequirementInput) =>
-      apiService.shipmentService.waivePermitRequirement(
-        shipmentId,
-        requirement?.id ?? "",
-        values.reason,
-      ),
+      shipmentService.waivePermitRequirement(shipmentId, requirement?.id ?? "", values.reason),
     onSuccess: () => {
       invalidate();
       reset();

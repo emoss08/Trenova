@@ -3,8 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AssistantLayout } from "@/lib/assistant-dock";
 import { conversationPath } from "@/lib/conversation-path";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
-import { downloadAssistantTranscript } from "@/services/assistant";
+import { assistantService, downloadAssistantTranscript } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import type { AssistantThread } from "@/types/assistant";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
@@ -81,7 +80,7 @@ export function AssistantPanel({
   const { start, isStarting } = useStartConversation({ origin: "Panel", onStarted: open });
 
   const deleteMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.assistantService.deleteThread(id),
+    mutationFn: (id: string) => assistantService.deleteThread(id),
     onSuccess: async (_result, id) => {
       if (activeThread?.id === id) {
         setActiveThreadId(null);

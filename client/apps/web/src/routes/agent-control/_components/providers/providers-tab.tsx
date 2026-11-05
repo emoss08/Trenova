@@ -9,7 +9,7 @@ import {
 } from "@/lib/graphql/ai-provider";
 import { aiControl } from "@/lib/queries/ai-control";
 import { aiProvider } from "@/lib/queries/ai-provider";
-import { apiService } from "@/services/api";
+import { aiProviderService } from "@/services/ai-provider";
 import type { AIProviderKind, AIProviderPreset, AITask } from "@/types/ai-provider";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "@trenova/shared/components/icons";
@@ -201,7 +201,7 @@ export default function ProvidersTab() {
   }, [queryClient]);
 
   const test = useApiMutation({
-    mutationFn: (provider: AIProviderRow) => apiService.aiProviderService.test(provider.id),
+    mutationFn: (provider: AIProviderRow) => aiProviderService.test(provider.id),
     onMutate: (provider) =>
       setTests((current) => ({ ...current, [provider.id]: { state: "run" } })),
     onSuccess: async (result, provider) => {
@@ -246,7 +246,7 @@ export default function ProvidersTab() {
   });
 
   const remove = useApiMutation({
-    mutationFn: (provider: AIProviderRow) => apiService.aiProviderService.remove(provider.id),
+    mutationFn: (provider: AIProviderRow) => aiProviderService.remove(provider.id),
     onSuccess: async (_result, provider) => {
       setRemoving(null);
       void setAddress((current) =>
@@ -263,7 +263,7 @@ export default function ProvidersTab() {
     mutationFn: async ({ provider, key }: { provider: AIProviderRow; key: string }) => {
       const keyed = await patchAIProvider(provider, { apiKey: key });
       setTests((current) => ({ ...current, [provider.id]: { state: "run" } }));
-      const result = await apiService.aiProviderService.test(provider.id);
+      const result = await aiProviderService.test(provider.id);
       if (!result.success) {
         return { provider: keyed, result, enabled: false };
       }

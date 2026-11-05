@@ -8,7 +8,7 @@ import type {
   EdiPartnerTransport,
 } from "@/lib/graphql/edi-partner-card";
 import { edi, ediPartnerMessagesQuery } from "@/lib/queries/edi";
-import { apiService } from "@/services/api";
+import { ediService } from "@/services/edi";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link01Icon, RefreshCw01Icon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -664,12 +664,12 @@ function PartnerBar({ card }: { card: DeskEdiPartnerCard }) {
 
   const test = useApiMutation({
     resourceName: "EDI connection test",
-    mutationFn: (profileId: string) => apiService.ediService.testProfileConnection(profileId),
+    mutationFn: (profileId: string) => ediService.testProfileConnection(profileId),
     onSuccess: (outcome) => setResult(outcome),
   });
   const pickup = useApiMutation({
     resourceName: "EDI pickup",
-    mutationFn: (profileId: string) => apiService.ediService.pollProfile(profileId),
+    mutationFn: (profileId: string) => ediService.pollProfile(profileId),
     onSuccess: (outcome) => {
       void queryClient.invalidateQueries({ queryKey: edi.partnerCard(id).queryKey });
       void queryClient.invalidateQueries({ queryKey: edi.partnerMessages(id).queryKey });

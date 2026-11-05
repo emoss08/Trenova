@@ -4,7 +4,7 @@ import {
   customFieldDefinitionTableGraphQLConfig,
   type CustomFieldDefinitionRow,
 } from "@/lib/graphql/custom-field-definition-table";
-import { CustomFieldService } from "@/services/custom-field";
+import { customFieldService } from "@/services/custom-field";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,8 +14,6 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { getColumns } from "./custom-field-definition-columns";
 import { CustomFieldDefinitionPanel } from "./custom-field-definition-panel";
 import { DeleteDefinitionDialog } from "./delete-definition-dialog";
-
-const customFieldService = new CustomFieldService();
 
 export default function CustomFieldDefinitionTable() {
   const t = useT();

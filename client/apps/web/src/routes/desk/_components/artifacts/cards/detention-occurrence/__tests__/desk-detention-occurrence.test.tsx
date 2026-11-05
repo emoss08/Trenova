@@ -22,14 +22,13 @@ vi.mock("@/lib/graphql/detention-card", async (importOriginal) => ({
   fetchDeskDetention: fetchers.detention,
 }));
 vi.mock("@/lib/graphql/record-shipments", () => ({ fetchRecordShipments: fetchers.shipments }));
-vi.mock("@/services/api", () => ({
-  apiService: {
-    detentionService: {
-      approve: fetchers.approve,
-      sendNotice: fetchers.sendNotice,
-      waive: fetchers.waive,
-      dispute: fetchers.dispute,
-    },
+vi.mock("@/services/detention", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/detention")>()),
+  detentionService: {
+    approve: fetchers.approve,
+    sendNotice: fetchers.sendNotice,
+    waive: fetchers.waive,
+    dispute: fetchers.dispute,
   },
 }));
 vi.mock("../../shipment/desk-shipment", () => ({

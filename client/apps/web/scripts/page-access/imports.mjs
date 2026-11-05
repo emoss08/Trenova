@@ -4,13 +4,10 @@
  * and the REST endpoints it calls. Nothing is imported or run.
  *
  * REST calls go through `api.<method>(path)` from `@trenova/shared/lib/api`.
- * Most screens reach them through `apiService.<service>.<method>(…)`, the
- * object `services/api.ts` builds from every service class, so that module is
- * never followed as a whole: each `apiService.x.y` a module names is resolved
- * to the one method it calls. A service's own instance
- * (`export const userService = new UserService()`) is read the same way: a
- * module that imports it is not sent into the service's module, and each
- * `userService.y` it names is resolved to that one method.
+ * Screens reach them through a service's own instance
+ * (`export const userService = new UserService()`): a module that imports one
+ * is not sent into the service's module, and each `userService.y` it names is
+ * resolved to the one method it calls.
  */
 
 import { existsSync } from "node:fs";
@@ -31,7 +28,6 @@ export function graphPaths(webRoot) {
     shared,
     main: join(src, "main.tsx"),
     router: join(src, "router.tsx"),
-    apiService: join(src, "services", "api.ts"),
   };
 }
 
@@ -116,24 +112,6 @@ function instanceCall(node, instances) {
   const instance = instances.get(node.object.name);
 
   return instance ? { ...instance, method: node.property.name } : null;
-}
-
-function memberChain(node) {
-  if (
-    node.type !== "MemberExpression" ||
-    node.computed ||
-    node.object.type !== "MemberExpression" ||
-    node.object.computed ||
-    node.object.object.type !== "Identifier"
-  ) {
-    return null;
-  }
-
-  return {
-    root: node.object.object.name,
-    service: node.object.property.name,
-    method: node.property.name,
-  };
 }
 
 export const ALL = Symbol("all");
@@ -243,7 +221,6 @@ export class ModuleGraph {
   constructor(paths) {
     this.paths = paths;
     this.modules = new Map();
-    this.services = null;
     this.instanceClasses = new Map();
     this.methodsOf = new Map();
   }
@@ -320,10 +297,8 @@ export class ModuleGraph {
       bindings: new Map(),
       exports: new Map(),
       rest: [],
-      services: [],
       instanceCalls: [],
     };
-    const apiServiceNames = new Set();
     const instances = new Map();
 
     const addNames = (target, names) => {
@@ -361,14 +336,6 @@ export class ModuleGraph {
           continue;
         }
         const target = resolveSpecifier(this.paths, source, file);
-        if (target === this.paths.apiService) {
-          for (const spec of values) {
-            if ((spec.imported?.name ?? spec.local.name) === "apiService") {
-              apiServiceNames.add(spec.local.name);
-            }
-          }
-          continue;
-        }
         const exported = target === null ? new Map() : this.instancesOf(target);
         const followed = values.filter((spec) => {
           const className =
@@ -413,7 +380,7 @@ export class ModuleGraph {
     walk(program, (node) => {
       if (node.type === "ImportExpression" && node.source.type === "Literal") {
         const target = resolveSpecifier(this.paths, node.source.value, file);
-        if (target !== null && target !== this.paths.apiService) {
+        if (target !== null) {
           info.dynamic.push(target);
         }
         return;
@@ -421,11 +388,6 @@ export class ModuleGraph {
       const rest = restCall(node);
       if (rest !== null) {
         info.rest.push(rest);
-        return;
-      }
-      const chain = memberChain(node);
-      if (chain !== null && apiServiceNames.has(chain.root)) {
-        info.services.push({ service: chain.service, method: chain.method });
         return;
       }
       const call = instanceCall(node, instances);
@@ -436,51 +398,6 @@ export class ModuleGraph {
 
     this.modules.set(file, info);
     return info;
-  }
-
-  /** `apiService.<field>` → the REST calls each method of its class makes. */
-  serviceMethods() {
-    if (this.services !== null) {
-      return this.services;
-    }
-    const { program } = parseFile(this.paths.apiService);
-    const classFiles = new Map();
-    for (const statement of program.body) {
-      if (statement.type !== "ImportDeclaration") continue;
-      const target = resolveSpecifier(this.paths, statement.source.value, this.paths.apiService);
-      if (target === null) continue;
-      for (const spec of statement.specifiers) {
-        classFiles.set(spec.local.name, target);
-      }
-    }
-
-    const fieldClasses = new Map();
-    walk(program, (node) => {
-      if (
-        node.type !== "AssignmentExpression" ||
-        node.left.type !== "MemberExpression" ||
-        node.left.object.type !== "ThisExpression"
-      ) {
-        return;
-      }
-      const field = node.left.property.name;
-      if (node.right.type === "NewExpression" && node.right.callee.type === "Identifier") {
-        fieldClasses.set(field, node.right.callee.name);
-      } else if (node.right.type === "Identifier") {
-        // A shared instance (`this.userService = userService`) is of the class
-        // its name capitalizes.
-        const name = node.right.name;
-        fieldClasses.set(field, name.charAt(0).toUpperCase() + name.slice(1));
-      }
-    });
-
-    const services = new Map();
-    for (const [field, className] of fieldClasses) {
-      const file = classFiles.get(className);
-      services.set(field, file ? this.classMethods(file, className) : new Map());
-    }
-    this.services = services;
-    return services;
   }
 
   /**
@@ -540,16 +457,12 @@ export class ModuleGraph {
   uses(files, entries) {
     const documents = new Set();
     const rest = new Map();
-    const services = this.serviceMethods();
     const wanted = this.wanted(files, entries);
     const addRest = (call) => rest.set(`${call.method} ${call.path}`, call);
     for (const file of files) {
       const info = this.module(file);
       for (const name of documentsFor(info, wanted.get(file) ?? ALL)) documents.add(name);
       for (const call of info.rest) addRest(call);
-      for (const { service, method } of info.services) {
-        for (const call of services.get(service)?.get(method) ?? []) addRest(call);
-      }
       for (const { file: serviceFile, className, method } of info.instanceCalls) {
         for (const call of this.classMethods(serviceFile, className).get(method) ?? []) {
           addRest(call);

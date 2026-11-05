@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -92,7 +92,7 @@ export function DocumentUploadSection({
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, undefined, {
+      documentService.getByResource(resourceType, resourceId, undefined, {
         includeDocumentType: "true",
       }),
     enabled: !!resourceId,
@@ -100,7 +100,7 @@ export function DocumentUploadSection({
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) =>
-      apiService.documentService.upload({
+      documentService.upload({
         file,
         resourceId,
         resourceType,
@@ -114,7 +114,7 @@ export function DocumentUploadSection({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
       setDeletingId(null);
@@ -166,7 +166,7 @@ export function DocumentUploadSection({
   const handleDownload = useCallback(
     async (doc: Document) => {
       try {
-        const url = await apiService.documentService.getDownloadUrl(doc.id);
+        const url = await documentService.getDownloadUrl(doc.id);
         window.open(url, "_blank");
       } catch {
         toast.error(t("Failed to get download URL"));

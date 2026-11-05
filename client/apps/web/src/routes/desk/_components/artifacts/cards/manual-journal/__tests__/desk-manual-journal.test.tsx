@@ -25,15 +25,13 @@ vi.mock("@/lib/graphql/journal-cards", () => ({
   fetchDeskJournalEntry: vi.fn(),
   fetchDeskManualJournal: fetchers.journal,
 }));
-vi.mock("@/services/api", () => ({
-  apiService: {
-    manualJournalService: {
-      submit: fetchers.submit,
-      approve: fetchers.approve,
-      post: fetchers.post,
-      reject: fetchers.reject,
-      cancel: fetchers.cancel,
-    },
+vi.mock("@/services/manual-journal", () => ({
+  manualJournalService: {
+    submit: fetchers.submit,
+    approve: fetchers.approve,
+    post: fetchers.post,
+    reject: fetchers.reject,
+    cancel: fetchers.cancel,
   },
 }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({

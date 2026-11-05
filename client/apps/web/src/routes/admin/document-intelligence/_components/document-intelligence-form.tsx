@@ -14,7 +14,7 @@ import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form
 import { Label } from "@trenova/shared/components/ui/label";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { documentControl } from "@/lib/queries/document-control";
-import { apiService } from "@/services/api";
+import { documentControlService } from "@/services/document-control";
 import {
   documentControlResourceSchema,
   documentControlSchema,
@@ -69,7 +69,7 @@ export default function DocumentIntelligenceForm() {
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: documentControl.get._def,
-    mutationFn: async (values: DocumentControl) => apiService.documentControlService.update(values),
+    mutationFn: async (values: DocumentControl) => documentControlService.update(values),
     resourceName: "Document extraction",
     resetForm: reset,
     form,

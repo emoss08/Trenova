@@ -166,3 +166,5 @@ export class AgentExtensionService {
     return safeParse(portalRecordingSchema, response, translate("Portal task recording"));
   }
 }
+
+export const agentExtensionService = new AgentExtensionService();

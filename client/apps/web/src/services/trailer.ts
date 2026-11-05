@@ -29,3 +29,5 @@ export class TrailerService {
     return api.post(`/trailers/${trailerId}/locate/`, data);
   }
 }
+
+export const trailerService = new TrailerService();

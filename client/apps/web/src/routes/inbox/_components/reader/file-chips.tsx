@@ -3,7 +3,7 @@ import type { SelectOption } from "@/lib/graphql/select-options";
 import { inbox } from "@/lib/queries/inbox";
 import { inboxReferenceQuery } from "@/lib/queries/inbox";
 import { documentTypeName, documentTypeNamed } from "@/lib/triage/document-types";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContextMenuTrigger } from "@trenova/shared/components/context-menu/context-menu-host";
@@ -55,7 +55,7 @@ export function readTypeId(
 
 async function download(t: TranslateFn, documentId: string) {
   try {
-    const url = await apiService.documentService.getDownloadUrl(documentId);
+    const url = await documentService.getDownloadUrl(documentId);
     window.open(url, "_blank", "noopener,noreferrer");
   } catch {
     toast.error(t("The file could not be downloaded"));

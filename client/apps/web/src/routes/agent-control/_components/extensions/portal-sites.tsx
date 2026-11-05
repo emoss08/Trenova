@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { agentExtension } from "@/lib/queries/agent-extension";
-import { apiService } from "@/services/api";
+import { agentExtensionService } from "@/services/agent-extension";
 import type { PortalSite } from "@/types/agent-extension";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit05Icon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -31,7 +31,7 @@ export function PortalSites({ canUpdate }: PortalSitesProps) {
 
   const remove = useApiMutation({
     resourceName: t("Portal site"),
-    mutationFn: (site: PortalSite) => apiService.agentExtensionService.deletePortalSite(site.id),
+    mutationFn: (site: PortalSite) => agentExtensionService.deletePortalSite(site.id),
     onSuccess: async () => {
       setRemoving(null);
       await queryClient.invalidateQueries({ queryKey: agentExtension._def });
@@ -83,9 +83,7 @@ export function PortalSites({ canUpdate }: PortalSitesProps) {
                     <Badge variant="neutral">{t("Authenticator codes")}</Badge>
                   )}
                 </div>
-                {site.purpose && (
-                  <p className="text-muted-foreground text-xs">{site.purpose}</p>
-                )}
+                {site.purpose && <p className="text-muted-foreground text-xs">{site.purpose}</p>}
                 <p className="text-muted-foreground truncate font-mono text-xs">
                   {site.domains.join(", ")}
                 </p>

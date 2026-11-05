@@ -12,7 +12,7 @@ import {
   WORKER_POLICIES_KEY,
   type WorkerPolicyRow,
 } from "@/lib/graphql/self-service";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -158,7 +158,7 @@ export function PolicyDialog({ open, onOpenChange, policy }: PolicyDialogProps) 
 
   const attach = useMutation({
     mutationFn: (file: File) =>
-      apiService.documentService.upload({
+      documentService.upload({
         file,
         resourceType: POLICY_RESOURCE_TYPE,
         resourceId: policy?.id ?? PENDING_RESOURCE_ID,

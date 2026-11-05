@@ -17,7 +17,7 @@ import {
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
 import { invalidateFormulaLibrary } from "@/lib/queries/formula-library";
-import { apiService } from "@/services/api";
+import { formulaLibraryService } from "@/services/formula-library";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertDialog,
@@ -225,7 +225,7 @@ function ArchiveDialog({
     setBusy(true);
     const saved: { library: FormulaLibrary | null } = { library: null };
     const outcome = await archiveLibraries([libraryId], held !== null, async (id, confirmInUse) => {
-      saved.library = await apiService.formulaLibraryService.archive(id, { confirmInUse });
+      saved.library = await formulaLibraryService.archive(id, { confirmInUse });
     });
     setBusy(false);
     await invalidateFormulaLibrary(queryClient);
@@ -324,7 +324,7 @@ function LibraryStudioLayout({
   const duplicate = useCallback(async () => {
     if (!library) return;
     try {
-      const [copy] = await apiService.formulaLibraryService.duplicate([library.id]);
+      const [copy] = await formulaLibraryService.duplicate([library.id]);
       await invalidateFormulaLibrary(queryClient);
       toast.success(t("Duplicated as a draft"));
       if (copy?.id) void navigate(formulaLibraryRoutes.edit(copy.id));

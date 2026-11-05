@@ -10,3 +10,5 @@ export class WeatherAlertService {
     return api.get<WeatherAlertDetail>(`/weather-alerts/${alertId}/`);
   }
 }
+
+export const weatherAlertService = new WeatherAlertService();

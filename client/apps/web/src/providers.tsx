@@ -18,6 +18,7 @@ import { setPartialErrorReporter, setSessionExpiryHandler } from "@trenova/share
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import type { ReactNode } from "react";
+import { installFailureListeners } from "@trenova/shared/lib/failure-reporter";
 
 // The transport cannot reach the router or the auth store, so the expiry path is wired here
 // instead; the teardown is the one protectedLoader's 401 branch does.
@@ -37,6 +38,8 @@ installSessionContextHandler();
 // An edition's strings live in its own catalog; layering it over the app's before the
 // first locale loads means its pages render translated like everything else.
 void registerCatalogSource(edition.messages);
+
+installFailureListeners();
 
 setPartialErrorReporter((errors, { operationName }) => {
   for (const error of errors) {

@@ -1,6 +1,6 @@
 import { turnFailureDetail } from "@/components/assistant/follow-turn";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
+import { assistantService } from "@/services/assistant";
 import type { AssistantThread, CaseParty, CaseSubjectType, SnoozeAnchor } from "@/types/assistant";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -30,7 +30,7 @@ export function useDeskCase(thread: Pick<AssistantThread, "id" | "case">) {
 
   const mutation = useMutation({
     mutationFn: async (action: CaseAction) => {
-      const cases = apiService.assistantService;
+      const cases = assistantService;
       switch (action.kind) {
         case "bind":
           return cases.bindCase(threadId, {

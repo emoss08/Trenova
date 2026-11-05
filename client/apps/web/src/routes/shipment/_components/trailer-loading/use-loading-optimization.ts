@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import type {
   LoadingOptimizationRequest,
   LoadingOptimizationResult,
@@ -80,7 +80,7 @@ export function useLoadingOptimization() {
         equipmentTypeId,
         stops: extractDeliveryStops(moves),
       };
-      return apiService.shipmentService.calculateLoadingOptimization(req);
+      return shipmentService.calculateLoadingOptimization(req);
     },
   });
 

@@ -6,8 +6,8 @@ import { TrialBalancePage } from "../page";
 
 const mocks = vi.hoisted(() => ({ getTrialBalance: vi.fn() }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { accountingReportService: { getTrialBalance: mocks.getTrialBalance } },
+vi.mock("@/services/accounting-report", () => ({
+  accountingReportService: { getTrialBalance: mocks.getTrialBalance },
 }));
 vi.mock("@/components/navigation/sidebar-layout", () => ({ PageLayout: PageLayoutStub }));
 vi.mock("@/components/accounting/fiscal-period-selector", () => ({

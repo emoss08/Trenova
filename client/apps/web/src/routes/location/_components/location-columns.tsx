@@ -2,7 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { statusChoices } from "@/lib/choices";
-import { apiService } from "@/services/api";
+import { locationService } from "@/services/location";
 import type { LocationRow } from "@/lib/graphql/location-table";
 import type { Location } from "@trenova/shared/types/location";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ function LocationStatusCell({ row }: { row: LocationRow }) {
   const handleStatusChange = useCallback(
     async (newStatus: Location["status"]) => {
       if (!row.id) return;
-      await apiService.locationService.patch(row.id, {
+      await locationService.patch(row.id, {
         status: newStatus,
       });
 

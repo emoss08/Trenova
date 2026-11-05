@@ -1,12 +1,14 @@
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import {
   describeError,
+  nullWhenAbsent,
   formatErrorReport,
   parseStackFrames,
   shortenSourcePath,
 } from "@trenova/shared/lib/error-presentation";
 import { GraphQLRequestError, type NormalizedGraphQLError } from "@trenova/shared/lib/graphql";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { RequestTimeoutError, ResponseContractError } from "@trenova/shared/lib/request-errors";
 
 const PROBLEM_BASE = "https://trenova.app/problems";
 
@@ -270,5 +272,44 @@ describe("formatErrorReport", () => {
     expect(report).toContain("Page: https://app.trenova.app/shipments");
     expect(report).not.toContain("Code:");
     expect(report).not.toContain("Component stack:");
+  });
+});
+
+describe("describeError: requests that never produced an answer to use", () => {
+  it("offers another try for a request that passed its deadline", () => {
+    expect(describeError(new RequestTimeoutError())).toMatchObject({
+      kind: "timeout",
+      retryable: true,
+    });
+  });
+
+  it("does not offer another try for a response this build cannot read", () => {
+    expect(describeError(new ResponseContractError("Shipment"))).toMatchObject({
+      kind: "contract",
+      retryable: false,
+    });
+  });
+});
+
+describe("nullWhenAbsent", () => {
+  const failed = (status: number) =>
+    new ApiRequestError(status, { type: "about:blank", title: "Failed", status });
+
+  it("hands back what was read", async () => {
+    await expect(nullWhenAbsent(Promise.resolve("draft"))).resolves.toBe("draft");
+  });
+
+  it("reads a missing or forbidden record as nothing there", async () => {
+    await expect(nullWhenAbsent(Promise.reject(failed(404)))).resolves.toBeNull();
+    await expect(nullWhenAbsent(Promise.reject(failed(403)))).resolves.toBeNull();
+  });
+
+  it("keeps a failure a failure, so a screen never reports nothing when it could not find out", async () => {
+    const outage = failed(500);
+
+    await expect(nullWhenAbsent(Promise.reject(outage))).rejects.toBe(outage);
+    await expect(nullWhenAbsent(Promise.reject(new TypeError("Failed to fetch")))).rejects.toThrow(
+      "Failed to fetch",
+    );
   });
 });

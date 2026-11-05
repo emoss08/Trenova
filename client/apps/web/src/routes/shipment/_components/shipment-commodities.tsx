@@ -6,7 +6,7 @@ import { fieldErrorMessages } from "@/lib/form-errors";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
 import { shipment } from "@/lib/queries/shipment";
 import { commodityFromOption, commodityTotals } from "@/lib/shipment-commodity";
-import { apiService } from "@/services/api";
+import { shipmentService } from "@/services/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { CapabilityExplainer } from "@trenova/shared/components/capability-explainer";
 import {
@@ -154,7 +154,7 @@ function CommodityDialog({
     if (checkHazmatSegregation && commodityIds.length >= 2) {
       setSaving(true);
       try {
-        await apiService.shipmentService.checkHazmatSegregation(commodityIds);
+        await shipmentService.checkHazmatSegregation(commodityIds);
         commodities.forEach((_, at) => clearErrors(`commodities.${at}.commodityId`));
       } catch (error) {
         if (error instanceof ApiRequestError && error.isValidationError()) {

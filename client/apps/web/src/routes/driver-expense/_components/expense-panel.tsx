@@ -11,7 +11,7 @@ import {
   reviewDriverExpense,
   type DriverExpenseRow,
 } from "@trenova/shared/lib/graphql/driver-portal";
-import { apiService } from "@/services/api";
+import { documentService } from "@/services/document";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LinkExternal01Icon } from "@trenova/shared/components/icons";
@@ -61,7 +61,7 @@ function ExpenseDetail({ expenseId, onClose }: { expenseId: string; onClose: () 
   };
 
   const handleViewReceipt = async (documentId: string) => {
-    const url = await apiService.documentService.getViewUrl(documentId);
+    const url = await documentService.getViewUrl(documentId);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 

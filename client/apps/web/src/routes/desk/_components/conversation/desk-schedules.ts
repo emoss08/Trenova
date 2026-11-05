@@ -1,6 +1,5 @@
 import { isScheduleRequest } from "@/components/assistant/composer-commands";
 import { assistant } from "@/lib/queries/assistant";
-import { apiService } from "@/services/api";
 import type { ConversationSchedule, ConversationScheduleList } from "@/types/assistant";
 import {
   appendToHistory,
@@ -14,7 +13,7 @@ import {
   type InfiniteData,
   type QueryClient,
 } from "@tanstack/react-query";
-import type { StartedTurn } from "@/services/assistant";
+import { assistantService, type StartedTurn } from "@/services/assistant";
 import { useEffect, useState } from "react";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 
@@ -100,9 +99,7 @@ export function patchSchedulePages(
  * what is loaded again moves a schedule paused or resumed here at once,
  * rather than when the list is next read.
  */
-export function orderSchedules(
-  schedules: readonly ConversationSchedule[],
-): ConversationSchedule[] {
+export function orderSchedules(schedules: readonly ConversationSchedule[]): ConversationSchedule[] {
   return [...schedules].sort((a, b) => {
     if (a.enabled !== b.enabled) {
       return a.enabled ? -1 : 1;
@@ -164,9 +161,7 @@ function writeSchedule(
   queryClient.setQueryData<ConversationScheduleList>(keys.thread, (list) =>
     patchScheduleList(list, id, next),
   );
-  queryClient.setQueryData<SchedulePages>(keys.all, (pages) =>
-    patchSchedulePages(pages, id, next),
-  );
+  queryClient.setQueryData<SchedulePages>(keys.all, (pages) => patchSchedulePages(pages, id, next));
 }
 
 /**
@@ -218,7 +213,7 @@ export function useScheduleActions(options?: {
   const toggle = useMutation({
     mutationKey: SCHEDULE_CHANGE_KEY,
     mutationFn: (schedule: ConversationSchedule) =>
-      apiService.assistantService.setScheduleEnabled(schedule.id, !schedule.enabled),
+      assistantService.setScheduleEnabled(schedule.id, !schedule.enabled),
     onMutate: async (schedule) => {
       const previous = await holdSchedules(queryClient, schedule);
       writeSchedule(queryClient, schedule.threadId, schedule.id, {
@@ -239,8 +234,7 @@ export function useScheduleActions(options?: {
 
   const remove = useMutation({
     mutationKey: SCHEDULE_CHANGE_KEY,
-    mutationFn: (schedule: ConversationSchedule) =>
-      apiService.assistantService.deleteSchedule(schedule.id),
+    mutationFn: (schedule: ConversationSchedule) => assistantService.deleteSchedule(schedule.id),
     onMutate: async (schedule) => {
       const previous = await holdSchedules(queryClient, schedule);
       writeSchedule(queryClient, schedule.threadId, schedule.id, null);
@@ -256,8 +250,7 @@ export function useScheduleActions(options?: {
 
   const run = useMutation({
     mutationKey: SCHEDULE_CHANGE_KEY,
-    mutationFn: (schedule: ConversationSchedule) =>
-      apiService.assistantService.runSchedule(schedule.id),
+    mutationFn: (schedule: ConversationSchedule) => assistantService.runSchedule(schedule.id),
     onSuccess: (turn, schedule) => {
       void queryClient.invalidateQueries({ queryKey: assistant.activeTurns().queryKey });
       onRan?.(schedule, turn);
@@ -307,7 +300,7 @@ export function useCreateSchedule(threadId: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (content: string) => apiService.assistantService.createSchedule(threadId, content),
+    mutationFn: (content: string) => assistantService.createSchedule(threadId, content),
     onSuccess: async ({ schedule, message }) => {
       const historyKey = assistant.messages(threadId).queryKey;
       const cached = queryClient.getQueryData<ThreadHistory>(historyKey);

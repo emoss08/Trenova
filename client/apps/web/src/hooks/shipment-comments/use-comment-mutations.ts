@@ -19,7 +19,7 @@ import {
   type LocalShipmentComment,
 } from "@/lib/shipment-comment-cache";
 import { applyCommentEntitySync } from "@/lib/shipment-comment-realtime";
-import { apiService } from "@/services/api";
+import { shipmentCommentService } from "@/services/shipment-comment";
 import type {
   ShipmentComment,
   ShipmentCommentCreateInput,
@@ -100,7 +100,7 @@ export function useCommentMutations(shipmentId: string) {
 
   const createMutation = useMutation({
     mutationFn: (variables: CreateCommentVariables) =>
-      apiService.shipmentCommentService.create(shipmentId, variables),
+      shipmentCommentService.create(shipmentId, variables),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const optimistic = buildOptimisticComment(variables);
@@ -166,7 +166,7 @@ export function useCommentMutations(shipmentId: string) {
 
   const updateMutation = useMutation({
     mutationFn: (variables: ShipmentCommentUpdateInput) =>
-      apiService.shipmentCommentService.update(shipmentId, variables.id, variables),
+      shipmentCommentService.update(shipmentId, variables.id, variables),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const restore = snapshotCommentCaches(queryClient, shipmentId);
@@ -200,8 +200,7 @@ export function useCommentMutations(shipmentId: string) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (comment: ShipmentComment) =>
-      apiService.shipmentCommentService.delete(shipmentId, comment.id),
+    mutationFn: (comment: ShipmentComment) => shipmentCommentService.delete(shipmentId, comment.id),
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const restore = snapshotCommentCaches(queryClient, shipmentId);
@@ -249,7 +248,7 @@ export function useCommentMutations(shipmentId: string) {
 
   const pinMutation = useMutation({
     mutationFn: ({ comment, pinned }: { comment: ShipmentComment; pinned: boolean }) =>
-      apiService.shipmentCommentService.setPinned(shipmentId, comment.id, pinned),
+      shipmentCommentService.setPinned(shipmentId, comment.id, pinned),
     onMutate: async ({ comment, pinned }) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const restore = snapshotCommentCaches(queryClient, shipmentId);
@@ -274,7 +273,7 @@ export function useCommentMutations(shipmentId: string) {
 
   const resolveMutation = useMutation({
     mutationFn: ({ comment, resolved }: { comment: ShipmentComment; resolved: boolean }) =>
-      apiService.shipmentCommentService.setResolved(shipmentId, comment.id, resolved),
+      shipmentCommentService.setResolved(shipmentId, comment.id, resolved),
     onMutate: async ({ comment, resolved }) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const restore = snapshotCommentCaches(queryClient, shipmentId);
@@ -298,7 +297,7 @@ export function useCommentMutations(shipmentId: string) {
 
   const acknowledgeMutation = useMutation({
     mutationFn: (comment: ShipmentComment) =>
-      apiService.shipmentCommentService.acknowledge(shipmentId, comment.id),
+      shipmentCommentService.acknowledge(shipmentId, comment.id),
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: commentKeys.root(shipmentId) });
       const restore = snapshotCommentCaches(queryClient, shipmentId);

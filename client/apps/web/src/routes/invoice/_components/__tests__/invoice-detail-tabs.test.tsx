@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({ getById: vi.fn(), fetchInvoiceArContext: vi.fn
 vi.mock("@/hooks/use-post-invoice", () => ({
   usePostInvoice: () => ({ mutate: vi.fn(), isPending: false }),
 }));
-vi.mock("@/services/api", () => ({ apiService: { invoiceService: { getById: mocks.getById } } }));
+vi.mock("@/services/invoice", () => ({ invoiceService: { getById: mocks.getById } }));
 vi.mock("@trenova/shared/components/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));

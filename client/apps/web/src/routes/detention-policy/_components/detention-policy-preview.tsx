@@ -3,7 +3,7 @@ import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { pricingFingerprint } from "@/lib/detention-policy";
 import { CalculationReceipt } from "@/routes/detention-desk/_components/calculation-receipt";
-import { apiService } from "@/services/api";
+import { detentionPolicyService } from "@/services/detention";
 import { Card } from "@trenova/shared/components/ui/card";
 import {
   SegmentedControl,
@@ -393,7 +393,7 @@ export function DetentionPolicyPreview() {
     queries: SCENARIOS.map((definition) => ({
       queryKey: ["detention", "preview", definition.key, definition.scenario, fingerprint],
       queryFn: ({ signal }) =>
-        apiService.detentionPolicyService.preview(policy, definition.scenario, { signal }),
+        detentionPolicyService.preview(policy, definition.scenario, { signal }),
       enabled: ready && isVisible,
       retry: false,
       staleTime: Infinity,

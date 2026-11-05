@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { apiService } from "@/services/api";
+import { billingQueueService } from "@/services/billing-queue";
 import { ScanSearchIcon } from "@trenova/shared/components/icons";
 import {
   AlertDialog,
@@ -41,7 +41,7 @@ export function BillingQueueRedetectSignaturesAction() {
 
   const { mutate, isPending } = useApiMutation<PODSignatureRedetectResult, undefined>({
     resourceName: "Billing queue",
-    mutationFn: () => apiService.billingQueueService.redetectPODSignatures(),
+    mutationFn: () => billingQueueService.redetectPODSignatures(),
     onSuccess: (result) => {
       setOpen(false);
       toast.success(podSignatureRedetectSummary(t, result));

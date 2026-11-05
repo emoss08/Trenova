@@ -16,8 +16,9 @@ const mocks = vi.hoisted(() => ({
   audit: vi.fn(),
 }));
 
-vi.mock("@/services/api", () => ({
-  apiService: { documentService: { getByResource: mocks.documents, delete: vi.fn() } },
+vi.mock("@/services/document", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/document")>()),
+  documentService: { getByResource: mocks.documents, delete: vi.fn() },
 }));
 vi.mock("@/lib/queries/shipment", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/shipment")>()),

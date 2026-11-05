@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { apiService } from "@/services/api";
+import { hazmatSegregationRuleService } from "@/services/hazmat-segregation-rule";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   hazmatSegregationRuleSchema,
@@ -49,7 +49,7 @@ export function HazmatSegregationRulePanel({
             throw new Error("No Hazmat Segregation Rule ID selected");
           }
 
-          return apiService.hazmatSegregationRuleService.update(currentRow.id, values);
+          return hazmatSegregationRuleService.update(currentRow.id, values);
         }}
         row={row}
         form={form}
@@ -65,7 +65,7 @@ export function HazmatSegregationRulePanel({
       queryKey="hazmat-segregation-rule-list"
       title={t("Hazmat segregation rule")}
       formComponent={<HazmatSegregationRuleForm />}
-      mutationFn={(values) => apiService.hazmatSegregationRuleService.create(values)}
+      mutationFn={(values) => hazmatSegregationRuleService.create(values)}
     />
   );
 }

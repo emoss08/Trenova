@@ -1,4 +1,4 @@
-import { apiService } from "@/services/api";
+import { shipmentEventService } from "@/services/shipment-event";
 import type { ShipmentEvent, ShipmentEventType } from "@/types/shipment-event";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
@@ -32,7 +32,7 @@ export function useShipmentEventsInfinite({
     ],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      apiService.shipmentEventService.list({
+      shipmentEventService.list({
         shipmentId,
         types: normalizedTypes,
         limit,

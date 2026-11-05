@@ -15,7 +15,7 @@ import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/dat
 import { cn } from "@trenova/shared/lib/utils";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { insight as insightQueries } from "@/lib/queries/insight";
-import { apiService } from "@/services/api";
+import { insightService } from "@/services/insight";
 import type { Insight, InsightMetric } from "@/types/insight";
 import {
   formatMetricValue,
@@ -339,13 +339,13 @@ function DecisionSection({ insight, onDone }: { insight: Insight; onDone: () => 
   };
 
   const dismissMutation = useApiMutation({
-    mutationFn: () => apiService.insightService.dismiss(insight.id, reason.trim()),
+    mutationFn: () => insightService.dismiss(insight.id, reason.trim()),
     onSuccess: invalidate,
     resourceName: "Insight",
   });
 
   const restoreMutation = useApiMutation({
-    mutationFn: () => apiService.insightService.restore(insight.id),
+    mutationFn: () => insightService.restore(insight.id),
     onSuccess: invalidate,
     resourceName: "Insight",
   });
