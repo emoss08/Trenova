@@ -1,6 +1,7 @@
 package ediservicetest
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -124,6 +125,10 @@ type Services struct {
 }
 
 func New(d Deps) *Services {
+	if d.Metrics == nil {
+		d.Metrics = &metrics.Registry{EDI: documentmetrics.NewEDI(nil, zap.NewNop(), false)}
+	}
+
 	s := &Services{}
 	s.Alerts = edialert.New(edialert.Params{
 		Logger:        d.Logger,

@@ -51,12 +51,17 @@ func setupTest(t *testing.T) *testDeps {
 	sr := sessionportsmock.NewMockSessionRepository(t)
 	pr := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	events := &recordingAuthEvents{}
+	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
+	ssoRepo.EXPECT().ListEnabledByOrganizationID(mock.Anything, mock.Anything).
+		Return(nil, nil).Maybe()
 	svc := &Service{
 		ur:         ur,
+		ssoRepo:    ssoRepo,
 		sr:         sr,
 		portalRepo: pr,
 		rbacRepo:   &rbactest.Repository{},
 		authEvents: events,
+		throttle:   sessiontest.OpenThrottle{},
 		tokens:     testTokens,
 		rotator:    sessionrotation.New(sessionrotation.Params{Sessions: sr, Tokens: testTokens}),
 		policy:     testSessionPolicy,

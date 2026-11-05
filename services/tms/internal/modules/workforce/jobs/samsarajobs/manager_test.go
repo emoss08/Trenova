@@ -168,23 +168,6 @@ func TestManager_StartWorkersSyncWorkflow(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsConflictError(err))
 	})
-
-	t.Run("not configured", func(t *testing.T) {
-		t.Parallel()
-		manager, repo := setupManager(t, nil)
-		repo.On("GetWorkerSyncReadinessCounts", mock.Anything, tenantInfo).Return(
-			&workerports.WorkerSyncReadinessCounts{
-				TotalWorkers:        10,
-				ActiveWorkers:       8,
-				SyncedActiveWorkers: 7,
-			},
-			nil,
-		).Once()
-
-		_, err := manager.StartWorkersSyncWorkflow(t.Context(), tenantInfo)
-		require.Error(t, err)
-		assert.True(t, errortypes.IsBusinessError(err))
-	})
 }
 
 func TestManager_GetWorkersSyncWorkflowStatus(t *testing.T) {

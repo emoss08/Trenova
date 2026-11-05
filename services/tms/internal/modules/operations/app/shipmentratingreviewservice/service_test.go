@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -96,6 +97,7 @@ func newService(repo *store, audit *auditLog) *shipmentratingreviewservice.Servi
 		DB:           dbtest.NopConnection{},
 		Repo:         repo,
 		AuditService: audit,
+		Realtime:     &mocks.NoopRealtimeService{},
 	})
 }
 

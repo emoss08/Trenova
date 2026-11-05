@@ -49,7 +49,7 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 		}).
 		Once()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
+	calculator := newCalculator(t, Params{Logger: zap.NewNop(), RateEngine: engine})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -82,7 +82,8 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 		RateQuoteID:   "rq_01",
 	}
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -112,7 +113,8 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 	entity.AutoRated = false
 	entity.RatingDetail = &shipment.RatingDetail{AgreementName: "Acme TL 2026"}
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -142,7 +144,7 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
+	calculator := newCalculator(t, Params{Logger: zap.NewNop(), RateEngine: engine})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -175,7 +177,8 @@ func TestAdoptContractRate_SeatsTheTariffAndItsInputs(t *testing.T) {
 	templateID := pulid.MustNew("fmt_")
 	agreementID := pulid.MustNew("ragr_")
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -201,7 +204,8 @@ func TestAdoptContractRate_TakesTheContractsInputsEvenWhenItSetsNone(t *testing.
 	entity := validShipment()
 	entity.TariffInputs = perMileInputs(t, "$3.50/mi")
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -225,7 +229,8 @@ func TestAdoptContractRate_ClearsAPreviousDeparture(t *testing.T) {
 	entity.RateOverrideReason = "Spot rate agreed with the customer"
 	entity.RateOverrideByID = &userID
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -247,7 +252,8 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 
 	entity := validShipment()
 
-	calculator := New(
+	calculator := newCalculator(
+		t,
 		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)},
 	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
@@ -333,7 +339,7 @@ func TestRecordRateDeparture_RecordsWhatWasGivenAway(t *testing.T) {
 		}).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
@@ -367,7 +373,7 @@ func TestRecordRateDeparture_WritesNoQuoteWhenNothingJustDeparted(t *testing.T) 
 
 	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
@@ -392,7 +398,7 @@ func TestRecordRateDeparture_IgnoresAnAutoRatedShipment(t *testing.T) {
 
 	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
@@ -458,7 +464,7 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 		}, nil).
 		Maybe()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: engine,
 	})
@@ -507,7 +513,7 @@ func departingCalculator(
 		}, nil).
 		Maybe()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: engine,
 	})

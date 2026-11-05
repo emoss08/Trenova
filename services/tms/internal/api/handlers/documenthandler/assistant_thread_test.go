@@ -115,8 +115,7 @@ func openImportThread(
 				ErrorHandler:     errorHandler,
 			},
 		),
-		StorageConfig: &storageconfig.Config{},
-		Logger:        zap.NewNop(),
+		Logger: zap.NewNop(),
 	})
 
 	router := gin.New()

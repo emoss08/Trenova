@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
@@ -38,7 +40,13 @@ func setupInboundFileHandler(
 		Outbound: edis.Outbound,
 		Messages: edis.Messages,
 		InboundService: ediinboundservice.New(
-			ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
+			ediinboundservice.Params{
+				Logger:          logger,
+				InboundFileRepo: files,
+				Metrics: &metrics.Registry{
+					EDI: documentmetrics.NewEDI(nil, logger, false),
+				},
+			},
 		),
 		ErrorHandler:         mw.ErrorHandler,
 		PermissionMiddleware: mw.PermissionMiddleware,

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
@@ -60,7 +61,7 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 			SkippedReason: "ready_for_generation",
 			EDIPartnerID:  pulid.MustNew("edip_"),
 		}, nil)
-	svc := &service{l: zap.NewNop(), repo: repo, ediService: ediSvc}
+	svc := &service{watchtower: mocks.NoopWatchtowerProjector{}, l: zap.NewNop(), repo: repo, ediService: ediSvc}
 	req := func() *servicefailureports.ServiceFailureLifecycleRequest {
 		return &servicefailureports.ServiceFailureLifecycleRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/analyticscli"
 	"github.com/emoss08/keel/analytics/ir/tsgen"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,10 @@ func TestEveryReportableEntityHasAKind(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, catalog.Entities())
 
-	_, err = reportaccess.New(reportaccess.Params{Catalog: catalog})
+	_, err = reportaccess.New(reportaccess.Params{
+		Catalog:  catalog,
+		Registry: permissioncatalog.NewRegistry(),
+	})
 	require.NoError(t, err)
 }
 

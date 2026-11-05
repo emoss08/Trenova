@@ -88,6 +88,7 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		Adapters:   adapterregistry.NewRegistry(),
 		Clients:    make(map[bool]*http.Client, 2),
+		Usage:      &fakeUsage{},
 	})
 }
 

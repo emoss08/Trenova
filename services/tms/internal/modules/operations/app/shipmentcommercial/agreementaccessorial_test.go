@@ -335,7 +335,7 @@ func agreementCalculator(
 ) *Calculator {
 	t.Helper()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger: zap.NewNop(),
 		RateEngine: shipmentcommercialtest.StubRateEngineForContract(
 			t,

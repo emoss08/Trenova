@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgx/v5/pgproto3"
 	"github.com/stretchr/testify/require"
 )
@@ -51,6 +52,10 @@ func NewConnection(t testing.TB, existingTables ...string) *postgres.Connection 
 		TenantColumns: []string{dbpool.OrganizationColumn, dbpool.BusinessUnitColumn},
 		Tenant: func(context.Context) ([]any, bool) {
 			return []any{stubOrganizationID, stubBusinessUnitID}, true
+		},
+		System: func(ctx context.Context) (string, bool) {
+			scope := dbscope.From(ctx)
+			return scope.Reason(), scope.Kind() == dbscope.KindSystem
 		},
 		SkipEnums: true,
 	})

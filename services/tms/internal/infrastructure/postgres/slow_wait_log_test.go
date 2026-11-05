@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -27,6 +29,9 @@ func slowWaitConnection(t *testing.T, after time.Duration) (*Connection, *observ
 		databaseConfig: &cfg.Database,
 		logger:         observability.NewContextLogger(zap.New(core)),
 		settings:       connectionSettings{component: "postgres"},
+		metrics: &metrics.Registry{
+			Database: platformmetrics.NewDatabase(nil, zap.NewNop(), false),
+		},
 	}, logs
 }
 
@@ -117,7 +122,12 @@ func TestSlowWaits_LogEachKindAtMostOncePerInterval(t *testing.T) {
 
 	interval := 50 * time.Millisecond
 	conn, logs = slowWaitConnection(t, time.Second)
-	l := &slowWaitLog{logger: conn.logger, pool: "tenant", kinds: newSlowWaitKinds(interval)}
+	l := &slowWaitLog{
+		logger:  conn.logger,
+		pool:    "tenant",
+		kinds:   newSlowWaitKinds(interval),
+		metrics: conn.metrics.Database,
+	}
 	wait := &keel.SlowWait{Kind: keel.WaitConnection}
 	l.report(context.Background(), wait)
 	l.report(context.Background(), wait)

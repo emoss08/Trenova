@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/jobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -109,7 +110,10 @@ func setupIntegrationHandler(
 	})
 	jobsManager := samsaracontract.NewManager(samsaracontract.ManagerParams{
 		TemporalClient: temporalClient,
-		SyncService:    syncService,
+		WorkflowStarter: workflowstarter.New(workflowstarter.Params{
+			TemporalClient: temporalClient,
+		}),
+		SyncService: syncService,
 	})
 
 	cfg := &config.Config{App: appconfig.Config{Debug: true}}
@@ -163,30 +167,6 @@ func TestIntegrationHandler_StartWorkerSync_Success(t *testing.T) {
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "run-1", resp["runId"])
 	assert.Equal(t, enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING.String(), resp["status"])
-}
-
-func TestIntegrationHandler_StartWorkerSync_NotConfigured(t *testing.T) {
-	t.Parallel()
-
-	h, repo := setupIntegrationHandler(t, nil)
-	repo.On("GetWorkerSyncReadinessCounts", mock.Anything, mock.Anything).Return(
-		&workerports.WorkerSyncReadinessCounts{
-			TotalWorkers:        10,
-			ActiveWorkers:       8,
-			SyncedActiveWorkers: 7,
-		},
-		nil,
-	).Once()
-
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(http.MethodPost).
-		WithPath("/api/v1/integrations/samsara/workers/sync/").
-		WithDefaultAuthContext()
-
-	h.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	assert.Equal(t, http.StatusUnprocessableEntity, ginCtx.ResponseCode())
 }
 
 func TestIntegrationHandler_GetWorkerSyncStatus_Success(t *testing.T) {

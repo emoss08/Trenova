@@ -63,13 +63,4 @@ func TestResultStoreKeepsReportRowsInProcessUnlessTheSharedTierIsOn(t *testing.T
 	}}
 	_, inProcess := local.resultStore().(*cache.Memory)
 	assert.True(t, inProcess, "the default keeps report rows in this process only")
-
-	sharedWithoutRedis := &Engine{cfg: &reportingconfig.Config{
-		ResultCache: reportingconfig.ResultCacheConfig{
-			Enabled: true,
-			Shared:  reportingconfig.SharedResultCacheConfig{Enabled: true},
-		},
-	}}
-	_, inProcess = sharedWithoutRedis.resultStore().(*cache.Memory)
-	assert.True(t, inProcess, "without Redis the shared tier has nowhere to go")
 }

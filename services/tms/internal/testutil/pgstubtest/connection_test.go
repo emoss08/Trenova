@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +38,26 @@ func TestExistsAnswersFromTheListedTables(t *testing.T) {
 			{Column: "code", Value: "TR001", CaseSensitive: true},
 		},
 	})
+	require.NoError(t, err)
+	assert.False(t, conflict)
+}
+
+func TestExistsAnswersUnderASystemScope(t *testing.T) {
+	t.Parallel()
+
+	checker := keelcheck.NewChecker(pgstubtest.NewConnection(t), trailerdb.TrailersSchema())
+
+	conflict, err := checker.CheckUniqueness(
+		dbscope.WithSystem(t.Context(), "check across the business unit"),
+		&validationframework.UniquenessRequest{
+			TableName:      "trailers",
+			OrganizationID: pulid.MustNew("org_"),
+			BusinessUnitID: pulid.MustNew("bu_"),
+			Fields: []validationframework.FieldCheck{
+				{Column: "code", Value: "TR001", CaseSensitive: true},
+			},
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, conflict)
 }

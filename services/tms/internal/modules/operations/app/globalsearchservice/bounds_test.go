@@ -105,7 +105,7 @@ func TestSearch_SearchesOnlyTheStartOfAVeryLongQuery(t *testing.T) {
 func TestSearch_RefusesAKindOfRecordItDoesNotFind(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{config: indexConfig(), views: searchViews()}
+	svc := &Service{balances: &fakeBalances{}, config: indexConfig(), views: searchViews()}
 
 	_, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
 		Query:       "pro",

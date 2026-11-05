@@ -6,16 +6,23 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -134,6 +141,10 @@ func activeUser() *tenant.User {
 	}
 }
 
+type discardedAuthEvents struct{}
+
+func (discardedAuthEvents) Record(context.Context, *iamports.AuthEventRecord) {}
+
 func newService(
 	t *testing.T,
 	users *stubUserRepo,
@@ -145,12 +156,30 @@ func newService(
 	cfg := &config.Config{}
 	cfg.Security.PasswordReset.BaseURL = "https://app.example.com"
 
+	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().RenderMessage(mock.Anything, mock.Anything).
+		Return(&documenttemplateports.RenderedMessage{
+			Subject: "Reset your password",
+			HTML:    "<p>reset</p>",
+			Text:    "reset",
+		}, nil).Maybe()
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{Name: "Acme"}, nil).Maybe()
+	mail := emailportsmock.NewMockEmailService(t)
+	mail.EXPECT().Send(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+
 	return &Service{
-		ur:       users,
-		tokens:   tokens,
-		sessions: sessions,
-		cfg:      &cfg.Security,
-		l:        zap.NewNop(),
+		ur:           users,
+		tokens:       tokens,
+		sessions:     sessions,
+		orgs:         orgs,
+		templates:    templates,
+		emailService: mail,
+		audit:        &mocks.NoopAuditService{},
+		authEvents:   discardedAuthEvents{},
+		cfg:          &cfg.Security,
+		l:            zap.NewNop(),
 	}
 }
 

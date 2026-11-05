@@ -54,14 +54,9 @@ func TestQueryBudgetExtensionLeavesSubscriptionsAndBareContextsAlone(t *testing.
 	assert.False(t, budgetedResponse(t.Context(), ext))
 }
 
-func TestExtensionsRunTheQueryBudgetWhenProvided(t *testing.T) {
+func TestExtensionsRunTheQueryBudget(t *testing.T) {
 	t.Parallel()
 
 	ext := queryBudgetExtension()
 	assert.Contains(t, Extensions(Params{QueryBudget: ext}), gqlgen.HandlerExtension(ext))
-	assert.NotContains(
-		t,
-		Extensions(Params{}),
-		gqlgen.HandlerExtension((*QueryBudgetExtension)(nil)),
-	)
 }

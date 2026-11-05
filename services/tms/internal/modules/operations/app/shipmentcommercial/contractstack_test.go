@@ -150,7 +150,7 @@ func newContractStack(t *testing.T) *contractStack {
 		}).
 		Maybe()
 
-	c.calculator = New(Params{
+	c.calculator = newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      c.stack.Engine,
 		AccessorialRepo: accessorials,

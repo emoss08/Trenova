@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -109,11 +111,25 @@ func (previewOrganizations) GetByID(
 	return &tenant.Organization{Timezone: "America/Chicago"}, nil
 }
 
+type discardedEvidence struct {
+	detentionports.DetentionEvidenceRepository
+}
+
+func (discardedEvidence) Append(
+	_ context.Context,
+	req *detentionports.AppendEvidenceRequest,
+) (*detentionevidence.DetentionEvidence, error) {
+	return req.Entry, nil
+}
+
 func previewWiring(repo *previewOccurrenceRepo) *wiring {
 	return &wiring{
 		Logger:         zap.NewNop(),
 		OccurrenceRepo: repo,
 		Organizations:  previewOrganizations{},
+		EvidenceRepo:   discardedEvidence{},
+		AuditService:   &mocks.NoopAuditService{},
+		Realtime:       &mocks.NoopRealtimeService{},
 		Now:            func() int64 { return 1_767_230_000 },
 	}
 }

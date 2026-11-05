@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -244,7 +245,7 @@ func setupTest(t *testing.T) *testDeps {
 		repo:       repo,
 		storage:    &noopStorageClient{},
 		storageCfg: &storageconfig.Config{PresignedURLExpiry: 15 * time.Minute},
-		v:          NewValidator(ValidatorParams{}),
+		v:          NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
 	}
 	return &testDeps{repo: repo, svc: svc}
 }
@@ -576,7 +577,7 @@ func TestNew(t *testing.T) {
 		Storage:        &noopStorageClient{},
 		SecurityConfig: &securityconfig.Config{},
 		StorageConfig:  &storageconfig.Config{},
-		Validator:      NewValidator(ValidatorParams{}),
+		Validator:      NewValidator(ValidatorParams{DB: pgstubtest.NewConnection(t)}),
 	})
 
 	require.NotNil(t, svc)
