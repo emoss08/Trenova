@@ -71,6 +71,7 @@ type PortalSite struct {
 	Credentials      map[string]any `json:"-"                keel:"credentials,jsonb"`
 	BrowserProfileID string         `json:"browserProfileId" keel:"browser_profile_id"`
 	AllowActions     bool           `json:"allowActions"     keel:"allow_actions"`
+	ViewOnlyAccount  bool           `json:"viewOnlyAccount"  keel:"view_only_account"`
 	Enabled          bool           `json:"enabled"          keel:"enabled"`
 	CreatedByID      pulid.ID       `json:"createdById"      keel:"created_by_id,nullzero"`
 	Version          int64          `json:"version"          keel:"version,version"`
@@ -83,6 +84,10 @@ func (s *PortalSite) HasSignIn() bool {
 		{Key: PortalCredentialUsername, Required: true},
 		{Key: PortalCredentialPassword, Required: true},
 	})
+}
+
+func (s *PortalSite) ReadNeedsAPerson() bool {
+	return (s.HasSignIn() || s.BrowserProfileID != "") && !s.ViewOnlyAccount
 }
 
 func (s *PortalSite) Normalize() {
