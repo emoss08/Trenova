@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
@@ -136,9 +137,14 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 
 	edis := ediServices()
 	service := New(Params{
-		Logger: zap.NewNop(),
+		Metrics: metricstest.Disabled(),
+		Logger:  zap.NewNop(),
 		Inbound: ediinboundservice.New(
-			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+			ediinboundservice.Params{
+				Logger:          zap.NewNop(),
+				Metrics:         metricstest.Disabled(),
+				InboundFileRepo: inboundFileRepo,
+			},
 		),
 		ProfileRepo:     profileRepo,
 		Delivery:        edis.Delivery,
@@ -224,6 +230,7 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -306,9 +313,14 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		Once()
 
 	service := New(Params{
-		Logger: zap.NewNop(),
+		Metrics: metricstest.Disabled(),
+		Logger:  zap.NewNop(),
 		Inbound: ediinboundservice.New(
-			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+			ediinboundservice.Params{
+				Logger:          zap.NewNop(),
+				Metrics:         metricstest.Disabled(),
+				InboundFileRepo: inboundFileRepo,
+			},
 		),
 		ProfileRepo:     profileRepo,
 		Delivery:        ediServices().Delivery,
@@ -347,6 +359,7 @@ func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -366,6 +379,7 @@ func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
 		Secrets:  ediServices().Secrets,
@@ -392,6 +406,7 @@ func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
 		Secrets:  ediServices().Secrets,
@@ -435,6 +450,7 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -498,6 +514,7 @@ func TestReceiveAS2MessageAnswersAFailedDecryptionWithOneFixedReceipt(t *testing
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -580,6 +597,7 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 				Once()
 
 			service := New(Params{
+				Metrics:     metricstest.Disabled(),
 				Logger:      zap.NewNop(),
 				ProfileRepo: profileRepo,
 				Delivery:    ediServices().Delivery,

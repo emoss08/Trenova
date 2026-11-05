@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -94,6 +95,7 @@ func newDispatchFixture(t *testing.T) *dispatchFixture {
 		Users:       f.users,
 		Preferences: f.prefs,
 		Email:       f.mail,
+		AppConfig:   &appconfig.Config{},
 	})
 	f.svc.now = func() time.Time { return f.now }
 	f.svc.webBaseURL = "https://tms.example.com"

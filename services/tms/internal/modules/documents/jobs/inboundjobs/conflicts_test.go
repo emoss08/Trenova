@@ -71,9 +71,3 @@ func TestProcessInboundMessageWorkflow_AFailedConflictCheckLeavesTheMessageSettl
 	require.NoError(t, env.GetWorkflowResult(&result))
 	assert.Equal(t, inboundmessage.StatusInReview, result.Status)
 }
-
-func TestCheckInboundConflictsActivity_IsANoOpWithoutTheService(t *testing.T) {
-	t.Parallel()
-
-	require.NoError(t, (&Activities{}).CheckInboundConflictsActivity(t.Context(), processPayload()))
-}

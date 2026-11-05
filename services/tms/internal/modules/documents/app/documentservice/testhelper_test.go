@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -14,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"go.temporal.io/sdk/client"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"go.uber.org/zap"
 )
 
@@ -38,7 +37,6 @@ func NewTestService(
 	auditService auditports.AuditService,
 	cfg *storageconfig.Config,
 	thumbnailGenerator *thumbnailservice.Generator,
-	temporalClient client.Client,
 ) *Service {
 	return &Service{
 		l:                    logger.Named("service.document"),
@@ -67,8 +65,7 @@ func NewTestService(
 			ImagingConfig: &imagingconfig.Config{},
 			Logger:        logger,
 		}),
-		workflowStarter: workflowstarter.New(workflowstarter.Params{
-			TemporalClient: temporalClient,
-		}),
+		workflowStarter: &mocks.NoopWorkflowStarter{},
+		realtime:        &mocks.NoopRealtimeService{},
 	}
 }

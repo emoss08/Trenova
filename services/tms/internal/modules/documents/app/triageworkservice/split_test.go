@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +16,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSplitFilesEachRangeInline(t *testing.T) {
+func finishSplitWorkflow(
+	t *testing.T,
+	f *fixture,
+	payload *triageworkcontract.SplitFilingPayload,
+) {
+	t.Helper()
+
+	record := &triageworkcontract.RecordSplitPayload{SplitFilingPayload: *payload}
+	for _, rng := range payload.Ranges {
+		session, err := f.uploads.Complete(
+			t.Context(),
+			&documentuploadports.CompletionRequest{SessionID: rng.SessionID},
+		)
+		require.NoError(t, err)
+		record.Documents = append(record.Documents, triageworkcontract.SplitDocument{
+			SplitRange: rng,
+			DocumentID: *session.DocumentID,
+		})
+	}
+
+	require.NoError(t, f.service.RecordSplit(t.Context(), record))
+}
+
+func TestSplitStagesEachRangeAndTheWorkflowFilesThem(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
@@ -41,6 +65,9 @@ func TestSplitFilesEachRangeInline(t *testing.T) {
 		assert.Len(t, f.uploads.parts[id], 2)
 	}
 	assert.ElementsMatch(t, []string{"paperwork (pages 1-2).pdf", "paperwork (pages 3-4).pdf"}, names)
+
+	require.Len(t, f.workflows.started, 1)
+	finishSplitWorkflow(t, f, f.workflows.started[0])
 
 	stored := f.storedAttachment()
 	assert.Equal(t, "2 documents (Proof of Delivery, Bill of Lading)", stored.FiledAs)

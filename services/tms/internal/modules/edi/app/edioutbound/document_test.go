@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
@@ -59,6 +60,7 @@ func TestResolvePayloadInvoiceIDResolves210Payload(t *testing.T) {
 		invoiceRepo: invoiceRepo,
 		alert:       &edialert.Service{},
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:     metricstest.Disabled(),
 			Logger:      zap.NewNop(),
 			InvoiceRepo: invoiceRepo,
 			Alert:       &edialert.Service{},
@@ -113,6 +115,7 @@ func TestResolvePayloadShipmentEventIDResolves214Payload(t *testing.T) {
 		shipmentSvc:       shipmentSvc,
 		alert:             &edialert.Service{},
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:   metricstest.Disabled(),
 			Logger:    zap.NewNop(),
 			Alert:     &edialert.Service{},
 			Recipient: editenderrecipient.New(editenderrecipient.Params{}),
@@ -141,6 +144,7 @@ func TestResolvePayloadRejectsSourceTransactionMismatch(t *testing.T) {
 			Logger: zap.NewNop(),
 		}),
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:   metricstest.Disabled(),
 			Logger:    zap.NewNop(),
 			Alert:     &edialert.Service{},
 			Recipient: editenderrecipient.New(editenderrecipient.Params{}),
@@ -183,6 +187,7 @@ func TestResolvePayloadRejectsShipmentEventMismatch(t *testing.T) {
 		shipmentEventRepo: eventRepo,
 		alert:             &edialert.Service{},
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:   metricstest.Disabled(),
 			Logger:    zap.NewNop(),
 			Alert:     &edialert.Service{},
 			Recipient: editenderrecipient.New(editenderrecipient.Params{}),

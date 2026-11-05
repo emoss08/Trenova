@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -446,7 +445,6 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 			&mocks.NoopAuditService{},
 			storageCfg,
 			thumbnailservice.NewGenerator(nil),
-			nil,
 		),
 		cacheRepo:   cacheRepo,
 		sessionRepo: sessionRepo,
@@ -1456,7 +1454,6 @@ func TestNew(t *testing.T) {
 		&mocks.NoopAuditService{},
 		storageCfg,
 		thumbnailservice.NewGenerator(nil),
-		nil,
 	)
 
 	require.NotNil(t, svc)
@@ -1487,7 +1484,7 @@ func TestNewConstructor(t *testing.T) {
 		AuditService:       &mocks.NoopAuditService{},
 		StorageConfig:      storageCfg,
 		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
-		WorkflowStarter:    workflowstarter.New(workflowstarter.Params{}),
+		WorkflowStarter:    &mocks.NoopWorkflowStarter{},
 	})
 
 	require.NotNil(t, svc)

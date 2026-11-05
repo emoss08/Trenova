@@ -19,6 +19,20 @@ import (
 
 const TestNow = int64(1_784_131_200)
 
+type NoopBriefing struct{}
+
+func (NoopBriefing) InvalidateBriefing(context.Context, pagination.TenantInfo) {}
+
+type NoSenderHints struct{}
+
+func (NoSenderHints) HintsFor(
+	context.Context,
+	pagination.TenantInfo,
+	string,
+) ([]*triage.SenderHint, error) {
+	return nil, nil
+}
+
 type FakeDB struct {
 	Txs int
 }

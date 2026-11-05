@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,7 @@ func scheduleCore(
 		OrganizationRepo: reportingtest.Organizations{},
 		Engine:           reportingtest.NewEngine(reportingtest.ReportCatalog(t), nil),
 		ReportingConfig:  &reportingconfig.Config{},
+		Metrics:          metricstest.Disabled(),
 	})
 	require.NoError(t, err)
 	return core

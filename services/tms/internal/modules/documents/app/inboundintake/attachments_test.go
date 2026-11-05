@@ -148,19 +148,6 @@ func TestStageAttachments_KeepsTheSession(t *testing.T) {
 	assert.Equal(t, 1, up.parts)
 }
 
-func TestStageAttachments_IsASilentNoOpWithoutTheUploadService(t *testing.T) {
-	// An installation without the document pipeline still receives mail. The
-	// attachment rows record what arrived and say it was never read.
-	svc := attachmentService(&attachmentRepo{}, nil, nil)
-
-	message := messageWithAttachment("rate-con.pdf")
-	svc.intake().stageAttachments(t.Context(), message, &providerMessage{
-		Attachments: []providerAttachment{{FileName: "rate-con.pdf", Content: []byte("%PDF-1.7")}},
-	})
-
-	assert.True(t, message.Attachments[0].UploadSessionID.IsNil())
-}
-
 func TestPendingAttachments_SkipsWhatIsDoneAndWhatNeverStarted(t *testing.T) {
 	messageID := pulid.MustNew("imsg_")
 	done := &inboundmessage.InboundAttachment{

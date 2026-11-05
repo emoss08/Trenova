@@ -48,6 +48,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"go.uber.org/zap"
 )
 
@@ -124,6 +126,15 @@ type Services struct {
 }
 
 func New(d Deps) *Services {
+	if d.Logger == nil {
+		d.Logger = zap.NewNop()
+	}
+	if d.Metrics == nil {
+		d.Metrics = metricstest.Disabled()
+	}
+	if d.Notifications == nil {
+		d.Notifications = notificationtest.Discarding()
+	}
 	s := &Services{}
 	s.Alerts = edialert.New(edialert.Params{
 		Logger:        d.Logger,

@@ -89,12 +89,7 @@ func (f *fakeIndexer) Reindex(
 }
 
 func newTestService(repo *fakeProjectionRepo, indexer *fakeIndexer) *Service {
-	params := Params{Logger: zap.NewNop(), Repo: repo}
-	if indexer != nil {
-		params.Indexer = indexer
-	}
-
-	return New(params).(*Service)
+	return New(Params{Logger: zap.NewNop(), Repo: repo, Indexer: indexer}).(*Service)
 }
 
 func testDocument() *document.Document {
@@ -157,14 +152,6 @@ func TestAFailedProjectionWriteIsNotIndexed(t *testing.T) {
 
 	require.Error(t, svc.Upsert(t.Context(), testDocument(), ""))
 	assert.Empty(t, indexer.stale)
-}
-
-func TestWithoutAnIndexerTheProjectionStillWorks(t *testing.T) {
-	t.Parallel()
-
-	repo := &fakeProjectionRepo{}
-	require.NoError(t, newTestService(repo, nil).Upsert(t.Context(), testDocument(), ""))
-	assert.Len(t, repo.upserted, 1)
 }
 
 func TestUpsert_LeavesConversationFilesOutOfTheProjection(t *testing.T) {

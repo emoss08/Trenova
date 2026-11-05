@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -85,11 +87,17 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		mappingProfileRepo: edipartnerportsmock.NewMockEDIMappingProfileRepository(t),
 		controlNumberRepo:  edipartnerportsmock.NewMockEDIControlNumberRepository(t),
 	}
+	customFields := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	customFields.EXPECT().
+		GetActiveByResourceType(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	runtime := edilading.NewRuntime(edilading.RuntimeParams{
-		Logger:   zap.NewNop(),
-		Projects: fixture.projects,
-		Mappings: fixture.mappingProfileRepo,
-		Orgs:     fixture.orgs,
+		Logger:       zap.NewNop(),
+		Projects:     fixture.projects,
+		Mappings:     fixture.mappingProfileRepo,
+		Orgs:         fixture.orgs,
+		CustomFields: customFields,
 	})
 	flows := edilading.NewFlows(edilading.FlowsParams{
 		Logger:  zap.NewNop(),
@@ -120,6 +128,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		inboundApply:        edis.InboundApply,
 		outbound:            edis.Outbound,
 		alerts:              edis.Alerts,
+		watchtower:          &mocks.NoopWatchtowerProjector{},
 		lading:              runtime,
 		flows:               flows,
 	}

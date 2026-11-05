@@ -4,14 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
@@ -20,11 +19,7 @@ func TestNotifyOperationalFailureSendsOneNotificationAndThrottlesDuplicates(t *t
 
 	repo := notificationportsmock.NewMockNotificationRepository(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
-	notifications := notificationservice.New(notificationservice.Params{
-		Logger:   zap.NewNop(),
-		Repo:     repo,
-		Realtime: realtime,
-	})
+	notifications := notificationtest.New(repo, realtime)
 	service := &Service{l: zap.NewNop(), notifications: notifications}
 
 	orgID := pulid.MustNew("org_")
@@ -85,15 +80,4 @@ func TestNotifyOperationalFailureSendsOneNotificationAndThrottlesDuplicates(t *t
 	service.NotifyOperationalFailure(t.Context(), alert)
 
 	repo.AssertNumberOfCalls(t, "Create", 1)
-}
-
-func TestNotifyOperationalFailureIsNoopWithoutNotificationService(t *testing.T) {
-	t.Parallel()
-
-	service := &Service{l: zap.NewNop()}
-	require.NotPanics(t, func() {
-		service.NotifyOperationalFailure(t.Context(), &EDIOperationalAlert{
-			EventType: EDIAlertEventInboundFileQuarantined,
-		})
-	})
 }

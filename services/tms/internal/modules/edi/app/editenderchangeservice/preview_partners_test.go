@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,7 +71,8 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 		tenderRecipientRepo: recipients,
 		tenderChangeRepo:    changes,
 		delivery: edidelivery.New(edidelivery.Params{
-			Logger: zap.NewNop(),
+			Metrics: metricstest.Disabled(),
+			Logger:  zap.NewNop(),
 			Alert: edialert.New(edialert.Params{
 				Logger: zap.NewNop(),
 			}),
@@ -86,7 +88,8 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
-				Logger: zap.NewNop(),
+				Metrics: metricstest.Disabled(),
+				Logger:  zap.NewNop(),
 				Alert: edialert.New(edialert.Params{
 					Logger: zap.NewNop(),
 				}),
@@ -175,7 +178,8 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 		l:                zap.NewNop(),
 		shipmentLinkRepo: links,
 		delivery: edidelivery.New(edidelivery.Params{
-			Logger: zap.NewNop(),
+			Metrics: metricstest.Disabled(),
+			Logger:  zap.NewNop(),
 			Alert: edialert.New(edialert.Params{
 				Logger: zap.NewNop(),
 			}),
@@ -188,7 +192,8 @@ func TestPreviewCancelNotices_NamesTheOtherSideOfEachActiveLink(t *testing.T) {
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
-				Logger: zap.NewNop(),
+				Metrics: metricstest.Disabled(),
+				Logger:  zap.NewNop(),
 				Alert: edialert.New(edialert.Params{
 					Logger: zap.NewNop(),
 				}),

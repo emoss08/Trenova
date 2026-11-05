@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -67,7 +68,13 @@ func (silentRealtime) PublishResourceInvalidation(
 }
 
 func permittedService(repo *recordingNotificationRepo, roles *permittedRoles) *Service {
-	return New(Params{Logger: zap.NewNop(), Repo: repo, Realtime: silentRealtime{}, Roles: roles})
+	return New(Params{
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Realtime:  silentRealtime{},
+		Roles:     roles,
+		AppConfig: &appconfig.Config{},
+	})
 }
 
 func permittedRequest(tenant pagination.TenantInfo) NotifyPermittedRequest {

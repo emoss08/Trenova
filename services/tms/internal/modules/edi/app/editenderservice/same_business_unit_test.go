@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
@@ -167,6 +168,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
+				Metrics:     metricstest.Disabled(),
 				Logger:      zap.NewNop(),
 				PartnerRepo: partnerRepo,
 				ProfileRepo: profileRepo,

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -42,6 +43,7 @@ func TestShipmentStatusCapabilityEnabledDefaultsTrueForDirectExternalPartner(t *
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
+				Metrics:   metricstest.Disabled(),
 				Logger:    zap.NewNop(),
 				Alert:     &edialert.Service{},
 				Recipient: editenderrecipient.New(editenderrecipient.Params{}),
@@ -83,6 +85,7 @@ func TestShipmentStatusCapabilityEnabledDefaultsTrueForMissingConnection(t *test
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
+				Metrics:   metricstest.Disabled(),
 				Logger:    zap.NewNop(),
 				Alert:     &edialert.Service{},
 				Recipient: editenderrecipient.New(editenderrecipient.Params{}),
@@ -205,6 +208,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 					PartnerRepo: partnerRepo,
 					Alert:       &edialert.Service{},
 					Delivery: edidelivery.New(edidelivery.Params{
+						Metrics:     metricstest.Disabled(),
 						Logger:      zap.NewNop(),
 						PartnerRepo: partnerRepo,
 						Alert:       &edialert.Service{},

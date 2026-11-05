@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -18,7 +19,10 @@ func kinds(t *testing.T) *reportaccess.Resolver {
 	t.Helper()
 	catalog, err := reportengine.NewCatalog()
 	require.NoError(t, err)
-	resolver, err := reportaccess.New(reportaccess.Params{Catalog: catalog})
+	resolver, err := reportaccess.New(reportaccess.Params{
+		Catalog:  catalog,
+		Registry: permissioncatalog.NewRegistry(),
+	})
 	require.NoError(t, err)
 	return resolver
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendershipment"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -16,8 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -247,6 +251,11 @@ func newTransferChangeApplyFixture(
 		shipmentRepo:       shipmentportsmock.NewMockShipmentRepository(t),
 		eventRepo:          shipmenteventportsmock.NewMockShipmentEventRepository(t),
 	}
+	orderDerivation := orderportsmock.NewMockOrderDerivationService(t)
+	orderDerivation.EXPECT().
+		RecomputeForShipment(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
 	fixture.service = &Service{
 		db:                 dbtest.NopConnection{},
 		transferChangeRepo: fixture.transferChangeRepo,
@@ -254,13 +263,37 @@ func newTransferChangeApplyFixture(
 		shipmentRepo:       fixture.shipmentRepo,
 		shipmentEventRepo:  fixture.eventRepo,
 		coordinator:        shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),
-		shipments:          &editendershipment.Service{},
+		shipments:          quietShipments(t),
+		orderDerivation:    orderDerivation,
 	}
 	fixture.service.lifecycleApplier = internaledilifecycle.New(internaledilifecycle.Params{
 		ShipmentRepo: fixture.shipmentRepo,
 		Coordinator:  fixture.service.coordinator,
 	})
 	return fixture
+}
+
+func quietShipments(t *testing.T) *editendershipment.Service {
+	t.Helper()
+	users := tenantportsmock.NewMockUserRepository(t)
+	users.EXPECT().
+		GetSystemUser(mock.Anything, mock.Anything).
+		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		Maybe()
+	comments := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
+	comments.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Maybe()
+
+	return editendershipment.New(editendershipment.Params{
+		ShipmentCommentRepo: comments,
+		UserRepo:            users,
+	})
 }
 
 func (f *transferChangeApplyFixture) pendingChange(

@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -136,6 +137,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		inboundApply:        edis.InboundApply,
 		outbound:            edis.Outbound,
 		alerts:              edis.Alerts,
+		watchtower:          &mocks.NoopWatchtowerProjector{},
 	}
 	return fixture
 }
@@ -654,6 +656,10 @@ func TestRouteFreightInvoice_RecipientMissMatchesAcceptedOfferByBOL(t *testing.T
 	t.Parallel()
 
 	fixture := newTenderedCarrierFixture(t)
+	fixture.withInvoiceMatcher(t).EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(&carrierports.AutoMatchInboundInvoiceResult{}, nil).
+		Once()
 	offer := fixture.acceptedOffer()
 	fixture.tenderRepo.acceptedOffer = offer
 	fixture.expectRecipientMiss()
@@ -718,6 +724,10 @@ func TestRouteFreightInvoice_PerMileOfferLeavesExpectedAmountNull(t *testing.T) 
 	t.Parallel()
 
 	fixture := newTenderedCarrierFixture(t)
+	fixture.withInvoiceMatcher(t).EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(&carrierports.AutoMatchInboundInvoiceResult{}, nil).
+		Once()
 	offer := fixture.acceptedOffer()
 	offer.RateMethod = shipmentvocab.CarrierRateMethodPerMile
 	fixture.tenderRepo.acceptedOffer = offer

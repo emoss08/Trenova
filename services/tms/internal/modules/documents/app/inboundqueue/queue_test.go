@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -619,8 +620,13 @@ func TestEventSink_WakesTheMessagesWaitingOnTheEvent(t *testing.T) {
 		db:           fakes.DB,
 		queueRepo:    fakes.Queue,
 		activityRepo: fakes.Activities,
-		notifier:     newNotifier(notifierDeps{logger: zap.NewNop(), realtime: realtime}),
-		now:          func() int64 { return inboundqueuetest.TestNow },
+		notifier: newNotifier(notifierDeps{
+			logger:     zap.NewNop(),
+			realtime:   realtime,
+			watchtower: &mocks.NoopWatchtowerProjector{},
+			briefing:   inboundqueuetest.NoopBriefing{},
+		}),
+		now: func() int64 { return inboundqueuetest.TestNow },
 	}
 
 	sink.DocumentAttached(t.Context(), inboundqueuetest.QueueTenant, shipmentID, newID("dt_"))

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -149,6 +150,8 @@ func tileTestService(
 		FieldAccess:      reportingtest.FieldGroups{},
 		ReferenceViews:   refview.NewPort(refview.New(registry), reader),
 		ReportingConfig:  &reportingconfig.Config{PreviewRowLimit: 40},
+		Registry:         registry,
+		Metrics:          metricstest.Disabled(),
 	})
 	require.NoError(t, err)
 	return &Service{

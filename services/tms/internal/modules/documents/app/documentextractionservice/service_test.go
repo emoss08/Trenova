@@ -1,6 +1,7 @@
 package documentextractionservice_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -22,10 +23,19 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type recordingPaperwork struct {
+	requested []pulid.ID
+}
+
+func (p *recordingPaperwork) RequestRead(_ context.Context, doc *document.Document, _ pulid.ID) {
+	p.requested = append(p.requested, doc.ID)
+}
 
 func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	t.Parallel()
@@ -116,6 +126,8 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		).
 		Return(nil, nil)
 
+	paperwork := &recordingPaperwork{}
+
 	service := documentextractionservice.New(documentextractionservice.Params{
 		Logger:                   zap.NewNop(),
 		DocumentConversionConfig: &cfg.DocumentConversion,
@@ -129,10 +141,12 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		),
 		SearchProjection: searchProjection,
 		WorkflowStarter:  workflowStarter,
+		Paperwork:        paperwork,
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)
 	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{documentID}, paperwork.requested)
 }
 
 func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {

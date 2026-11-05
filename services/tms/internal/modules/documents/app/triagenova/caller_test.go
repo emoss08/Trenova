@@ -57,13 +57,10 @@ func TestRun_FilesTheInboxsTasksUnderInboundMail(t *testing.T) {
 func TestRun_SaysWhenNovaCannotDraftOrCannotBeReached(t *testing.T) {
 	t.Parallel()
 
-	_, err := triagenova.New(triagenova.Params{}).Run(t.Context(), &llmports.NovaTask{}, nil)
-	require.ErrorIs(t, err, triagenova.ErrUnavailable)
-
 	unconfigured := triagenova.New(
 		triagenova.Params{Nova: &nova{err: llmports.ErrNoProviderConfigured}},
 	)
-	_, err = unconfigured.Run(t.Context(), &llmports.NovaTask{}, nil)
+	_, err := unconfigured.Run(t.Context(), &llmports.NovaTask{}, nil)
 	require.ErrorIs(t, err, triagenova.ErrUnavailable)
 
 	down := triagenova.New(triagenova.Params{Nova: &nova{
