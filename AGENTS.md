@@ -53,6 +53,7 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
 |---|---|
 | `services/tms/` | the TMS (Go): API, worker and CLI; hexagonal modules in `internal/modules/<module>/` |
 | `services/imaging/`, `services/crates/`, `services/proto/` | Rust imaging worker, shared crates, gRPC contracts (buf) |
+| `services/operator/` | the Trenova Cloud operator (Go, its own module outside `go.work`): runs one instance's Helm release from the control plane's spec |
 | `shared/` | shared Go packages (`stringutils`, `sliceutils`, …); its own module in `go.work` |
 | `client/` | pnpm + Turborepo: `apps/web` (TMS), `apps/dash` (driver portal), `packages/{shared,graphql,config}` |
 | `desktop/capture/` | Windows scanning and printing companion (Rust) |

@@ -1,0 +1,58 @@
+# The Trenova Cloud operator (services/operator). Install it once per instance
+# cluster, after the CloudNativePG operator, with the instance's enrolment
+# bundle in a Secret (docs/engineering/operator.md):
+#
+#   kubectl create namespace trenova-system
+#   kubectl -n trenova-system create secret generic trenova-operator-enrolment \
+#     --from-file=enrolment.json=enrolment-<instance id>.json
+#   helm install trenova-operator oci://ghcr.io/emoss08/charts/trenova-operator \
+#     -n trenova-system --version <version>
+
+image:
+  repository: ghcr.io/emoss08/trenova/operator
+  # Defaults to the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# The Secret holding the enrolment bundle the admin issued, as enrolment.json.
+# The operator reads it on first start and when staff issue a new one, and
+# keeps its own key and certificate in identitySecret, which it creates.
+enrolmentSecret: trenova-operator-enrolment
+identitySecret: trenova-operator-identity
+
+# Where the Trenova release runs, and its name.
+target:
+  namespace: trenova
+  release: trenova
+  # Create the namespace with this chart. Turn off when something else owns it.
+  createNamespace: true
+
+# The Trenova chart, pulled at the version the spec pins.
+chart:
+  ref: oci://ghcr.io/emoss08/charts/trenova
+  # A registry served over plain HTTP; only for a registry inside the cluster
+  # (the CI install).
+  plainHTTP: false
+
+# Values every release of the Trenova chart gets on this cluster, under what
+# the spec decides: the hostname, the size, the lifecycle, the components and
+# the version. The ingress, storage classes and image overrides belong here.
+trenovaValues:
+  clamav:
+    enabled: true
+  ingress:
+    enabled: true
+    className: traefik
+
+pollInterval: 15s
+# At most 1m: the control plane expects a report every minute.
+reportInterval: 1m
+logLevel: info
+
+resources:
+  requests: { cpu: 50m, memory: 96Mi }
+  limits: { memory: 512Mi }
+nodeSelector: {}
+tolerations: []
+affinity: {}

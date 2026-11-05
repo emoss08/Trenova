@@ -1,0 +1,518 @@
+openapi: 3.1.0
+info:
+  title: Trenova Control Plane instance API
+  version: 0.1.0
+  description: |
+    The API each instance's operator calls, served on the instance listener. Every request must
+    present a client certificate from the instance CA over TLS 1.3; the certificate names its
+    instance (a `urn:trenova:instance:{id}` URI SAN), and that is the only identity this API
+    knows. There are no other credentials and nothing here is reachable without one.
+
+    **Enrolment.** Staff issue an instance's first certificate and key once, as an enrolment
+    bundle, when its infrastructure is ready. The operator's first call should be
+    `renewCertificate` with a key it generated itself: the first request made with a new
+    certificate retires the instance's older ones, so the enrolment key stops working as soon as
+    the operator uses its own. Renew again when a third of the certificate's life is left.
+
+    **Converging.** Poll `getSpec` (with `If-None-Match`) for the desired spec, converge to it, and
+    report with `reportStatus`. An instance becomes running once it reports `ready` with the
+    desired revision applied.
+
+    **Errors** are RFC 9457 problem details with a `code`. `401 unauthenticated` means the
+    certificate is unknown, revoked or names another instance; do not retry with it.
+servers:
+  - url: /
+paths:
+  /v1/spec:
+    get:
+      operationId: getSpec
+      summary: The desired spec
+      parameters:
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+          description: The `ETag` of the spec the operator holds.
+      responses:
+        "200":
+          description: The desired spec and its revision.
+          headers:
+            ETag:
+              description: The revision, quoted; send it back as `If-None-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DesiredSpec"
+        "304":
+          description: The operator already holds the desired revision.
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/status:
+    put:
+      operationId: reportStatus
+      summary: Report the instance's status
+      description: The operator's latest view of the instance. Send it after converging and at least every minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusReport"
+      responses:
+        "204":
+          description: Recorded.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/usage:
+    post:
+      operationId: reportUsage
+      summary: Report usage, and learn what may continue
+      description: |
+        Hourly meter readings: for a counted meter, what was counted in the hour; for a level
+        (document storage), the level at the hour's end. A reading for an hour already reported
+        replaces it, so resend from the source of truth. Report at least every 15 minutes: a usage
+        window closes and is billed 30 minutes after it ends, and readings that arrive later are
+        kept but not billed.
+
+        The answer is the open usage window, whether the subscription bills overage, and every
+        meter's quantity in the window so far against its allowance. Stop a metered action while
+        its meter is `stopped`. Without an open window (not paid yet, or the subscription has
+        ended), every metered action stops.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsageReport"
+      responses:
+        "200":
+          description: Recorded; what may continue.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageAck"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/certificate:
+    post:
+      operationId: renewCertificate
+      summary: Renew the client certificate
+      description: |
+        Signs a certificate for a key the operator generated (ECDSA P-256 or P-384, or Ed25519),
+        valid for 30 days. The key must differ from the current certificate's. Keep using the
+        current certificate until the new one is installed: the first request made with the new
+        one retires the old.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenewCertificateRequest"
+      responses:
+        "200":
+          description: The new certificate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssuedCertificate"
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+components:
+  responses:
+    Invalid:
+      description: The request is invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthenticated:
+      description: The client certificate is unknown, revoked, or its instance is not served.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: Too many requests from this instance.
+      headers:
+        Retry-After:
+          description: Seconds to wait.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          $ref: "#/components/schemas/ProblemCode"
+        requestId:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+    ProblemCode:
+      type: string
+      enum: [validation_failed, invalid_request, unauthenticated, rate_limited, not_found, internal, unavailable]
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+
+    DesiredSpec:
+      type: object
+      required: [revision, spec]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+        spec:
+          $ref: "#/components/schemas/InstanceSpec"
+
+    InstanceSpec:
+      type: object
+      description: |
+        What the instance should be. `schemaVersion` changes when a field's meaning changes; an
+        operator refuses a version it does not know.
+      required: [schemaVersion, lifecycle, instanceId, organizationId, name, hostname, release, plan, placement,
+                 addons, features, components, aiProvider, allowances]
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [1]
+        lifecycle:
+          type: string
+          enum: [active, suspended, decommissioned]
+          description: |
+            `active` runs the instance. `suspended` stops its workloads and keeps every byte of its
+            data: its subscription lapsed and it resumes when paid again. `decommissioned` means take
+            the final backup and report it as `finalBackup` on the status report; the instance is
+            torn down after.
+        instanceId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hostname:
+          type: string
+          description: Where the instance is served, at the root path.
+        release:
+          $ref: "#/components/schemas/SpecRelease"
+        plan:
+          $ref: "#/components/schemas/SpecPlan"
+        placement:
+          $ref: "#/components/schemas/SpecPlacement"
+        addons:
+          type: array
+          description: The add-ons the instance has, by key.
+          items:
+            type: string
+        features:
+          type: array
+          description: The TMS catalog features to turn on.
+          items:
+            type: string
+        components:
+          type: array
+          description: Extra workloads to run, such as `docling` for Document Intelligence.
+          items:
+            type: string
+        aiProvider:
+          type: string
+          enum: [trenova, customer]
+          description: Whose AI keys the instance uses.
+        allowances:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpecAllowance"
+
+    SpecRelease:
+      type: object
+      required: [channel, version]
+      properties:
+        channel:
+          type: string
+          enum: [stable]
+        version:
+          type: string
+          maxLength: 64
+          description: |
+            The Trenova release to run, without a leading "v" (0.11.0). The control plane pins it
+            for the channel; the operator installs chart oci://ghcr.io/emoss08/charts/trenova at
+            exactly this version.
+
+    SpecPlan:
+      type: object
+      required: [key, name, vcpu, memoryGiB, diskGiB, backup, backupRetentionDays, support]
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        vcpu:
+          type: integer
+          format: int64
+        memoryGiB:
+          type: integer
+          format: int64
+        diskGiB:
+          type: integer
+          format: int64
+        backup:
+          type: string
+          enum: [nightly, point_in_time]
+        backupRetentionDays:
+          type: integer
+          format: int64
+        uptimeSlaBp:
+          type: integer
+          format: int64
+          description: Uptime promised, in basis points (9950 is 99.5%). Absent when there is no SLA.
+        support:
+          type: string
+          enum: [email, business_hours, priority]
+
+    SpecPlacement:
+      type: object
+      required: [provider, region, location, storageLocation, country, runtime]
+      properties:
+        provider:
+          type: string
+        region:
+          type: string
+        location:
+          type: string
+          description: The provider's code for where the instance runs.
+        storageLocation:
+          type: string
+          description: The provider's code for where documents and backups are kept.
+        country:
+          type: string
+        runtime:
+          type: string
+          enum: [single_node]
+
+    SpecAllowance:
+      type: object
+      required: [meter, unit, quantity, hardCap]
+      properties:
+        meter:
+          type: string
+        appMeter:
+          type: string
+          description: The TMS meter this allowance limits; absent for an instance counter.
+        unit:
+          type: string
+          enum: [count, cents, bytes]
+        quantity:
+          type: integer
+          format: int64
+        hardCap:
+          type: boolean
+          description: Whether the metered action stops at the allowance.
+
+    StatusReport:
+      type: object
+      required: [ready, components]
+      properties:
+        appliedRevision:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The spec revision the instance runs; absent before the first converge.
+        version:
+          type: string
+          maxLength: 64
+          description: The Trenova release running.
+        ready:
+          type: boolean
+          description: Whether every component is ready and the post-deploy checks pass.
+        components:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/ComponentStatus"
+        message:
+          type: string
+          maxLength: 500
+          description: A short explanation when not ready.
+        finalBackup:
+          $ref: "#/components/schemas/FinalBackup"
+
+    UsageReport:
+      type: object
+      required: [readings]
+      properties:
+        readings:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/UsageReading"
+
+    UsageReading:
+      type: object
+      required: [meter, hour, quantity]
+      properties:
+        meter:
+          type: string
+          maxLength: 40
+          description: A catalog meter's key, such as `shipments`.
+        hour:
+          type: string
+          format: date-time
+          description: The start of the hour, on the hour, from 35 days ago to the current hour.
+        quantity:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 1000000000000000
+          description: In the meter's unit (a count, credit cents or bytes), at most 10^15.
+
+    UsageAck:
+      type: object
+      required: [overage, meters]
+      properties:
+        window:
+          $ref: "#/components/schemas/UsageWindow"
+        overage:
+          type: boolean
+          description: Whether usage beyond an allowance without a hard cap continues and is billed.
+        meters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeterUsage"
+
+    UsageWindow:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+
+    MeterUsage:
+      type: object
+      required: [meter, unit, quantity, allowance, hardCap, stopped]
+      properties:
+        meter:
+          type: string
+        unit:
+          type: string
+          enum: [count, cents, bytes]
+        quantity:
+          type: integer
+          format: int64
+          description: The window's quantity so far.
+        allowance:
+          type: integer
+          format: int64
+          description: The window's allowance; 0 when the plan and add-ons include none.
+        hardCap:
+          type: boolean
+        stopped:
+          type: boolean
+          description: Whether the metered action must stop.
+
+    FinalBackup:
+      type: object
+      description: |
+        The backup taken after the instance applied a `decommissioned` spec, reported with that
+        revision as `appliedRevision`. It is kept for 7 days after the instance is torn down.
+      required: [id, completedAt, sizeBytes]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: The backup's identifier in the instance's backup store.
+        completedAt:
+          type: string
+          format: date-time
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+
+    ComponentStatus:
+      type: object
+      required: [name, ready]
+      properties:
+        name:
+          type: string
+          maxLength: 64
+        ready:
+          type: boolean
+        message:
+          type: string
+          maxLength: 200
+
+    RenewCertificateRequest:
+      type: object
+      required: [csr]
+      properties:
+        csr:
+          type: string
+          maxLength: 8192
+          description: A PEM certificate request, signed by the new key.
+
+    IssuedCertificate:
+      type: object
+      required: [certificate, caBundle, notAfter]
+      properties:
+        certificate:
+          type: string
+          description: The PEM certificate.
+        caBundle:
+          type: string
+          description: Every CA certificate the control plane trusts, as PEM.
+        notAfter:
+          type: string
+          format: date-time

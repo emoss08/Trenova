@@ -1,0 +1,33 @@
+# The Trenova Cloud operator (services/operator) and, as a separate target, the
+# control plane stub its CI install runs against. Build from the repository
+# root: docker build -f deploy/Dockerfile.operator --target operator .
+#
+# The operator module is not in go.work: Helm and client-go would raise the
+# versions of dependencies it shares with the TMS in workspace builds.
+FROM golang:1.26-alpine AS source
+
+WORKDIR /build/services/operator
+ENV GOWORK=off CGO_ENABLED=0
+
+COPY services/operator/go.mod services/operator/go.sum ./
+RUN go mod download
+
+COPY services/operator/ ./
+
+FROM source AS build-operator
+RUN go build -trimpath -ldflags="-s -w" -o /out/trenova-operator ./cmd/operator
+
+FROM source AS build-stub
+RUN go build -trimpath -ldflags="-s -w" -o /out/controlplane-stub ./cmd/controlplane-stub
+
+FROM gcr.io/distroless/static-debian12:nonroot AS operator
+COPY --from=build-operator /out/trenova-operator /usr/local/bin/trenova-operator
+USER 65532:65532
+EXPOSE 8081
+ENTRYPOINT ["/usr/local/bin/trenova-operator"]
+
+FROM gcr.io/distroless/static-debian12:nonroot AS controlplane-stub
+COPY --from=build-stub /out/controlplane-stub /usr/local/bin/controlplane-stub
+USER 65532:65532
+EXPOSE 8080 8443
+ENTRYPOINT ["/usr/local/bin/controlplane-stub"]
