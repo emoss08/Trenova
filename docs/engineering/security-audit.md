@@ -190,6 +190,10 @@ Losing access ends it everywhere it is held, and each step is recorded:
   same entries, attributed to the system actor, and ends the matching sessions. It
   catches a removal whose revocation failed partway, and grants left behind by an
   expired membership.
+- A membership with an expiry stops granting at that moment, in the user's current
+  organization too: the permission engine caps a cached set at the expiry and computes
+  nothing from a membership that has ended. A person with no membership row is
+  unaffected.
 
 - A session issued by sign-in (`Session.IssuedBySignIn`, set only by
   `authservice.createSession`) is checked again each time it is touched, at most every

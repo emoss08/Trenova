@@ -1079,7 +1079,7 @@ func (e *engine) GetEffectivePermissions(
 		)
 	}()
 
-	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
+	assignments, _, err := e.memberAssignments(ctx, userID, orgID)
 	if err != nil {
 		log.Error("failed to get user role assignments", zap.Error(err))
 		return nil, err
@@ -1328,7 +1328,7 @@ func (e *engine) computePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
 ) (*permissionports.CachedPermissions, error) {
-	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
+	assignments, expiresAt, err := e.memberAssignments(ctx, userID, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -1339,7 +1339,7 @@ func (e *engine) computePermissions(
 		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
 			Resources:      make(map[string]*permissionports.CachedResourcePermission),
-			ExpiresAt:      permissionsExpireAt(assignments),
+			ExpiresAt:      expiresAt,
 		}, nil
 	}
 
@@ -1349,7 +1349,7 @@ func (e *engine) computePermissions(
 		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
 			Resources:      make(map[string]*permissionports.CachedResourcePermission),
-			ExpiresAt:      permissionsExpireAt(assignments),
+			ExpiresAt:      expiresAt,
 		}, nil
 	}
 
@@ -1376,12 +1376,40 @@ func (e *engine) computePermissions(
 		MaxSensitivity: string(maxSensitivity),
 		Resources:      resources,
 		AgentIDs:       agentIDs,
-		ExpiresAt:      permissionsExpireAt(assignments),
+		ExpiresAt:      expiresAt,
 	}, nil
 }
 
-func permissionsExpireAt(assignments []*rbac.UserRoleAssignment) int64 {
+func (e *engine) memberAssignments(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) ([]*rbac.UserRoleAssignment, int64, error) {
+	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	membershipEnds, err := e.roleRepo.GetMembershipExpiry(ctx, userID, orgID)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	now := timeutils.NowUnix()
+	if membershipEnds != nil && *membershipEnds <= now {
+		return nil, now + int64(cacheTTL.Seconds()), nil
+	}
+
+	return assignments, permissionsExpireAt(assignments, membershipEnds), nil
+}
+
+func permissionsExpireAt(
+	assignments []*rbac.UserRoleAssignment,
+	membershipEnds *int64,
+) int64 {
 	expiresAt := timeutils.NowUnix() + int64(cacheTTL.Seconds())
+	if membershipEnds != nil {
+		expiresAt = min(expiresAt, *membershipEnds)
+	}
 	for _, assignment := range assignments {
 		if assignment.ExpiresAt != nil && !assignment.IsExpired() {
 			expiresAt = min(expiresAt, *assignment.ExpiresAt)

@@ -113,6 +113,7 @@ type RoleRepository interface {
 		ctx context.Context,
 		userID, orgID pulid.ID,
 	) ([]*rbac.UserRoleAssignment, error)
+	GetMembershipExpiry(ctx context.Context, userID, orgID pulid.ID) (*int64, error)
 	CreateAssignment(ctx context.Context, assignment *rbac.UserRoleAssignment) error
 	DeleteAssignment(
 		ctx context.Context,

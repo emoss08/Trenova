@@ -324,6 +324,35 @@ func (r *repository) GetUserRoleAssignments(
 	)
 }
 
+func (r *repository) GetMembershipExpiry(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) (*int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*int64, error) {
+		m := tenantdb.OrganizationMemberships
+		membership, err := forTenant(
+			ctx,
+			m.Query(),
+			m.UserID.Eq(userID),
+			m.OrganizationID.Eq(orgID),
+		).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // no membership row has no expiry to apply
+		}
+		if err != nil {
+			r.l.Error(
+				"failed to get membership expiry",
+				zap.String("userId", userID.String()),
+				zap.String("orgId", orgID.String()),
+				zap.Error(err),
+			)
+			return nil, err
+		}
+
+		return membership.ExpiresAt, nil
+	})
+}
+
 func (r *repository) Create(ctx context.Context, role *rbac.Role) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
