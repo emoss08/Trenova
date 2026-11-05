@@ -12,6 +12,7 @@ otherwise. The defects these boundaries tend to grow are in
 | A person (`PrincipalTypeUser`) | a session, sealed against tampering in Redis (`infrastructure/redis/authstore/seal.go`) | `authctx.SetSessionAuthContext` | the permission engine, active roles, row-level security |
 | A federated person | an OIDC sign-in, then a session that records the issuer | `identity/app/authservice` | as above, and only in organizations that trust that issuer (`requireTargetSignIn`) |
 | An API key (`PrincipalTypeAPIKey`) | a key looked up by hash | `authctx.SetAPIKeyContext` | its own grants |
+| A SCIM directory (an identity provider provisioning people) | a token looked up by prefix, its hash compared in constant time, for the slug in the path | `scimservice.Authenticate` | its own organization and business unit, only the people it provisioned or linked, and for roles only what the person who saved each group mapping may still grant ([scim.md](scim.md)) |
 | An agent (`PrincipalTypeAgent`) | the run it belongs to | the agent runtime | `agentceiling`, autonomy tiers, taint, and a person's approval for what it may not do alone |
 | A Capture device | device tokens from a pairing a person approved | `api/handlers/capturehandler/device.go` | the person it acts for, the roles active at approval, their session epoch |
 | A local print client | the Windows process on the other end of the socket | `desktop/capture/bins/trenova-capture-svc/src/win/peer.rs` | `ClientAccess` in `capture-ipp`: only the spooler may print, others may only discover |

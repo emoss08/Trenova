@@ -15,6 +15,7 @@ import type { SCIMDirectory } from "@trenova/shared/types/iam";
 import { Trash01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { useSecurityAccess } from "../security-access/use-security-access";
+import { SCIMBaseURL } from "./scim-base-url";
 
 type DirectoryDetailHeaderProps = {
   directory?: SCIMDirectory;
@@ -51,6 +52,7 @@ export function DirectoryDetailHeader({
           <p className="text-muted-foreground text-xs">
             {t("Manage SCIM tokens, group-to-role mappings, and provisioning audit events.")}
           </p>
+          {directory ? <SCIMBaseURL tenantSlug={directory.tenantSlug} /> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {access.scimDirectories.update ? (
