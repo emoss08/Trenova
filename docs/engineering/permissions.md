@@ -224,6 +224,11 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
+Only `database.rls.mode: enforce` counts as the database enforcing. Under any other mode a stored
+`own` or `team` grant on one of these kinds allows nothing, for people, API keys and agents alike
+(`engine.usableGrant`), because nothing would narrow it and it would reach the whole organization.
+The grant stays stored and works again once `enforce` is back.
+
 The first query that needs the value may be inside a transaction that has not sent its
 `BEGIN` yet (the result cache keys a read by its read scope before the read runs), so the
 grants resolve in a read-only transaction of their own (`RunDetached`, through

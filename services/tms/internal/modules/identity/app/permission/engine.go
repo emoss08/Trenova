@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
@@ -74,42 +75,45 @@ type Params struct {
 	AgentRoles          permissionports.AgentRoleSource
 	Registry            *permissioncatalog.Registry
 	RouteRegistry       *routeaccess.RouteRegistry
+	DatabaseConfig      *databaseconfig.Config
 	Metrics             *metrics.Registry
 	Logger              *zap.Logger
 }
 
 type engine struct {
-	roleRepo      permissionports.RoleRepository
-	rbacRepo      permissionports.RBACRepository
-	iamRepo       iamports.IAMRepository
-	settings      iamports.AccessSettingsRepository
-	apiKeyRepo    apikeyports.APIKeyRepository
-	cacheRepo     permissionports.PermissionCacheRepository
-	userRepo      tenantports.UserRepository
-	agentGrants   permissionports.RoleAgentGrantRepository
-	agentRoles    permissionports.AgentRoleSource
-	registry      *permissioncatalog.Registry
-	routeRegistry *routeaccess.RouteRegistry
-	metrics       *metrics.Registry
-	l             *zap.Logger
+	roleRepo          permissionports.RoleRepository
+	rbacRepo          permissionports.RBACRepository
+	iamRepo           iamports.IAMRepository
+	settings          iamports.AccessSettingsRepository
+	apiKeyRepo        apikeyports.APIKeyRepository
+	cacheRepo         permissionports.PermissionCacheRepository
+	userRepo          tenantports.UserRepository
+	agentGrants       permissionports.RoleAgentGrantRepository
+	agentRoles        permissionports.AgentRoleSource
+	registry          *permissioncatalog.Registry
+	routeRegistry     *routeaccess.RouteRegistry
+	databaseEnforcing bool
+	metrics           *metrics.Registry
+	l                 *zap.Logger
 }
 
 //nolint:gocritic // this is dependency injection
 func NewEngine(p Params) permissionports.PermissionEngine {
 	return &engine{
-		roleRepo:      p.RoleRepository,
-		rbacRepo:      p.RBACRepository,
-		iamRepo:       p.IAMRepository,
-		settings:      p.AccessSettings,
-		apiKeyRepo:    p.APIKeyRepository,
-		cacheRepo:     p.PermissionCacheRepo,
-		userRepo:      p.UserRepository,
-		agentGrants:   p.AgentGrants,
-		agentRoles:    p.AgentRoles,
-		registry:      p.Registry,
-		routeRegistry: p.RouteRegistry,
-		metrics:       p.Metrics,
-		l:             p.Logger.Named("service.permission-engine"),
+		roleRepo:          p.RoleRepository,
+		rbacRepo:          p.RBACRepository,
+		iamRepo:           p.IAMRepository,
+		settings:          p.AccessSettings,
+		apiKeyRepo:        p.APIKeyRepository,
+		cacheRepo:         p.PermissionCacheRepo,
+		userRepo:          p.UserRepository,
+		agentGrants:       p.AgentGrants,
+		agentRoles:        p.AgentRoles,
+		registry:          p.Registry,
+		routeRegistry:     p.RouteRegistry,
+		databaseEnforcing: p.DatabaseConfig.RLS.Enforced(),
+		metrics:           p.Metrics,
+		l:                 p.Logger.Named("service.permission-engine"),
 	}
 }
 
@@ -277,20 +281,33 @@ func (e *engine) resolveResourcePermission(
 	resource string,
 	op permission.Operation,
 ) (*permissionports.CachedResourcePermission, bool) {
-	if rp, ok := perms.Resources[resource]; ok &&
-		slices.Contains(rp.Operations, string(op)) {
+	if rp, ok := e.usableGrant(perms, resource, op); ok {
 		return rp, true
 	}
 
 	effectiveResource := e.registry.GetEffectiveResource(resource)
 	if effectiveResource != resource {
-		if rp, ok := perms.Resources[effectiveResource]; ok &&
-			slices.Contains(rp.Operations, string(op)) {
-			return rp, true
-		}
+		return e.usableGrant(perms, effectiveResource, op)
 	}
 
 	return nil, false
+}
+
+func (e *engine) usableGrant(
+	perms *permissionports.CachedPermissions,
+	resource string,
+	op permission.Operation,
+) (*permissionports.CachedResourcePermission, bool) {
+	rp, ok := perms.Resources[resource]
+	if !ok || !slices.Contains(rp.Operations, string(op)) {
+		return nil, false
+	}
+	if !e.databaseEnforcing &&
+		e.registry.EnforcedByDatabase(resource, permission.DataScope(rp.DataScope)) {
+		return nil, false
+	}
+
+	return rp, true
 }
 
 func (e *engine) applyAccessPolicies(

@@ -208,13 +208,14 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 	require.NoError(t, err)
 
 	eng := &engine{
-		roleRepo:      rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
-		cacheRepo:     cacheRepo,
-		userRepo:      userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
-		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: routeaccess.NewRouteRegistry(),
-		metrics:       metricsRegistry,
-		l:             zap.NewNop().Named("test.permission-engine"),
+		roleRepo:          rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
+		cacheRepo:         cacheRepo,
+		userRepo:          userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
+		registry:          permissioncatalog.NewRegistry(),
+		routeRegistry:     routeaccess.NewRouteRegistry(),
+		databaseEnforcing: true,
+		metrics:           metricsRegistry,
+		l:                 zap.NewNop().Named("test.permission-engine"),
 	}
 
 	return eng, &integrationEnv{ctx: data.Ctx(ctx), db: db, data: data}, redisClient

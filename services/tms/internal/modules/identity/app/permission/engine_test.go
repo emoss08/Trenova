@@ -73,17 +73,18 @@ func setupTestEngine(
 		Maybe()
 
 	e := &engine{
-		roleRepo:      roleRepo,
-		rbacRepo:      &rbactest.Repository{},
-		cacheRepo:     cacheRepo,
-		userRepo:      userRepo,
-		iamRepo:       noPolicies,
-		agentGrants:   &fakeAgentGrants{},
-		settings:      &stubAccessSettings{},
-		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: routeaccess.NewRouteRegistry(),
-		metrics:       metricsRegistry,
-		l:             logger.Named("test.permission-engine"),
+		roleRepo:          roleRepo,
+		rbacRepo:          &rbactest.Repository{},
+		cacheRepo:         cacheRepo,
+		userRepo:          userRepo,
+		iamRepo:           noPolicies,
+		agentGrants:       &fakeAgentGrants{},
+		settings:          &stubAccessSettings{},
+		registry:          permissioncatalog.NewRegistry(),
+		routeRegistry:     routeaccess.NewRouteRegistry(),
+		databaseEnforcing: true,
+		metrics:           metricsRegistry,
+		l:                 logger.Named("test.permission-engine"),
 	}
 
 	return e, roleRepo, cacheRepo, userRepo

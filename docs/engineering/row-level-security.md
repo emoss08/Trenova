@@ -87,6 +87,11 @@ sends no `OnBegin` statements; one with another scope begins its own. See
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
 | `enforce` | `OnBegin` refuses a transaction with no tenant or system scope | production |
 
+Only `enforce` promises a database data scope, because `observe` may still connect as a role that
+bypasses the policies. Outside it an `own` or `team` grant on a database-scoped kind can't be saved,
+and one already stored allows nothing until `enforce` is back
+([permissions.md](permissions.md#data-scopes)).
+
 `trenova_db_rls_scope_events_total{pool,event,outcome}` counts every decision.
 In `observe`, the first sighting of each unscoped call site is logged at warn with
 its caller; refusals are always logged at error.
