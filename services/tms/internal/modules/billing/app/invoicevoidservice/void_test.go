@@ -30,6 +30,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type noLateCharges struct {
+	latechargeports.LateChargeRepository
+}
+
+func (noLateCharges) ListBySourceInvoiceIDs(
+	context.Context,
+	*latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
+) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
+	return nil, nil
+}
+
 func newVoidService(
 	repo *invoiceportsmock.MockInvoiceRepository,
 	queueRepo *billingqueueportsmock.MockBillingQueueRepository,
@@ -43,6 +54,8 @@ func newVoidService(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "INV-2002"},
+		lateChargeRepo:    noLateCharges{},
+		detentionBilling:  &mocks.NoopDetentionBilling{},
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{
 				Logger:       zap.NewNop(),

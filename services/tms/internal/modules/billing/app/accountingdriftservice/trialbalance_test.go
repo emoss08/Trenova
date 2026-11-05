@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -371,6 +372,8 @@ func newTrialFixture(t *testing.T) *trialFixture {
 		AuditService:  h.audit,
 		Dispatcher:    h.kicks,
 		Publisher:     h.events,
+		Realtime:      &mocks.NoopRealtimeService{},
+		Watchtower:    &mocks.NoopWatchtowerProjector{},
 	})
 	h.svc.now = func() time.Time { return h.now }
 	return f

@@ -1,9 +1,10 @@
 package fiscalperiodservice
 
 import (
+	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
-	"context"
 	"strings"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,14 +39,27 @@ func newTransitionFixture(t *testing.T, yearStatus fiscalyear.Status) *transitio
 	periodRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	yearRepo := fiscalyearportsmock.NewMockFiscalYearRepository(t)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	controls := tenantportsmock.NewMockAccountingControlRepository(t)
+	controls.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no accounting control")).
+		Maybe()
+	validator := NewTestValidator()
+	validator.accountingRepo = controls
+	conn := pgstubtest.NewConnection(t)
+	validator.db = conn
 
 	return &transitionFixture{
 		svc: &Service{
 			l:              zap.NewNop(),
+			db:             conn,
 			repo:           periodRepo,
 			fiscalYearRepo: yearRepo,
-			validator:      NewTestValidator(),
+			validator:      validator,
 			auditService:   &mocks.NoopAuditService{},
+			policy: accountingcontrolpolicyservice.New(
+				accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+			),
 		},
 		periodRepo: periodRepo,
 		yearRepo:   yearRepo,
@@ -97,6 +113,32 @@ func (f *transitionFixture) expectState(
 		Once()
 }
 
+func (f *transitionFixture) expectLockedState(
+	target *fiscalperiod.FiscalPeriod,
+	periods ...*fiscalperiod.FiscalPeriod,
+) {
+	f.periodRepo.EXPECT().
+		GetByID(mock.Anything, fiscalperiodports.GetFiscalPeriodByIDRequest{ID: target.ID, TenantInfo: f.tenant}).
+		Return(target, nil).
+		Once()
+	f.yearRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, fiscalyearports.GetFiscalYearByIDRequest{ID: f.year.ID, TenantInfo: f.tenant}).
+		Return(f.year, nil).
+		Once()
+	f.periodRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, fiscalperiodports.GetFiscalPeriodByIDRequest{ID: target.ID, TenantInfo: f.tenant}).
+		Return(target, nil).
+		Once()
+	f.periodRepo.EXPECT().
+		ListByFiscalYearIDForUpdate(mock.Anything, fiscalperiodports.ListByFiscalYearIDRequest{
+			FiscalYearID: f.year.ID,
+			OrgID:        f.tenant.OrgID,
+			BuID:         f.tenant.BuID,
+		}).
+		Return(append([]*fiscalperiod.FiscalPeriod{target}, periods...), nil).
+		Once()
+}
+
 func requireFieldError(t *testing.T, err error, field, fragment string) {
 	t.Helper()
 
@@ -115,7 +157,7 @@ func TestCloseAcceptsLockedPeriod(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(2, fiscalperiod.StatusLocked)
-	f.expectState(target, f.period(1, fiscalperiod.StatusClosed))
+	f.expectLockedState(target, f.period(1, fiscalperiod.StatusClosed))
 
 	closed := *target
 	closed.Status = fiscalperiod.StatusClosed
@@ -140,7 +182,7 @@ func TestCloseRejectsWhenEarlierPeriodWasNeverOpened(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(3, fiscalperiod.StatusOpen)
-	f.expectState(target, f.period(2, fiscalperiod.StatusInactive))
+	f.expectLockedState(target, f.period(2, fiscalperiod.StatusInactive))
 
 	_, err := f.svc.Close(t.Context(), fiscalperiodports.CloseFiscalPeriodRequest{
 		ID:         target.ID,
@@ -163,7 +205,7 @@ func TestCloseRejectsInactiveAndClosedPeriods(t *testing.T) {
 
 			f := newTransitionFixture(t, fiscalyear.StatusOpen)
 			target := f.period(1, status)
-			f.expectState(target)
+			f.expectLockedState(target)
 
 			_, err := f.svc.Close(t.Context(), fiscalperiodports.CloseFiscalPeriodRequest{
 				ID:         target.ID,
@@ -180,7 +222,7 @@ func TestLockRecordsWhoLockedAndWhen(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(1, fiscalperiod.StatusOpen)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	locked := *target
 	locked.Status = fiscalperiod.StatusLocked
@@ -205,7 +247,7 @@ func TestLockRejectsClosedPeriod(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(1, fiscalperiod.StatusClosed)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Lock(t.Context(), &fiscalperiodports.LockFiscalPeriodRequest{
 		ID:         target.ID,
@@ -220,7 +262,7 @@ func TestReopenRequiresReason(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(1, fiscalperiod.StatusClosed)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Reopen(t.Context(), fiscalperiodports.ReopenFiscalPeriodRequest{
 		ID:           target.ID,
@@ -236,7 +278,7 @@ func TestReopenRecordsReasonAndUser(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(1, fiscalperiod.StatusClosed)
-	f.expectState(target, f.period(2, fiscalperiod.StatusOpen))
+	f.expectLockedState(target, f.period(2, fiscalperiod.StatusOpen))
 
 	reopened := *target
 	reopened.Status = fiscalperiod.StatusOpen
@@ -265,7 +307,7 @@ func TestReopenBlockedWhenFiscalYearIsClosed(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusClosed)
 	target := f.period(12, fiscalperiod.StatusClosed)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Reopen(t.Context(), fiscalperiodports.ReopenFiscalPeriodRequest{
 		ID:           target.ID,
@@ -281,7 +323,7 @@ func TestUnlockBlockedWhenFiscalYearIsPermanentlyClosed(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusPermanentlyClosed)
 	target := f.period(12, fiscalperiod.StatusLocked)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Unlock(t.Context(), fiscalperiodports.UnlockFiscalPeriodRequest{
 		ID:         target.ID,
@@ -298,7 +340,7 @@ func TestActivateOpensInactivePeriod(t *testing.T) {
 	target := f.period(13, fiscalperiod.StatusInactive)
 	target.PeriodType = fiscalperiod.PeriodTypeAdjusting
 	target.IsAdjusting = true
-	f.expectState(target, f.period(12, fiscalperiod.StatusLocked))
+	f.expectLockedState(target, f.period(12, fiscalperiod.StatusLocked))
 
 	opened := *target
 	opened.Status = fiscalperiod.StatusOpen
@@ -324,7 +366,7 @@ func TestActivateRejectsPeriodsThatAreNotInactive(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(1, fiscalperiod.StatusClosed)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Activate(t.Context(), fiscalperiodports.ActivateFiscalPeriodRequest{
 		ID:         target.ID,
@@ -339,7 +381,7 @@ func TestActivateRequiresEarlierPeriodsToBeOpened(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusOpen)
 	target := f.period(3, fiscalperiod.StatusInactive)
-	f.expectState(target, f.period(2, fiscalperiod.StatusInactive))
+	f.expectLockedState(target, f.period(2, fiscalperiod.StatusInactive))
 
 	_, err := f.svc.Activate(t.Context(), fiscalperiodports.ActivateFiscalPeriodRequest{
 		ID:         target.ID,
@@ -354,7 +396,7 @@ func TestActivateBlockedWhenFiscalYearIsClosed(t *testing.T) {
 
 	f := newTransitionFixture(t, fiscalyear.StatusClosed)
 	target := f.period(13, fiscalperiod.StatusInactive)
-	f.expectState(target)
+	f.expectLockedState(target)
 
 	_, err := f.svc.Activate(t.Context(), fiscalperiodports.ActivateFiscalPeriodRequest{
 		ID:         target.ID,

@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -476,7 +477,12 @@ func newRemittanceHarness(t *testing.T) *remittanceHarness {
 		Ledger:      h.ledger,
 		Factors:     &fakeRemitFactors{factor: h.factor},
 		Documents:   h.documents,
+		Content:     &fakeRemitContent{},
+		Nova:        &fakeRemitCompletion{},
+		Starter:     &fakeStageStarter{},
 		Events:      h.events,
+		Audit:       &mocks.NoopAuditService{},
+		Realtime:    &mocks.NoopRealtimeService{},
 		Logger:      zap.NewNop(),
 	}).(*RemittanceService)
 	h.svc.now = func() int64 { return factoringservicetest.Now }
@@ -646,6 +652,11 @@ func TestRemittanceNeedsMappingThenSavesTheFactorsLayout(t *testing.T) {
 func TestRemittancePdfWithoutAModelFails(t *testing.T) {
 	t.Parallel()
 	h := newRemittanceHarness(t)
+	h.svc.content = &fakeRemitContent{content: &documentcontent.Content{
+		Status:      documentcontent.StatusIndexed,
+		ContentText: "RTS Financial purchase report ...",
+	}}
+	h.svc.nova = noRemitModel{}
 	rem := h.create(t)
 	doc := h.upload(rem, "rts.pdf", "%PDF-1.7")
 
@@ -871,6 +882,18 @@ func (f *fakeRemitCompletion) Run(
 	result := &llmports.StructuredCompletionResult{Text: f.reply}
 
 	return result, llmports.DecodeAnswer(task.Name, f.reply, out)
+}
+
+type noRemitModel struct {
+	llmports.TaskRunner
+}
+
+func (noRemitModel) Run(
+	context.Context,
+	*llmports.NovaTask,
+	any,
+) (*llmports.StructuredCompletionResult, error) {
+	return nil, llmports.ErrNoProviderConfigured
 }
 
 type fakeStageStarter struct {

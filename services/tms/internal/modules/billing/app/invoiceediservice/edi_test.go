@@ -261,38 +261,6 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	)
 }
 
-func TestResolveEDISendPlansWithoutEDIWiringNeverTouchesCustomers(t *testing.T) {
-	t.Parallel()
-
-	customerRepo := customerportsmock.NewMockCustomerRepository(t)
-	svc := &Service{
-		l:            zap.NewNop(),
-		customerRepo: customerRepo,
-	}
-	inv := &invoice.Invoice{
-		ID:            pulid.MustNew("inv_"),
-		CustomerID:    pulid.MustNew("cus_"),
-		EDISendStatus: invoice.EDISendStatusFailed,
-	}
-
-	plans, err := svc.ResolveEDISendPlans(
-		t.Context(),
-		&invoiceports.ResolveInvoiceEDISendPlansRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
-			Invoices:   []*invoice.Invoice{inv, nil},
-		},
-	)
-
-	require.NoError(t, err)
-	require.Len(t, plans, 1)
-	plan := plans[inv.ID]
-	require.NotNil(t, plan)
-	assert.False(t, plan.Enabled)
-	assert.Equal(t, invoice.EDISendStatusFailed, plan.Status)
-	assert.Equal(t, []string{ediBlockerNotWired}, plan.Blockers)
-	customerRepo.AssertNotCalled(t, "GetByIDs", mock.Anything, mock.Anything)
-}
-
 // ediWiredFixture is an invoice whose customer has EDI invoicing on, an active
 // external partner, an active Lading version that writes a 210 and an SFTP channel: nothing blocks a send.
 type ediWiredFixture struct {
@@ -382,6 +350,16 @@ func newEDIWiredFixture(t *testing.T, status invoice.EDISendStatus) *ediWiredFix
 	return f
 }
 
+func (f *ediWiredFixture) withoutRunnableLading(t *testing.T) {
+	t.Helper()
+	projects := ladingportsmock.NewMockLadingProjectRepository(t)
+	projects.EXPECT().
+		GetRunnableVersions(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no runnable version")).
+		Maybe()
+	f.svc.ediLadingProjects = projects
+}
+
 func (f *ediWiredFixture) expectLoad() {
 	f.repo.EXPECT().
 		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.inv.ID, TenantInfo: f.tenantInfo}).
@@ -391,7 +369,6 @@ func (f *ediWiredFixture) expectLoad() {
 
 func (f *ediWiredFixture) expectWorkflowStart(t *testing.T, force bool) {
 	t.Helper()
-	f.starter.EXPECT().Enabled().Return(true).Once()
 	f.starter.EXPECT().
 		StartWorkflow(
 			mock.Anything,
@@ -505,7 +482,7 @@ func TestSendEDIRefusesWhenTheChannelIsBlocked(t *testing.T) {
 	t.Parallel()
 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
-	f.svc.ediPartnerRepo = nil
+	f.withoutRunnableLading(t)
 	f.expectLoad()
 
 	_, err := f.svc.SendEDI(
@@ -515,7 +492,7 @@ func TestSendEDIRefusesWhenTheChannelIsBlocked(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), ediBlockerNotWired)
+	assert.Contains(t, err.Error(), ediBlockerNoLadingVersion)
 }
 
 func TestEnqueueEDIAfterPostQueuesWhenAutoSendIsOn(t *testing.T) {
@@ -533,7 +510,7 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 	t.Parallel()
 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
-	f.svc.ediLadingProjects = nil
+	f.withoutRunnableLading(t)
 	f.repo.EXPECT().
 		UpdateEDISendStatus(mock.Anything, invoiceports.UpdateInvoiceEDISendStatusRequest{
 			TenantInfo: f.tenantInfo,
@@ -562,7 +539,6 @@ func TestEnqueueEDIAfterPostMarksFailedWhenTheWorkflowCannotStart(t *testing.T) 
 	t.Parallel()
 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
-	f.starter.EXPECT().Enabled().Return(true).Once()
 	f.starter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, billingcontract.SendInvoiceEDIWorkflowName, mock.Anything).
 		Return(nil, errors.New("temporal down")).

@@ -16,11 +16,13 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestImportAndMatchBankReceipt(t *testing.T) {
@@ -68,10 +70,13 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	}
 	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
 	svc := &Service{
-		db:           passthroughDB{},
-		repo:         receiptRepo,
-		paymentRepo:  paymentRepo,
-		auditService: &mocks.NoopAuditService{},
+		l:              zap.NewNop(),
+		workItemRepo:   noWorkItems(t),
+		db:             passthroughDB{},
+		repo:           receiptRepo,
+		accountingRepo: reconciliationDisabled(t),
+		paymentRepo:    paymentRepo,
+		auditService:   &mocks.NoopAuditService{},
 	}
 
 	receipt, err := svc.Import(
@@ -157,6 +162,8 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: true}, nil).
 		Once()
 	svc := &Service{
+		l:              zap.NewNop(),
+		workItemRepo:   noWorkItems(t),
 		db:             passthroughDB{},
 		repo:           receiptRepo,
 		paymentRepo:    paymentRepo,
@@ -216,8 +223,10 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
-		Once()
+		Twice()
 	svc := &Service{
+		l:              zap.NewNop(),
+		workItemRepo:   noWorkItems(t),
 		db:             passthroughDB{},
 		repo:           receiptRepo,
 		paymentRepo:    paymentRepo,
@@ -288,8 +297,9 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly, NotifyOnReconciliationException: false}, nil).
-		Once()
+		Twice()
 	svc := &Service{
+		l:              zap.NewNop(),
 		db:             passthroughDB{},
 		repo:           receiptRepo,
 		workItemRepo:   workItemRepo,
@@ -335,6 +345,8 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 		Status:          customerpayment.StatusPosted,
 	}
 	svc := &Service{
+		l:            zap.NewNop(),
+		workItemRepo: noWorkItems(t),
 		db:           passthroughDB{},
 		repo:         bankreceiptportsmock.NewMockBankReceiptRepository(t),
 		paymentRepo:  customerpaymentportsmock.NewMockCustomerPaymentRepository(t),
@@ -412,4 +424,34 @@ func TestPaymentsOfReceiptAmount_AsksForPaymentsOfTheReceiptsAmountUpToTheLimit(
 	require.NoError(t, err)
 	assert.Equal(t, []*customerpayment.Payment{payment}, found,
 		"every payment of the amount, whatever its reference, so the caller judges the references")
+}
+
+func noWorkItems(t *testing.T) *bankreceiptworkitemportsmock.MockBankReceiptWorkItemRepository {
+	t.Helper()
+
+	repo := bankreceiptworkitemportsmock.NewMockBankReceiptWorkItemRepository(t)
+	repo.EXPECT().
+		GetActiveByReceiptID(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no active work item")).
+		Maybe()
+	repo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, item *bankreceiptworkitem.WorkItem) (*bankreceiptworkitem.WorkItem, error) {
+			return item, nil
+		}).
+		Maybe()
+
+	return repo
+}
+
+func reconciliationDisabled(t *testing.T) *tenantportsmock.MockAccountingControlRepository {
+	t.Helper()
+
+	repo := tenantportsmock.NewMockAccountingControlRepository(t)
+	repo.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeDisabled}, nil).
+		Maybe()
+
+	return repo
 }

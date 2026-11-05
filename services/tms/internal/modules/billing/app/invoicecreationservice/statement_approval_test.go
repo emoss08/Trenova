@@ -139,6 +139,7 @@ func newApprovalHarness(
 		shipmentRepo:     shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo:     customerRepo,
 		billingRepo:      billingRepo,
+		detentionBilling: &mocks.NoopDetentionBilling{},
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),

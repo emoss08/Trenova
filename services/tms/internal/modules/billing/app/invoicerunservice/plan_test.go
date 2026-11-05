@@ -2,6 +2,7 @@ package invoicerunservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
@@ -96,9 +97,10 @@ func newRunPlanFixture(t *testing.T) *runPlanFixture {
 	}
 	f.run.SyncTotals()
 	f.svc = &Service{
-		l:         zap.NewNop(),
-		repo:      &readOnlyRunRepo{t: t, run: f.run, tenantInfo: f.tenantInfo},
-		validator: NewValidator(ValidatorParams{}),
+		l:                zap.NewNop(),
+		repo:             &readOnlyRunRepo{t: t, run: f.run, tenantInfo: f.tenantInfo},
+		validator:        NewValidator(ValidatorParams{}),
+		detentionBilling: &mocks.NoopDetentionBilling{},
 	}
 
 	return f

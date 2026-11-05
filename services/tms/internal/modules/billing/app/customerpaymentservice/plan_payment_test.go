@@ -135,7 +135,7 @@ func newPaymentWorld(
 		}).
 		Maybe()
 
-	w.svc = &Service{
+	w.svc = wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -146,7 +146,7 @@ func newPaymentWorld(
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	return w
 }

@@ -9,9 +9,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
+
+type fakeOrganizations struct {
+	tenantports.OrganizationRepository
+}
+
+func (fakeOrganizations) GetByID(
+	_ context.Context,
+	req tenantports.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return &tenant.Organization{ID: req.TenantInfo.OrgID}, nil
+}
 
 type fakeCertificates struct {
 	mu   sync.Mutex

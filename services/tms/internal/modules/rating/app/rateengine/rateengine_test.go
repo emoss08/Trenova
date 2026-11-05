@@ -164,6 +164,7 @@ func setup(t *testing.T) *deps {
 		accessorials:  d.accessorials,
 		exchange:      d.exchange,
 		routingGuides: d.guides,
+		hydrator:      noHydration{},
 		now:           func() int64 { return testNow },
 	}
 
@@ -702,4 +703,14 @@ func exchangeAt(rate string) func(
 			Converted:    amount.Mul(value),
 		}, nil
 	}
+}
+
+type noHydration struct{}
+
+func (noHydration) HydrateShipment(context.Context, *ratequoteports.HydrateShipmentRequest) error {
+	return nil
+}
+
+func (noHydration) HydrateShipments(context.Context, *ratequoteports.HydrateShipmentsRequest) error {
+	return nil
 }

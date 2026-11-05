@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -135,6 +136,7 @@ func newHarness(t *testing.T, policy accountingconnection.InboundPaymentPolicy) 
 		Refresher:        h.refresher,
 		Publisher:        h.events,
 		Watchtower:       h.watchtower,
+		Realtime:         &mocks.NoopRealtimeService{},
 	})
 	h.svc.now = func() time.Time { return h.now }
 	return h

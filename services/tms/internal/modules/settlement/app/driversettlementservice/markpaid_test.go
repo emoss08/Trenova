@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -26,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type paidJournalNumbers struct {
@@ -122,7 +124,9 @@ func TestMarkPaidWritesThePaymentJournalAndKeepsItsBatch(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		l:              zap.NewNop(),
 		db:             dbtest.NopConnection{},
+		realtime:       &mocks.NoopRealtimeService{},
 		settlementRepo: store,
 		journals: driversettlementjournal.New(&driversettlementjournal.Params{
 			AccountingRepo:   accounting,
@@ -180,7 +184,9 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 	journals.EXPECT().CreatePosting(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := &Service{
+		l:              zap.NewNop(),
 		db:             dbtest.NopConnection{},
+		realtime:       &mocks.NoopRealtimeService{},
 		settlementRepo: store,
 		journals: driversettlementjournal.New(&driversettlementjournal.Params{
 			AccountingRepo:   accounting,

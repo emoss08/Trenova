@@ -335,16 +335,6 @@ func TestEnqueueToleratesAFailedKick(t *testing.T) {
 	assert.Equal(t, accountingsync.SyncStatusQueued, record.Status)
 }
 
-func TestEnqueueWritesWithoutADispatcher(t *testing.T) {
-	t.Parallel()
-
-	h := newHarness(t, withoutDispatcher())
-
-	record := h.enqueueInvoice(t, h.postedInvoice(pulid.MustNew("cus_"), invoiceSpec{}))
-
-	assert.Equal(t, accountingsync.SyncStatusQueued, record.Status)
-}
-
 func TestEnqueueRejectsMalformedRequests(t *testing.T) {
 	t.Parallel()
 

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -63,12 +64,7 @@ type harness struct {
 type harnessOption func(*harnessConfig)
 
 type harnessConfig struct {
-	withoutDispatcher bool
-	timezone          string
-}
-
-func withoutDispatcher() harnessOption {
-	return func(c *harnessConfig) { c.withoutDispatcher = true }
+	timezone string
 }
 
 func withTimezone(timezone string) harnessOption {
@@ -113,10 +109,6 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 	}
 	h.conn = h.addConnection(syncingConnection)
 
-	var dispatcher accountingsyncports.AccountingSyncDispatcher = h.dispatcher
-	if cfg.withoutDispatcher {
-		dispatcher = nil
-	}
 	h.enqueuer = accountingsyncenqueue.New(accountingsyncenqueue.Params{
 		Logger:      zap.NewNop(),
 		Connections: h.connections,
@@ -124,7 +116,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Mappings:    fakeMappingRepo{store: h.mappings},
 		Orgs:        fakeOrganizations{timezone: cfg.timezone},
 		Ledger:      h.ledger,
-		Dispatcher:  dispatcher,
+		Dispatcher:  h.dispatcher,
 	})
 	h.svc = wire(&wiring{
 		Logger:        zap.NewNop(),
@@ -150,9 +142,10 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		),
 		AuditService: h.audit,
 		Enqueuer:     h.enqueuer,
-		Dispatcher:   dispatcher,
+		Dispatcher:   h.dispatcher,
 		Publisher:    h.events,
 		Watchtower:   h.watchtower,
+		Realtime:     &mocks.NoopRealtimeService{},
 	})
 	return h
 }

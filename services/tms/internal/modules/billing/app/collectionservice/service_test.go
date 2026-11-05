@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -163,6 +164,7 @@ func newService(t *testing.T, repo *fakeRepo, notifier *fakeNotifier, members fa
 		customers: customers,
 		users:     members,
 		notifier:  notifier,
+		realtime:  &mocks.NoopRealtimeService{},
 		now:       func() int64 { return now },
 		l:         zap.NewNop(),
 	}

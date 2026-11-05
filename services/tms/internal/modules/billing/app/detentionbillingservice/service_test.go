@@ -128,6 +128,7 @@ func newFixture(t *testing.T) *fixture {
 		evidenceRepo:   f.evidence,
 		invoiceRepo:    f.invoices,
 		auditService:   f.audit,
+		watchtower:     &mocks.NoopWatchtowerProjector{},
 		now:            func() int64 { return 1_700_000_000 },
 	}
 

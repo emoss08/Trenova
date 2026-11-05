@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -187,7 +188,12 @@ func newHarness(t *testing.T) *harness {
 		Customers:          customers,
 		Carriers:           carriers,
 		Accessorials:       charges,
+		Ledger:             &fakeLedgerAccounts{},
+		SettlementControls: fakeSettlementControls{},
+		PayCodes:           fakePayCodes{},
 		AuditService:       h.audit,
+		Realtime:           &mocks.NoopRealtimeService{},
+		SyncRecords:        fakeSyncRecords{},
 		Completion:         h.completion,
 		Refresher:          h.refresher,
 	}

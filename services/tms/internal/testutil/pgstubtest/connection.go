@@ -20,6 +20,7 @@ import (
 
 const (
 	boolOID      = 16
+	int8OID      = 20
 	textOID      = 25
 	binaryFormat = 1
 
@@ -32,7 +33,11 @@ const (
 	stubBusinessUnitID = "bu_stub"
 )
 
-var parameterRef = regexp.MustCompile(`\$(\d+)`)
+var (
+	parameterRef = regexp.MustCompile(`\$(\d+)`)
+	countQuery   = regexp.MustCompile(`(?i)^\s*SELECT\s+COUNT\(`)
+	settingQuery = regexp.MustCompile(`(?i)^\s*SELECT\s+set_config\(`)
+)
 
 func NewConnection(t testing.TB, existingTables ...string) *postgres.Connection {
 	t.Helper()
@@ -196,6 +201,16 @@ func (s *session) describe(m *pgproto3.Describe) {
 		return
 	}
 
+	if countQuery.MatchString(sql) {
+		s.backend.Send(&pgproto3.RowDescription{Fields: []pgproto3.FieldDescription{{
+			Name:         []byte("count"),
+			DataTypeOID:  int8OID,
+			DataTypeSize: 8,
+			TypeModifier: -1,
+		}}})
+		return
+	}
+
 	s.backend.Send(&pgproto3.NoData{})
 }
 
@@ -203,6 +218,17 @@ func (s *session) command(sql string, binary bool) {
 	if strings.HasPrefix(sql, existsPrefix) {
 		s.backend.Send(&pgproto3.DataRow{Values: [][]byte{s.existsValue(sql, binary)}})
 		s.backend.Send(&pgproto3.CommandComplete{CommandTag: []byte("SELECT 1")})
+		return
+	}
+
+	if countQuery.MatchString(sql) {
+		s.backend.Send(&pgproto3.DataRow{Values: [][]byte{zeroCount(binary)}})
+		s.backend.Send(&pgproto3.CommandComplete{CommandTag: []byte("SELECT 1")})
+		return
+	}
+
+	if settingQuery.MatchString(sql) {
+		s.backend.Send(&pgproto3.CommandComplete{CommandTag: []byte("SELECT 0")})
 		return
 	}
 
@@ -241,6 +267,14 @@ func (s *session) existsValue(sql string, binary bool) []byte {
 	default:
 		return []byte("f")
 	}
+}
+
+func zeroCount(binary bool) []byte {
+	if binary {
+		return make([]byte, 8)
+	}
+
+	return []byte("0")
 }
 
 func (s *session) fail(message string) {

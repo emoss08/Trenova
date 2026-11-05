@@ -82,16 +82,6 @@ func TestPollAsksForDocumentsAndComparesTheOnesThatChanged(t *testing.T) {
 	assert.Equal(t, 2, result.Documents)
 }
 
-func TestPollDoesNotAskForDocumentsWithoutADriftCheck(t *testing.T) {
-	t.Parallel()
-	h := newHarness(t, accountingconnection.InboundPaymentsPropose)
-
-	h.poll(t)
-
-	require.Len(t, h.connector.reads, 1)
-	assert.False(t, h.connector.reads[0].Documents)
-}
-
 func TestPollKeepsItsCursorWhenTheDriftCompareFails(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, accountingconnection.InboundPaymentsPropose)

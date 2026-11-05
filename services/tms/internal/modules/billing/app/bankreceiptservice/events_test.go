@@ -88,7 +88,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly}, nil).
-		Once()
+		Twice()
 
 	events := &recordingEvents{}
 	svc := &Service{

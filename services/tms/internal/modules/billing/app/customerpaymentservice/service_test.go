@@ -163,7 +163,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -174,7 +174,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
@@ -254,7 +254,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -265,7 +265,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
@@ -382,7 +382,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -393,7 +393,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	updated, err := svc.ApplyUnapplied(
 		t.Context(),
@@ -504,7 +504,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -515,7 +515,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	reversed, err := svc.Reverse(
 		t.Context(),
@@ -617,7 +617,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -628,7 +628,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),

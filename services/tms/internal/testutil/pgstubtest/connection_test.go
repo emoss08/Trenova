@@ -40,3 +40,13 @@ func TestExistsAnswersFromTheListedTables(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, conflict)
 }
+
+func TestCountAnswersZero(t *testing.T) {
+	t.Parallel()
+
+	conn := pgstubtest.NewConnection(t)
+
+	count, err := trailerdb.Trailers.Query().Count(t.Context(), conn.Keel(t.Context()))
+	require.NoError(t, err)
+	assert.Zero(t, count)
+}
