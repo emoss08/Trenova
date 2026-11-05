@@ -94,9 +94,4 @@ func TestCheckOrganizationExtractionDriftActivity(t *testing.T) {
 	checker.err = errors.New("database unavailable")
 	_, err = activities.CheckOrganizationExtractionDriftActivity(t.Context(), input)
 	require.ErrorIs(t, err, checker.err)
-
-	unwired := &Activities{l: zap.NewNop()}
-	result, err = unwired.CheckOrganizationExtractionDriftActivity(t.Context(), input)
-	require.NoError(t, err)
-	assert.Zero(t, result.Notified)
 }

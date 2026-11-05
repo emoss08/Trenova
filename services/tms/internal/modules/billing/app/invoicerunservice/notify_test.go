@@ -85,7 +85,11 @@ func TestNotifyGroupsFailedNamesTheCustomersLeftUnbilled(t *testing.T) {
 	notice := notifier.requests[0].Notification
 	assert.Equal(t, "2 customers were not billed by a scheduled invoice run", notice.Title)
 	assert.Contains(t, notice.Message, "billed 1 of 4 customers")
-	assert.Contains(t, notice.Message, "Globex: missing revenue account; Umbrella: customer on credit hold.")
+	assert.Contains(
+		t,
+		notice.Message,
+		"Globex: missing revenue account; Umbrella: customer on credit hold.",
+	)
 	assert.Equal(t, runID.String(), notice.Data["runId"])
 	assert.Equal(t, "groups:"+runID.String(), *notice.CorrelationID)
 }
@@ -121,8 +125,16 @@ func TestNotifyIsBestEffort(t *testing.T) {
 	notifier.err = errors.New("notifications cannot find who holds a permission")
 
 	assert.NotPanics(t, func() {
-		svc.notifyCommitFailed(t.Context(), tenantInfo, key, pulid.MustNew("invrun_").String(), errors.New("x"))
+		svc.notifyCommitFailed(
+			t.Context(),
+			tenantInfo,
+			key,
+			pulid.MustNew("invrun_").String(),
+			errors.New("x"),
+		)
 	})
 
-	(&Service{l: zap.NewNop()}).notifyBuildFailed(t.Context(), tenantInfo, key, errors.New("x"))
+	assert.NotPanics(t, func() {
+		svc.notifyBuildFailed(t.Context(), tenantInfo, key, errors.New("x"))
+	})
 }

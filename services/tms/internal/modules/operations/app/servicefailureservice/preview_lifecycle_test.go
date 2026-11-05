@@ -61,7 +61,13 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 			SkippedReason: "ready_for_generation",
 			EDIPartnerID:  pulid.MustNew("edip_"),
 		}, nil)
-	svc := &service{watchtower: mocks.NoopWatchtowerProjector{}, l: zap.NewNop(), repo: repo, ediService: ediSvc}
+	svc := &service{
+		watchtower:     mocks.NoopWatchtowerProjector{},
+		commentService: quietComments(t),
+		l:              zap.NewNop(),
+		repo:           repo,
+		ediService:     ediSvc,
+	}
 	req := func() *servicefailureports.ServiceFailureLifecycleRequest {
 		return &servicefailureports.ServiceFailureLifecycleRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},

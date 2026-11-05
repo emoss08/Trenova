@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -215,17 +214,3 @@ func getFreePort(t *testing.T) int {
 
 	return tcpAddr.Port
 }
-
-func TestMonitoringServer_DatabaseCheckWithoutConnection(t *testing.T) {
-	t.Parallel()
-
-	server, _ := newTestMonitoringServer(t, true, nil)
-	server.database = nil
-
-	check := server.databaseCheck(context.Background())
-
-	assert.Equal(t, "down", check.Status)
-	assert.True(t, strings.Contains(check.Message, "database connection is not configured"))
-}
-
-var _ databaseHealth = (*fakeDBConnection)(nil)

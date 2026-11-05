@@ -105,16 +105,6 @@ func TestRenderDropsTheNotificationWhenNothingRenders(t *testing.T) {
 		notifiedWorker(),
 	)
 	assert.False(t, ok)
-
-	// So does a deployment with no template rendering configured, rather than
-	// sending a notification with an empty title.
-	bare := &Service{l: zapNop(t)}
-	_, _, ok = bare.render(
-		t.Context(),
-		&DriverNotification{EventType: "dash.load_assigned"},
-		notifiedWorker(),
-	)
-	assert.False(t, ok)
 }
 
 // A context that does not carry a recipient block still renders. Not every future

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -112,11 +113,12 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		Once()
 
 	svc := &Service{
-		l:            zap.NewNop(),
-		repo:         repo,
-		customerRepo: customerRepo,
-		documentRepo: documentRepo,
-		billingRepo:  billingRepo,
+		l:                  zap.NewNop(),
+		repo:               repo,
+		customerRepo:       customerRepo,
+		documentRepo:       documentRepo,
+		billingRepo:        billingRepo,
+		serviceFailureRepo: noUnresolvedFailures(t),
 	}
 
 	readiness, err := svc.GetBillingReadiness(t.Context(), entity.ID, pagination.TenantInfo{
@@ -205,11 +207,12 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 		Once()
 
 	svc := &Service{
-		l:            zap.NewNop(),
-		repo:         repo,
-		customerRepo: customerRepo,
-		documentRepo: documentRepo,
-		billingRepo:  billingRepo,
+		l:                  zap.NewNop(),
+		repo:               repo,
+		customerRepo:       customerRepo,
+		documentRepo:       documentRepo,
+		billingRepo:        billingRepo,
+		serviceFailureRepo: noUnresolvedFailures(t),
 	}
 
 	readiness, err := svc.GetBillingReadiness(t.Context(), entity.ID, pagination.TenantInfo{
@@ -235,6 +238,18 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 	require.Len(t, readiness.Requirements, 1)
 	assert.True(t, readiness.Requirements[0].Satisfied)
 	assert.Equal(t, []string{matchingDocID.String()}, readiness.Requirements[0].DocumentIDs)
+}
+
+func noUnresolvedFailures(t *testing.T) *servicefailureportsmock.MockServiceFailureRepository {
+	t.Helper()
+
+	failures := servicefailureportsmock.NewMockServiceFailureRepository(t)
+	failures.EXPECT().
+		ListUnresolvedByShipment(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+
+	return failures
 }
 
 func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *testing.T) {
@@ -283,11 +298,19 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 		Return([]*document.Document{}, nil).
 		Once()
 
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
+		Return(entity, nil).
+		Maybe()
+
 	svc := &Service{
-		l:            zap.NewNop(),
-		customerRepo: customerRepo,
-		documentRepo: documentRepo,
-		billingRepo:  billingRepo,
+		l:                  zap.NewNop(),
+		repo:               repo,
+		customerRepo:       customerRepo,
+		documentRepo:       documentRepo,
+		billingRepo:        billingRepo,
+		serviceFailureRepo: noUnresolvedFailures(t),
 	}
 
 	multiErr := svc.ValidateBillingReadinessForStatusChange(t.Context(), entity)

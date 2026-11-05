@@ -2,6 +2,7 @@ package invoicepostingservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -11,12 +12,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -41,12 +47,24 @@ func newBackgroundService(
 
 	svc := newPostingTestService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t))
 	svc.realtime = realtime
+	svc.notificationService = notificationtest.Discarding()
 	svc.rec = invoiceaction.NewRecorder(invoiceaction.RecorderParams{
 		Logger:       zap.NewNop(),
 		AuditService: &mocks.NoopAuditService{},
 		Realtime:     realtime,
 	})
 	return svc, &published
+}
+
+type noBillingControl struct {
+	tenantports.BillingControlRepository
+}
+
+func (noBillingControl) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*billingcontrol.BillingControl, error) {
+	return nil, errortypes.NewNotFoundError("no billing control")
 }
 
 // newPostingTestService is a posting service over mocked repositories that
@@ -60,6 +78,7 @@ func newPostingTestService(
 		db:               invoiceservicetest.FakeTx{},
 		repo:             repo,
 		billingQueueRepo: queueRepo,
+		billingRepo:      noBillingControl{},
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
@@ -83,8 +102,14 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 		GetByID(mock.Anything, mock.Anything).
 		Return(f.Invoice(invoice.StatusDraft), nil).
 		Once()
+	notifications := notificationportsmock.NewMockNotificationRepository(t)
+	notifications.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		Return(nil, errors.New("notification store unavailable")).
+		Once()
 
 	svc, published := newBackgroundService(t, repo)
+	svc.notificationService = notificationtest.New(notifications, &mocks.NoopRealtimeService{})
 	err := svc.ReportAutoPostFailure(t.Context(), &invoiceports.ReportAutoPostFailureRequest{
 		InvoiceID:  f.InvoiceID,
 		TenantInfo: f.TenantInfo,
@@ -101,7 +126,7 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 	assert.True(
 		t,
 		snapshot.NotifiedUserID.IsNil(),
-		"no notification service, so nobody was notified",
+		"the notification failed, so nobody was notified",
 	)
 }
 

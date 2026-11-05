@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
@@ -23,19 +24,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,6 +160,11 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		Once()
 
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
@@ -196,9 +207,14 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 	}
 
 	svc := &service{
-		orgRepo: assetOperationsOrgRepo(t, tenantInfo, true),
-		l:       zap.NewNop(),
-		db:      dbtest.NopConnection{},
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
+		l:            zap.NewNop(),
+		db:           dbtest.NopConnection{},
 		repo: func() *assignmentportsmock.MockAssignmentRepository {
 			repo := assignmentportsmock.NewMockAssignmentRepository(t)
 			repo.EXPECT().
@@ -264,6 +280,11 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		Once()
 
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
@@ -386,6 +407,10 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		Once()
 
 	svc := &service{
+		driverNotify:        quietDriverNotify(t),
+		tenderGuard:         &recordingTenderGuard{},
+		workerRepo:          knownWorkers(t),
+		tractorRepo:         knownTractors(t),
 		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
 		db:                  dbtest.NopConnection{},
@@ -425,6 +450,44 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		"Trailer TRL-100 is currently located at Madison Yard which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer",
 		err.Error(),
 	)
+}
+
+func quietDriverNotify(t *testing.T) *drivernotificationservice.Service {
+	t.Helper()
+
+	return drivernotificationservice.New(drivernotificationservice.Params{
+		Logger:        zap.NewNop(),
+		WorkerRepo:    knownWorkers(t),
+		Notifications: notificationtest.Discarding(),
+		Templates:     documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
+	})
+}
+
+func knownWorkers(t *testing.T) *workerportsmock.MockWorkerRepository {
+	t.Helper()
+
+	workers := workerportsmock.NewMockWorkerRepository(t)
+	workers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&worker.Worker{}, nil).Maybe()
+
+	return workers
+}
+
+func knownTractors(t *testing.T) *tractorportsmock.MockTractorRepository {
+	t.Helper()
+
+	tractors := tractorportsmock.NewMockTractorRepository(t)
+	tractors.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tractor.Tractor{}, nil).Maybe()
+
+	return tractors
+}
+
+func knownTrailers(t *testing.T) *trailerportsmock.MockTrailerRepository {
+	t.Helper()
+
+	trailers := trailerportsmock.NewMockTrailerRepository(t)
+	trailers.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&trailer.Trailer{}, nil).Maybe()
+
+	return trailers
 }
 
 func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
@@ -472,7 +535,16 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("Worker not found within your organization")).
 		Once()
 
+	tractorRepo := tractorportsmock.NewMockTractorRepository(t)
+	tractorRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("tractorports.GetTractorByIDRequest")).
+		Return(&tractor.Tractor{}, nil).
+		Once()
+
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		trailerRepo:  knownTrailers(t),
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
@@ -480,6 +552,7 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 		shipmentRepo: shipmentRepo,
 		holdRepo:     holdRepo,
 		workerRepo:   workerRepo,
+		tractorRepo:  tractorRepo,
 		coordinator:  shipmentstate.NewCoordinator(),
 	}
 
@@ -585,6 +658,11 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		Once()
 
 	svc := &service{
+		driverNotify:        quietDriverNotify(t),
+		tenderGuard:         &recordingTenderGuard{},
+		workerRepo:          knownWorkers(t),
+		tractorRepo:         knownTractors(t),
+		trailerRepo:         knownTrailers(t),
 		orgRepo:             assetOperationsOrgRepo(t, tenantInfo, true),
 		l:                   zap.NewNop(),
 		db:                  dbtest.NopConnection{},
@@ -705,6 +783,11 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 		Once()
 
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -782,6 +865,11 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		Once()
 
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -829,6 +917,11 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		Once()
 
 	svc := &service{
+		driverNotify: quietDriverNotify(t),
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -1062,6 +1155,10 @@ func newAssignToMoveService(
 		Once()
 
 	return &service{
+		driverNotify: quietDriverNotify(t),
+		workerRepo:   knownWorkers(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},

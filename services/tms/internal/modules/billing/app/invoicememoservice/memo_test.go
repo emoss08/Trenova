@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -347,17 +348,23 @@ func newMemoFixture(t *testing.T, number string) *memoFixture {
 			},
 		),
 	}
+	adjustmentControls := tenantportsmock.NewMockInvoiceAdjustmentControlRepository(t)
+	adjustmentControls.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no adjustment control")).
+		Maybe()
 	f.svc.posting = invoicepostingservice.New(invoicepostingservice.Params{
-		Logger:            zap.NewNop(),
-		DB:                invoiceservicetest.FakeTx{},
-		Repo:              f.repo,
-		BillingQueueRepo:  f.queueRepo,
-		CustomerRepo:      f.customerRepo,
-		BillingRepo:       f.billingRepo,
-		Validator:         f.svc.validator,
-		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: number},
-		AuditService:      &mocks.NoopAuditService{},
-		Realtime:          &mocks.NoopRealtimeService{},
+		Logger:             zap.NewNop(),
+		AdjustmentCtrlRepo: adjustmentControls,
+		DB:                 invoiceservicetest.FakeTx{},
+		Repo:               f.repo,
+		BillingQueueRepo:   f.queueRepo,
+		CustomerRepo:       f.customerRepo,
+		BillingRepo:        f.billingRepo,
+		Validator:          f.svc.validator,
+		SequenceGenerator:  testutil.TestSequenceGenerator{SingleValue: number},
+		AuditService:       &mocks.NoopAuditService{},
+		Realtime:           &mocks.NoopRealtimeService{},
 	})
 
 	return f

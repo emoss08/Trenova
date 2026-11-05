@@ -465,8 +465,9 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 		Maybe()
 
 	calculator := newCalculator(t, Params{
-		Logger:     zap.NewNop(),
-		RateEngine: engine,
+		Logger:        zap.NewNop(),
+		RateEngine:    engine,
+		AgreementRepo: agreementRepoFor(t, agreement),
 	})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 

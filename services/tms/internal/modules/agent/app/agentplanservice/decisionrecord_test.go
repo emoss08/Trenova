@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,26 +59,4 @@ func TestDecide_ARejectionRecordsItsNoteAndNoDigestEvenWhenOneIsSent(t *testing.
 	assert.Equal(t, agentplan.PlanStatusRejected, h.plans.statuses[0].Status)
 	assert.Equal(t, "Hold off. I'm calling Tyson myself.", h.plans.statuses[0].Approval.Note)
 	assert.Empty(t, h.plans.statuses[0].Approval.PreviewDigest)
-}
-
-func TestCommitApproval_KeepsTheDigestStoredAtApprovalWhenNoPreviewSettlesAtCommit(t *testing.T) {
-	t.Parallel()
-
-	h := newHarness(t, 2, false)
-	commitsAt := int64(1_800_000_000)
-	h.plans.plan.Status = agentplan.PlanStatusApproving
-	h.plans.plan.CommitsAt = &commitsAt
-	h.plans.plan.ApprovalPreviewDigest = "sha256:stored-at-approval"
-
-	err := h.svc.CommitApproval(t.Context(), &agentapprovalports.CommitApprovalRequest{
-		OrganizationID:  h.req.TenantInfo.OrgID,
-		BusinessUnitID:  h.req.TenantInfo.BuID,
-		DecidedByUserID: h.actor.UserID,
-		PlanID:          h.plans.plan.ID,
-		CommitsAt:       commitsAt,
-	})
-	require.NoError(t, err)
-
-	require.NotEmpty(t, h.plans.statuses)
-	assert.Equal(t, "sha256:stored-at-approval", h.plans.statuses[0].Approval.PreviewDigest)
 }

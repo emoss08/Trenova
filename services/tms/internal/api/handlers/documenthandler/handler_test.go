@@ -1199,11 +1199,9 @@ func TestDocumentHandler_PageImage_InvalidPageNumber(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 	for _, page := range []string{"0", "-1", "first"} {
-		deps := setupHandler(
-			t,
-			documentportsmock.NewMockDocumentRepository(t),
-			&mockStorageClient{},
-		)
+		repo := documentportsmock.NewMockDocumentRepository(t)
+		repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(previewDocument(docID), nil)
+		deps := setupHandler(t, repo, &mockStorageClient{})
 
 		ginCtx := servePageImage(
 			t, deps, "/api/v1/documents/"+docID.String()+"/pages/"+page+"/image/", nil,
@@ -2127,7 +2125,7 @@ func TestDocumentHandler_Reject_Success(t *testing.T) {
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
-		Once()
+		Times(2)
 	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
 		return doc.ID == docID &&
 			doc.Status == document.StatusRejected &&
@@ -2162,7 +2160,7 @@ func TestDocumentHandler_Reject_RequiresReason(t *testing.T) {
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
-		Once()
+		Times(2)
 
 	ginCtx := serveDocumentReview(
 		t,
@@ -2185,7 +2183,7 @@ func TestDocumentHandler_Approve_ClearsRejection(t *testing.T) {
 	rejected.RejectionReason = "Blurred"
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Once()
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Times(2)
 	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
 		return doc.Status == document.StatusActive &&
 			doc.ApprovedByID == testutil.TestUserID &&
@@ -2214,7 +2212,7 @@ func TestDocumentHandler_Approve_RefusesSupersededVersion(t *testing.T) {
 	superseded.IsCurrentVersion = false
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Once()
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Times(2)
 
 	ginCtx := serveDocumentReview(t, repo, "/api/v1/documents/"+docID.String()+"/approve/", nil)
 

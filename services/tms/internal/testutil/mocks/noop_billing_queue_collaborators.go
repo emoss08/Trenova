@@ -47,3 +47,10 @@ func (*NoopDetentionBilling) HoldsForShipments(
 ) ([]*detention.DetentionOccurrence, error) {
 	return nil, nil
 }
+
+func (*NoopDetentionBilling) SyncInvoiceBilling(
+	context.Context,
+	*detentionports.SyncDetentionInvoiceBillingRequest,
+) error {
+	return nil
+}

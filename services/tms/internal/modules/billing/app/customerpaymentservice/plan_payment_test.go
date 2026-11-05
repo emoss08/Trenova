@@ -143,7 +143,11 @@ func newPaymentWorld(
 		journalRepo:    journalRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator: NewValidator(
-			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
+			ValidatorParams{
+				InvoiceRepo:        invoiceRepo,
+				FiscalPeriodRepo:   fiscalRepo,
+				AdjustmentCtrlRepo: shortPaysUnderThreshold(t, mock.Anything),
+			},
 		),
 		auditService: &mocks.NoopAuditService{},
 	})

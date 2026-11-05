@@ -309,23 +309,6 @@ func TestVoidInvoicePostedExecutedReversalIsNotPending(t *testing.T) {
 	assert.False(t, result.PendingApproval)
 }
 
-func TestVoidInvoicePostedWithoutAdjustmentEngineIsRefused(t *testing.T) {
-	t.Parallel()
-
-	f := invoiceservicetest.NewFixture()
-	repo := invoiceportsmock.NewMockInvoiceRepository(t)
-	repo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(f.Invoice(invoice.StatusPosted), nil).
-		Once()
-
-	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
-		VoidInvoice(t.Context(), f.Request(invoice.VoidDispositionDoNotRebill), f.Actor)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "adjustments are unavailable")
-}
-
 func TestVoidInvoiceAlreadyVoidedIsRefused(t *testing.T) {
 	t.Parallel()
 

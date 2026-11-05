@@ -95,6 +95,11 @@ func previewAssignmentServiceWith(
 	holdRepo.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
 
 	svc := &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		orgRepo: capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
 			TenantInfo:             tenantInfo,
 			Lock:                   tenantports.CapabilityLockNone,

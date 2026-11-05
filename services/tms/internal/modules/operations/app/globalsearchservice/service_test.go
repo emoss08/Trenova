@@ -46,13 +46,16 @@ func page(documents ...map[string]any) *customerports.SearchPage {
 func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 	repo := customerportsmock.NewMockSearchRepository(t)
 	svc := &Service{
-		balances:    &fakeBalances{},
-		views:       searchViews(),
-		logger:      zaptest.NewLogger(t),
-		config:      &searchconfig.Config{},
-		searchRepo:  repo,
-		permissions: permissionportsmock.NewMockPermissionEngine(t),
-		visibility:  everyRecordVisible{},
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       &searchconfig.Config{},
+		searchRepo:   repo,
+		permissions:  permissionportsmock.NewMockPermissionEngine(t),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{})
@@ -85,9 +88,12 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 		Once()
 
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,
 			Meilisearch: searchconfig.MeilisearchConfig{
@@ -147,9 +153,12 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 		Once()
 
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,
 			Meilisearch: searchconfig.MeilisearchConfig{
@@ -207,9 +216,12 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 		Once()
 
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,
 			Meilisearch: searchconfig.MeilisearchConfig{

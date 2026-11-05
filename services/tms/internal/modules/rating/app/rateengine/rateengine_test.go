@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
@@ -165,6 +166,7 @@ func setup(t *testing.T) *deps {
 		exchange:      d.exchange,
 		routingGuides: d.guides,
 		hydrator:      noHydration{},
+		modeProfile:   &stubModeProfiles{err: modeprofileports.ErrNoModeProfileConfigured},
 		now:           func() int64 { return testNow },
 	}
 
@@ -711,6 +713,9 @@ func (noHydration) HydrateShipment(context.Context, *ratequoteports.HydrateShipm
 	return nil
 }
 
-func (noHydration) HydrateShipments(context.Context, *ratequoteports.HydrateShipmentsRequest) error {
+func (noHydration) HydrateShipments(
+	context.Context,
+	*ratequoteports.HydrateShipmentsRequest,
+) error {
 	return nil
 }

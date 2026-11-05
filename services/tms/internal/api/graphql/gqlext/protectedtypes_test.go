@@ -128,7 +128,6 @@ func protectedTypes() map[string]protectedType {
 					NetMargin:       amount("150"),
 				}
 			},
-			jsonNames: intelligenceJSONNames,
 		},
 		"DetentionPreviewResult": {
 			entity: func() protectedfield.Withholder {

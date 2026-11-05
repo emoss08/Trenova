@@ -3,6 +3,8 @@ package latechargeservice
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
@@ -19,12 +21,12 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
-	"testing"
 )
 
 const day = int64(86400)
@@ -502,4 +504,28 @@ func TestAssessReadsCustomersAPageAtATime(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result.Customers, 1)
+}
+
+func TestAssessRefusesARealRunDatedInTheFuture(t *testing.T) {
+	t.Parallel()
+
+	f := newLateChargeFixture(
+		t,
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeDisabled,
+		},
+	)
+
+	_, err := f.svc.Assess(
+		t.Context(),
+		&latechargeports.LateChargeAssessmentRequest{
+			TenantInfo: f.tenantInfo,
+			AsOfDate:   timeutils.NowUnix() + 90*timeutils.SecondsPerDay,
+		},
+		f.actor,
+	)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "future")
+	f.repo.AssertNotCalled(t, "ListCandidates", mock.Anything, mock.Anything)
 }

@@ -626,3 +626,58 @@ func TestHumanReason(t *testing.T) {
 	)
 	assert.Equal(t, "Wrong trailer", HumanReason("Wrong trailer"))
 }
+
+func TestRecordCorrection_IsOfferedUnlessThePersonManagesSharedMemory(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct {
+		manages bool
+		status  agentmemory.MemoryStatus
+	}{
+		"a manager keeps it":        {manages: true, status: agentmemory.MemoryStatusActive},
+		"anyone else only offers it": {manages: false, status: agentmemory.MemoryStatusSuggested},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
+			svc.permissions = &fakePermissions{manages: tc.manages}
+
+			memory, err := svc.RecordCorrection(
+				t.Context(),
+				proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"}),
+				&agentdecision.AgentDecision{
+					Decision:        agentdecision.DecisionRejected,
+					ReasonCode:      "Always use the night dispatcher",
+					DecidedByUserID: pulid.MustNew("usr_"),
+				},
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, memory)
+			assert.Equal(t, tc.status, memory.Status)
+			assert.Equal(t, agentmemory.MemoryScopeOrganization, memory.Scope)
+		})
+	}
+}
+
+func TestRecordCorrection_KeepsTheTaintOfTheProposal(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
+	svc.permissions = &fakePermissions{manages: true}
+	p := proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"})
+	p.Tainted = true
+
+	memory, err := svc.RecordCorrection(t.Context(), p, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionModified,
+		Modifications:   map[string]any{"workerId": "wrk_b"},
+		DecidedByUserID: pulid.MustNew("usr_"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, memory)
+	assert.True(t, memory.Tainted)
+	require.NotNil(t, memory.TaintRunID)
+	assert.Equal(t, p.RunID, *memory.TaintRunID)
+}

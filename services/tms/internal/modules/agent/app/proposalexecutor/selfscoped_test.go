@@ -225,3 +225,62 @@ func TestMergeParams_KeepsTheStoredOwner(t *testing.T) {
 	)
 	assert.NotContains(t, unowned, agenttoolports.SelfScopeOwnerParam)
 }
+
+type personGrantTool struct {
+	*recordingTool
+}
+
+func (t personGrantTool) Policy() agenttoolports.ToolPolicy {
+	policy := t.recordingTool.Policy()
+	policy.PersonAlsoNeeds = []agenttoolports.ToolGrant{
+		{Resource: permission.ResourceDetention, Operation: permission.OpUpdate},
+	}
+
+	return policy
+}
+
+type grantsHeld map[string]bool
+
+func (g grantsHeld) Check(
+	_ context.Context,
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{
+		Allowed: g[req.Resource+":"+string(req.Operation)],
+	}, nil
+}
+
+func TestAssertActorMayRun_APersonNeedsWhatThePageAsksOfThem(t *testing.T) {
+	t.Parallel()
+
+	tool := personGrantTool{&recordingTool{}}
+	own := tool.Policy().Resource.String() + ":" + string(tool.Policy().Operation)
+	person := &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   pulid.MustNew("usr_"),
+		UserID:        pulid.MustNew("usr_"),
+	}
+
+	executor := &Service{permissions: grantsHeld{own: true}}
+	require.Error(t, executor.assertActorMayRun(t.Context(), tool, person))
+
+	executor.permissions = grantsHeld{own: true, "detention:update": true}
+	require.NoError(t, executor.assertActorMayRun(t.Context(), tool, person))
+}
+
+func TestAssertActorMayRun_AnAgentIsNotAskedAPersonsGrants(t *testing.T) {
+	t.Parallel()
+
+	tool := personGrantTool{&recordingTool{}}
+	own := tool.Policy().Resource.String() + ":" + string(tool.Policy().Operation)
+	executor := &Service{permissions: grantsHeld{own: true}}
+
+	require.NoError(t, executor.assertActorMayRun(
+		t.Context(),
+		tool,
+		&permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeAgent,
+			PrincipalID:   pulid.MustNew("agdef_"),
+		},
+	))
+}

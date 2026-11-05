@@ -201,11 +201,15 @@ func TestWaiveRequirement_DoesNotAuditARejectedWaiver(t *testing.T) {
 func TestCreatePermit_SurvivesWithoutAnAuditService(t *testing.T) {
 	entity := activePermit()
 
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
+	shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Shipment not found")).Maybe()
 	svc := &service{
 		permitRepo: &permitRepoStub{
 			create: func(e *permit.Permit) (*permit.Permit, error) { return e, nil },
 		},
-		l: zap.NewNop(),
+		shipmentRepo: shipments,
+		l:            zap.NewNop(),
 	}
 
 	created, err := svc.CreatePermit(t.Context(), entity, actor())

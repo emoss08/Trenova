@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -182,7 +184,8 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 			Logger:    zap.NewNop(),
 			AppConfig: &cfg.App,
 		}),
-		Logger: zap.NewNop(),
+		Logger:  zap.NewNop(),
+		Metrics: metricstest.Disabled(),
 	})
 
 	router := gin.New()

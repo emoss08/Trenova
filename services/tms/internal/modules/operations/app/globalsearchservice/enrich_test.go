@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -60,6 +62,14 @@ func (f *fakeBalances) ListCustomerOpenBalances(
 ) ([]*kernelports.CustomerOpenBalance, error) {
 	f.called = true
 	return f.balances, nil
+}
+
+type fakeStates struct {
+	usstateports.UsStateRepository
+}
+
+func (fakeStates) GetByIDs(context.Context, []pulid.ID) ([]*usstate.UsState, error) {
+	return nil, nil
 }
 
 type fakeLabels struct {
@@ -195,10 +205,12 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 	}
 
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
-		config:   indexConfig(),
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"customers": page(
 				map[string]any{"id": customerID.String(), "name": "Acme Foods", "code": "ACME"},
@@ -258,10 +270,12 @@ func TestSearchNamesNoShipmentWithoutShipmentAccess(t *testing.T) {
 	reader := &fakeCardReader{}
 
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
-		config:   indexConfig(),
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": page(
 				map[string]any{"id": workerID.String(), "first_name": "Leon", "last_name": "Park"},
@@ -296,6 +310,8 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 		{CustomerID: customerID, OpenMinor: 4821050, OverdueMinor: 1701000, CurrencyCode: "USD"},
 	}}
 	svc := &Service{
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
 		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
@@ -319,6 +335,8 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 
 	denied := &fakeBalances{}
 	svc = &Service{
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
 		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
@@ -351,6 +369,7 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 	}}
 
 	svc := &Service{
+		states:   fakeStates{},
 		balances: &fakeBalances{},
 		views:    searchViews(),
 		logger:   zaptest.NewLogger(t),
@@ -400,10 +419,12 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 
 func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 	svc := &Service{
-		balances: &fakeBalances{},
-		views:    searchViews(),
-		logger:   zaptest.NewLogger(t),
-		config:   indexConfig(),
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": {
 				Documents: []map[string]any{
@@ -447,6 +468,8 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
 		balances:     &fakeBalances{},
 		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
@@ -475,13 +498,16 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 
 func TestSearchDoesNotBrowseEverythingOnABlankQuery(t *testing.T) {
 	svc := &Service{
-		balances:    &fakeBalances{},
-		views:       searchViews(),
-		logger:      zaptest.NewLogger(t),
-		config:      indexConfig(),
-		searchRepo:  customerportsmock.NewMockSearchRepository(t),
-		permissions: permissionportsmock.NewMockPermissionEngine(t),
-		visibility:  everyRecordVisible{},
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
+		searchRepo:   customerportsmock.NewMockSearchRepository(t),
+		permissions:  permissionportsmock.NewMockPermissionEngine(t),
+		visibility:   everyRecordVisible{},
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{

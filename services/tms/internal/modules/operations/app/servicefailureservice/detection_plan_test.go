@@ -89,6 +89,7 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		Once()
 
 	fixture.svc = &service{
+		commentService: quietComments(t),
 		watchtower:     mocks.NoopWatchtowerProjector{},
 		l:              zap.NewNop(),
 		repo:           fixture.repo,

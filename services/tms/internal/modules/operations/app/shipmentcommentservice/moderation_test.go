@@ -66,6 +66,10 @@ func newCommentService(
 		audit:        auditportsmock.NewMockAuditService(t),
 		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	}
+	m.userRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.User{Name: "Author"}, nil).
+		Maybe()
 	m.docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
 		Return([]*document.Document{}, nil).

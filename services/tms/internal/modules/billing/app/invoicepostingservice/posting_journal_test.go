@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -136,6 +137,8 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
+		billingRepo:       noBillingControl{},
+		permissions:       &mocks.AllowAllPermissionEngine{},
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		fiscalPeriodRepo:  fiscalPeriodRepo,
@@ -196,6 +199,8 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
+		billingRepo:       noBillingControl{},
+		permissions:       &mocks.AllowAllPermissionEngine{},
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		fiscalPeriodRepo:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
@@ -242,6 +247,8 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
+		billingRepo:       noBillingControl{},
+		permissions:       &mocks.AllowAllPermissionEngine{},
 		journalRepo:       journalRepo,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		fiscalPeriodRepo:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),

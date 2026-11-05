@@ -174,7 +174,7 @@ func TestOpenImportAssistantThread_NeedsTheDocumentAndTheAssistant(t *testing.T)
 
 	for name, granted := range map[string]map[string]bool{
 		"no document":  {"assistant:create": true},
-		"no assistant": {"document:read": true, "assistant:read": true},
+		"no assistant": {"document:read": true, "shipment:read": true, "assistant:read": true},
 	} {
 		assistant := &pageAssistant{}
 		recorder := openImportThread(t, &grantedEngine{granted: granted}, assistant,

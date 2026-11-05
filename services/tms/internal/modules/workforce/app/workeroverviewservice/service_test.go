@@ -54,9 +54,17 @@ func (f *fakeTraining) Summary(
 }
 
 type fakeSafety struct {
-	calls int
-	card  *safetyscorecard.SafetyScorecard
-	err   error
+	calls             int
+	withoutDiscipline int
+	card              *safetyscorecard.SafetyScorecard
+	err               error
+}
+
+func (f *fakeSafety) ScorecardWithoutDiscipline(
+	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
+) (*safetyscorecard.SafetyScorecard, error) {
+	f.withoutDiscipline++
+	return f.card, f.err
 }
 
 func (f *fakeSafety) Scorecard(
@@ -428,3 +436,26 @@ func TestRosterAttention_CountsLeaveAcrossTheReadersTeam(t *testing.T) {
 	assert.True(t, leave.req.CertificationOutstandingOnly)
 	assert.Nil(t, attention.ReviewsAwaitingSignOff)
 }
+
+func TestGet_KeepsDisciplineOffTheCardOfAReaderWhoCannotSeeIt(t *testing.T) {
+	t.Parallel()
+
+	h := newOverviewHarness(t)
+
+	h.get(t, workeroverviewservice.Sections{Safety: true})
+
+	assert.Equal(t, 1, h.safety.withoutDiscipline)
+	assert.Zero(t, h.safety.calls)
+}
+
+func TestGet_ReadsDisciplineForAReaderWhoMaySeeIt(t *testing.T) {
+	t.Parallel()
+
+	h := newOverviewHarness(t)
+
+	h.get(t, workeroverviewservice.Sections{Safety: true, Discipline: true})
+
+	assert.Equal(t, 1, h.safety.calls)
+	assert.Zero(t, h.safety.withoutDiscipline)
+}
+

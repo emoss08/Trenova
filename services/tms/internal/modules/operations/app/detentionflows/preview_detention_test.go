@@ -22,6 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -282,14 +284,26 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 		Return(&documenttemplateports.RenderedDocument{PDF: []byte("%PDF-1.7")}, nil).
 		Maybe()
 
+	documentTypes := documenttypeportsmock.NewMockDocumentTypeRepository(t)
+	documentTypes.EXPECT().
+		GetByCode(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Document type not found")).
+		Maybe()
+
 	w := previewWiring(repo)
+	w.DocumentTypeRepo = documentTypes
 	w.CustomerRepo = &noticeCustomers{recipients: "ap@acme.test, ops@acme.test"}
 	w.NoticeRepo = &previewNoticeRepo{}
 	w.PolicyRepo = stubPolicyRepo{
 		policy: &detentionpolicy.DetentionPolicy{ID: policyID, AttachNoticePDF: true},
 	}
 	w.Templates = resolver
-	w.ContextBuilder = &detentionnoticerender.ContextBuilder{}
+	w.ContextBuilder = detentionnoticerender.NewContextBuilder(
+		detentionnoticerender.ContextBuilderParams{
+			OccurrenceRepo: repo,
+			OrgRepo:        previewOrganizations{},
+		},
+	)
 	w.EmailService = mailer
 	w.Senders = noticeSenders{}
 	svc := wire(w)

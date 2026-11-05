@@ -219,6 +219,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 		followUps:  agenttest.QuietFollowUps{},
 		previews:   &fakePreviews{},
 		audit:      &recordedAudit{},
+		workflows:  &unreachableWindow{},
 	}
 
 	return h

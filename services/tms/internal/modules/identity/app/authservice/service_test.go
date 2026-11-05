@@ -1,6 +1,7 @@
 package authservice
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -24,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,6 +36,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type roleActivationPolicy struct {
+	required bool
+}
+
+func (p roleActivationPolicy) RoleActivationRequired(
+	context.Context,
+	pagination.TenantInfo,
+) (bool, error) {
+	return p.required, nil
+}
 
 type testDeps struct {
 	userRepo    *tenantportsmock.MockUserRepository
@@ -62,6 +76,10 @@ func setupTest(t *testing.T) *testDeps {
 		rbacRepo:   &rbactest.Repository{},
 		authEvents: events,
 		throttle:   sessiontest.OpenThrottle{},
+		plans:      planservice.NewUnlimited(),
+		mfa:        &fakeMFA{},
+		turns:      &turnStopper{},
+		activation: roleActivationPolicy{},
 		tokens:     testTokens,
 		rotator:    sessionrotation.New(sessionrotation.Params{Sessions: sr, Tokens: testTokens}),
 		policy:     testSessionPolicy,
@@ -152,6 +170,7 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	ctx := t.Context()
 	usr := newTestUser(t)
 	roleID := pulid.MustNew("rol_")
+	deps.svc.activation = roleActivationPolicy{required: true}
 	deps.svc.rbacRepo = &rbactest.Repository{
 		AuthorizedRoles: []*rbac.Role{
 			{

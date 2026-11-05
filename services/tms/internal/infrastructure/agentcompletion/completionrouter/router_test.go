@@ -299,11 +299,11 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 			`"evidence":[{"type":"doc","id":"d1"}]}]}`)
 
 	weak := openAIChatProvider("weak-local", garbage.URL, 10)
-	weak.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
+	weak.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 	weak.Trusted = true
 
 	strong := openAIChatProvider("hosted", good.URL, 20)
-	strong.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
+	strong.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 	strong.Trusted = true
 
 	svc := newTestService(t, weak, strong)
@@ -313,7 +313,7 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aitask.TaskBillingDiagnosis,
+		Task:   aitask.TaskEvaluationJudge,
 		System: "Diagnose the blocker.",
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{

@@ -54,6 +54,11 @@ func brokerageOnlyService(
 	})
 
 	svc := &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,

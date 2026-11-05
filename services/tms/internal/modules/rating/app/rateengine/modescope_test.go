@@ -185,22 +185,6 @@ func TestQuoteRecordsTheModeItRatedUnder(t *testing.T) {
 		result.Quote.Trace.Inputs.ServiceModel)
 }
 
-// An engine wired without the mode service at all — a test harness, a path that
-// predates this — must not panic. It rates as though nothing is configured.
-func TestMissingModeServiceBehavesAsNothingConfigured(t *testing.T) {
-	t.Parallel()
-
-	d := setup(t)
-	d.svc.modeProfile = nil
-
-	expectRules(d, perMileRule("2.15", 100))
-
-	result, err := d.svc.RateShipment(t.Context(), rateRequest(testShipment()))
-
-	require.NoError(t, err)
-	assert.Equal(t, ratequote.OutcomeRated, result.Outcome)
-}
-
 // The formula template a shipment carries is the customer's rating method. On
 // the buy side, falling back to it would pay the carrier whatever the customer
 // is charged — a load sold at $2,000 would settle at $2,000 and the margin

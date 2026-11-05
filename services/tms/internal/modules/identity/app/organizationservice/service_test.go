@@ -250,6 +250,12 @@ func setupTest(t *testing.T) *testDeps {
 	return &testDeps{repo: repo, svc: svc}
 }
 
+func (d *testDeps) expectStoredOrganization(entity *tenant.Organization) {
+	d.repo.On("GetByID", mock.Anything, tenantports.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: entity.ID, BuID: entity.BusinessUnitID},
+	}).Return(entity, nil)
+}
+
 func newTestOrganization() *tenant.Organization {
 	return &tenant.Organization{
 		ID:             pulid.MustNew("org_"),
@@ -391,6 +397,7 @@ func TestUpdate_Success(t *testing.T) {
 	updated.ID = entity.ID
 	updated.Name = "Updated Organization"
 
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(updated, nil)
 
 	result, err := deps.svc.Update(ctx, entity)
@@ -431,6 +438,7 @@ func TestUpdate_RepoError(t *testing.T) {
 	entity := newTestOrganization()
 
 	repoErr := errors.New("database error")
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(nil, repoErr)
 
 	result, err := deps.svc.Update(ctx, entity)
@@ -474,6 +482,7 @@ func TestUpdate_RepoUniqueConstraintNameMapped(t *testing.T) {
 			entity := newTestOrganization()
 
 			repoErr := &pgconn.PgError{Code: "23505", ConstraintName: tt.constraint}
+			deps.expectStoredOrganization(entity)
 			deps.repo.On("Update", mock.Anything, entity).Return(nil, repoErr)
 
 			result, err := deps.svc.Update(ctx, entity)
@@ -498,6 +507,7 @@ func TestUpdate_RepoUniqueConstraintUnknownUnchanged(t *testing.T) {
 	entity := newTestOrganization()
 
 	repoErr := &pgconn.PgError{Code: "23505", ConstraintName: "idx_unknown"}
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(nil, repoErr)
 
 	result, err := deps.svc.Update(ctx, entity)

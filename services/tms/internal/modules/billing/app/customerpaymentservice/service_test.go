@@ -625,7 +625,11 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 		journalRepo:    journalRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator: NewValidator(
-			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
+			ValidatorParams{
+				InvoiceRepo:        invoiceRepo,
+				FiscalPeriodRepo:   fiscalRepo,
+				AdjustmentCtrlRepo: shortPaysUnderThreshold(t, orgID),
+			},
 		),
 		auditService: &mocks.NoopAuditService{},
 	})
