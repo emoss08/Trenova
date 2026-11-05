@@ -297,15 +297,16 @@ postgres:
   database: trenova
   # Owns the tables; migrations and seeds run as it.
   owner: trenova
-  # The roles the application signs in as. With rlsMode enforce, appRole is
-  # bound by row-level security and systemRole serves only the code paths
-  # that declare dbscope.WithSystem; both are made by the release Job.
+  # The roles the application signs in as. appRole is bound by row-level
+  # security and systemRole serves only the code paths that declare
+  # dbscope.WithSystem; both are made by the release Job. The owner is a
+  # superuser, so nothing but the release Job signs in as it.
   appRole: trenova_app
   systemRole: trenova_system
   temporalRole: temporal
   gtcRole: trenova_gtc
-  # enforce (production), observe or off; see
-  # docs/engineering/row-level-security.md. Off connects as the owner.
+  # enforce (production) or observe; see
+  # docs/engineering/row-level-security.md.
   rlsMode: enforce
   # A basic-auth Secret you manage: username and password (the owner), and
   # appPassword, systemPassword, temporalPassword and gtcPassword, letters

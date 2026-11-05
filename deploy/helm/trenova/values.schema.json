@@ -462,8 +462,7 @@
         "rlsMode": {
           "enum": [
             "enforce",
-            "observe",
-            "off"
+            "observe"
           ]
         },
         "existingSecret": {

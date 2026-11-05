@@ -134,8 +134,7 @@ in order:
    Secret, so a restored cluster takes the release's passwords.
 2. **migrate**: `trenova-db up`, as the owner: the migrations and every reference seed that
    changed.
-3. **rls-roles**: `trenova db rls provision-roles` creates the application and system roles
-   (skipped with `postgres.rlsMode: off`).
+3. **rls-roles**: `trenova db rls provision-roles` creates the application and system roles.
 4. **publication**: scopes GTC's publication to the tables
    [`deploy/gtc/sinks.yaml`](../../deploy/gtc/sinks.yaml) routes, and lets GTC's role read them.
 5. **bootstrap**: `trenova db bootstrap`, when `bootstrap.adminEmail` is set. Later runs are
@@ -183,8 +182,8 @@ CloudNativePG runs the cluster `trenova-postgres` from the Trenova image through
 | `trenova_gtc` | yes, replication | GTC: logical replication and its backfill reads |
 
 `postgres.rlsMode` defaults to `enforce`: PostgreSQL itself refuses another organization's
-rows ([row-level security](../engineering/row-level-security.md)). `off` connects the API and
-worker as the owner, as the Compose stack does.
+rows ([row-level security](../engineering/row-level-security.md)). `observe` logs what would be
+refused. There is no mode that signs the API and worker in as the owner, which is a superuser.
 
 ## Network policies
 

@@ -4,7 +4,7 @@ order the database needs it:
 
   prepare        superuser: the owner, Temporal's and GTC's roles, the temporal databases
   migrate        trenova-db up, as the owner: migrations and reference seeds
-  rls-roles      the application and system roles (rlsMode enforce/observe)
+  rls-roles      the application and system roles
   publication    superuser: GTC's publication and its grants
   bootstrap      the first organization and administrator, when configured
 
@@ -84,7 +84,6 @@ spec:
             {{- toYaml .Values.tms.release.resources | nindent 12 }}
           volumeMounts:
             {{- include "trenova.tmsVolumeMounts" . | nindent 12 }}
-        {{- if include "trenova.rlsEnforced" . }}
         - name: rls-roles
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.image) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.tms.image }}
@@ -101,7 +100,6 @@ spec:
             {{- toYaml .Values.tms.release.resources | nindent 12 }}
           volumeMounts:
             {{- include "trenova.tmsVolumeMounts" . | nindent 12 }}
-        {{- end }}
         - name: publication
           image: {{ include "trenova.image" (dict "root" . "image" .Values.postgres.image) }}
           command: [sh, /files/db-publication.sh]

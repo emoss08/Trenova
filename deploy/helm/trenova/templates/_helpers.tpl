@@ -153,10 +153,6 @@ storageClassName: {{ .storageClass | quote }}
 {{- end -}}
 {{- end -}}
 
-{{- define "trenova.rlsEnforced" -}}
-{{- if ne .Values.postgres.rlsMode "off" }}true{{ end -}}
-{{- end -}}
-
 {{/* A secret key as an env var. Call with (dict "name" "X" "secret" s "key" k). */}}
 {{- define "trenova.secretEnv" -}}
 - name: {{ .name }}
@@ -176,14 +172,10 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{- $db := include "trenova.dbSecret" . -}}
 - name: APP_ENV
   value: production
-{{- if include "trenova.rlsEnforced" . }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_PASSWORD" "secret" $db "key" "appPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_SYSTEM_PASSWORD" "secret" $db "key" "systemPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEYID" "secret" $app "key" "rlsScopeKeyId") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEY" "secret" $app "key" "rlsScopeKey") }}
-{{- else }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_PASSWORD" "secret" $db "key" "password") }}
-{{- end }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_CACHE_PASSWORD" "secret" $app "key" "redisPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SEARCH_MEILISEARCH_APIKEY" "secret" $app "key" "meiliMasterKey") }}
 {{- if .Values.minio.enabled }}
@@ -209,9 +201,7 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{/* The owner's password, for the release Job's steps alone: migrations and
 role provisioning run as it (database.migrator), and nothing else needs it. */}}
 {{- define "trenova.migratorEnv" -}}
-{{- if include "trenova.rlsEnforced" . -}}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_MIGRATOR_PASSWORD" "secret" (include "trenova.dbSecret" .) "key" "password") }}
-{{- end -}}
 {{- end -}}
 
 {{/* What a TMS container mounts: the rendered config and the imaging client
@@ -280,14 +270,10 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
     limits: { memory: 64Mi }
 {{- end -}}
 
-{{/* The TMS's own role, signed in: the release Job has made it (enforce) or
-the cluster exists (off). The processes then wait for the schema themselves. */}}
+{{/* The TMS's own role, signed in: the release Job has made it. The processes
+then wait for the schema themselves. */}}
 {{- define "trenova.waitForTmsRole" -}}
-{{- if include "trenova.rlsEnforced" . -}}
 {{ include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.appRole "secret" (include "trenova.dbSecret" .) "key" "appPassword" "database" .Values.postgres.database "query" "SELECT 1" "why" "the application role (the release Job provisions it)") }}
-{{- else -}}
-{{ include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.owner "secret" (include "trenova.dbSecret" .) "key" "password" "database" .Values.postgres.database "query" "SELECT 1" "why" "PostgreSQL") }}
-{{- end -}}
 {{- end -}}
 
 {{- define "trenova.dnsEgress" -}}
