@@ -177,9 +177,10 @@ func (s *MonitoringServer) handleLiveness(w http.ResponseWriter, _ *http.Request
 
 func (s *MonitoringServer) databaseCheck(ctx context.Context) monitoringCheck {
 	if err := s.database.HealthCheck(ctx); err != nil {
+		s.logger.Warn("database health check failed", zap.Error(err))
 		return monitoringCheck{
 			Status:  "down",
-			Message: err.Error(),
+			Message: "database is unavailable",
 		}
 	}
 
@@ -203,7 +204,8 @@ func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
 	)
 	switch {
 	case err != nil:
-		issues = append(issues, "dead-letter backlog could not be read: "+err.Error())
+		s.logger.Warn("edi dead-letter count failed", zap.Error(err))
+		issues = append(issues, "dead-letter backlog could not be read")
 	case deadLettered > 0:
 		issues = append(issues, fmt.Sprintf(
 			"%d message(s) dead-lettered in the last 24h",
@@ -217,7 +219,8 @@ func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
 	)
 	switch {
 	case err != nil:
-		issues = append(issues, "quarantine backlog could not be read: "+err.Error())
+		s.logger.Warn("edi quarantine count failed", zap.Error(err))
+		issues = append(issues, "quarantine backlog could not be read")
 	case quarantined > 0:
 		issues = append(issues, fmt.Sprintf(
 			"%d inbound file(s) quarantined in the last 24h",
@@ -231,7 +234,8 @@ func (s *MonitoringServer) ediCheck(ctx context.Context) monitoringCheck {
 	)
 	switch {
 	case err != nil:
-		issues = append(issues, "mailbox poll status could not be read: "+err.Error())
+		s.logger.Warn("edi mailbox poll count failed", zap.Error(err))
+		issues = append(issues, "mailbox poll status could not be read")
 	case staleProfiles > 0:
 		issues = append(issues, fmt.Sprintf(
 			"%d polling profile(s) have not reached their mailbox in over %s",
