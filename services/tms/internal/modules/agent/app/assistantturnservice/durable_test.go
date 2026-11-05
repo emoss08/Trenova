@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,10 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
-
-type quietChapters struct{}
-
-func (quietChapters) Cue(context.Context, *assistantchapterports.ChapterTurnRequest) {}
 
 // recordingTurns remembers how a turn was closed, which is the thing worth
 // asserting when a start fails.
@@ -68,7 +64,7 @@ func newDurable(turns *recordingTurns) *Service {
 		l:        zap.NewNop(),
 		turns:    turns,
 		realtime: &mocks.NoopRealtimeService{},
-		chapters: quietChapters{},
+		chapters: agenttest.QuietChapters{},
 	}
 }
 

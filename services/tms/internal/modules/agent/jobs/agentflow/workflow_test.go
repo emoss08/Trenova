@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -28,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,6 +77,17 @@ type harnessParams struct {
 	) func(context.Context, converter.EncodedValues) (*ToolResult, error)
 }
 
+type quietObserver struct{}
+
+func (quietObserver) ObserveTool(
+	context.Context,
+	RunContext,
+	*agentruntimeports.ToolObservation,
+	kernelports.AssistantStreamEmitter,
+) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
+	return nil, nil, nil
+}
+
 func newHarness(t *testing.T, p harnessParams) *harness {
 	t.Helper()
 
@@ -94,6 +107,8 @@ func newHarness(t *testing.T, p harnessParams) *harness {
 		Runtime:   rt,
 		Steps:     p.ledger,
 		Delegates: p.delegates,
+		Observer:  quietObserver{},
+		Scopes:    agenttest.OpenReadScopes{},
 	})
 
 	env.RegisterActivity(acts)

@@ -292,12 +292,12 @@ func newDeskWorld() *deskWorld {
 	dispatch := &rbac.Role{ID: pulid.MustNew("rol_"), Name: "Dispatch"}
 
 	return &deskWorld{
-		svc: &Service{
+		svc: wired(&Service{
 			l:     zap.NewNop(),
 			repo:  repo,
 			runs:  &fakeRuns{},
 			roles: &fakeRoles{held: []*rbac.Role{billing}},
-		},
+		}),
 		repo:     repo,
 		avery:    pulid.MustNew("usr_"),
 		billing:  billing,

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -102,7 +103,7 @@ func newRelay(turns *stubTurns, reader *stubReader) *Service {
 		turns:    turns,
 		reader:   reader,
 		realtime: &mocks.NoopRealtimeService{},
-		chapters: quietChapters{},
+		chapters: agenttest.QuietChapters{},
 	}
 }
 

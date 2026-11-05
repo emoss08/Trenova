@@ -209,6 +209,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 		Permissions:  &agenttest.StubPermissions{},
 		AuditService: traceAudit{},
 		Versions:     &traceVersions{versions: []int64{3, 4}},
+		Runs:         runs,
 	})
 
 	return &decideHarness{

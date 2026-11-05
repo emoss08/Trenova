@@ -209,8 +209,16 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 		},
 	}
 	h.svc = &Service{
-		l: zap.NewNop(), plans: h.plans, proposals: h.steps, decisions: h.decider, shadow: fakeShadow{shadow: shadow},
-		activity: &announcedPlans{}, watchtower: agenttest.QuietWatchtower{}, followUps: agenttest.QuietFollowUps{},
+		l:          zap.NewNop(),
+		plans:      h.plans,
+		proposals:  h.steps,
+		decisions:  h.decider,
+		shadow:     fakeShadow{shadow: shadow},
+		activity:   &announcedPlans{},
+		watchtower: agenttest.QuietWatchtower{},
+		followUps:  agenttest.QuietFollowUps{},
+		previews:   &fakePreviews{},
+		audit:      &recordedAudit{},
 	}
 
 	return h

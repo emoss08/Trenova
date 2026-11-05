@@ -155,6 +155,8 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		activity:   &announcedPlans{},
 		watchtower: agenttest.QuietWatchtower{},
 		followUps:  agenttest.QuietFollowUps{},
+		previews:   &fakePreviews{},
+		audit:      &recordedAudit{},
 	}
 
 	plan, err := svc.Decide(t.Context(), &agentplanports.DecideAgentPlanRequest{

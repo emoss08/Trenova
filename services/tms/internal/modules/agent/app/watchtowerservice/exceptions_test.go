@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -44,16 +46,19 @@ func newExceptionFixture(t *testing.T, perms permissionports.PermissionEngine) *
 
 	repo := newStubRepo()
 	projector := NewProjector(ProjectorParams{
-		Logger:   zap.NewNop(),
-		Repo:     repo,
-		Realtime: &recordingRealtime{},
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		Realtime:      &recordingRealtime{},
+		Notifications: notificationtest.Discarding(),
 	})
 	exceptions := NewExceptions(ExceptionsParams{
-		Logger:      zap.NewNop(),
-		Repo:        repo,
-		Projector:   projector,
-		Router:      NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
-		Permissions: perms,
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		Projector:     projector,
+		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
+		Permissions:   perms,
+		Audit:         &mocks.NoopAuditService{},
+		Notifications: notificationtest.Discarding(),
 	})
 	exceptions.now = func() int64 { return 1_700_000_000 }
 

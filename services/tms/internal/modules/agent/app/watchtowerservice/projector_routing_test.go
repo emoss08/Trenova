@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,10 +41,12 @@ func newRoutingProjector(
 ) (*Projector, *fakeControlRepo) {
 	controls := &fakeControlRepo{control: control}
 	projector := NewProjector(ProjectorParams{
-		Logger:      zap.NewNop(),
-		Repo:        repo,
-		Router:      NewRouter(RouterParams{Logger: zap.NewNop(), Controls: controls}),
-		Permissions: perms,
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: controls}),
+		Permissions:   perms,
+		Realtime:      &recordingRealtime{},
+		Notifications: notificationtest.Discarding(),
 	})
 	projector.now = func() int64 { return 1_700_000_000 }
 

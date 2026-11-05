@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 )
@@ -39,10 +41,20 @@ func (echoedPlans) Create(
 	return plan, nil
 }
 
+type noSteps struct{}
+
+func (noSteps) Get(
+	context.Context,
+	*agentruntimeports.GetAgentRunStepRequest,
+) (*agentrunstep.AgentRunStep, error) {
+	return nil, nil
+}
+
 func recorderOn(runs RunOpener, proposals ProposalStore) *Service {
 	svc := NewWithStores(nil, runs, proposals).
 		WithTransactor(dbtest.NopConnection{}).
-		WithPlans(echoedPlans{})
+		WithPlans(echoedPlans{}).
+		WithScriptSteps(noSteps{})
 	svc.notifier = quietNotifier{}
 	svc.trust = quietTrust{}
 	svc.activity = agenttest.QuietActivity{}

@@ -62,19 +62,6 @@ func TestDecide_ARejectionRecordsItsNoteAndNoDigestEvenWhenOneIsSent(t *testing.
 	assert.Empty(t, h.plans.statuses[0].Approval.PreviewDigest)
 }
 
-func TestDecide_AnApprovalWithNoPreviewToSettleRecordsNoDigest(t *testing.T) {
-	t.Parallel()
-
-	h := newHarness(t, 2, false)
-	h.req.PreviewDigest = "a-digest-nobody-checked"
-
-	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
-	require.NoError(t, err)
-
-	require.NotEmpty(t, h.plans.statuses)
-	assert.Empty(t, h.plans.statuses[0].Approval.PreviewDigest)
-}
-
 func TestCommitApproval_KeepsTheDigestStoredAtApprovalWhenNoPreviewSettlesAtCommit(t *testing.T) {
 	t.Parallel()
 

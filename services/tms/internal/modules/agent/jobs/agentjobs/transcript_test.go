@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -56,7 +57,15 @@ func settle(t *testing.T, messages []conversation.Message) *agent.AgentRun {
 	t.Helper()
 
 	runs := &settledRuns{}
-	a := &Activities{logger: zap.NewNop(), runRepo: runs, proposalRepo: filedProposals{}}
+	a := &Activities{
+		logger:       zap.NewNop(),
+		runRepo:      runs,
+		proposalRepo: filedProposals{},
+		activity:     agenttest.QuietActivity{},
+		watchtower:   agenttest.QuietWatchtower{},
+		reflections:  agenttest.QuietReflections{},
+		trajectory:   agenttest.QuietTrajectory{},
+	}
 	_, run, err := a.settleRun(t.Context(), settleRunParams{
 		Payload: &agentcontract.AgentRunPayload{
 			BasePayload: temporaltype.BasePayload{

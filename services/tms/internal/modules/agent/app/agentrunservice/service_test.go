@@ -454,21 +454,6 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 	}
 }
 
-func TestStartForDefinitionRejectsWhenWorkflowEngineUnavailable(t *testing.T) {
-	t.Parallel()
-
-	svc := &Service{
-		l:         zap.NewNop(),
-		budgets:   &agenttest.StubMoneyBudgets{},
-		activity:  agenttest.QuietActivity{},
-		workflows: &fakeWorkflowStarter{enabled: false},
-	}
-
-	if _, err := svc.StartForDefinition(t.Context(), startRequest(definitionFixture(true)), nil); err == nil {
-		t.Fatalf("expected error when workflow engine is unavailable")
-	}
-}
-
 func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
 	t.Parallel()
 

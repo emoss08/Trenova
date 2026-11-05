@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
@@ -55,7 +56,7 @@ func announcing(turns assistantturnports.AssistantTurnRepository) (*Service, *re
 	realtime := &recordingRealtime{}
 
 	return &Service{
-		l: zap.NewNop(), turns: turns, realtime: realtime, chapters: quietChapters{},
+		l: zap.NewNop(), turns: turns, realtime: realtime, chapters: agenttest.QuietChapters{},
 	}, realtime
 }
 
@@ -254,7 +255,7 @@ func TestStopAllForUser_StopsEveryReplyAndReportsTheOnesItCouldNot(t *testing.T)
 		l:        zap.NewNop(),
 		turns:    turns,
 		realtime: &mocks.NoopRealtimeService{},
-		chapters: quietChapters{},
+		chapters: agenttest.QuietChapters{},
 	}
 
 	var asked []string
@@ -302,7 +303,7 @@ func TestStopAllForUser_HasNothingToDoForSomeoneWithNoReplies(t *testing.T) {
 		l:        zap.NewNop(),
 		turns:    &liveTurns{},
 		realtime: &mocks.NoopRealtimeService{},
-		chapters: quietChapters{},
+		chapters: agenttest.QuietChapters{},
 	}
 	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(context.Context, string) error {

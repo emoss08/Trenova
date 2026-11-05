@@ -123,9 +123,14 @@ func (quietIndexer) MarkStale(
 // wired gives a test's service the dependencies its test does not care about.
 func wired(svc *Service) *Service {
 	svc.ranker = agentmemoryrank.NewRecencyRanker()
-	svc.indexer = quietIndexer{}
+	if svc.indexer == nil {
+		svc.indexer = quietIndexer{}
+	}
 	if svc.audit == nil {
 		svc.audit = &mocks.NoopAuditService{}
+	}
+	if svc.permissions == nil {
+		svc.permissions = &fakePermissions{}
 	}
 
 	return svc

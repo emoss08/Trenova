@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -248,6 +251,13 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		}}},
 		Conversations: conversations,
 		Contexts:      contexts,
+		Runtime: assistanttest.Runtime(agentruntime.Params{
+			Logger:      zap.NewNop(),
+			Completion:  &agenttest.ScriptedCompletion{},
+			QueryTools:  &agenttest.StubQueryRegistry{},
+			ActionTools: &agenttest.StubActionRegistry{},
+			Permissions: &agenttest.StubPermissions{},
+		}),
 	})
 
 	return &replayWorld{
