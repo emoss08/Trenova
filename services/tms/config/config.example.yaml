@@ -384,8 +384,15 @@ reporting:
 # The sidecar renders organization-authored markup, so it must never be exposed:
 # no published port, no reverse-proxy route, and an internal-only network. See
 # dev/compose.yml for the hardened service definition.
+#
+# gotenbergUsername and gotenbergPassword are sent as basic auth on every render;
+# the sidecar's --api-enable-basic-auth holds the same pair. Production and staging
+# refuse to start without them while gotenbergUrl is set. Keep the password out of
+# this file: TRENOVA_RENDERER_GOTENBERGPASSWORD.
 renderer:
     gotenbergUrl: http://gotenberg:3000
+    gotenbergUsername: ""
+    gotenbergPassword: ""
     requestTimeout: 45s # HTTP timeout for one convert call
     renderTimeout: 2s # Budget for executing a template before rendering
     maxConcurrent: 4 # In-process render slots; excess callers queue

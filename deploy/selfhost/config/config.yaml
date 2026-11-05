@@ -272,6 +272,8 @@ aiAudit:
 renderer:
   # Internal network only: Gotenberg renders organization-authored HTML.
   gotenbergUrl: http://gotenberg:3000
+  gotenbergUsername: trenova
+  gotenbergPassword: "" # from .env
 
 documentConversion:
   # Internal network only: docling-serve parses uploaded files. The key comes

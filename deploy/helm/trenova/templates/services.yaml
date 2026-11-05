@@ -118,7 +118,8 @@ spec:
                 path: dynamic_config.yaml
 {{- /* Gotenberg renders organization-authored HTML to PDF, so it is locked
 down rather than trusted: JavaScript off, only data: and its own staging
-files allowed, no network (templates/networkpolicy.yaml). */ -}}
+files allowed, no network (templates/networkpolicy.yaml). Every route but
+/health needs the password in the app Secret, which the TMS sends. */ -}}
 {{- $c = dict "root" . "component" "gotenberg" }}
 ---
 apiVersion: v1
@@ -167,6 +168,11 @@ spec:
             - --pdfengines-disable-routes=true
             - --api-timeout=30s
             - --api-disable-health-check-logging=true
+            - --api-enable-basic-auth=true
+          env:
+            - name: GOTENBERG_API_BASIC_AUTH_USERNAME
+              value: {{ include "trenova.gotenbergUsername" . }}
+            {{- include "trenova.secretEnv" (dict "name" "GOTENBERG_API_BASIC_AUTH_PASSWORD" "secret" $app "key" "gotenbergPassword") | nindent 12 }}
           ports:
             - name: http
               containerPort: 3000

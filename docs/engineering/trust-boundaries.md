@@ -54,7 +54,8 @@ parameters, so what a person approved is what runs ([proposal-previews.md](propo
 | Operator to the cluster | a namespaced `Role`, no `ClusterRole`; a namespace the chart creates enforces `baseline` Pod Security |
 | TMS to imaging worker | mutual TLS ([imaging-worker.md](imaging-worker.md)) |
 | Every client to PostgreSQL | `verify-full` against the install's CA: CloudNativePG's on Kubernetes, `postgres-certs` in Compose. No image carries a key |
-| TMS to Temporal and Gotenberg, GTC's dashboard | nothing but the network: NetworkPolicies in the chart, separate Docker networks in Compose. Neither takes a credential, so nothing that parses files may share a network with them |
+| TMS to Gotenberg | basic auth with a generated password on every route but `/health`, and the network: NetworkPolicies in the chart, a network of its own in Compose |
+| TMS to Temporal, GTC's dashboard | nothing but the network: NetworkPolicies in the chart, separate Docker networks in Compose. Neither takes a credential, so nothing that parses files may share a network with them |
 
 A scanner driver is native code in the process that loads it, so what it returns crosses no
 boundary; parse it defensively anyway. A printed job comes from whoever printed, so `pwg.rs` checks

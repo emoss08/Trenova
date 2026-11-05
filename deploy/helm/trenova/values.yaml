@@ -46,6 +46,7 @@ secrets:
   #   rlsScopeKey              base64 of 32+ random bytes
   #   storageAccessKey, storageSecretKey   while minio.enabled is true
   #   doclingApiKey            while docling.enabled is true
+  #   gotenbergPassword        what the TMS and Gotenberg authenticate with
   #   bootstrapAdminPassword   while bootstrap.adminEmail is set
   existingSecret: ""
 
@@ -435,7 +436,7 @@ temporal:
     limits: { memory: 1536Mi }
 
 # Renders organization-authored HTML to PDF, locked down: JavaScript off, no
-# network, read-only root.
+# network, read-only root. Rendering needs the generated gotenbergPassword.
 gotenberg:
   image:
     repository: gotenberg/gotenberg

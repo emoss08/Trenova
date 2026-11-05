@@ -374,6 +374,21 @@ Maintenance commands connect as the owner, whose password the API no longer hold
 `encryption rewrap` and `db rls status` now run through `tms-bootstrap` (`--entrypoint trenova`),
 as shown here and under [Rotating the encryption key](#rotating-the-encryption-key).
 
+### Upgrading to a release with a Gotenberg password
+
+Gotenberg now refuses a render without the password in `.env`, and `docker compose` refuses to
+run until it has one. After step 3 above, from this directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+If you edited `config/config.yaml`, carry `renderer.gotenbergUsername` and
+`renderer.gotenbergPassword` over from the new version: production refuses to start without
+them while `renderer.gotenbergUrl` is set.
+
 ### Upgrading to a release with document conversion
 
 Releases that bundle the `docling` service read a new key from `.env`,
@@ -655,9 +670,9 @@ in a child process under seccomp, landlock and resource limits and reached only 
 TLS, and nothing published except Caddy. PostgreSQL serves a certificate issued for this
 install on first start (`postgres-certs`), and every client verifies it. Each service that
 parses files sits on a network of its own with the TMS processes, away from the databases,
-Temporal, GTC's dashboard and each other. Temporal, Gotenberg and GTC's dashboard take no
-credentials, so that separation is what guards them: don't attach anything else to their
-networks. Beyond that:
+Temporal, GTC's dashboard and each other. Gotenberg takes a generated password. Temporal and
+GTC's dashboard take no credentials, so that separation is what guards them: don't attach
+anything else to their networks. Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
@@ -689,6 +704,9 @@ changed after the volume was created; PostgreSQL keeps the password it was initi
 **`required variable TRENOVA_DATABASE_APP_PASSWORD is missing`, or the same for another
 `TRENOVA_DATABASE_*` secret.** `.env` predates row-level security: run
 `./scripts/init-env.sh --upgrade`.
+
+**`required variable TRENOVA_RENDERER_GOTENBERGPASSWORD is missing`.** `.env` predates the
+Gotenberg password: run `./scripts/init-env.sh --upgrade`.
 
 **`rls-roles` exited with an error, and the API never starts.** `docker compose logs rls-roles`.
 A role that does not exist means a restore skipped the first step under

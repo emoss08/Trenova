@@ -34,7 +34,7 @@ you already run Kubernetes, or want the database run by an operator.
 | `imaging` | Deployment | Reached over mutual TLS with certificates the chart issues |
 | `temporal` | Deployment | auto-setup, in the same PostgreSQL cluster |
 | `redis`, `meilisearch`, `minio` | StatefulSet | MinIO is optional: point `storage.external` at S3 instead |
-| `gotenberg` | Deployment | No network, read-only root |
+| `gotenberg` | Deployment | No network, read-only root; the TMS signs in with a generated password |
 | `gtc` | Deployment | Change data capture into Meilisearch and Redis |
 | `client` | Deployment | Caddy serving the web app and Dash, behind your Ingress |
 | `docling`, `clamav` | Deployment, StatefulSet | Off by default; see [Values](#values) |
@@ -165,7 +165,9 @@ Supply your own Secrets (`secrets.existingSecret`, `postgres.existingSecret`,
   nothing back there and would generate new values on every render;
 - the secrets are held elsewhere: a vault, External Secrets, or Trenova Cloud's control plane.
 
-`values.yaml` lists the keys each Secret must hold.
+`values.yaml` lists the keys each Secret must hold. A key a new release adds is generated on the
+upgrade that adds it, but a Secret you manage has to gain it first: until it does, the pods that
+read the key don't start.
 
 ## PostgreSQL
 

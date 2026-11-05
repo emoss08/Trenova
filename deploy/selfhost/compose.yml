@@ -18,7 +18,7 @@
 #              (Gotenberg, docling-serve, the imaging worker, ClamAV), shared
 #              only with the TMS processes that call it. None of them can reach
 #              Temporal, GTC's dashboard, the databases or each other: Temporal
-#              and Gotenberg take no credentials, so the network is their guard.
+#              takes no credentials, so the network is its guard.
 #
 # Image versions come from .env: TRENOVA_VERSION for the TMS and client
 # images, TRENOVA_POSTGRES_VERSION for the database image (published only when
@@ -64,6 +64,7 @@ x-tms-environment: &tms-environment
   TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS: ${TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS:-}
   TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER: ${TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER:?set TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER in .env (openssl rand -hex 32)}
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD:?set TRENOVA_SYSTEM_SYSTEMUSERPASSWORD in .env}
+  TRENOVA_RENDERER_GOTENBERGPASSWORD: ${TRENOVA_RENDERER_GOTENBERGPASSWORD:?set TRENOVA_RENDERER_GOTENBERGPASSWORD in .env (./scripts/init-env.sh --upgrade)}
   TRENOVA_DOCUMENTCONVERSION_APIKEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}
   TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS: ${TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS:-}
   TRENOVA_AI_AUDIT_CHAIN_KEYS: ${TRENOVA_AI_AUDIT_CHAIN_KEYS:-}
@@ -286,7 +287,8 @@ services:
   # than trusted: JavaScript off, only data: and its own staging files
   # allowed, no published port, no route through Caddy, no network off the
   # host, and a network of its own with the TMS processes. See dev/compose.yml
-  # for why each flag is there.
+  # for why each flag is there. Every route but /health needs the password in
+  # .env, which the TMS sends.
   gotenberg:
     image: gotenberg/gotenberg:8@sha256:13672f317b443c793e972b1bd2155ec62a3e7b6891b411e8196442cc053ee5f5
     command:
@@ -298,6 +300,10 @@ services:
       - --pdfengines-disable-routes=true
       - --api-timeout=30s
       - --api-disable-health-check-logging=true
+      - --api-enable-basic-auth=true
+    environment:
+      GOTENBERG_API_BASIC_AUTH_USERNAME: trenova
+      GOTENBERG_API_BASIC_AUTH_PASSWORD: ${TRENOVA_RENDERER_GOTENBERGPASSWORD:?set TRENOVA_RENDERER_GOTENBERGPASSWORD in .env (./scripts/init-env.sh --upgrade)}
     read_only: true
     tmpfs:
       - /tmp

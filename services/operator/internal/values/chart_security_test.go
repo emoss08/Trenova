@@ -68,6 +68,31 @@ func TestApplicationSignsInAsItsOwnRoleInEveryMode(t *testing.T) {
 	}
 }
 
+func TestGotenbergAndTheTMSShareOneGeneratedCredential(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	require.Contains(t, template(t, out, "templates/secrets.yaml"), "gotenbergPassword: ")
+	require.Contains(t, template(t, out, "templates/configmap.yaml"), "gotenbergUsername: trenova")
+
+	services := template(t, out, "templates/services.yaml")
+	require.Contains(t, services, "--api-enable-basic-auth=true")
+	require.Regexp(
+		t,
+		`name: GOTENBERG_API_BASIC_AUTH_PASSWORD\s+valueFrom:\s+secretKeyRef:\s+name: trenova-secrets\s+key: gotenbergPassword`,
+		services,
+	)
+
+	for _, suffix := range []string{"templates/tms.yaml", "templates/release-job.yaml"} {
+		require.Regexp(
+			t,
+			`name: TRENOVA_RENDERER_GOTENBERGPASSWORD\s+valueFrom:\s+secretKeyRef:\s+name: trenova-secrets\s+key: gotenbergPassword`,
+			template(t, out, suffix),
+			suffix,
+		)
+	}
+}
+
 func TestClamAVRunsUnprivileged(t *testing.T) {
 	t.Parallel()
 	_, _, out := renderChart(t, base())

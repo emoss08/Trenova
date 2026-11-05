@@ -125,6 +125,60 @@ func TestRenderSubmitsExpectedMultipartShape(t *testing.T) {
 	assert.Equal(t, "true", captured.fields["skipNetworkIdleEvent"])
 }
 
+func TestRenderSendsTheConfiguredCredentials(t *testing.T) {
+	var username, password string
+	var sent bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, password, sent = r.BasicAuth()
+		_, _ = w.Write([]byte("pdf"))
+	}))
+	defer srv.Close()
+
+	client := newTestClient(t, srv.URL, func(c *rendererconfig.Config) {
+		c.GotenbergUsername = "trenova"
+		c.GotenbergPassword = "sidecar-password"
+	})
+
+	_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
+	require.NoError(t, err)
+	assert.True(t, sent)
+	assert.Equal(t, "trenova", username)
+	assert.Equal(t, "sidecar-password", password)
+}
+
+func TestRenderSendsNoCredentialsWhenNoneAreConfigured(t *testing.T) {
+	var sent bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _, sent = r.BasicAuth()
+		_, _ = w.Write([]byte("pdf"))
+	}))
+	defer srv.Close()
+
+	_, err := newTestClient(t, srv.URL, nil).Render(
+		t.Context(),
+		&documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"},
+	)
+	require.NoError(t, err)
+	assert.False(t, sent)
+}
+
+func TestRenderReportsRefusedCredentialsAsUnavailableWithoutRetrying(t *testing.T) {
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	_, err := newTestClient(t, srv.URL, nil).Render(
+		t.Context(),
+		&documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"},
+	)
+	require.ErrorIs(t, err, documenttemplateports.ErrPDFRendererUnavailable)
+	assert.NotErrorIs(t, err, errBadRequest)
+	assert.Equal(t, int32(1), calls.Load())
+}
+
 func TestRenderOmitsEmptyHeaderAndFooter(t *testing.T) {
 	var captured capturedRequest
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

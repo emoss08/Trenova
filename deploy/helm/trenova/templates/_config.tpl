@@ -71,7 +71,10 @@ empty one fails validation instead of running with a default. */ -}}
     "csrf" (dict "trustedOrigins" (list $origin)))
   "monitoring" (dict "metrics" (dict "enabled" true "host" "0.0.0.0" "port" 9090))
   "temporal" (dict "hostPort" (printf "%s:7233" (include "trenova.name" (dict "root" . "component" "temporal"))))
-  "renderer" (dict "gotenbergUrl" (printf "http://%s:3000" (include "trenova.name" (dict "root" . "component" "gotenberg"))))
+  "renderer" (dict
+    "gotenbergUrl" (printf "http://%s:3000" (include "trenova.name" (dict "root" . "component" "gotenberg")))
+    "gotenbergUsername" (include "trenova.gotenbergUsername" .)
+    "gotenbergPassword" "")
   "documentConversion" $documentConversion
   "contentScan" $contentScan
   "portal" (dict "baseUrl" (printf "%s/dash" $origin))

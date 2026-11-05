@@ -168,6 +168,7 @@ monitoring:
 # internal network, no published port, never proxied.
 renderer:
   gotenbergUrl: http://gotenberg:3000
+  gotenbergUsername: trenova # the password: TRENOVA_RENDERER_GOTENBERGPASSWORD
 
 # Document extraction sidecar (docling-serve). Internal network only, never
 # published or proxied. To turn it on, set doclingUrl (http://docling:5001) and

@@ -92,6 +92,7 @@ if [ "${upgrade}" = true ]; then
   add_missing TRENOVA_DATABASE_SYSTEM_PASSWORD "$(secret)"
   add_missing TRENOVA_DATABASE_RLS_SCOPEKEYID "$(scope_key_id)"
   add_missing TRENOVA_DATABASE_RLS_SCOPEKEY "$(scope_key)"
+  add_missing TRENOVA_RENDERER_GOTENBERGPASSWORD "$(secret)"
   echo ".env is up to date. Back it up, then: docker compose up -d"
   exit 0
 fi
@@ -206,6 +207,7 @@ for name in \
   TRENOVA_SECURITY_ENCRYPTION_KEY \
   TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER \
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD \
+  TRENOVA_RENDERER_GOTENBERGPASSWORD \
   TRENOVA_DOCUMENTCONVERSION_APIKEY; do
   set_value "${name}" "$(secret)"
 done

@@ -46,6 +46,11 @@ so a pod mounts the certificate alone. */}}
   value: /certs/postgres/ca.crt
 {{- end -}}
 
+{{/* The name the TMS and Gotenberg agree on; the password is in the app Secret. */}}
+{{- define "trenova.gotenbergUsername" -}}
+trenova
+{{- end -}}
+
 {{- define "trenova.appSecret" -}}
 {{- .Values.secrets.existingSecret | default (printf "%s-secrets" (include "trenova.fullname" .)) -}}
 {{- end -}}
@@ -216,6 +221,7 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS" "secret" $app "key" "encryptionRetiredKeys" "optional" true) }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER" "secret" $app "key" "mfaRecoveryCodePepper") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SYSTEM_SYSTEMUSERPASSWORD" "secret" $app "key" "systemUserPassword") }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_RENDERER_GOTENBERGPASSWORD" "secret" $app "key" "gotenbergPassword") }}
 {{- if .Values.docling.enabled }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DOCUMENTCONVERSION_APIKEY" "secret" $app "key" "doclingApiKey") }}
 {{- end }}
