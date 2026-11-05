@@ -346,6 +346,7 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
               canUndo={actions.canUndo}
               onUndo={undo}
               exceptions={exceptionItems}
+              driversTruncated={board?.driversTruncated ?? false}
               exceptionsRead={{
                 isPending: exceptionsQuery.isPending,
                 isError: exceptionsQuery.isError,

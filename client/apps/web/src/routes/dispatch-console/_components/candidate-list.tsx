@@ -2,6 +2,7 @@ import { HoverGlideGroup } from "@/components/hover-glide";
 import type { DispatchBoardMove, DispatchCandidate } from "@/lib/graphql/dispatch-console";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostBox, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
@@ -11,9 +12,10 @@ import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/da
 import { cn } from "@trenova/shared/lib/utils";
 import { useId, useState } from "react";
 import { ArmedPreflight } from "./armed-preflight";
-import { formatMiles, scoreTone } from "./dispatch-vocabulary";
+import { formatMiles } from "./dispatch-vocabulary";
 import { FindingList, FindingSummary, findingKey } from "./finding-list";
-import { ScoreBreakdown } from "./score-breakdown";
+import { CostBreakdown } from "./cost-breakdown";
+import { formatCents } from "./cost-vocabulary";
 
 export const MAX_HOTKEY_RANK = 9;
 const INITIAL_VISIBLE = 6;
@@ -68,6 +70,7 @@ function CandidateRow({
   candidate,
   rank,
   proposed,
+  plan,
   isArmed,
   canAssign,
   onArm,
@@ -76,6 +79,8 @@ function CandidateRow({
   candidate: DispatchCandidate;
   rank: number;
   proposed: boolean;
+  /** Where the last plan stands on this driver: its pick, or what choosing them adds. */
+  plan: CandidatePlanStanding | null;
   isArmed: boolean;
   canAssign: boolean;
   onArm: (candidate: DispatchCandidate) => void;
@@ -110,6 +115,16 @@ function CandidateRow({
           <div className="flex min-w-0 items-center gap-1.5 font-medium">
             <span className="truncate">{candidate.workerName}</span>
             {proposed ? <NovaBadge size="xs" label={t("Nova's pick")} /> : null}
+            {plan === null ? null : plan.pick ? (
+              <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-2xs font-normal">
+                <AssistMark className="size-3" aria-hidden />
+                {t("Plan's pick")}
+              </span>
+            ) : (
+              <span className="text-muted-foreground shrink-0 text-2xs font-normal tabular-nums">
+                {t("+{0} to the plan", formatCents(plan.extraCents))}
+              </span>
+            )}
           </div>
           <div className="text-muted-foreground truncate text-2xs">
             {candidate.minutesOfSlack < 0
@@ -128,13 +143,8 @@ function CandidateRow({
           </div>
         </div>
         <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "w-5 text-right font-mono text-xs tabular-nums",
-              scoreTone(candidate.score),
-            )}
-          >
-            {candidate.score}
+          <span className="text-right font-mono text-xs tabular-nums" title={t("Cost to cover")}>
+            {formatCents(candidate.costCents)}
           </span>
           {canAssign ? (
             <Button
@@ -169,14 +179,29 @@ function CandidateRow({
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
-          {open ? t("Hide detail") : t("Why this score")}
+          {open ? t("Hide detail") : t("Why this cost")}
         </Button>
-        {open ? (
-          <ScoreBreakdown score={candidate.score} factors={candidate.factors} className="mt-1" />
-        ) : null}
+        {open ? <CostBreakdown candidate={candidate} className="mt-1" /> : null}
       </div>
     </div>
   );
+}
+
+type CandidatePlanStanding = { pick: true } | { pick: false; extraCents: number };
+
+/**
+ * What the move's last plan says about each driver: the one it chose, and for the others it
+ * weighed, the exact extra cost to the whole plan of choosing them instead.
+ */
+function planStandings(move: DispatchBoardMove): Map<string, CandidatePlanStanding> {
+  const standings = new Map<string, CandidatePlanStanding>();
+  const price = move.isCovered ? null : move.planPrice;
+  if (!price) return standings;
+  for (const alternative of price.alternatives) {
+    standings.set(alternative.workerId, { pick: false, extraCents: alternative.extraCents });
+  }
+  if (price.workerId) standings.set(price.workerId, { pick: true });
+  return standings;
 }
 
 export type CandidatesRead = {
@@ -241,6 +266,7 @@ export function CandidateList({
   const restId = useId();
   const shared = sharedFindings(candidates);
   const sharedKeys = new Set(shared.map(findingKey));
+  const standings = planStandings(move);
 
   const renderCandidate = (candidate: DispatchCandidate, index: number) => (
     <div key={candidate.workerId}>
@@ -248,6 +274,7 @@ export function CandidateList({
         candidate={candidate}
         rank={index + 1}
         proposed={candidate.workerId === proposedWorkerId}
+        plan={standings.get(candidate.workerId) ?? null}
         isArmed={candidate.workerId === armedWorkerId}
         canAssign={canAssign}
         onArm={onArm}

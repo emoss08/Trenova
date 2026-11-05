@@ -5,7 +5,6 @@ import {
   formatMiles,
   groupMovesByUrgency,
   pickupState,
-  scoreTone,
   severityMeta,
   urgencyMeta,
   verdictMeta,
@@ -161,12 +160,5 @@ describe("groupMovesByUrgency", () => {
     expect(grouped.get("Late")?.map((move) => move.id)).toEqual(["b"]);
     expect(grouped.get("Now")?.map((move) => move.id)).toEqual(["a"]);
     expect(grouped.get("Planned")?.map((move) => move.id)).toEqual(["c"]);
-  });
-});
-
-describe("scoreTone", () => {
-  it("separates strong, middling, and weak scores", () => {
-    expect(scoreTone(90)).not.toBe(scoreTone(60));
-    expect(scoreTone(60)).not.toBe(scoreTone(20));
   });
 });

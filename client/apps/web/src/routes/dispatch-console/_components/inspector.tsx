@@ -51,6 +51,7 @@ import { formatMiles, pickupState } from "./dispatch-vocabulary";
 import { formatWhen } from "./format-when";
 import { FailedApproval } from "./failed-approval";
 import { NovaProposalPanel, useProposalApproval, type DeclineDraft } from "./nova-proposal-panel";
+import { PlanPricePanel } from "./plan-price-panel";
 import { TenderHistory } from "./tender-history";
 import { TenderLivePanel } from "./tender-live-panel";
 import type { DispatchActions } from "./use-dispatch-actions";
@@ -567,6 +568,10 @@ function MoveInspector({
             onApprove={approve}
             onDecline={declineWith}
           />
+        ) : null}
+
+        {!move.isCovered && move.planPrice ? (
+          <PlanPricePanel price={move.planPrice} nowSeconds={nowSeconds} />
         ) : null}
 
         {showsCarrierPaths && (

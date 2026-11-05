@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchurgency"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -36,7 +37,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 					OriginWindowStart: 1_790_000_000 - 1800, DestinationCity: "Houston", DestinationState: "TX",
 					DestinationWindowStart: 1_790_000_000 + 7200,
 				},
-				Urgency: dispatchconsoleservice.UrgencyLate, MinutesToPickup: -30,
+				Urgency: dispatchurgency.Late, MinutesToPickup: -30,
 			},
 			{
 				BoardMove: &dispatchboardports.BoardMove{
@@ -47,7 +48,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 						"wrk_",
 					), CoverageType: "driver", OriginWindowStart: 1_790_000_000 + 3600,
 				},
-				Urgency: dispatchconsoleservice.UrgencyNow, IsCovered: true,
+				Urgency: dispatchurgency.Now, IsCovered: true,
 			},
 		},
 		Drivers: []*dispatchconsoleservice.BoardDriver{{

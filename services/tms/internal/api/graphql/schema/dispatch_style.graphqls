@@ -1,0 +1,62 @@
+"A soft cost whose weight the planner learns from the organization's dispatchers."
+enum DispatchStyleComponent {
+  homeTime
+  fairness
+  customerExperience
+  onTimeHistory
+  safety
+  acceptance
+  trailerContinuity
+  haulFit
+  timeOffBuffer
+}
+
+"""
+How much the organization's dispatchers weigh one cost against what dispatch control
+says it costs, learned from the drivers they assign.
+"""
+type DispatchStyleWeight {
+  component: DispatchStyleComponent!
+  """
+  1 is the organization's own cost; 1.6 means dispatchers choose as if it cost 60%
+  more. Between 0.25 and 4.
+  """
+  multiplier: Float!
+  "Decisions that moved this weight."
+  samples: Int!
+}
+
+"""
+The organization's learned dispatch style: from each driver a person assigns against
+the standing plan, whether they took the planned driver, a priced alternative, or a
+driver the plan did not price.
+"""
+type DispatchStyle {
+  "Learning is on in dispatch control, and the planner uses the weights."
+  enabled: Boolean!
+  decisions: Int!
+  "The planned driver was assigned."
+  approvals: Int!
+  "An alternative the plan priced was assigned instead."
+  overrides: Int!
+  "A driver the plan did not price was assigned instead."
+  declines: Int!
+  "When learning began or was last reset; null before it ever ran."
+  learningSince: Timestamp
+  "When a decision last moved the weights."
+  updatedAt: Timestamp
+  "The weights decisions have moved, the one furthest from the default first."
+  weights: [DispatchStyleWeight!]!
+}
+
+extend type Query {
+  dispatchStyle: DispatchStyle!
+}
+
+extend type Mutation {
+  """
+  Forgets the learned weights: the planner goes back to the organization's own costs
+  and learning starts again from the next decision.
+  """
+  resetDispatchStyle: DispatchStyle!
+}

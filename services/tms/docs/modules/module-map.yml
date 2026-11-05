@@ -590,6 +590,9 @@ modules:
       - detentionnotice
       - detentionpolicy
       - dispatchcontrol
+      - dispatcheconomics
+      - dispatchfinding
+      - dispatchplanprice
       - documentshipmentdraft
       - movesplit
       - order
@@ -630,8 +633,11 @@ modules:
       - dispatchcandidateservice
       - dispatchconsoleservice
       - dispatchcontrolservice
+      - dispatchcost
       - dispatcheligibility
       - dispatchguard
+      - dispatchplanservice
+      - dispatchurgency
       - equipmentavailabilityhelper
       - etaprojection
       - etatrigger
@@ -704,6 +710,7 @@ modules:
       - detentionrepository
       - dispatchconsolerepository
       - dispatchcontrolrepository
+      - dispatchplanpricerepository
       - documentshipmentdraftrepository
       - orderrepository
       - recurringshipmentrepository

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -25,11 +26,13 @@ import (
 func (r *repository) ListBoardDrivers(
 	ctx context.Context,
 	filter *dispatchboardports.DispatchBoardFilter,
-) ([]*dispatchboardports.BoardDriver, error) {
+) (*dispatchboardports.BoardDriverPage, error) {
+	limit := driverLimit(filter.DriverLimit)
+
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*dispatchboardports.BoardDriver, error) {
+		func(ctx context.Context) (*dispatchboardports.BoardDriverPage, error) {
 			w := workerdb.Workers
 			fc := fleetcodedb.FleetCodes
 			us := usstatedb.UsStates
@@ -77,15 +80,26 @@ func (r *repository) ListBoardDrivers(
 					zero(openAssignments(w)),
 				).
 				Where(preds...).
-				Order(w.LastName.Asc(), w.FirstName.Asc(), w.ID.Asc()).
-				Limit(boardLimit(filter.Limit))
+				Order(
+					keel.Desc(w.AvailableForDispatch),
+					w.LastName.Asc(),
+					w.FirstName.Asc(),
+					w.ID.Asc(),
+				).
+				Limit(limit + 1)
 
 			rows, err := keel.Into[dispatchboardports.BoardDriver](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				return nil, fmt.Errorf("list dispatch board drivers: %w", err)
 			}
 
-			return pointers(rows), nil
+			page := &dispatchboardports.BoardDriverPage{Truncated: len(rows) > limit}
+			if page.Truncated {
+				rows = rows[:limit]
+			}
+			page.Drivers = pointers(rows)
+
+			return page, nil
 		},
 	)
 }
@@ -122,6 +136,16 @@ func (r *repository) ListWorkerCommitments(
 					st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Max(),
 				).
 				Where(live...))
+			se := stopetadb.StopETAs.As("cm_eta")
+			etaOf := func(e keel.Expr) keel.Expr {
+				return keel.Scalar(se.Pick(e).Where(
+					se.ShipmentID.EqCol(sm.ShipmentID),
+					se.MoveSequence.EqCol(sm.Sequence),
+					se.Arrived.IsFalse(),
+				))
+			}
+			expectedEnd := etaOf(se.EstimatedDeparture.Coalesce(se.EstimatedArrival).Max())
+			remainingDrive := etaOf(se.DriveMinutes.Max())
 
 			q := joinEdge(asn.
 				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
@@ -140,16 +164,25 @@ func (r *repository) ListWorkerCommitments(
 					dest.loc.Latitude,
 					dest.loc.Longitude,
 					text(asn.TrailerID),
+					sm.Distance,
+					zero(expectedEnd),
+					zero(remainingDrive),
 				).
 				Where(
 					asn.ArchivedAt.IsNull(),
 					asn.PrimaryWorkerID.In(req.WorkerIDs...),
 					sm.Status.In(openMoveStatuses...),
-					keel.When(req.WindowEnd > 0,
-						zero(windowStart).Lte(req.WindowEnd)),
-					keel.When(
-						req.WindowStart > 0,
-						keel.Int64Of(windowEnd).Coalesce(windowStart, 0).Gte(req.WindowStart),
+					keel.Or(
+						sm.Status.Eq(shipmentvocab.MoveStatusInTransit),
+						keel.And(
+							keel.When(req.WindowEnd > 0, zero(windowStart).Lte(req.WindowEnd)),
+							keel.When(
+								req.WindowStart > 0,
+								keel.Int64Of(windowEnd).
+									Coalesce(windowStart, 0).
+									Gte(req.WindowStart),
+							),
+						),
 					),
 				).
 				Order(keel.Asc(windowStart))

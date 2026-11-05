@@ -67,7 +67,7 @@ export function ArmedPreflight({
     if (ready) confirmRef.current?.focus({ preventScroll: true });
   }, [ready]);
 
-  const score = data?.score;
+  const score = data?.candidate;
   const verdict = score ? verdictMeta(score.verdict) : null;
   const block = score?.findings.find((finding) => finding.severity === "Block");
   const strategy = hosStrategyMeta(score?.hosStrategy);

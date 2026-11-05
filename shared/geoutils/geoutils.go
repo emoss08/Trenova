@@ -69,3 +69,9 @@ func PolygonContains(polygon []Point, p Point) bool {
 
 	return inside
 }
+
+const PlanarLongitudeScale = 0.788
+
+func Planar(latitude, longitude float64) (x, y float64) {
+	return longitude * PlanarLongitudeScale, latitude
+}

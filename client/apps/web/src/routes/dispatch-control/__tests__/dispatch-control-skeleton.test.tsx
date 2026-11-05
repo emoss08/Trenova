@@ -15,8 +15,6 @@ const control = {
   businessUnitId: "bu_01",
   enableAutoAssignment: false,
   autoProposeCoverage: false,
-  autoAssignmentStrategy: "Proximity",
-  scoringWeights: {},
   enforceHosCompliance: false,
   recordServiceFailures: "Never",
   enableCheckCallMonitoring: false,
@@ -25,6 +23,24 @@ const control = {
 vi.mock("@/lib/queries/dispatch-control", () => ({
   dispatchControl: {
     get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => control }),
+  },
+}));
+
+vi.mock("@/lib/queries/dispatch-style", () => ({
+  dispatchStyle: {
+    get: () => ({
+      queryKey: ["dispatch-style"],
+      queryFn: async () => ({
+        enabled: false,
+        decisions: 0,
+        approvals: 0,
+        overrides: 0,
+        declines: 0,
+        learningSince: null,
+        updatedAt: null,
+        weights: [],
+      }),
+    }),
   },
 }));
 
@@ -77,10 +93,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(8);
+    expect(cardCount(skeleton)).toBe(9);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(8);
+    expect(await loadedFormCardCount()).toBe(9);
   });
 
   it("leaves out the fleet's cards for a brokerage, as the form does", async () => {
@@ -97,10 +113,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: false, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(7);
+    expect(cardCount(skeleton)).toBe(8);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(7);
+    expect(await loadedFormCardCount()).toBe(8);
   });
 
   it("is announced once as loading", () => {

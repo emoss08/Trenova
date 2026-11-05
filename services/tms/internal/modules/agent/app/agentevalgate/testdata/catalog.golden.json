@@ -10498,7 +10498,7 @@
     },
     {
       "name": "dispatch_rank_candidates",
-      "description": "Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit. Each candidate carries a verdict, the findings behind it and the factors that made its score. Call this before dispatch_assign_move and propose from the top of the list unless a finding says why not.",
+      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them: what each driver costs on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), with a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move and propose from the top of the list unless a finding says why not.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

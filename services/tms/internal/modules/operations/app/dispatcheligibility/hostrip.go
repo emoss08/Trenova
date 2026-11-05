@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -28,8 +29,8 @@ func EvaluateHOSTrip(in HOSTripInput) *Evaluation {
 
 	projection := in.Projection
 	if !projection.Feasible {
-		eval.Add(Finding{
-			Code:       CodeHOSInsufficientForTrip,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSInsufficientForTrip,
 			Severity:   enforcementSeverity(in.Control.ComplianceEnforcementLevel),
 			Field:      fieldHOS,
 			Message:    projection.Detail,
@@ -39,9 +40,9 @@ func EvaluateHOSTrip(in HOSTripInput) *Evaluation {
 	}
 
 	if projection.Strategy != hosprojection.StrategyCurrentClocks {
-		eval.Add(Finding{
-			Code:     CodeHOSTightForTrip,
-			Severity: SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHOSTightForTrip,
+			Severity: dispatchfinding.SeverityWarn,
 			Field:    fieldHOS,
 			Message:  projection.Detail,
 		})
@@ -49,9 +50,9 @@ func EvaluateHOSTrip(in HOSTripInput) *Evaluation {
 	}
 
 	if projection.Trip.MarginMs < hosTripTightMarginMs {
-		eval.Add(Finding{
-			Code:     CodeHOSTightForTrip,
-			Severity: SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHOSTightForTrip,
+			Severity: dispatchfinding.SeverityWarn,
 			Field:    fieldHOS,
 			Message: fmt.Sprintf(
 				"Only %s of clock left after the trip",

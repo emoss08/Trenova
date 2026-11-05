@@ -8166,8 +8166,13 @@ enum CapacityGroup {
 }
 
 type CapacityMatch {
+  """
+  What the driver taking this move costs the plan, in cents. Null for a carrier's match.
+  """
+  costCents: Int
   deadheadMiles: Float
   destinationCity: String!
+  """How well a carrier fits the lane, 0 to 100. Null for a driver's match."""
   fitPercent: Float
   """Null to a reader without the margins field group."""
   marginPercent: Float @protected(group: Margins)
@@ -13686,9 +13691,9 @@ hard block, so the confirm action can be labelled honestly.
 """
 type DispatchAssignmentPreview {
   blocked: Boolean!
+  candidate: DispatchCandidate!
   moveId: ID!
   requiresOverride: Boolean!
-  score: DispatchCandidate!
   tractorId: ID
   trailerId: ID
   workerId: ID!
@@ -13703,6 +13708,10 @@ input DispatchAssignmentPreviewInput {
 
 type DispatchBoard {
   drivers: [DispatchBoardDriver!]!
+  """
+  True when more drivers match than the board lists; drivers available for dispatch come first.
+  """
+  driversTruncated: Boolean!
   generatedAt: Timestamp!
   moves: [DispatchBoardMove!]!
   summary: DispatchBoardSummary!
@@ -13734,6 +13743,7 @@ type DispatchBoardDriver {
   latitude: Float
   longitude: Float
   openAssignments: Int!
+  plannedMove: DispatchDriverPlannedMove
   positionRecordedAt: Timestamp!
   postalCode: String!
   profilePicUrl: String!
@@ -13814,6 +13824,11 @@ type DispatchBoardMove {
   absent everywhere else, and when nothing is waiting.
   """
   pendingProposal: DispatchMoveProposal
+  """
+  What the last plan said this move is worth and who should take it. Absent on a covered
+  move and on one no plan has priced yet.
+  """
+  planPrice: DispatchMovePlanPrice
   previousMoveTrailerId: ID
   proNumber: String!
   requiredTractorTypeId: ID
@@ -13871,11 +13886,17 @@ type DispatchBulkAssignResult {
 """A driver-and-equipment pairing judged against one move."""
 type DispatchCandidate {
   blocked: Boolean!
+  """
+  What this driver taking the move costs, in cents: the sum of its cost lines.
+  """
+  costCents: Int!
+  costLines: [DispatchCostLine!]!
   cycleRemainingMs: Int!
+  """Empty miles to the pickup; null when where the driver is is unknown."""
   deadheadMiles: Float
+  deliveryLateMinutes: Int!
   driveRemainingMs: Int!
   estimatedDriveMs: Int!
-  factors: [DispatchScoreFactor!]!
   findings: [DispatchFinding!]!
   hosProjectedCycleMs: Int!
   hosProjectedDriveMs: Int!
@@ -13889,11 +13910,21 @@ type DispatchCandidate {
   tenHourReset, or restart34. Empty when no projection ran.
   """
   hosStrategy: String!
+  loadedMiles: Float!
   minutesOfSlack: Int!
   moveId: ID!
+  """
+  Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown.
+  """
+  originSource: String!
   projectedArrival: Timestamp!
+  projectedDelivery: Timestamp!
+  projectedFreeAt: Timestamp!
   projectedTimeAvailable: Int!
-  score: Int!
+  """
+  Rest the driver needs on the way, from the hours-of-service projection.
+  """
+  restMs: Int!
   shiftRemainingMs: Int!
   tractorId: ID
   trailerId: ID
@@ -13945,9 +13976,25 @@ type DispatchCommitment {
   windowStart: Timestamp!
 }
 
+"""
+One part of what a pairing costs, in cents. A negative line is a credit, such as a move that
+leaves the driver where drivers are worth more.
+"""
+type DispatchCostLine {
+  cents: Int!
+  """
+  emptyMiles, lateness, idleWait, rest, homeTime, fairness, customerExperience, onTimeHistory, safety, acceptance, trailerContinuity, haulFit, timeOffBuffer or endMarket.
+  """
+  component: String!
+  """
+  True for a preference that chooses between drivers without deciding whether a move is worth covering.
+  """
+  soft: Boolean!
+}
+
 type DispatchDriverMoveMatch {
+  candidate: DispatchCandidate!
   move: DispatchBoardMove!
-  score: DispatchCandidate!
 }
 
 input DispatchDriverMovesInput {
@@ -13955,6 +14002,18 @@ input DispatchDriverMovesInput {
   windowEnd: Timestamp
   windowStart: Timestamp
   workerId: ID!
+}
+
+"""
+The move the last plan put a driver on, and what the driver is worth to it.
+"""
+type DispatchDriverPlannedMove {
+  costCents: Int!
+  generatedAt: Timestamp!
+  moveId: ID!
+  proNumber: String!
+  """How much more the plan costs without this driver, in cents."""
+  valueCents: Int!
 }
 
 """
@@ -13994,6 +14053,30 @@ type DispatchMoveFailedProposal {
 }
 
 """
+The price the last plan put on an uncovered move. The coverage price is what leaving it
+uncovered costs; the plan covers it when a driver costs less. Plan again to refresh it.
+"""
+type DispatchMovePlanPrice {
+  alternatives: [DispatchPlanAlternative!]!
+  """What the named driver costs on this move, in cents."""
+  costCents: Int!
+  coveragePriceCents: Int!
+  """How much more the plan costs without the planned driver, in cents."""
+  driverValueCents: Int!
+  generatedAt: Timestamp!
+  """Why the plan left the move uncovered; absent when it is covered."""
+  uncoveredReason: DispatchUncoveredReason
+  """
+  The driver the plan put on the move; absent when the plan left it uncovered.
+  """
+  workerId: ID
+  """
+  The planned driver, or for an uncovered move the cheapest driver the plan considered.
+  """
+  workerName: String!
+}
+
+"""
 A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
 would put on it, how sure it is and why. Decide it with decideAgentProposals.
 """
@@ -14021,6 +14104,8 @@ type DispatchMoveProposal {
 type DispatchPlan {
   assignments: [DispatchPlannedAssignment!]!
   autonomyTier: String!
+  """What the covered moves cost, in cents."""
+  costCents: Int!
   generatedAt: Timestamp!
   planningMode: String!
   runId: ID
@@ -14029,13 +14114,23 @@ type DispatchPlan {
   nothing was written.
   """
   shadowMode: Boolean!
-  totalScore: Int!
   """
   Populated under Horizon planning only; empty when the organization plans a single
   period at a time.
   """
   tours: [DispatchTour!]!
   uncovered: [DispatchUncoveredMove!]!
+  """What the uncovered moves cost by being left, in cents."""
+  uncoveredCents: Int!
+}
+
+type DispatchPlanAlternative {
+  """
+  How much more the whole plan costs, in cents, when this driver takes the move and the rest re-plan around it.
+  """
+  extraCents: Int!
+  workerId: ID!
+  workerName: String!
 }
 
 input DispatchPlanInput {
@@ -14051,15 +14146,27 @@ dispatcher sees when they pick a driver by hand.
 """
 type DispatchPlannedAssignment {
   """
+  The next cheapest drivers and exactly how much more the whole plan costs if each takes the move instead.
+  """
+  alternatives: [DispatchPlanAlternative!]!
+  """
   True only when the organization allows unattended execution and this pairing cleared
   its confidence threshold with no blocking findings.
   """
   autoExecutable: Boolean!
+  candidate: DispatchCandidate!
   confidence: Float!
+  """
+  What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium.
+  """
+  coveragePriceCents: Int!
+  """
+  What this driver is worth to the plan, in cents: how much more the plan costs without them.
+  """
+  driverValueCents: Int!
   moveId: ID!
   proNumber: String!
   projectedCompleteAt: Timestamp!
-  projectedDriveRemainingMs: Int!
   """
   When the driver is projected to start and finish this move, and the drive time left
   on their clock afterwards. These are projections from the plan, not commitments.
@@ -14067,7 +14174,6 @@ type DispatchPlannedAssignment {
   projectedStartAt: Timestamp!
   proposalId: ID
   rationale: String!
-  score: DispatchCandidate!
   sequenceIndex: Int!
   """
   Set only under Horizon planning: the tour this move belongs to and its position
@@ -14081,16 +14187,58 @@ type DispatchPlannedAssignment {
 }
 
 """
-One weighted dimension of a candidate's score, carrying both its numeric contribution and
-the sentence a dispatcher reads to understand it.
+The organization's learned dispatch style: from each driver a person assigns against
+the standing plan, whether they took the planned driver, a priced alternative, or a
+driver the plan did not price.
 """
-type DispatchScoreFactor {
-  contribution: Float!
-  detail: String!
-  key: String!
-  label: String!
-  raw: Float!
-  weight: Float!
+type DispatchStyle {
+  """The planned driver was assigned."""
+  approvals: Int!
+  decisions: Int!
+  """A driver the plan did not price was assigned instead."""
+  declines: Int!
+  """Learning is on in dispatch control, and the planner uses the weights."""
+  enabled: Boolean!
+  """When learning began or was last reset; null before it ever ran."""
+  learningSince: Timestamp
+  """An alternative the plan priced was assigned instead."""
+  overrides: Int!
+  """When a decision last moved the weights."""
+  updatedAt: Timestamp
+  """
+  The weights decisions have moved, the one furthest from the default first.
+  """
+  weights: [DispatchStyleWeight!]!
+}
+
+"""
+A soft cost whose weight the planner learns from the organization's dispatchers.
+"""
+enum DispatchStyleComponent {
+  acceptance
+  customerExperience
+  fairness
+  haulFit
+  homeTime
+  onTimeHistory
+  safety
+  timeOffBuffer
+  trailerContinuity
+}
+
+"""
+How much the organization's dispatchers weigh one cost against what dispatch control
+says it costs, learned from the drivers they assign.
+"""
+type DispatchStyleWeight {
+  component: DispatchStyleComponent!
+  """
+  1 is the organization's own cost; 1.6 means dispatchers choose as if it cost 60%
+  more. Between 0.25 and 4.
+  """
+  multiplier: Float!
+  """Decisions that moved this weight."""
+  samples: Int!
 }
 
 type DispatchTimeOff {
@@ -14105,25 +14253,42 @@ are measured from where the previous move ends, which is what makes the chain wo
 more than the same moves assigned independently.
 """
 type DispatchTour {
+  costCents: Int!
+  emptyMiles: Float!
   endsAt: Timestamp!
   moveIds: [ID!]!
   startsAt: Timestamp!
-  totalDeadheadMiles: Float!
-  totalScore: Int!
   tourId: ID!
   workerId: ID!
   workerName: String!
+}
+
+type DispatchUncoveredMove {
+  """
+  The nearest driver who could not take it, or the cheapest who was outbid.
+  """
+  bestCandidate: DispatchCandidate
+  coveragePriceCents: Int!
+  """The reason in a sentence, with the driver it is about."""
+  explanation: String!
+  moveId: ID!
+  proNumber: String!
+  reason: DispatchUncoveredReason!
 }
 
 """
 A move the optimizer could not cover. Reporting these matters more than the successes: a
 move that silently vanishes from a plan is a load nobody is watching.
 """
-type DispatchUncoveredMove {
-  bestBlockedFindings: [DispatchFinding!]!
-  moveId: ID!
-  proNumber: String!
-  reason: String!
+enum DispatchUncoveredReason {
+  BeyondDeadhead
+  Disqualified
+  LocationUnknown
+  NoCandidate
+  """Every driver costs more than leaving the move."""
+  NotWorthIt
+  """Its drivers are worth more on other moves."""
+  Outbid
 }
 
 input DisputeAdjustmentInput {
@@ -14583,9 +14748,12 @@ type DriverCapacitySummary {
 }
 
 type DriverCoverageSuggestion {
+  """
+  What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences.
+  """
+  costCents: Int
   distanceMiles: Float
   driveRemainingMs: Int
-  fitPercent: Float
   initials: String!
   moveId: ID!
   name: String!
@@ -23120,6 +23288,11 @@ type Mutation {
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   resetCannedFork(id: ID!): ReportDefinition!
+  """
+  Forgets the learned weights: the planner goes back to the organization's own costs
+  and learning starts again from the next decision.
+  """
+  resetDispatchStyle: DispatchStyle!
   resetHomeLayout: HomeLayout!
   """
   Forgets the caller's arrangement of a table, so it opens as its default view.
@@ -26016,6 +26189,7 @@ type Query {
   """
   dispatchMove(moveId: ID!): DispatchBoardMove!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
+  dispatchStyle: DispatchStyle!
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!
   distanceProfile(id: ID!): DistanceProfile

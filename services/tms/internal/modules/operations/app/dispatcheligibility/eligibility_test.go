@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -107,8 +108,8 @@ func TestEvaluateWorkerCompliance_ExpiredLicenseBlocksUnderBlockLevel(t *testing
 	})
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeLicenseExpired, eval.Findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityBlock, eval.Findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeLicenseExpired, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityBlock, eval.Findings[0].Severity)
 	assert.Equal(t, "49 CFR 391.11(b)(5)", eval.Findings[0].Regulation)
 	assert.True(t, eval.Blocked())
 }
@@ -125,7 +126,7 @@ func TestEvaluateWorkerCompliance_WarningLevelDowngradesToWarn(t *testing.T) {
 	})
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.SeverityWarn, eval.Findings[0].Severity)
+	assert.Equal(t, dispatchfinding.SeverityWarn, eval.Findings[0].Severity)
 	assert.False(t, eval.Blocked())
 }
 
@@ -150,7 +151,7 @@ func TestEvaluateWorkerCompliance_HazmatOnlyWhenShipmentCarriesHazmat(t *testing
 			HasHazmatCommodities: true,
 		},
 	)
-	assert.Contains(t, codes(with), dispatcheligibility.CodeHazmatEndorsementMissing)
+	assert.Contains(t, codes(with), dispatchfinding.CodeHazmatEndorsementMissing)
 }
 
 func TestEvaluateWorkerCompliance_DisabledEnforcementSuppressesFindings(t *testing.T) {
@@ -177,8 +178,8 @@ func TestEvaluateHOSClocks_MissingAndStaleStayInformational(t *testing.T) {
 		Control: blockingControl(),
 	})
 	require.Len(t, missing.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeHOSMissing, missing.Findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityInfo, missing.Findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeHOSMissing, missing.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityInfo, missing.Findings[0].Severity)
 	assert.False(t, missing.Blocked())
 
 	stale := healthyHOS()
@@ -188,8 +189,8 @@ func TestEvaluateHOSClocks_MissingAndStaleStayInformational(t *testing.T) {
 		Control: blockingControl(),
 	})
 	require.Len(t, staleEval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeHOSStale, staleEval.Findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityInfo, staleEval.Findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeHOSStale, staleEval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityInfo, staleEval.Findings[0].Severity)
 }
 
 // Info findings describe telematics gaps. They must never surface as validation errors
@@ -221,9 +222,9 @@ func TestEvaluateHOSClocks_ExhaustedClocksReportEveryViolation(t *testing.T) {
 	})
 
 	assert.ElementsMatch(t, []string{
-		dispatcheligibility.CodeHOSNoDriveTime,
-		dispatcheligibility.CodeHOSNoShiftTime,
-		dispatcheligibility.CodeHOSNoCycleTime,
+		dispatchfinding.CodeHOSNoDriveTime,
+		dispatchfinding.CodeHOSNoShiftTime,
+		dispatchfinding.CodeHOSNoCycleTime,
 	}, codes(eval))
 	assert.True(t, eval.Blocked())
 }
@@ -245,7 +246,7 @@ func TestEvaluateHOSClocks_BreakOnlyRequiredWhileDriving(t *testing.T) {
 		State:   state,
 		Control: blockingControl(),
 	})
-	assert.Contains(t, codes(driving), dispatcheligibility.CodeHOSBreakRequired)
+	assert.Contains(t, codes(driving), dispatchfinding.CodeHOSBreakRequired)
 }
 
 func TestTimeWindowOverlaps(t *testing.T) {
@@ -317,8 +318,8 @@ func TestEvaluateAvailability_BlocksAreIndependentOfEnforcementLevel(t *testing.
 	})
 
 	assert.ElementsMatch(t, []string{
-		dispatcheligibility.CodeWorkerNotForDispatch,
-		dispatcheligibility.CodeWorkerBlocked,
+		dispatchfinding.CodeWorkerNotForDispatch,
+		dispatchfinding.CodeWorkerBlocked,
 	}, codes(eval))
 	assert.True(t, eval.Blocked())
 }
@@ -339,7 +340,7 @@ func TestEvaluateAvailability_ApprovedPTOOverlappingTheMoveBlocks(t *testing.T) 
 	})
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeWorkerOnPTO, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.CodeWorkerOnPTO, eval.Findings[0].Code)
 }
 
 func TestEvaluateAvailability_PTOOutsideTheMoveIsIgnored(t *testing.T) {
@@ -375,10 +376,10 @@ func TestEvaluateAvailability_OverlappingCommitmentBlocks(t *testing.T) {
 	})
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeWorkerOverlappingMove, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.CodeWorkerOverlappingMove, eval.Findings[0].Code)
 }
 
-func TestEvaluateEquipment_OutOfServiceTractorBlocksTypeMismatchWarns(t *testing.T) {
+func TestEvaluateEquipment_OutOfServiceTractorBlocks(t *testing.T) {
 	t.Parallel()
 
 	requiredType := pulid.MustNew("etp_")
@@ -394,10 +395,28 @@ func TestEvaluateEquipment_OutOfServiceTractorBlocksTypeMismatchWarns(t *testing
 	})
 
 	assert.ElementsMatch(t, []string{
-		dispatcheligibility.CodeTractorUnavailable,
-		dispatcheligibility.CodeTractorTypeMismatch,
+		dispatchfinding.CodeTractorUnavailable,
+		dispatchfinding.CodeTractorTypeMismatch,
 	}, codes(eval))
 	assert.True(t, eval.Blocked())
+}
+
+func TestEvaluateEquipment_ATractorOfTheWrongRequiredTypeCannotTakeTheMove(t *testing.T) {
+	t.Parallel()
+
+	eval := dispatcheligibility.EvaluateEquipment(dispatcheligibility.EquipmentInput{
+		Tractor: &tractor.Tractor{
+			Code:            "T-100",
+			Status:          domaintypes.EquipmentStatusAvailable,
+			EquipmentTypeID: pulid.MustNew("etp_"),
+		},
+		RequiredTractorTypeID: pulid.MustNew("etp_"),
+		Control:               blockingControl(),
+	})
+
+	require.Len(t, eval.Findings, 1)
+	assert.Equal(t, dispatchfinding.CodeTractorTypeMismatch, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityBlock, eval.Findings[0].Severity)
 }
 
 func TestEvaluateEquipment_MissingTractorBlocks(t *testing.T) {
@@ -408,7 +427,7 @@ func TestEvaluateEquipment_MissingTractorBlocks(t *testing.T) {
 	})
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeWorkerNoTractor, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.CodeWorkerNoTractor, eval.Findings[0].Code)
 }
 
 func TestEvaluateEquipment_FleetContinuityOnlyWhenEnforced(t *testing.T) {
@@ -433,7 +452,7 @@ func TestEvaluateEquipment_FleetContinuityOnlyWhenEnforced(t *testing.T) {
 	in.Control.EnforceWorkerTractorFleetContinuity = true
 	assert.Equal(
 		t,
-		[]string{dispatcheligibility.CodeFleetMismatch},
+		[]string{dispatchfinding.CodeFleetMismatch},
 		codes(dispatcheligibility.EvaluateEquipment(in)),
 	)
 }
@@ -474,10 +493,10 @@ func TestEvaluate_ComposesEveryRuleSet(t *testing.T) {
 	})
 
 	assert.ElementsMatch(t, []string{
-		dispatcheligibility.CodeWorkerNotForDispatch,
-		dispatcheligibility.CodeLicenseExpired,
-		dispatcheligibility.CodeHOSNoDriveTime,
-		dispatcheligibility.CodeTractorUnavailable,
+		dispatchfinding.CodeWorkerNotForDispatch,
+		dispatchfinding.CodeLicenseExpired,
+		dispatchfinding.CodeHOSNoDriveTime,
+		dispatchfinding.CodeTractorUnavailable,
 	}, codes(eval))
 	assert.True(t, eval.Blocked())
 }
@@ -506,8 +525,8 @@ func TestEvaluate_ActiveDispatchHoldBlocks(t *testing.T) {
 	})
 
 	require.True(t, eval.Blocked())
-	assert.Contains(t, codes(eval), dispatcheligibility.CodeShipmentOnHold)
-	assert.Equal(t, dispatcheligibility.CodeShipmentOnHold, eval.Findings[0].Code)
+	assert.Contains(t, codes(eval), dispatchfinding.CodeShipmentOnHold)
+	assert.Equal(t, dispatchfinding.CodeShipmentOnHold, eval.Findings[0].Code)
 }
 
 func TestComplianceErrorCode(t *testing.T) {
@@ -530,7 +549,7 @@ func TestComplianceErrorCode(t *testing.T) {
 	)
 }
 
-func drugAlcoholFindings(w *worker.Worker) []dispatcheligibility.Finding {
+func drugAlcoholFindings(w *worker.Worker) []dispatchfinding.Finding {
 	return dispatcheligibility.EvaluateWorkerCompliance(
 		dispatcheligibility.WorkerComplianceInput{Worker: w, Control: blockingControl()},
 	).Findings
@@ -551,8 +570,8 @@ func TestEvaluateWorkerCompliance_ProhibitionAlwaysBlocks(t *testing.T) {
 	)
 
 	require.Len(t, eval.Findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholProhibited, eval.Findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityBlock, eval.Findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeDrugAlcoholProhibited, eval.Findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityBlock, eval.Findings[0].Severity)
 	assert.Contains(t, eval.Findings[0].Message, "return-to-duty test")
 }
 
@@ -566,14 +585,14 @@ func TestEvaluateWorkerCompliance_MissingRecordWarnsOnly(t *testing.T) {
 
 	findings := drugAlcoholFindings(w)
 	require.Len(t, findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholUnknown, findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityWarn, findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeDrugAlcoholUnknown, findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityWarn, findings[0].Severity)
 
 	w.Profile.DrugAlcoholStatus = worker.DrugAlcoholPending
 	findings = drugAlcoholFindings(w)
 	require.Len(t, findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeDrugAlcoholPending, findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityWarn, findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeDrugAlcoholPending, findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityWarn, findings[0].Severity)
 }
 
 func TestEvaluateWorkerCompliance_ClearinghouseQueryOverdue(t *testing.T) {
@@ -585,8 +604,8 @@ func TestEvaluateWorkerCompliance_ClearinghouseQueryOverdue(t *testing.T) {
 
 	findings := drugAlcoholFindings(w)
 	require.Len(t, findings, 1)
-	assert.Equal(t, dispatcheligibility.CodeClearinghouseOverdue, findings[0].Code)
-	assert.Equal(t, dispatcheligibility.SeverityBlock, findings[0].Severity)
+	assert.Equal(t, dispatchfinding.CodeClearinghouseOverdue, findings[0].Code)
+	assert.Equal(t, dispatchfinding.SeverityBlock, findings[0].Severity)
 
 	future := timeutils.NowUnix() + 30*day
 	w.Profile.NextClearinghouseQueryDue = &future

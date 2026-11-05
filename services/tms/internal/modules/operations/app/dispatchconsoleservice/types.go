@@ -1,22 +1,14 @@
 package dispatchconsoleservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchurgency"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-)
-
-type UrgencyBucket string
-
-const (
-	UrgencyLate     = UrgencyBucket("Late")
-	UrgencyNow      = UrgencyBucket("Now")
-	UrgencyToday    = UrgencyBucket("Today")
-	UrgencyTomorrow = UrgencyBucket("Tomorrow")
-	UrgencyPlanned  = UrgencyBucket("Planned")
 )
 
 type MoveTenderSummary struct {
@@ -32,11 +24,12 @@ type MoveTenderSummary struct {
 type BoardMove struct {
 	*dispatchboardports.BoardMove
 
-	Urgency         UrgencyBucket      `json:"urgency"`
-	MinutesToPickup int64              `json:"minutesToPickup"`
-	IsCovered       bool               `json:"isCovered"`
-	TotalStopCount  int                `json:"totalStopCount"`
-	LiveTender      *MoveTenderSummary `json:"liveTender"`
+	Urgency         dispatchurgency.Bucket               `json:"urgency"`
+	MinutesToPickup int64                                `json:"minutesToPickup"`
+	IsCovered       bool                                 `json:"isCovered"`
+	TotalStopCount  int                                  `json:"totalStopCount"`
+	LiveTender      *MoveTenderSummary                   `json:"liveTender"`
+	PlanPrice       *dispatchplanprice.DispatchPlanPrice `json:"planPrice"`
 }
 
 type DriverAvailability string
@@ -69,18 +62,28 @@ type BoardDriver struct {
 	ProjectedTimeAvailable int64                                  `json:"projectedTimeAvailable"`
 	Commitments            []*dispatchboardports.WorkerCommitment `json:"commitments"`
 	TimeOff                []*dispatchboardports.WorkerTimeOff    `json:"timeOff"`
-	Findings               []dispatcheligibility.Finding          `json:"findings"`
+	Findings               []dispatchfinding.Finding              `json:"findings"`
 	CommittedMiles         float64                                `json:"committedMiles"`
 	CommittedRevenue       float64                                `json:"committedRevenue"`
+	PlannedMove            *PlannedMove                           `json:"plannedMove"`
+}
+
+type PlannedMove struct {
+	MoveID      pulid.ID `json:"moveId"`
+	ProNumber   string   `json:"proNumber"`
+	CostCents   int64    `json:"costCents"`
+	ValueCents  int64    `json:"valueCents"`
+	GeneratedAt int64    `json:"generatedAt"`
 }
 
 type Board struct {
-	Moves       []*BoardMove                     `json:"moves"`
-	Drivers     []*BoardDriver                   `json:"drivers"`
-	Summary     *dispatchboardports.BoardSummary `json:"summary"`
-	WindowStart int64                            `json:"windowStart"`
-	WindowEnd   int64                            `json:"windowEnd"`
-	GeneratedAt int64                            `json:"generatedAt"`
+	Moves            []*BoardMove                     `json:"moves"`
+	Drivers          []*BoardDriver                   `json:"drivers"`
+	DriversTruncated bool                             `json:"driversTruncated"`
+	Summary          *dispatchboardports.BoardSummary `json:"summary"`
+	WindowStart      int64                            `json:"windowStart"`
+	WindowEnd        int64                            `json:"windowEnd"`
+	GeneratedAt      int64                            `json:"generatedAt"`
 }
 
 type GetBoardRequest struct {
@@ -112,8 +115,8 @@ type MoveCandidatesRequest struct {
 }
 
 type DriverMoveMatch struct {
-	Move  *BoardMove                               `json:"move"`
-	Score *dispatchcandidateservice.CandidateScore `json:"score"`
+	Move  *BoardMove                        `json:"move"`
+	Score *dispatchplanports.CandidateScore `json:"score"`
 }
 
 type DriverMovesRequest struct {
@@ -125,13 +128,13 @@ type DriverMovesRequest struct {
 }
 
 type AssignmentPreview struct {
-	MoveID           pulid.ID                                 `json:"moveId"`
-	WorkerID         pulid.ID                                 `json:"workerId"`
-	TractorID        pulid.ID                                 `json:"tractorId"`
-	TrailerID        pulid.ID                                 `json:"trailerId"`
-	Score            *dispatchcandidateservice.CandidateScore `json:"score"`
-	Blocked          bool                                     `json:"blocked"`
-	RequiresOverride bool                                     `json:"requiresOverride"`
+	MoveID           pulid.ID                          `json:"moveId"`
+	WorkerID         pulid.ID                          `json:"workerId"`
+	TractorID        pulid.ID                          `json:"tractorId"`
+	TrailerID        pulid.ID                          `json:"trailerId"`
+	Score            *dispatchplanports.CandidateScore `json:"score"`
+	Blocked          bool                              `json:"blocked"`
+	RequiresOverride bool                              `json:"requiresOverride"`
 }
 
 type PreviewAssignmentRequest struct {

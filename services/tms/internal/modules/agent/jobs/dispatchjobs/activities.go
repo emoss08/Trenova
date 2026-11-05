@@ -4,15 +4,16 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -131,7 +132,8 @@ func (a *Activities) planTenant(
 	outcome.MovesPlanned = len(plan.Assignments)
 	outcome.MovesUncovered = len(plan.Uncovered)
 	outcome.ToursBuilt = len(plan.Tours)
-	outcome.TotalScore = plan.TotalScore
+	outcome.CostCents = plan.CostCents
+	outcome.UncoveredCents = plan.UncoveredCents
 	outcome.ShadowMode = plan.ShadowMode
 	outcome.RunID = plan.RunID.String()
 
@@ -144,7 +146,7 @@ func (a *Activities) planTenant(
 	outcome.MovesAtRisk = a.raiseCoverageRisk(ctx, tenant, control, plan.Uncovered)
 
 	for _, tour := range plan.Tours {
-		outcome.TotalDeadheadMiles += tour.TotalDeadheadMiles
+		outcome.TotalDeadheadMiles += tour.EmptyMiles
 		if len(tour.MoveIDs) > 1 {
 			outcome.ChainedMoves += len(tour.MoveIDs) - 1
 		}
@@ -202,7 +204,7 @@ func (a *Activities) raiseCoverageRisk(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	control *dispatchcontrol.DispatchControl,
-	uncovered []*dispatchconsoleports.DispatchUncoveredMove,
+	uncovered []*dispatchplanports.Uncovered,
 ) int {
 	now := a.now()
 
@@ -218,7 +220,7 @@ func (a *Activities) raiseCoverageRisk(
 			TenantInfo: tenant,
 			MoveID:     move.MoveID,
 			ProNumber:  move.ProNumber,
-			Reason:     move.Reason,
+			Reason:     move.Explanation(),
 			StartsAt:   move.StartsAt,
 			HoursOut:   (move.StartsAt - now) / secondsPerHour,
 		}

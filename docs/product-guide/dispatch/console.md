@@ -25,18 +25,19 @@ Keywords: approve proposal, nova picked a driver, decline proposal, proposed dri
 5. If an approval can't be carried out, the move stays in the queue with **Approved (driver); not assigned** and the reason, such as which stop's times conflict. Open it to see the same under the move's details, select **Open shipment** to fix what was refused, then assign a driver or select **Propose coverage** again. The note goes away once the move changes or a newer proposal replaces it.
 
 ### Assign a driver yourself
-Keywords: cover a load, dispatch a driver, assign truck, rank drivers, pre-flight
+Keywords: cover a load, dispatch a driver, assign truck, rank drivers, pre-flight, driver cost
 1. Open [Console](/dispatch/console) and select a move, or walk the queue with J and K.
-2. Under **Drivers for this move**, review the ranked drivers. Select **Why this score** to see how a driver was scored, or **Show ineligible** to see drivers who cannot take it and why.
+2. Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why.
 3. Press the driver's number (1–9) or select **Assign**. The pre-flight opens under the driver.
 4. When it has loaded, check the empty miles, drive time left, pickup margin and any findings, then press Enter or select **Assign driver** (**Reassign driver** on a covered move, which names who it replaces). Nothing is written until you confirm.
 
 ### Propose coverage for the window
 Keywords: auto dispatch, optimize assignments, propose drivers, auto assign
 1. Open [Console](/dispatch/console) and select **Propose coverage**.
-2. Nova picks a driver for each move it can cover. Each proposal waits on its move in the queue and in Decisions; nothing is assigned until someone approves it.
-3. With shadow mode on, a dialog shows what Nova would have proposed instead, and nothing is written.
-4. To have proposals waiting without pressing the button, turn on **Keep coverage proposed** under **Enable automated assignment** in [Dispatch control](/admin/dispatch-controls). Nova then plans again when loads are created or lose their driver, and every hour.
+2. Nova plans the whole window at once, at the lowest total cost. A move is covered when a driver costs less than leaving it uncovered, which depends on its revenue and how urgent it is; the rates come from **Costs and prices** in [Dispatch control](/admin/dispatch-controls). Each proposal waits on its move in the queue and in Decisions; nothing is assigned until someone approves it.
+3. The plan prices every move. Select a move to see what covering it is worth, what the planned driver is worth to the plan, and how much more each other driver would cost the plan. A move the plan left uncovered says why: no driver costs less than leaving it, its drivers are worth more on other moves, or the nearest driver can't take it.
+4. With shadow mode on, a dialog shows what Nova would have proposed instead, and nothing is written.
+5. To have proposals waiting without pressing the button, turn on **Keep coverage proposed** under **Enable automated assignment** in [Dispatch control](/admin/dispatch-controls). Nova then plans again when loads are created or lose their driver, and every hour.
 
 ### Plan on the timeline
 Keywords: drag a load onto a driver, driver lanes, free time, gantt, plan relays
@@ -53,8 +54,8 @@ Keywords: late delivery, missed stop, no check call, tender exhausted, covered m
 ### Find work for a driver
 Keywords: what can this driver take, next load for driver, open drivers
 1. Open [Console](/dispatch/console) and select the **Drivers** tab, or the **Open drivers** figure.
-2. Drivers are grouped by availability, open capacity first. Find one with **Search drivers** in the toolbar (by name, tractor code or fleet) and select them.
-3. The inspector shows when they are free, their hours, what they hold, and the open moves under **Best fit in this window**. Select a move to open it and assign the driver from its pre-flight.
+2. Drivers are grouped by availability, open capacity first. Find one with **Search drivers** in the toolbar (by name, tractor code or fleet) and select them. A large fleet lists its first drivers only, available ones first: the tab's count ends in "+" and the list says so at the bottom. Filter the board by fleet to see the rest.
+3. The inspector shows when they are free, their hours, what they hold, the move the last plan put them on and what they are worth to it, and the open moves under **Best fit in this window**. Select a move to open it and assign the driver from its pre-flight.
 
 ### Broker a move to a carrier
 Keywords: tender load, send to carriers, spot tender, waterfall, cover with carrier

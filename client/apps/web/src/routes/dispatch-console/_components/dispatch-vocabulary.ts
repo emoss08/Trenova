@@ -198,12 +198,6 @@ export function dutyStatusMeta(value: string) {
   return DUTY_STATUS_META[value];
 }
 
-export function scoreTone(score: number): string {
-  if (score >= 75) return "text-success-foreground";
-  if (score >= 50) return "text-warning-foreground";
-  return "text-muted-foreground";
-}
-
 export function formatMiles(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
   return translate("{0} mi", Math.round(value).toLocaleString());

@@ -3,7 +3,9 @@ package dispatchconsoleservice
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchurgency"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -20,7 +22,7 @@ func decorateMoves(moves []*dispatchboardports.BoardMove, now int64) []*BoardMov
 func decorateMove(move *dispatchboardports.BoardMove, now int64) *BoardMove {
 	return &BoardMove{
 		BoardMove:       move,
-		Urgency:         urgencyFor(move, now),
+		Urgency:         dispatchurgency.Of(move, now),
 		MinutesToPickup: minutesToPickup(move, now),
 		IsCovered:       !move.AssignmentID.IsNil() || !move.CarrierAssignmentID.IsNil(),
 		TotalStopCount:  move.MoveCount,
@@ -50,66 +52,6 @@ func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
 	}
 
 	return summary
-}
-
-// urgencyFor reads a move's urgency from its next stop: the pickup until it
-// is picked up, then the delivery. A stop is Late once its window has closed
-// with no arrival, and Now while its window is open, the same rule for a
-// pickup as for a delivery: a truck inside its pickup window is due, not
-// late, and calling it late made the board, the shipment list and the
-// answer built from them count late loads three ways.
-func urgencyFor(move *dispatchboardports.BoardMove, now int64) UrgencyBucket {
-	if arrived(move.OriginActualArrive) {
-		return deliveryUrgency(move, now)
-	}
-	if move.OriginWindowStart <= 0 {
-		return UrgencyPlanned
-	}
-	if windowClose(move.OriginWindowStart, move.OriginWindowEnd) < now {
-		return UrgencyLate
-	}
-
-	return bucketFor(max(move.OriginWindowStart-now, 0))
-}
-
-// windowClose is when a window closes: its end, or its start when it has
-// none.
-func windowClose(start int64, end *int64) int64 {
-	if end != nil && *end > start {
-		return *end
-	}
-
-	return start
-}
-
-func deliveryUrgency(move *dispatchboardports.BoardMove, now int64) UrgencyBucket {
-	if arrived(move.DestinationActualArrive) || move.DestinationWindowStart <= 0 {
-		return UrgencyPlanned
-	}
-	if windowClose(move.DestinationWindowStart, move.DestinationWindowEnd) < now {
-		return UrgencyLate
-	}
-
-	return bucketFor(max(move.DestinationWindowStart-now, 0))
-}
-
-func arrived(at *int64) bool {
-	return at != nil && *at > 0
-}
-
-func bucketFor(delta int64) UrgencyBucket {
-	switch {
-	case delta < 0:
-		return UrgencyLate
-	case delta <= nowThresholdSeconds:
-		return UrgencyNow
-	case delta <= secondsPerDay:
-		return UrgencyToday
-	case delta <= 2*secondsPerDay:
-		return UrgencyTomorrow
-	default:
-		return UrgencyPlanned
-	}
 }
 
 func minutesToPickup(move *dispatchboardports.BoardMove, now int64) int64 {
@@ -196,7 +138,7 @@ func availabilityFindings(
 	snapshot *dispatchcandidateservice.FleetSnapshot,
 	control *dispatchcontrol.DispatchControl,
 	now int64,
-) []dispatcheligibility.Finding {
+) []dispatchfinding.Finding {
 	w := snapshot.WorkersByID[driver.WorkerID]
 	if w == nil {
 		return nil
@@ -235,7 +177,7 @@ func workerHOSExempt(w *worker.Worker) bool {
 
 func availabilityFor(row *BoardDriver, now int64) DriverAvailability {
 	for i := range row.Findings {
-		if row.Findings[i].Severity == dispatcheligibility.SeverityBlock {
+		if row.Findings[i].Severity == dispatchfinding.SeverityBlock {
 			return AvailabilityBlocked
 		}
 	}

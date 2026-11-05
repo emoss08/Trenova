@@ -402,6 +402,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports:
     config:
       all: true

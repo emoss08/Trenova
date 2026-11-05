@@ -1,0 +1,33 @@
+query DispatchStyle {
+  dispatchStyle {
+    enabled
+    decisions
+    approvals
+    overrides
+    declines
+    learningSince
+    updatedAt
+    weights {
+      component
+      multiplier
+      samples
+    }
+  }
+}
+
+mutation ResetDispatchStyle {
+  resetDispatchStyle {
+    enabled
+    decisions
+    approvals
+    overrides
+    declines
+    learningSince
+    updatedAt
+    weights {
+      component
+      multiplier
+      samples
+    }
+  }
+}

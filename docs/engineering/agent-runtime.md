@@ -2646,6 +2646,11 @@ the plan read it.
   burst of new loads plans once. The hourly sweep plans these organizations too and keeps
   their proposals; an organization that plans the horizon only to see risk still has its
   sweep's proposals retired.
+- **The plan comes from operations, priced.** The service calls
+  `dispatchplanports.Planner` and never operations' application code. Each pairing carries
+  its cost in cents, the move's coverage price, the driver's value and the exact extra cost
+  of each alternative. The confidence and rationale come from those numbers. The planner
+  stores the same prices per move for the board; see [dispatch-optimizer.md](dispatch-optimizer.md).
 - **A person's click never runs the plan's writes.** "Propose coverage" only proposes,
   whatever the autonomy tier; only the scheduled and event-driven plans apply pairings the
   tier lets run on their own.

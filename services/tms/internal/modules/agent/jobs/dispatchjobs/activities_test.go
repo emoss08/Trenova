@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -146,10 +148,9 @@ type activityMocks struct {
 	controls   *dispatchcontrolportsmock.MockDispatchControlRepository
 	proposals  *stubProposalRepo
 	autoAssign *dispatchconsoleportsmock.MockDispatchAutoAssignService
+	feed       *recordingProjector
 }
 
-// A tenant on the horizon sweep that only plans to spot risk; one that keeps coverage
-// proposed is built with newActivitiesWith.
 var horizonOnly = &dispatchcontrol.DispatchControl{
 	EnableAutoAssignment: true,
 	PlanningMode:         dispatchcontrol.PlanningModeHorizon,
@@ -171,6 +172,7 @@ func newActivitiesWith(
 		controls:   dispatchcontrolportsmock.NewMockDispatchControlRepository(t),
 		proposals:  new(stubProposalRepo),
 		autoAssign: dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t),
+		feed:       &recordingProjector{},
 	}
 
 	deps.controls.EXPECT().
@@ -182,33 +184,34 @@ func newActivitiesWith(
 		DispatchControlRepo: deps.controls,
 		ProposalRepo:        deps.proposals,
 		AutoAssign:          deps.autoAssign,
+		Watchtower:          deps.feed,
 		Logger:              zap.NewNop(),
 	}), deps
 }
 
 func planWithRun(
 	assignments, uncovered int,
-	tours ...*dispatchconsoleports.DispatchTour,
+	tours ...*dispatchplanports.Tour,
 ) *dispatchconsoleports.DispatchPlan {
 	return &dispatchconsoleports.DispatchPlan{
 		RunID:       pulid.MustNew("arun_"),
 		Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, assignments),
-		Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, uncovered),
+		Uncovered:   make([]*dispatchplanports.Uncovered, uncovered),
 		Tours:       tours,
 	}
 }
 
-func tourOf(moves int, deadhead float64) *dispatchconsoleports.DispatchTour {
+func tourOf(moves int, deadhead float64) *dispatchplanports.Tour {
 	moveIDs := make([]pulid.ID, 0, moves)
 	for range moves {
 		moveIDs = append(moveIDs, pulid.MustNew("mov_"))
 	}
 
-	return &dispatchconsoleports.DispatchTour{
-		TourID:             pulid.MustNew("tour_"),
-		WorkerID:           pulid.MustNew("wrk_"),
-		MoveIDs:            moveIDs,
-		TotalDeadheadMiles: deadhead,
+	return &dispatchplanports.Tour{
+		TourID:     pulid.MustNew("tour_"),
+		WorkerID:   pulid.MustNew("wrk_"),
+		MoveIDs:    moveIDs,
+		EmptyMiles: deadhead,
 	}
 }
 
@@ -227,12 +230,13 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 			return req.TenantInfo.OrgID == first.OrgID
 		})).
 		Return(&dispatchconsoleports.DispatchPlan{
-			RunID:       pulid.MustNew("arun_"),
-			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 5),
-			Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, 2),
-			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(3, 40), tourOf(2, 25)},
-			TotalScore:  400,
-			ShadowMode:  true,
+			RunID:          pulid.MustNew("arun_"),
+			Assignments:    make([]*dispatchconsoleports.DispatchPlannedAssignment, 5),
+			Uncovered:      make([]*dispatchplanports.Uncovered, 2),
+			Tours:          []*dispatchplanports.Tour{tourOf(3, 40), tourOf(2, 25)},
+			CostCents:      48_000,
+			UncoveredCents: 90_000,
+			ShadowMode:     true,
 		}, nil)
 
 	deps.proposals.On("ExpirePendingByRun", mock.Anything, mock.Anything).Return(5, nil)
@@ -243,9 +247,9 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 		})).
 		Return(&dispatchconsoleports.DispatchPlan{
 			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 1),
-			Uncovered:   make([]*dispatchconsoleports.DispatchUncoveredMove, 0),
-			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(1, 10)},
-			TotalScore:  90,
+			Uncovered:   make([]*dispatchplanports.Uncovered, 0),
+			Tours:       []*dispatchplanports.Tour{tourOf(1, 10)},
+			CostCents:   9_000,
 		}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
@@ -264,6 +268,10 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	assert.InDelta(t, 65.0, result.TenantOutcomes[0].TotalDeadheadMiles, 0.001)
 	assert.True(t, result.TenantOutcomes[0].ShadowMode)
 	assert.Equal(t, 5, result.TenantOutcomes[0].ProposalsRetired)
+	assert.Equal(t, int64(48_000), result.TenantOutcomes[0].CostCents)
+	assert.Equal(t, int64(90_000), result.TenantOutcomes[0].UncoveredCents)
+	assert.Equal(t, int64(9_000), result.TenantOutcomes[1].CostCents)
+	assert.Zero(t, result.TenantOutcomes[1].UncoveredCents)
 }
 
 func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
@@ -361,10 +369,6 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 	require.NoError(t, err)
 }
 
-/*
-An organization that keeps coverage proposed gets its sweep's proposals applied where its
-autonomy allows and left waiting otherwise, rather than retired as a risk-only plan's are.
-*/
 func TestHorizonPlanSweepActivity_KeepsTheProposalsOfAnOrganizationThatKeepsCoverageProposed(
 	t *testing.T,
 ) {
@@ -462,7 +466,7 @@ func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing
 		})).
 		Return(&dispatchconsoleports.DispatchPlan{
 			Assignments: make([]*dispatchconsoleports.DispatchPlannedAssignment, 2),
-			Tours:       []*dispatchconsoleports.DispatchTour{tourOf(2, 15)},
+			Tours:       []*dispatchplanports.Tour{tourOf(2, 15)},
 		}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
@@ -476,6 +480,58 @@ func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing
 	require.Len(t, result.TenantOutcomes, 2)
 	assert.Contains(t, result.TenantOutcomes[0].Error, "disabled")
 	assert.Empty(t, result.TenantOutcomes[1].Error)
+}
+
+func TestRefreshCoverageActivity_RaisesOnlyUncoveredMovesInsideTheCoverageWindow(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	activities, deps := newActivitiesWith(t, &dispatchcontrol.DispatchControl{
+		EnableAutoAssignment:    true,
+		AutoProposeCoverage:     true,
+		CoverageRiskWindowHours: 6,
+	})
+	now := int64(1_800_000_000)
+	activities.now = func() int64 { return now }
+	only := tenant()
+
+	soon := &dispatchplanports.Uncovered{
+		MoveID:    pulid.MustNew("smv_"),
+		ProNumber: "PRO-1",
+		StartsAt:  now + 2*3600,
+		Reason:    dispatchplanprice.UncoveredNoCandidate,
+	}
+	later := &dispatchplanports.Uncovered{
+		MoveID:    pulid.MustNew("smv_"),
+		ProNumber: "PRO-2",
+		StartsAt:  now + 30*3600,
+		Reason:    dispatchplanprice.UncoveredNoCandidate,
+	}
+	unscheduled := &dispatchplanports.Uncovered{
+		MoveID:    pulid.MustNew("smv_"),
+		ProNumber: "PRO-3",
+		Reason:    dispatchplanprice.UncoveredNoCandidate,
+	}
+	deps.autoAssign.EXPECT().
+		Plan(mock.Anything, mock.Anything).
+		Return(&dispatchconsoleports.DispatchPlan{
+			RunID:     pulid.MustNew("arun_"),
+			Uncovered: []*dispatchplanports.Uncovered{soon, nil, later, unscheduled},
+		}, nil)
+
+	result, err := activities.RefreshCoverageActivity(t.Context(), refreshPayload(only))
+	require.NoError(t, err)
+
+	assert.Equal(t, 4, result.MovesUncovered)
+	assert.Equal(t, 1, result.MovesAtRisk)
+	require.Len(t, deps.feed.items, 1)
+	item := deps.feed.items[0]
+	assert.Equal(t, soon.MoveID.String(), item.SourceID)
+	assert.Equal(t, only, item.TenantInfo)
+	assert.Contains(t, item.Title, "PRO-1")
+	assert.Contains(t, item.Summary, soon.Explanation())
+	assert.Contains(t, item.Summary, "Starts in 2h.")
 }
 
 func TestHorizonPlanSweepActivity_NoTenantsIsNotAnError(t *testing.T) {

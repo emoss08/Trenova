@@ -11,16 +11,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
@@ -39,7 +40,7 @@ var fixedNow = time.Date(2026, 10, 6, 16, 30, 0, 0, time.UTC)
 type console struct {
 	dispatchconsoleports.DispatchConsoleService
 	board      *dispatchconsoleservice.Board
-	candidates map[pulid.ID][]*dispatchcandidateservice.CandidateScore
+	candidates map[pulid.ID][]*dispatchplanports.CandidateScore
 }
 
 func (f *console) GetBoard(
@@ -52,7 +53,7 @@ func (f *console) GetBoard(
 func (f *console) GetMoveCandidates(
 	_ context.Context,
 	req *dispatchconsoleservice.MoveCandidatesRequest,
-) ([]*dispatchcandidateservice.CandidateScore, error) {
+) ([]*dispatchplanports.CandidateScore, error) {
 	return f.candidates[req.MoveID], nil
 }
 
@@ -229,7 +230,7 @@ func newHarness(operation tenant.OperationType) *harness {
 	h := &harness{
 		console: &console{
 			board:      &dispatchconsoleservice.Board{},
-			candidates: map[pulid.ID][]*dispatchcandidateservice.CandidateScore{},
+			candidates: map[pulid.ID][]*dispatchplanports.CandidateScore{},
 		},
 		caps: &capabilities{
 			caps: shipmentboardports.ShipmentBoardCapabilities{OperationType: operation, HOS: true},
@@ -318,18 +319,19 @@ func TestCoverage_OffersTheBestUnblockedDriverToAnAssetCarrier(t *testing.T) {
 	covered.IsCovered = true
 	h.console.board.Moves = []*dispatchconsoleservice.BoardMove{later, covered, move}
 	deadhead := 5.0
-	blocked := &dispatchcandidateservice.CandidateScore{
+	blocked := &dispatchplanports.CandidateScore{
 		WorkerID: pulid.MustNew("wrk_"), WorkerName: "Blocked Driver",
-		Findings: []dispatcheligibility.Finding{
-			{Code: "HOS", Severity: dispatcheligibility.SeverityBlock},
+		Findings: []dispatchfinding.Finding{
+			{Code: "HOS", Severity: dispatchfinding.SeverityBlock},
 		},
 	}
-	best := &dispatchcandidateservice.CandidateScore{
+	best := &dispatchplanports.CandidateScore{
 		WorkerID: pulid.MustNew("wrk_"), TractorID: pulid.MustNew("trc_"),
-		WorkerName: "Gwen Grant", Score: 96, DeadheadMiles: &deadhead,
+		WorkerName: "Gwen Grant", DeadheadMiles: &deadhead,
+		Cost:             dispatcheconomics.Cost{TotalCents: 4_249},
 		DriveRemainingMs: int64(6 * time.Hour / time.Millisecond),
 	}
-	h.console.candidates[move.MoveID] = []*dispatchcandidateservice.CandidateScore{blocked, best}
+	h.console.candidates[move.MoveID] = []*dispatchplanports.CandidateScore{blocked, best}
 
 	items := h.queue(t).Items
 
@@ -339,7 +341,7 @@ func TestCoverage_OffersTheBestUnblockedDriverToAnAssetCarrier(t *testing.T) {
 	assert.Equal(t, "coverage:"+move.MoveID.String(), item.Key)
 	assert.Equal(t, "Assign Gwen Grant to San Antonio → Dallas", item.Title)
 	assert.Equal(t, "5 mi out with 6h of drive time left. Pickup closes at 13:30.", item.Reason)
-	assert.Equal(t, []string{"$3590", "5 mi out", "96% fit"}, item.Impact)
+	assert.Equal(t, []string{"$3590", "5 mi out", "costs $42 to the plan"}, item.Impact)
 	assert.Equal(t, shipmentsuggestionports.SuggestionActionAssignDriver, item.Primary.Type)
 	assert.Equal(t, best.WorkerID, item.Primary.WorkerID)
 	assert.Equal(t, best.TractorID, item.Primary.TractorID)

@@ -34,6 +34,7 @@ type DispatchBoardFilter struct {
 	Query          string
 	IncludeCovered bool
 	Limit          int
+	DriverLimit    int
 	// LateAt, when set, lists only the moves late at that instant: the pickup
 	// window opened with no arrival, or picked up with the delivery window
 	// closed and no arrival. The summary still counts every move.
@@ -137,19 +138,22 @@ type BoardDriver struct {
 }
 
 type WorkerCommitment struct {
-	WorkerID       pulid.ID                 `json:"workerId"`
-	MoveID         pulid.ID                 `json:"moveId"`
-	ShipmentID     pulid.ID                 `json:"shipmentId"`
-	ProNumber      string                   `json:"proNumber"`
-	MoveStatus     shipmentvocab.MoveStatus `json:"moveStatus"`
-	WindowStart    int64                    `json:"windowStart"`
-	WindowEnd      int64                    `json:"windowEnd"`
-	DestinationID  pulid.ID                 `json:"destinationLocationId"`
-	DestinationCty string                   `json:"destinationCity"`
-	DestinationSt  string                   `json:"destinationState"`
-	DestLatitude   *float64                 `json:"destinationLatitude"`
-	DestLongitude  *float64                 `json:"destinationLongitude"`
-	TrailerID      pulid.ID                 `json:"trailerId"`
+	WorkerID              pulid.ID                 `json:"workerId"`
+	MoveID                pulid.ID                 `json:"moveId"`
+	ShipmentID            pulid.ID                 `json:"shipmentId"`
+	ProNumber             string                   `json:"proNumber"`
+	MoveStatus            shipmentvocab.MoveStatus `json:"moveStatus"`
+	WindowStart           int64                    `json:"windowStart"`
+	WindowEnd             int64                    `json:"windowEnd"`
+	DestinationID         pulid.ID                 `json:"destinationLocationId"`
+	DestinationCty        string                   `json:"destinationCity"`
+	DestinationSt         string                   `json:"destinationState"`
+	DestLatitude          *float64                 `json:"destinationLatitude"`
+	DestLongitude         *float64                 `json:"destinationLongitude"`
+	TrailerID             pulid.ID                 `json:"trailerId"`
+	Distance              *float64                 `json:"distance"`
+	ExpectedEnd           int64                    `json:"expectedEnd"`
+	RemainingDriveMinutes int64                    `json:"remainingDriveMinutes"`
 }
 
 type WorkerTimeOff struct {
@@ -237,7 +241,7 @@ type ListEquipmentByIDsRequest struct {
 
 type DispatchConsoleRepository interface {
 	ListBoardMoves(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardMove, error)
-	ListBoardDrivers(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardDriver, error)
+	ListBoardDrivers(ctx context.Context, filter *DispatchBoardFilter) (*BoardDriverPage, error)
 	ListWorkerCommitments(
 		ctx context.Context,
 		req *ListWorkerWindowsRequest,
@@ -266,4 +270,9 @@ type DispatchConsoleRepository interface {
 		ctx context.Context,
 		req *ListEquipmentByIDsRequest,
 	) ([]*tractor.Tractor, []*trailer.Trailer, error)
+}
+
+type BoardDriverPage struct {
+	Drivers   []*BoardDriver
+	Truncated bool
 }

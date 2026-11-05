@@ -1,9 +1,11 @@
 import { HoverGlideGroup } from "@/components/hover-glide";
 import type { DispatchBoardDriver, DispatchDriverMoveMatch } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { formatTimeAgo } from "@/lib/time-utils";
 import type { TimeRange } from "@/lib/timeline/time-scale";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { XCloseIcon } from "@trenova/shared/components/icons";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useNow } from "@trenova/shared/hooks/use-now";
@@ -12,7 +14,8 @@ import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { availabilityMeta, formatMiles, pickupState, scoreTone } from "./dispatch-vocabulary";
+import { availabilityMeta, formatMiles, pickupState } from "./dispatch-vocabulary";
+import { formatCents } from "./cost-vocabulary";
 import { hoursLeft, whenFree } from "./driver-queue";
 import { FindingList } from "./finding-list";
 import { formatWhen } from "./format-when";
@@ -56,7 +59,7 @@ function MatchRow({
   onSelectMove: (moveId: string) => void;
 }) {
   const t = useT();
-  const { move, score } = match;
+  const { move, candidate } = match;
   const pickup = pickupState(
     move,
     nowSeconds,
@@ -82,13 +85,13 @@ function MatchRow({
             move.destinationState,
           )}
         </span>
-        <span className={cn("ml-auto shrink-0 font-mono tabular-nums", scoreTone(score.score))}>
-          {score.score}
+        <span className="ml-auto shrink-0 font-mono tabular-nums">
+          {formatCents(candidate.costCents)}
         </span>
       </span>
       <span className="text-muted-foreground truncate text-2xs">
-        {score.deadheadMiles != null
-          ? t("{0} · {1} empty", pickup.headline, formatMiles(score.deadheadMiles))
+        {candidate.deadheadMiles != null
+          ? t("{0} · {1} empty", pickup.headline, formatMiles(candidate.deadheadMiles))
           : pickup.headline}
       </span>
     </button>
@@ -128,6 +131,7 @@ export function DriverInspector({
   const availability = availabilityMeta(driver.availability);
   const hours = hoursLeft(driver, t);
   const nextTimeOff = driver.timeOff[0];
+  const planned = driver.plannedMove ?? null;
   const where =
     driver.formattedLocation ||
     (driver.city ? t("{0}, {1}", driver.city, driver.stateAbbreviation) : t("Location unknown"));
@@ -177,6 +181,30 @@ export function DriverInspector({
                     .join(" · ")
                 : t("No work yet")}
             </DescriptionItem>
+            {planned ? (
+              <DescriptionItem label={t("Plan")}>
+                <span className="inline-flex flex-wrap items-center gap-x-1.5">
+                  <AssistMark className="text-muted-foreground size-3 shrink-0" aria-hidden />
+                  <Button
+                    variant="link"
+                    size="xxs"
+                    className="px-0"
+                    title={t(
+                      "Priced {0}",
+                      formatTimeAgo(planned.generatedAt * 1000, nowSeconds * 1000),
+                    )}
+                    onClick={() => onSelectMove(planned.moveId)}
+                  >
+                    {t("Planned on {0} for {1}", planned.proNumber, formatCents(planned.costCents))}
+                  </Button>
+                  {planned.valueCents > 0 ? (
+                    <span className="text-muted-foreground tabular-nums">
+                      {t("Worth {0} to the plan", formatCents(planned.valueCents))}
+                    </span>
+                  ) : null}
+                </span>
+              </DescriptionItem>
+            ) : null}
             {nextTimeOff ? (
               <DescriptionItem label={t("Time off")}>
                 {t(

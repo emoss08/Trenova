@@ -1,22 +1,29 @@
 package dispatchautoassignservice
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/timeutils"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/shared/assignmentsolver"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/shopspring/decimal"
 )
 
+const (
+	rationaleLines  = 3
+	warningDiscount = 0.1
+	millisPerMinute = 60_000
+)
+
 type plannedAssignmentParams struct {
-	Move       *dispatchboardports.BoardMove
-	Score      *dispatchcandidateservice.CandidateScore
+	Pairing    *dispatchplanports.Pairing
 	Tier       agent.AutonomyTier
 	Threshold  decimal.Decimal
 	ShadowMode bool
@@ -25,173 +32,135 @@ type plannedAssignmentParams struct {
 func plannedAssignmentFor(
 	p *plannedAssignmentParams,
 ) *dispatchconsoleports.DispatchPlannedAssignment {
-	confidence := confidenceFor(p.Score)
+	confidence := confidenceFor(p.Pairing)
 
 	planned := &dispatchconsoleports.DispatchPlannedAssignment{
-		MoveID:      p.Move.MoveID,
-		MoveVersion: p.Move.MoveVersion,
-		ProNumber:   p.Move.ProNumber,
-		WorkerID:    p.Score.WorkerID,
-		WorkerName:  p.Score.WorkerName,
-		TractorID:   p.Score.TractorID,
-		TrailerID:   p.Score.TrailerID,
-		Score:       p.Score,
-		Confidence:  confidence,
-		Rationale:   rationaleFor(p.Score, p.Move),
+		Pairing:    p.Pairing,
+		Confidence: confidence,
+		Rationale:  rationaleFor(p.Pairing),
 	}
-
 	planned.AutoExecutable = p.Tier == agent.TierAutoExecute &&
 		!p.ShadowMode &&
-		!p.Score.Blocked() &&
+		!p.Pairing.Candidate.Blocked() &&
+		p.Pairing.Candidate.LocationKnown() &&
 		confidence.GreaterThanOrEqual(p.Threshold)
 
 	return planned
 }
 
-func costFor(
-	score *dispatchcandidateservice.CandidateScore,
-	control *dispatchcontrol.DispatchControl,
-) float64 {
-	if score == nil || score.Blocked() {
-		return assignmentsolver.Forbidden
-	}
-
-	if deadheadExceedsLimit(score, control) {
-		return assignmentsolver.Forbidden
-	}
-
-	return float64(100 - score.Score)
-}
-
-func deadheadExceedsLimit(
-	score *dispatchcandidateservice.CandidateScore,
-	control *dispatchcontrol.DispatchControl,
-) bool {
-	return control != nil && control.AutoAssignMaxDeadheadMiles != nil &&
-		score.DeadheadMiles != nil &&
-		*score.DeadheadMiles > float64(*control.AutoAssignMaxDeadheadMiles)
-}
-
-func confidenceFor(score *dispatchcandidateservice.CandidateScore) decimal.Decimal {
-	if score == nil || score.Blocked() {
+func confidenceFor(pairing *dispatchplanports.Pairing) decimal.Decimal {
+	candidate := pairing.Candidate
+	if candidate == nil || candidate.Blocked() || pairing.CoveragePriceCents <= 0 {
 		return decimal.Zero
 	}
 
-	base := decimal.NewFromInt(int64(score.Score)).Div(decimal.NewFromInt(100))
+	share := float64(candidate.HardCents) / float64(pairing.CoveragePriceCents)
+	confidence := 1 - share - warningDiscount*float64(candidate.Warnings())
 
-	warnings := score.Warnings()
-	if warnings == 0 {
-		return base
-	}
-
-	penalty := decimal.NewFromInt(int64(warnings)).Mul(decimal.NewFromFloat(0.1))
-	adjusted := base.Sub(penalty)
-	if adjusted.LessThan(decimal.Zero) {
-		return decimal.Zero
-	}
-	return adjusted
+	return decimal.NewFromFloat(min(max(confidence, 0), 1)).Round(2)
 }
 
-func rationaleFor(
-	score *dispatchcandidateservice.CandidateScore,
-	move *dispatchboardports.BoardMove,
-) string {
-	if score == nil {
+func rationaleFor(pairing *dispatchplanports.Pairing) string {
+	candidate := pairing.Candidate
+	if candidate == nil {
 		return ""
 	}
 
-	// The factors lead, because a line that is cut short (a queue row) should still say
-	// why; who and which move close it, for a reader that sees the proposal on its own.
 	var rationale strings.Builder
-	for i, factor := range score.Factors {
-		if i >= 3 {
-			break
-		}
-		if i > 0 {
-			rationale.WriteString("; ")
-		}
-		rationale.WriteString(factor.Detail)
-	}
-	if rationale.Len() > 0 {
-		rationale.WriteString(". ")
-	}
 	fmt.Fprintf(
 		&rationale,
-		"%s scores %d of 100 for move %s",
-		score.WorkerName,
-		score.Score,
-		move.ProNumber,
+		"%s costs %s to cover %s, which is worth %s",
+		candidate.WorkerName,
+		dispatcheconomics.Dollars(candidate.Cost.TotalCents),
+		pairing.ProNumber,
+		dispatcheconomics.Dollars(pairing.CoveragePriceCents),
 	)
-
-	if warnings := score.Warnings(); warnings > 0 {
-		fmt.Fprintf(&rationale, " (%d advisory finding(s) to review)", warnings)
+	if lines := topLines(candidate.Cost.Lines); len(lines) > 0 {
+		rationale.WriteString(": ")
+		for i, line := range lines {
+			if i > 0 {
+				rationale.WriteString(", ")
+			}
+			fmt.Fprintf(
+				&rationale,
+				"%s %s",
+				dispatcheconomics.Dollars(line.Cents),
+				line.Component.Label(),
+			)
+		}
+	}
+	rationale.WriteString(".")
+	if len(pairing.Alternatives) > 0 {
+		next := pairing.Alternatives[0]
+		fmt.Fprintf(
+			&rationale,
+			" Choosing %s instead adds %s to the plan.",
+			next.WorkerName,
+			dispatcheconomics.Dollars(next.ExtraCents),
+		)
+	}
+	if warnings := candidate.Warnings(); warnings > 0 {
+		fmt.Fprintf(&rationale, " %d advisory finding(s) to review.", warnings)
 	}
 
 	return rationale.String()
 }
 
-func evidenceFor(
-	score *dispatchcandidateservice.CandidateScore,
-	move *dispatchboardports.BoardMove,
-) []agentevidence.EvidenceRef {
+func topLines(lines []dispatcheconomics.Line) []dispatcheconomics.Line {
+	positive := make([]dispatcheconomics.Line, 0, len(lines))
+	for _, line := range lines {
+		if line.Cents > 0 {
+			positive = append(positive, line)
+		}
+	}
+	slices.SortStableFunc(positive, func(a, b dispatcheconomics.Line) int {
+		return cmp.Compare(b.Cents, a.Cents)
+	})
+	if len(positive) > rationaleLines {
+		positive = positive[:rationaleLines]
+	}
+
+	return positive
+}
+
+func evidenceFor(pairing *dispatchplanports.Pairing) []agentevidence.EvidenceRef {
+	candidate := pairing.Candidate
 	evidence := make([]agentevidence.EvidenceRef, 0, 3)
 
 	evidence = append(evidence,
 		agentevidence.EvidenceRef{
 			Type: evidenceTypeMove,
-			ID:   move.MoveID.String(),
+			ID:   pairing.MoveID.String(),
 			Note: fmt.Sprintf(
-				"%s → %s, pickup window opens %d",
-				originLabel(move),
-				destinationLabel(move),
-				move.OriginWindowStart,
+				"%s → %s, pickup window opens %s; covering it is worth %s",
+				pairing.OriginLabel,
+				pairing.DestinationLabel,
+				timeutils.FormatInstantUTC(pairing.PickupOpens),
+				dispatcheconomics.Dollars(pairing.CoveragePriceCents),
 			),
 		},
 		agentevidence.EvidenceRef{
 			Type: evidenceTypeHOS,
-			ID:   score.WorkerID.String(),
+			ID:   candidate.WorkerID.String(),
 			Note: fmt.Sprintf(
 				"drive %dm, shift %dm, cycle %dm remaining",
-				score.DriveRemainingMs/60000,
-				score.ShiftRemainingMs/60000,
-				score.CycleRemainingMs/60000,
+				candidate.DriveRemainingMs/millisPerMinute,
+				candidate.ShiftRemainingMs/millisPerMinute,
+				candidate.CycleRemainingMs/millisPerMinute,
 			),
 		})
 
-	if score.DeadheadMiles != nil {
+	if candidate.DeadheadMiles != nil {
 		evidence = append(evidence, agentevidence.EvidenceRef{
 			Type: evidenceTypeDeadhead,
-			ID:   score.TractorID.String(),
+			ID:   candidate.TractorID.String(),
 			Note: fmt.Sprintf(
 				"%.0f empty miles to the pickup; %d minutes of appointment margin",
-				*score.DeadheadMiles,
-				score.MinutesOfSlack,
+				*candidate.DeadheadMiles,
+				candidate.MinutesOfSlack,
 			),
 		})
 	}
 
 	return evidence
-}
-
-func originLabel(move *dispatchboardports.BoardMove) string {
-	if move.OriginCity == "" {
-		return move.OriginName
-	}
-	return fmt.Sprintf("%s, %s", move.OriginCity, move.OriginState)
-}
-
-func destinationLabel(move *dispatchboardports.BoardMove) string {
-	if move.DestinationCity == "" {
-		return move.DestinationName
-	}
-	return fmt.Sprintf("%s, %s", move.DestinationCity, move.DestinationState)
-}
-
-func moveStubFor(
-	planned *dispatchconsoleports.DispatchPlannedAssignment,
-) *dispatchboardports.BoardMove {
-	return &dispatchboardports.BoardMove{
-		MoveID:    planned.MoveID,
-		ProNumber: planned.ProNumber,
-	}
 }
