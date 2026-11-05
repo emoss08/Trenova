@@ -95,9 +95,12 @@ func TestRunTaint_Merge(t *testing.T) {
 	)
 	second.Add(TaintMark{Source: TaintSourceMemory, ToolName: "agent_list_memories", CallID: "b"})
 
-	first.Merge(second)
-	first.Merge(nil)
+	assert.True(t, first.Merge(second))
+	assert.False(t, first.Merge(nil))
 	assert.Len(t, first.Marks, 2)
+	assert.False(t, first.Merge(second), "the same content again is nothing new")
+	assert.True(t, first.Merge(&RunTaint{Seen: []TaintSource{TaintSourceEDI}}))
+	assert.True(t, first.Merge(&RunTaint{Overflowed: true}))
 
 	var unknown *RunTaint
 	unknown.Merge(second)

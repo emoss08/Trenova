@@ -88,12 +88,34 @@ func Call(
 		return nil
 	}
 
-	marks := make([]agent.TaintMark, 0, len(refs))
+	return refMarks(call, refs, now)
+}
+
+func refMarks(
+	call *llmports.ToolCall,
+	refs []agent.SourcedRef,
+	now int64,
+) []agent.TaintMark {
+	marks := make([]agent.TaintMark, 0, min(len(refs), agent.MaxTaintMarks))
+	summed := make(map[agent.TaintSource]struct{}, 1)
 	for idx := range refs {
-		marks = append(marks, callMark(call, refs[idx].Source, &refs[idx].Ref, now))
+		source := refs[idx].Source
+		if keepsRecord(source, len(refs)) {
+			marks = append(marks, callMark(call, source, &refs[idx].Ref, now))
+
+			continue
+		}
+		if _, done := summed[source]; !done {
+			summed[source] = struct{}{}
+			marks = append(marks, callMark(call, source, nil, now))
+		}
 	}
 
 	return marks
+}
+
+func keepsRecord(source agent.TaintSource, refs int) bool {
+	return refs <= agent.MaxMarksPerCall || (source.Rereadable() && refs < agent.MaxTaintMarks)
 }
 
 func carriedRefs(policy *agenttoolports.ToolPolicy, data any) []agent.SourcedRef {

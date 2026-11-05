@@ -692,6 +692,13 @@ present), and its policy lists every further source it may name
 that names a source the policy does not declare is still marked, under the
 policy's own source, so a mark is never dropped and the table never lies.
 
+A call that returns more than `agent.MaxMarksPerCall` marked records adds one mark per source for
+the call instead of one per record (`turntaint.Call`), so one list cannot fill `MaxTaintMarks` and
+overflow the turn. A rereadable source keeps each record while the list fits under the bound,
+because a money bound vouches for a mark by the record it names; past that a mark names none and
+nothing vouches, as for an overflowed turn. A conversation keeps a turn's marks, sources and
+overflow alike (`Thread.AbsorbTaint`).
+
 `shipment_get` returns the shipment's twenty newest top-level comments (when the
 caller may read shipment comments) and marks each one written outside the
 organization as a `record_note` (`shipment_comment` record). Comment origin is

@@ -117,8 +117,9 @@ func (s TaintSource) Rereadable() bool {
 }
 
 const (
-	MaxTaintMarks  = 16
-	HeldByTaintKey = "tainted"
+	MaxTaintMarks   = 16
+	MaxMarksPerCall = 4
+	HeldByTaintKey  = "tainted"
 )
 
 type TaintMark struct {
@@ -177,14 +178,17 @@ func (t *RunTaint) Tainted() bool {
 	return t != nil && (len(t.Marks) > 0 || len(t.Seen) > 0 || t.Overflowed)
 }
 
-func (t *RunTaint) Merge(other *RunTaint) {
+func (t *RunTaint) Merge(other *RunTaint) bool {
 	if t == nil || other == nil {
-		return
+		return false
 	}
+	marks, seen, overflowed := len(t.Marks), len(t.Seen), t.Overflowed
 	t.carry(other)
 	for _, mark := range other.Marks {
 		t.Add(mark)
 	}
+
+	return len(t.Marks) != marks || len(t.Seen) != seen || t.Overflowed != overflowed
 }
 
 func (t *RunTaint) carry(other *RunTaint) {
