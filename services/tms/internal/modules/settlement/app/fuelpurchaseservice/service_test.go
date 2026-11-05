@@ -24,9 +24,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,6 +38,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeRepo struct {
@@ -584,6 +587,7 @@ func (f *fakeRepo) CommitImport(
 }
 
 type fakeJurisdictions struct {
+	iftaports.IFTARepository
 	byKey map[string]*ifta.Jurisdiction
 }
 
@@ -643,6 +647,7 @@ func (f *fakeJurisdictions) FindJurisdictionsByCodes(
 }
 
 type fakeDocuments struct {
+	documentports.InvoiceDocumentService
 	docs    map[pulid.ID]*document.Document
 	content map[pulid.ID][]byte
 }
@@ -838,17 +843,19 @@ func newHarness(t *testing.T) *harness {
 	feeds := newFakeFeedResolver()
 	now := int64(1_784_000_000)
 
-	svc := fuelpurchaseservice.NewWithDeps(fuelpurchaseservice.Deps{
-		Repo:          repo,
-		Jurisdictions: newFakeJurisdictions("TX", "OK", "ON"),
-		TractorRepo:   tractorRepo,
-		WorkerRepo:    workerRepo,
-		Documents:     docs,
-		AuditService:  auditService,
-		Feeds:         feeds,
-		Validator:     fuelpurchaseservice.NewValidatorWithDeps(fakeReferenceChecker{}, repo),
-		Now:           func() int64 { return now },
+	svc := fuelpurchaseservice.New(fuelpurchaseservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		IFTARepo:     newFakeJurisdictions("TX", "OK", "ON"),
+		TractorRepo:  tractorRepo,
+		WorkerRepo:   workerRepo,
+		Documents:    docs,
+		AuditService: auditService,
+		Realtime:     &mocks.NoopRealtimeService{},
+		Feeds:        feeds,
+		Validator:    fuelpurchaseservice.NewValidatorWithDeps(fakeReferenceChecker{}, repo),
 	})
+	svc.SetClock(func() int64 { return now })
 
 	return &harness{
 		svc:       svc,

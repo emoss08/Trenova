@@ -124,6 +124,7 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 			stopVisits:          visits,
 			dispatchControlRepo: dispatch,
 			watchtower:          tower,
+			waits:               &recordedWaitNotices{},
 			l:                   zap.NewNop(),
 		},
 		repo:    repo,

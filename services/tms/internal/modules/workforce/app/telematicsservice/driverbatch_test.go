@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/infrastructure/telematics/samsaraprovider"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
@@ -157,11 +159,43 @@ func newDriverBatchFixture(n int) *driverBatchFixture {
 }
 
 func (f *driverBatchFixture) service(provider telematicsports.TelematicsProvider) *Service {
-	return &Service{
-		repo:             f.repo,
-		providerOverride: provider,
-		l:                zap.NewNop(),
-	}
+	return New(Params{
+		Repo:            f.repo,
+		ProviderFactory: fixedProviderFactory{provider: provider},
+		AssignmentRepo:  noAssignments{},
+		Logger:          zap.NewNop(),
+	})
+}
+
+type noAssignments struct {
+	assignmentports.AssignmentRepository
+}
+
+func (noAssignments) FindActiveByWorkerID(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (*shipment.Assignment, error) {
+	return nil, nil
+}
+
+type fixedProviderFactory struct {
+	provider telematicsports.TelematicsProvider
+}
+
+func (f fixedProviderFactory) ProviderFor(
+	context.Context,
+	pagination.TenantInfo,
+) (telematicsports.TelematicsProvider, error) {
+	return f.provider, nil
+}
+
+func (f fixedProviderFactory) ProviderOfType(
+	context.Context,
+	pagination.TenantInfo,
+	integration.Type,
+) (telematicsports.TelematicsProvider, error) {
+	return f.provider, nil
 }
 
 type samsaraRequestCounter struct {

@@ -90,7 +90,7 @@ func (f *fleetRepo) FleetRanking(
 }
 
 func newFleetService(repo *fleetRepo) *workersafetyservice.Service {
-	return workersafetyservice.NewWithDeps(workersafetyservice.Deps{
+	return workersafetyservice.New(workersafetyservice.Params{
 		Logger: zap.NewNop(),
 		Repo:   repo,
 	})

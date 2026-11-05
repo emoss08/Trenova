@@ -12,10 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const day = int64(86400)
@@ -186,6 +188,7 @@ func (r *fakeTimesheetRepo) ClearExport(
 }
 
 type fakeWorkerReader struct {
+	workerports.WorkerRepository
 	workerType worker.WorkerType
 }
 
@@ -197,9 +200,11 @@ func (r *fakeWorkerReader) GetByID(
 }
 
 func newService(repo *fakeTimesheetRepo, reader *fakeWorkerReader) *timesheetservice.Service {
-	return timesheetservice.NewWithDeps(timesheetservice.Deps{
-		Repo:       repo,
-		WorkerRepo: reader,
+	return timesheetservice.New(timesheetservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		WorkerRepo:   reader,
+		AuditService: &mocks.NoopAuditService{},
 	})
 }
 

@@ -16,9 +16,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
@@ -31,6 +33,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeEventRepo struct {
@@ -231,6 +234,17 @@ func (f *fakePortal) RevokeOnTermination(
 	return f.hadAccess, nil
 }
 
+type noTraining struct{}
+
+func (noTraining) AssignRequired(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+	pulid.ID,
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	return nil, nil
+}
+
 type harness struct {
 	svc      *workeremploymentservice.Service
 	ledger   *fakeLedger
@@ -288,21 +302,21 @@ func newHarness(t *testing.T) *harness {
 		wrk:      wrk,
 		userID:   pulid.MustNew("usr_"),
 	}
-	h.svc = workeremploymentservice.NewWithDeps(workeremploymentservice.Deps{
+	h.svc = workeremploymentservice.New(workeremploymentservice.Params{
+		Logger:        zap.NewNop(),
 		Repo:          h.events,
 		WorkerRepo:    workerRepo,
 		FleetCodeRepo: fleet,
 		DocumentRepo:  docRepo,
 		PayAssignRepo: payRepo,
-		Workers:       h.workers,
-		PTOPolicies:   h.policies,
 		PTO:           h.pto,
-		PTOLedger:     h.ledger,
-		DriverPay:     h.pay,
 		AuditService:  audit,
-		Portal:        h.portal,
+		Realtime:      &mocks.NoopRealtimeService{},
 		Checklists:    h.lists,
+		Training:      noTraining{},
 	})
+	h.svc.SetCollaborators(h.workers, h.policies, h.ledger, h.pay)
+	h.svc.SetPortalRevoker(h.portal)
 	return h
 }
 

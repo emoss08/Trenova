@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -69,13 +71,21 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 		Return(nil).
 		Once()
 
+	events := shipmenteventportsmock.NewMockShipmentEventService(t)
+	events.EXPECT().Record(mock.Anything, mock.Anything).Return(nil)
+
 	agentEvents := &recordingAgentEvents{}
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: audit,
-		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
-		AgentEvents:  agentEvents,
-		Logger:       zap.NewNop(),
+		EventService: events,
+		Invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: realtime,
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
+		AgentEvents: agentEvents,
+		Logger:      zap.NewNop(),
 	})
 
 	result, err := activities.BulkDuplicateShipmentsActivity(
@@ -153,8 +163,12 @@ func TestActivitiesAutoDelayTenantShipmentsActivity_InvalidatesEachDelayedShipme
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: auditportsmock.NewMockAuditService(t),
-		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
-		Logger:       zap.NewNop(),
+		Invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: realtime,
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
+		Logger: zap.NewNop(),
 	})
 
 	result, err := activities.AutoDelayTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))
@@ -200,8 +214,12 @@ func TestActivitiesAutoCancelTenantShipmentsActivity_InvalidatesTheTenantOnce(t 
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: auditportsmock.NewMockAuditService(t),
-		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
-		Logger:       zap.NewNop(),
+		Invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: realtime,
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
+		Logger: zap.NewNop(),
 	})
 
 	result, err := activities.AutoCancelTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))
@@ -234,8 +252,12 @@ func TestActivitiesAutoCancelTenantShipmentsActivity_NothingCanceledPublishesNot
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: auditportsmock.NewMockAuditService(t),
-		Invalidator:  shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
-		Logger:       zap.NewNop(),
+		Invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: realtime,
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
+		Logger: zap.NewNop(),
 	})
 
 	result, err := activities.AutoCancelTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))

@@ -41,7 +41,7 @@ func TestInvalidateShipmentsBumpsAndPublishes(t *testing.T) {
 
 	realtime := &recordingRealtime{}
 	epochs := &recordingEpochs{}
-	svc := NewWithDependencies(realtime, epochs, zap.NewNop())
+	svc := New(Params{Realtime: realtime, Epochs: epochs, Logger: zap.NewNop()})
 
 	tenant := pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
@@ -66,7 +66,11 @@ func TestInvalidateShipmentsPublishesWhenTheEpochCannotMove(t *testing.T) {
 	t.Parallel()
 
 	realtime := &recordingRealtime{}
-	svc := NewWithDependencies(realtime, &recordingEpochs{err: errors.New("down")}, zap.NewNop())
+	svc := New(Params{
+		Realtime: realtime,
+		Epochs:   &recordingEpochs{err: errors.New("down")},
+		Logger:   zap.NewNop(),
+	})
 
 	svc.InvalidateShipments(t.Context(), &shipmentinvalidationports.ShipmentInvalidation{
 		OrganizationID: pulid.MustNew("org_"),
