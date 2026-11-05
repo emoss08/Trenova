@@ -182,8 +182,6 @@ func (s *Service) renderDocumentHTML(
 	return &renderedDocument{body: document, header: header, footer: footer}, diags, nil
 }
 
-// finishRunningPart holds a rendered header or footer to what the body is held
-// to: nothing remote reaches the renderer, and the result passes the sanitizer.
 func (s *Service) finishRunningPart(
 	ctx context.Context,
 	field, part string,
