@@ -1099,6 +1099,8 @@
   "Order {0}": "訂單 {0}",
   "Other failures on this load": "此貨載的其他異常",
   "Our AS2 ID": "我方 AS2 ID",
+  "Our decryption key": "我方解密金鑰",
+  "Our encryption certificate": "我方加密憑證",
   "Our private key": "我方私密金鑰",
   "Our shipment this tender offers": "此派車要約提供的我方運單",
   "Our signing certificate": "我方簽署憑證",

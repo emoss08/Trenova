@@ -1099,6 +1099,8 @@
   "Order {0}": "Pedido {0}",
   "Other failures on this load": "Otras fallas en esta carga",
   "Our AS2 ID": "Nuestro ID AS2",
+  "Our decryption key": "Nuestra clave de descifrado",
+  "Our encryption certificate": "Nuestro certificado de cifrado",
   "Our private key": "Nuestra clave privada",
   "Our shipment this tender offers": "Nuestro envío que ofrece esta oferta de carga",
   "Our signing certificate": "Nuestro certificado de firma",

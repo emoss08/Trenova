@@ -8917,6 +8917,15 @@
       "edi/lading"
     ]
   },
+  "A partner signing certificate is required to verify signed inbound documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A party other than shipper or consignee pays": {
     "sites": 1,
     "scope": [
@@ -15454,6 +15463,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "AS2 decryption key (PEM)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "AS2 identifiers": {
@@ -37505,7 +37523,7 @@
     ]
   },
   "Authentication required": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -84526,7 +84544,7 @@
     ]
   },
   "Document not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -94103,6 +94121,15 @@
       "routes/edi"
     ]
   },
+  "Encryption certificate (PEM)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Encryption key is required": {
     "sites": 1,
     "scope": [
@@ -96139,6 +96166,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Enter {0} again: a saved secret does not follow a change of address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Enter, change, duplicate and cancel shipments and orders.": {
@@ -185776,6 +185812,15 @@
       "routes/worker"
     ]
   },
+  "Optional. Give partners this certificate to encrypt to, so a separate key decrypts and the signing key is never used for it; pair it with the decryption key secret.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Optional. It switches itself off after this date.": {
     "sites": 1,
     "scope": [
@@ -187412,6 +187457,15 @@
       "routes/edi"
     ]
   },
+  "Our decryption key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Our driver has departed {0} on shipment {1}. Final detention is summarized below.": {
     "sites": 3,
     "scope": [
@@ -187440,6 +187494,15 @@
     "areas": [
       "template/detention.notice.email",
       "template/detention.notice.pdf"
+    ]
+  },
+  "Our encryption certificate": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Our invoices are now payable to {0}.": {
@@ -187478,7 +187541,7 @@
       "routes/desk"
     ]
   },
-  "Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret.": {
+  "Our public certificate. Partners verify our signatures with it, and encrypt to it unless an encryption certificate is set; pair it with the private key secret.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190718,7 +190781,16 @@
       "routes/capture"
     ]
   },
-  "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.": {
+  "Pairs with the encryption certificate and only decrypts. Leave blank to keep the saved value.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Pairs with the local certificate. It signs, and decrypts too unless a decryption key is set. Leave blank to keep the saved value.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -216667,7 +216739,7 @@
       "routes/edi"
     ]
   },
-  "Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured.": {
+  "Reject inbound documents that are not signed by the partner. Automatic requires a signature, so inbound documents are refused until a partner signing certificate is configured. Off accepts documents with no proof of who sent them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -286761,6 +286833,15 @@
       "packages/shared/types"
     ]
   },
+  "This covers the whole organization, and your access is limited to part of it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "This credential has been archived": {
     "sites": 1,
     "scope": [
@@ -289705,6 +289786,15 @@
     ]
   },
   "This organization requires a receipt before an expense can be approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This organization requires single sign-on. Sign in through it to continue.": {
     "sites": 1,
     "scope": [
       "go"
@@ -324663,7 +324753,7 @@
     ]
   },
   "You don't have permission to perform this action: {0} {1}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go"
     ],
@@ -328035,6 +328125,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "a revoked api key cannot be rotated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "a schema root": {
@@ -352050,6 +352149,15 @@
       "go/other"
     ]
   },
+  "{0} is not a condition a policy can use, so this policy would never apply": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} is not a decimal such as 1250.00": {
     "sites": 1,
     "scope": [
@@ -352196,6 +352304,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is not a resource, so this policy would never apply": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} is not a root of the record": {
@@ -352525,6 +352642,15 @@
     ]
   },
   "{0} is not an id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} is not an operation of {1}, so this policy would never apply": {
     "sites": 1,
     "scope": [
       "go"
@@ -354690,7 +354816,7 @@
     ]
   },
   "{0} must be a number": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -354728,6 +354854,15 @@
     ]
   },
   "{0} must be an array": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} must be an https address on a public host": {
     "sites": 1,
     "scope": [
       "go"

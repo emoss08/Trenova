@@ -54,6 +54,7 @@ export function FacilityHighlightProvider({ children }: { children: ReactNode })
   return (
     <HighlightContext value={setHot}>
       {hot ? (
+        // i18n-ignore: a CSS rule, not text a person reads
         <style>{`[data-facility-scope] [data-facility]:not([data-facility="${hot.replace(/["\\]/g, "\\$&")}"]){opacity:.3}`}</style>
       ) : null}
       <div data-facility-scope className="contents">

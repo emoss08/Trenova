@@ -44,6 +44,7 @@ const HEAT_SPAN = 82;
 const HEAT_INK_FROM = 0.55;
 const HEAT_LEGEND_STEPS = [0, 0.33, 0.66, 1] as const;
 function heatShade(position: number): string {
+  // i18n-ignore: a CSS color, not text a person reads
   return `color-mix(in oklch, var(--accent-orange) ${Math.round(HEAT_FLOOR + position * HEAT_SPAN)}%, var(--color-card))`;
 }
 
