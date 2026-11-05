@@ -61,6 +61,7 @@ func (h *Handler) RequireDevice() gin.HandlerFunc {
 			device.UserID,
 			device.BusinessUnitID,
 			device.OrganizationID,
+			device.ActiveRoleIDs,
 		)
 		c.Set(principalKey, principal)
 		c.Next()

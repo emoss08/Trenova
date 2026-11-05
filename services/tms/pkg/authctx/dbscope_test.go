@@ -61,7 +61,7 @@ func TestSetCaptureDeviceContext_BindsTheDeviceOwnersScope(t *testing.T) {
 	c := newScopeTestContext()
 	userID, buID, orgID := pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_")
 
-	SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID)
+	SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID, nil)
 
 	got, ok := dbscope.TenantFrom(c.Request.Context())
 	require.True(t, ok)

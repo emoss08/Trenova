@@ -18,7 +18,7 @@
 #                        when storage is an external S3 service.
 #   API_UPSTREAM         Defaults to tms-api:8080.
 #   STORAGE_UPSTREAM     Defaults to minio:9000.
-#   CADDY_GLOBAL_OPTIONS One Caddy global option, e.g. "local_certs" to issue every
+#   CADDY_GLOBAL_OPTIONS Caddy global options, e.g. "local_certs" to issue every
 #                        certificate from Caddy's local CA on a private network,
 #                        or "email ops@example.com" for Let's Encrypt notices.
 #

@@ -51,6 +51,8 @@ type CaptureDevice struct {
 	RevokedAt            *int64       `json:"revokedAt"      keel:"revoked_at"`
 	RevokedByID          *pulid.ID    `json:"revokedById"    keel:"revoked_by_id"`
 	RevokedReason        string       `json:"revokedReason"  keel:"revoked_reason,nullzero"`
+	ActiveRoleIDs        []pulid.ID   `json:"-"              keel:"active_role_ids,jsonb"`
+	SessionEpoch         int64        `json:"-"              keel:"session_epoch"`
 	Version              int64        `json:"version"        keel:"version,version"`
 	CreatedAt            int64        `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt            int64        `json:"updatedAt"      keel:"updated_at,autoupdate"`

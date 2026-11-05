@@ -148,7 +148,11 @@ spec:
             - name: STORAGE_UPSTREAM
               value: {{ printf "%s:9000" (include "trenova.name" (dict "root" . "component" "minio")) | quote }}
             - name: CADDY_GLOBAL_OPTIONS
-              value: admin off
+              value: |
+                admin off
+                servers {
+                  trusted_proxies static private_ranges
+                }
           ports:
             - name: http
               containerPort: 8080

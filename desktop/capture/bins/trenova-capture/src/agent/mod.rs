@@ -271,7 +271,7 @@ pub async fn run(
         let (tx, rx) = mpsc::channel(16);
         let shared = Arc::clone(&agent.shared);
         tokio::spawn(prints::watch(
-            Inbox::new(dir),
+            Inbox::new(dir).rejecting_into(agent.env.spool_dir.join("rejected-prints")),
             Arc::clone(&agent.spool),
             tx,
             Arc::new(move || shared.snapshot().review_before_sending),

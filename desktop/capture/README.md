@@ -232,11 +232,17 @@ the console instead of as a service, for development. The printer listens on
 `HKLM\SOFTWARE\Policies\Trenova\Capture` or `HKLM\SOFTWARE\Trenova\Capture`) moves it, and
 `install-printer` must be run again after changing it.
 
+Only the print spooler may send a job or read one. The service asks Windows which process owns
+each loopback connection and compares it to the Spooler service's process; every print goes through
+`spoolsv.exe`, and the job's owner comes from its queue, so nothing else could say whose document
+it is. Any other local process, Windows' own device discovery included, may only read what the
+printer is. `installer/verify-install.ps1` checks all of this on a real install in CI.
+
 The service keeps its logs in `%ProgramData%\Trenova\Capture\logs\service.<date>.log`, and
 leaves each print in `%ProgramData%\Trenova\Capture\spool\<SID of the person who printed>\`,
 which only that person, the service, SYSTEM and Administrators can open. The agent takes it
-from there within two seconds, or at its next start. A job the agent could not read is renamed
-`.rejected` there, not deleted.
+from there within two seconds, or at its next start. A job the agent could not read is moved to `rejected-prints` in its spool folder, because its inbox
+ACL leaves it no way to create anything there.
 
 ## The installer
 

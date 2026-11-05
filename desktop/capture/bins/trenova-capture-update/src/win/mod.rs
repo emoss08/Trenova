@@ -87,7 +87,7 @@ impl Installer for WindowsInstaller {
 
     fn download_dir(&self) -> Result<PathBuf, UpdaterError> {
         let dir = paths::shared_dir()?.join("updates");
-        create_trusted(&dir, SYSTEM_ONLY_SDDL)?;
+        create_trusted(&dir, SYSTEM_ONLY_SDDL, 2)?;
         sweep(&dir);
         Ok(dir)
     }

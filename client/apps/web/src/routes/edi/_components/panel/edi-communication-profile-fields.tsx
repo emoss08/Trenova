@@ -4,10 +4,12 @@ import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
-import type { Control } from "react-hook-form";
+import { type Control, useWatch } from "react-hook-form";
 import {
   as2CompressionOptions,
   as2EncryptionAlgorithmOptions,
@@ -25,6 +27,26 @@ import { EDIEmptyState } from "./edi-panel-primitives";
 type ProfileFieldsProps = {
   control: Control<CommunicationProfileFormValues>;
 };
+
+function UnsignedInboundWarning({ control }: ProfileFieldsProps) {
+  const t = useT();
+  const required = useWatch({ control, name: "config.requireSignedInbound" });
+
+  if (required !== "false") {
+    return null;
+  }
+
+  return (
+    <Alert variant="warning" size="sm" className="mt-2">
+      <AlertTriangleIcon />
+      <AlertDescription>
+        {t(
+          "Anyone who reaches this endpoint could send a document under this partner's name. Keep this off only for a partner who cannot sign.",
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 export function TransportProfileFields({
   control,
@@ -156,6 +178,7 @@ export function TransportProfileFields({
                   "Reject inbound documents that are not signed by the partner. Automatic requires a signature, so inbound documents are refused until a partner signing certificate is configured. Off accepts documents with no proof of who sent them.",
                 )}
               />
+              <UnsignedInboundWarning control={control} />
             </FormControl>
             <FormControl>
               <SelectField

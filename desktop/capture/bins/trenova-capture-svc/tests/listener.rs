@@ -14,7 +14,7 @@ use capture_protocol::handoff::Inbox;
 use tokio_util::sync::CancellationToken;
 use trenova_capture_svc::attribution::{Attributor, Patience, PrintSystem, QueuedJob, SignedIn};
 use trenova_capture_svc::handler::{PlainInboxes, PrintHandler};
-use trenova_capture_svc::listener::{Limits, bind, serve};
+use trenova_capture_svc::listener::{AnyPeer, Limits, bind, serve};
 
 const SID: &str = "S-1-5-21-1-2-3-1001";
 
@@ -85,6 +85,7 @@ async fn start(max_request_bytes: usize) -> Running {
             max_request_bytes,
             concurrent_jobs: 1,
         },
+        Arc::new(AnyPeer),
         stop.clone(),
     ));
     Running {

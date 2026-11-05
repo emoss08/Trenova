@@ -24,10 +24,6 @@ import {
   useFacilityHighlight,
 } from "./intelligence-parts";
 
-const strong = (chunk: React.ReactNode) => (
-  <span className="text-foreground font-medium">{chunk}</span>
-);
-
 const CHART_HEIGHT = 220;
 const LEFT = 40;
 const RIGHT = 12;

@@ -17,6 +17,7 @@ function Harness({ trackingProfile }: { trackingProfile: CustomerTrackingProfile
   const form = useForm<Customer>({
     defaultValues: { name: "Halstead Foods", trackingProfile } as Customer,
   });
+  // oxlint-disable-next-line react/globals -- the test drives the form from outside it
   current = form;
   return (
     <FormProvider {...form}>

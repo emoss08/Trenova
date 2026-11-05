@@ -192,7 +192,7 @@ describe("REST records carried inside another", () => {
     expect(pdf?.fileSize).toBe(48_213);
     expect(pdf?.storagePath).toBeNull();
 
-    const queueItem = shape.billingQueueItem.parse(
+    const queueItem = linkedRecordSchema("billing_queue_item", billingQueueItemSchema).parse(
       withheld(
         {
           id: "bqi_1",

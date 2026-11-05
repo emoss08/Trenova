@@ -1,6 +1,6 @@
-import { usePointerHover } from "@/components/pointer-hover-card";
-("use no memo");
+"use no memo";
 
+import { usePointerHover } from "@/components/pointer-hover-card";
 import { ScrollArea, ScrollBar } from "@trenova/shared/components/ui/scroll-area";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";

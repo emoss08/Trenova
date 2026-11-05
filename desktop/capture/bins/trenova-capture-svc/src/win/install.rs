@@ -127,10 +127,13 @@ fn create_directories() -> io::Result<()> {
     let service_sid = acl::service_sid()?;
     let shared = paths::shared_dir()?;
     std::fs::create_dir_all(&shared)?;
-    capture_platform::acl::refuse_reparse(&shared)?;
-    capture_platform::acl::apply_dacl(&shared, capture_platform::acl::SHARED_DIR_SDDL)?;
+    if let Some(root) = shared.parent() {
+        acl::secure_directory(root, acl::SHARED_DIR_SDDL)?;
+    }
+    acl::secure_directory(&shared, acl::SHARED_DIR_SDDL)?;
+    acl::secure_directory(&shared.join("updates"), acl::SYSTEM_ONLY_SDDL)?;
     let logs = shared.join("logs");
-    acl::create_secured(
+    acl::secure_directory(
         &logs,
         &trenova_capture_svc::security::logs_sddl(&service_sid),
     )?;
@@ -139,7 +142,7 @@ fn create_directories() -> io::Result<()> {
         logs.display()
     ));
     let spool = paths::print_spool_dir()?;
-    acl::create_secured(
+    acl::secure_directory(
         &spool,
         &trenova_capture_svc::security::spool_sddl(&service_sid),
     )?;

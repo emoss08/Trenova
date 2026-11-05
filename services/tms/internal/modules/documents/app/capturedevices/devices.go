@@ -32,17 +32,18 @@ const (
 	refreshIdleLimitSeconds = 90 * 24 * 60 * 60
 	// touchIntervalSeconds bounds how often an authenticated request writes
 	// the device's last-seen time.
-	touchIntervalSeconds  = 30
-	accessTokenPrefix     = "tcd_at_"
-	refreshTokenPrefix    = "tcd_rt_"
-	maxSources            = 50
-	maxAgentVersionLength = 50
-	maxOSVersionLength    = 100
-	maxSourceNameLength   = 255
-	maxRevokeReason       = 255
-	reasonReplayed        = "The device's credential was presented twice; it may have been copied"
-	reasonIdle            = "The device was not used for 90 days"
-	reasonPersonLeft      = "The person this device acts for can no longer sign in"
+	touchIntervalSeconds     = 30
+	accessTokenPrefix        = "tcd_at_"
+	refreshTokenPrefix       = "tcd_rt_"
+	maxSources               = 50
+	maxAgentVersionLength    = 50
+	maxOSVersionLength       = 100
+	maxSourceNameLength      = 255
+	maxRevokeReason          = 255
+	reasonReplayed           = "The device's credential was presented twice; it may have been copied"
+	reasonIdle               = "The device was not used for 90 days"
+	reasonPersonLeft         = "The person this device acts for can no longer sign in"
+	reasonCredentialsChanged = "The person this device acts for changed their password or second factor"
 )
 
 // OutdatedAgentError refuses a companion older than the organization allows.
@@ -291,7 +292,12 @@ func (s *Service) requireStanding(
 		return err
 	}
 	if err == nil && person.ValidateStatus() == nil {
-		return nil
+		if person.SessionEpoch == device.SessionEpoch {
+			return nil
+		}
+		s.revoke(ctx, device, nil, reasonCredentialsChanged, now)
+
+		return pairingError(PairingInvalidGrant)
 	}
 
 	s.revoke(ctx, device, nil, reasonPersonLeft, now)

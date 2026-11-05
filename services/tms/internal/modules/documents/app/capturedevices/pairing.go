@@ -10,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -320,6 +322,17 @@ func (s *Service) DecidePairing(ctx context.Context, req *DecidePairingRequest) 
 	}
 
 	orgID, buID, userID := req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.UserID
+	person, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
+		TenantInfo:   req.TenantInfo,
+		LookupUserID: userID,
+	})
+	if err != nil {
+		return err
+	}
+	if activation, bound := authctx.GetSessionRoleActivation(ctx); bound {
+		pairing.ActiveRoleIDs = activation.ActiveRoleIDs
+	}
+	pairing.SessionEpoch = person.SessionEpoch
 	pairing.Status = capturepairing.PairingApproved
 	pairing.OrganizationID = &orgID
 	pairing.BusinessUnitID = &buID
@@ -483,6 +496,8 @@ func newDeviceFromPairing(
 		Architecture:         pairing.Architecture,
 		OSVersion:            pairing.OSVersion,
 		Status:               capture.DeviceActive,
+		ActiveRoleIDs:        pairing.ActiveRoleIDs,
+		SessionEpoch:         pairing.SessionEpoch,
 		RefreshTokenHash:     issued.refreshHash,
 		AccessTokenHash:      issued.accessHash,
 		AccessTokenExpiresAt: issued.accessExpiresAt,

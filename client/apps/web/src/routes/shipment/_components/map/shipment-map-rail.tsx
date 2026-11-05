@@ -1,3 +1,4 @@
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { resolveCoverage } from "@/lib/shipment-board/coverage";
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import {
@@ -470,7 +471,7 @@ function AlertRow({ feature, affected }: { feature: WeatherAlertFeature; affecte
   const hovered = useMapFocusStore((s) => s.alertHoverId === props.id);
   const toggleAlert = useMapFocusStore((s) => s.toggleAlert);
   const setAlertHoverId = useMapFocusStore((s) => s.setAlertHoverId);
-  const nowSeconds = Math.floor(Date.now() / 1000);
+  const nowSeconds = useNow("minute");
   const upcoming = !!props.effective && props.effective > nowSeconds;
 
   return (

@@ -1,3 +1,4 @@
+import { csvCellText, escapeCsvValue } from "@/lib/data-table-export";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import type { AgingBucketTotals } from "@/components/accounting/aging-buckets";
@@ -36,7 +37,9 @@ const AGING_COLUMNS = [
 ] as const;
 
 function toCsv(rows: ReturnType<typeof buildCsvRows>): string {
-  return rows.map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+  return rows
+    .map((row) => row.map((cell) => escapeCsvValue(csvCellText(cell))).join(","))
+    .join("\n");
 }
 
 function buildCsvRows(

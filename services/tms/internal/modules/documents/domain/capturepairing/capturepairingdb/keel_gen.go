@@ -39,6 +39,8 @@ var capturePairingsTable = schema.Table{
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "approved_by_id", Quoted: `"approved_by_id"`, Field: "ApprovedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Approved By ID`, JSON: `approvedById`},
 		{Name: "device_name", Quoted: `"device_name"`, Field: "DeviceName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Device Name`, JSON: `deviceName`},
+		{Name: "active_role_ids", Quoted: `"active_role_ids"`, Field: "ActiveRoleIDs", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Active Role IDs`},
+		{Name: "session_epoch", Quoted: `"session_epoch"`, Field: "SessionEpoch", Kind: schema.KindInt64, Flags: 0, Label: `Session Epoch`},
 		{Name: "device_id", Quoted: `"device_id"`, Field: "DeviceID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Device ID`, JSON: `deviceId`},
 		{Name: "last_polled_at", Quoted: `"last_polled_at"`, Field: "LastPolledAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Polled At`},
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: 0, Label: `Expires At`, JSON: `expiresAt`},
@@ -49,14 +51,14 @@ var capturePairingsTable = schema.Table{
 	},
 	PK:           []int32{0},
 	Tenant:       nil,
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
-	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
+	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
 	Returning:    nil,
-	Version:      18,
+	Version:      20,
 	AutoID:       0,
-	AutoCreate:   19,
-	AutoUpdate:   20,
+	AutoCreate:   21,
+	AutoUpdate:   22,
 	IDPrefix:     "cpair_",
 	New:          newCapturePairing,
 	NewN:         newNCapturePairing,
@@ -85,6 +87,8 @@ type CapturePairingsTable struct {
 	BusinessUnitID keelkinds.PulidIDCol
 	ApprovedByID   keelkinds.PulidIDCol
 	DeviceName     keel.StringCol
+	ActiveRoleIDs  keel.JSONBCol
+	SessionEpoch   keel.Int64Col
 	DeviceID       keelkinds.PulidIDCol
 	LastPolledAt   keel.Int64Col
 	ExpiresAt      keel.Int64Col
@@ -111,13 +115,15 @@ var CapturePairings = &CapturePairingsTable{
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 11}}},
 	ApprovedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 12}}},
 	DeviceName:     keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 13}},
-	DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 14}}},
-	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 15}},
-	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 16}},
-	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 17}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 18}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 19}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 20}},
+	ActiveRoleIDs:  keel.JSONBCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 14}},
+	SessionEpoch:   keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 15}},
+	DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 16}}},
+	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 17}},
+	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 18}},
+	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 19}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 20}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 21}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 22}},
 }
 
 // BuildCapturePairings builds the table of capture_pairings for ref. Generated relation and alias methods call it.
@@ -138,13 +144,15 @@ func BuildCapturePairings(r *keel.Ref) *CapturePairingsTable {
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ApprovedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		DeviceName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		ActiveRoleIDs:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		SessionEpoch:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
 }
 
@@ -558,18 +566,22 @@ func ptrCapturePairing(p unsafe.Pointer, c int32) any {
 	case 13:
 		return &r.DeviceName
 	case 14:
-		return (**string)(unsafe.Pointer(&r.DeviceID))
+		return &r.ActiveRoleIDs
 	case 15:
-		return &r.LastPolledAt
+		return &r.SessionEpoch
 	case 16:
-		return &r.ExpiresAt
+		return (**string)(unsafe.Pointer(&r.DeviceID))
 	case 17:
-		return &r.DecidedAt
+		return &r.LastPolledAt
 	case 18:
-		return &r.Version
+		return &r.ExpiresAt
 	case 19:
-		return &r.CreatedAt
+		return &r.DecidedAt
 	case 20:
+		return &r.Version
+	case 21:
+		return &r.CreatedAt
+	case 22:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -628,27 +640,34 @@ func valueCapturePairing(p unsafe.Pointer, c int32) any {
 		}
 		return r.DeviceName
 	case 14:
+		if r.ActiveRoleIDs == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.ActiveRoleIDs
+	case 15:
+		return r.SessionEpoch
+	case 16:
 		if r.DeviceID == nil {
 			return nil
 		}
 		return string(*r.DeviceID)
-	case 15:
+	case 17:
 		if r.LastPolledAt == nil {
 			return nil
 		}
 		return *r.LastPolledAt
-	case 16:
+	case 18:
 		return r.ExpiresAt
-	case 17:
+	case 19:
 		if r.DecidedAt == nil {
 			return nil
 		}
 		return *r.DecidedAt
-	case 18:
-		return r.Version
-	case 19:
-		return r.CreatedAt
 	case 20:
+		return r.Version
+	case 21:
+		return r.CreatedAt
+	case 22:
 		return r.UpdatedAt
 	}
 	return nil

@@ -31,7 +31,6 @@ import {
   queryKeyPrefix,
   queryKeyRootId,
   type QueryKeyRoot,
-  type ResourceInvalidationEvent,
 } from "@trenova/shared/hooks/realtime-patching";
 import {
   handleShipmentCommentEvent,

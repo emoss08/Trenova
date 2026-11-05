@@ -203,7 +203,7 @@ func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) 
 			authctx.SetAuthContext(c, userID, buID, orgID)
 		},
 		"capture device": func(c *gin.Context) {
-			authctx.SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID)
+			authctx.SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID, nil)
 		},
 		"no principal": func(*gin.Context) {},
 	}

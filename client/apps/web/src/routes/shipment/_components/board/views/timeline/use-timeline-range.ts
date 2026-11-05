@@ -6,7 +6,7 @@ import {
   rangeFirstDay,
 } from "@/lib/shipment-board/timeline";
 import { getTodayDate } from "@trenova/shared/lib/date";
-import { useLayoutEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useShipmentBoardUrl } from "../../url-state";
 import { createTimelineScale, LABEL_WIDTH } from "./timeline-scale";
 
@@ -17,15 +17,15 @@ import { createTimelineScale, LABEL_WIDTH } from "./timeline-scale";
  */
 function useWidth() {
   const [node, setNode] = useState<HTMLElement | null>(null);
-  const [width, setWidth] = useState(0);
-  useLayoutEffect(() => {
-    if (!node) return;
-    setWidth(node.clientWidth);
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [node]);
+  const width = useSyncExternalStore(
+    (notify) => {
+      if (!node || typeof ResizeObserver === "undefined") return () => {};
+      const observer = new ResizeObserver(notify);
+      observer.observe(node);
+      return () => observer.disconnect();
+    },
+    () => node?.clientWidth ?? 0,
+  );
   return [setNode, width] as const;
 }
 

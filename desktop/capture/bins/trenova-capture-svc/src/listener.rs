@@ -14,7 +14,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use bytes::Bytes;
-use capture_ipp::{JobHandler, Printer};
+use capture_ipp::{ClientAccess, JobHandler, Printer};
 use http::header::{ALLOW, CONTENT_LENGTH, CONTENT_TYPE, HOST, ORIGIN};
 use http::{Method, Request, Response, StatusCode};
 use http_body_util::{BodyExt, Full, Limited};
@@ -129,6 +129,7 @@ fn check<H: JobHandler>(
 async fn respond<H: JobHandler + 'static>(
     request: Request<Incoming>,
     context: Arc<Context<H>>,
+    access: ClientAccess,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     if let Err(status) = check(&request, &context) {
         let mut response = plain(status);
@@ -153,7 +154,7 @@ async fn respond<H: JobHandler + 'static>(
         return Ok(plain(StatusCode::SERVICE_UNAVAILABLE));
     };
     let printer = Arc::clone(&context.printer);
-    let answer = match tokio::task::spawn_blocking(move || printer.handle(&body)).await {
+    let answer = match tokio::task::spawn_blocking(move || printer.handle(access, &body)).await {
         Ok(answer) => answer,
         Err(err) => {
             tracing::error!(error = %err, "an IPP request failed");
@@ -167,6 +168,21 @@ async fn respond<H: JobHandler + 'static>(
     Ok(response)
 }
 
+/// Decides what the process behind a loopback connection may do.
+pub trait Peers: Send + Sync + 'static {
+    fn access(&self, peer: SocketAddr, port: u16) -> ClientAccess;
+}
+
+/// Every loopback client may print, for a test.
+#[derive(Clone, Copy, Debug)]
+pub struct AnyPeer;
+
+impl Peers for AnyPeer {
+    fn access(&self, _peer: SocketAddr, _port: u16) -> ClientAccess {
+        ClientAccess::Print
+    }
+}
+
 /// Binds the printer's loopback address.
 pub async fn bind(port: u16) -> io::Result<TcpListener> {
     TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], port))).await
@@ -177,6 +193,7 @@ pub async fn serve<H: JobHandler + 'static>(
     listener: TcpListener,
     printer: Arc<Printer<H>>,
     limits: Limits,
+    peers: Arc<dyn Peers>,
     shutdown: CancellationToken,
 ) -> io::Result<()> {
     let port = listener.local_addr()?.port();
@@ -204,8 +221,9 @@ pub async fn serve<H: JobHandler + 'static>(
         if !peer.ip().is_loopback() {
             continue;
         }
+        let access = peers.access(peer, port);
         let context = Arc::clone(&context);
-        let service = service_fn(move |request| respond(request, Arc::clone(&context)));
+        let service = service_fn(move |request| respond(request, Arc::clone(&context), access));
         let connection = http1::Builder::new()
             .timer(TokioTimer::new())
             .header_read_timeout(HEADER_TIMEOUT)

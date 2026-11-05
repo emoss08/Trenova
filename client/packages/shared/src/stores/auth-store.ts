@@ -5,6 +5,7 @@ import {
   announceSignedOut,
   sessionContextOf,
   setSessionContext,
+  sessionFoundEnded,
 } from "@trenova/shared/lib/session-context";
 import { realtimeClient } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
@@ -147,6 +148,7 @@ export const useAuthStore = create<AuthState>()(
           set({ user: null, restored: null, isAuthenticated: false });
           clearCsrfToken();
           usePermissionStore.getState().clearPermissions();
+          sessionFoundEnded();
           return { status: "signed_out" };
         }
       },

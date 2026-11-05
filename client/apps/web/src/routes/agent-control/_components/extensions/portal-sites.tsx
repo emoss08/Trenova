@@ -79,6 +79,9 @@ export function PortalSites({ canUpdate }: PortalSitesProps) {
                     <Badge variant="neutral">{t("Read only")}</Badge>
                   )}
                   {site.hasSignIn && <Badge variant="neutral">{t("Signs in")}</Badge>}
+                  {site.hasSignIn && site.viewOnlyAccount && (
+                    <Badge variant="neutral">{t("View-only sign-in")}</Badge>
+                  )}
                   {site.hasAuthenticator && (
                     <Badge variant="neutral">{t("Authenticator codes")}</Badge>
                   )}

@@ -5,8 +5,9 @@
 //! `Print-Job` or `Create-Job` plus `Send-Document`, and reports jobs through
 //! `Get-Job-Attributes` and `Get-Jobs`. What happens to a document is the
 //! [`JobHandler`]'s business: the service attributes it to a Windows user and
-//! hands it to that user's agent. A job name is never shown to anyone asking
-//! about jobs, because any local process can ask.
+//! hands it to that user's agent. Only a client with [`ClientAccess::Print`]
+//! reaches a job; any other local process learns what the printer is and
+//! nothing else.
 
 use std::collections::VecDeque;
 use std::sync::{Mutex, PoisonError};
@@ -133,6 +134,30 @@ impl Refusal {
 /// What the printer does with a document once it has one.
 pub trait JobHandler: Send + Sync {
     fn accept(&self, job: IncomingJob) -> Result<(), Refusal>;
+}
+
+/// What the client on a connection may do. Windows discovers the printer from
+/// its own services, but only the print spooler hands it a job, and the job's
+/// owner is read from the spooler's queue, so a job from anything else could
+/// land in another person's inbox.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClientAccess {
+    /// Read what the printer is.
+    Discovery,
+    /// Send jobs too.
+    Print,
+}
+
+fn touches_jobs(code: u16) -> bool {
+    matches!(
+        code,
+        op::PRINT_JOB
+            | op::CREATE_JOB
+            | op::SEND_DOCUMENT
+            | op::CANCEL_JOB
+            | op::GET_JOB_ATTRIBUTES
+            | op::GET_JOBS
+    )
 }
 
 /// How the printer describes itself.
@@ -450,7 +475,7 @@ impl<H: JobHandler> Printer<H> {
     }
 
     /// Answers one IPP request, given its whole body.
-    pub fn handle(&self, request: &[u8]) -> Vec<u8> {
+    pub fn handle(&self, access: ClientAccess, request: &[u8]) -> Vec<u8> {
         let message = match decode(request) {
             Ok(message) => message,
             Err(err) => {
@@ -483,6 +508,11 @@ impl<H: JobHandler> Printer<H> {
             Reply::error(
                 status::CLIENT_ERROR_BAD_REQUEST,
                 "attributes-charset is required.",
+            )
+        } else if access == ClientAccess::Discovery && touches_jobs(message.code) {
+            Reply::error(
+                status::CLIENT_ERROR_NOT_AUTHORIZED,
+                "Only the print spooler may send or read jobs.",
             )
         } else {
             self.jobs().expire(Instant::now());
@@ -981,9 +1011,37 @@ mod tests {
     }
 
     #[test]
+    fn a_discovery_client_reads_the_printer_and_touches_no_job() {
+        let (printer, recorder) = printer();
+
+        let attributes = reply(&printer.handle(
+            ClientAccess::Discovery,
+            &request(op::GET_PRINTER_ATTRIBUTES, &[], &[]),
+        ));
+        assert_eq!(attributes.code, status::SUCCESSFUL_OK);
+
+        for code in [
+            op::PRINT_JOB,
+            op::CREATE_JOB,
+            op::SEND_DOCUMENT,
+            op::CANCEL_JOB,
+            op::GET_JOB_ATTRIBUTES,
+            op::GET_JOBS,
+        ] {
+            let answer =
+                reply(&printer.handle(ClientAccess::Discovery, &request(code, &[], b"%PDF-1.7")));
+            assert_eq!(answer.code, status::CLIENT_ERROR_NOT_AUTHORIZED);
+        }
+        assert!(recorder.jobs.lock().expect("jobs").is_empty());
+    }
+
+    #[test]
     fn the_printer_describes_itself_and_honours_requested_attributes() {
         let (printer, _) = printer();
-        let all = reply(&printer.handle(&request(op::GET_PRINTER_ATTRIBUTES, &[], &[])));
+        let all = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(op::GET_PRINTER_ATTRIBUTES, &[], &[]),
+        ));
         assert_eq!(all.code, status::SUCCESSFUL_OK);
         assert_eq!(all.request_id, 7);
         let attributes = all.group(GroupTag::Printer).expect("printer group");
@@ -997,14 +1055,17 @@ mod tests {
         assert_eq!(formats, ["application/pdf", "image/pwg-raster"]);
         assert!(attributes.get("media-col-database").is_some());
 
-        let some = reply(&printer.handle(&request(
-            op::GET_PRINTER_ATTRIBUTES,
-            &[(
-                "requested-attributes",
-                Value::Keyword("printer-name".into()),
-            )],
-            &[],
-        )));
+        let some = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::GET_PRINTER_ATTRIBUTES,
+                &[(
+                    "requested-attributes",
+                    Value::Keyword("printer-name".into()),
+                )],
+                &[],
+            ),
+        ));
         let only = some.group(GroupTag::Printer).expect("printer group");
         assert_eq!(only.attributes.len(), 1);
         assert_eq!(
@@ -1016,18 +1077,21 @@ mod tests {
     #[test]
     fn a_printed_pdf_is_handed_on_with_its_name_and_claimed_user() {
         let (printer, recorder) = printer();
-        let answer = reply(&printer.handle(&request(
-            op::PRINT_JOB,
-            &[
-                ("requesting-user-name", Value::Name("jdoe".into())),
-                ("job-name", Value::Name("Rate confirmation".into())),
-                (
-                    "document-format",
-                    Value::MimeMediaType("application/pdf".into()),
-                ),
-            ],
-            b"%PDF-1.7 body",
-        )));
+        let answer = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::PRINT_JOB,
+                &[
+                    ("requesting-user-name", Value::Name("jdoe".into())),
+                    ("job-name", Value::Name("Rate confirmation".into())),
+                    (
+                        "document-format",
+                        Value::MimeMediaType("application/pdf".into()),
+                    ),
+                ],
+                b"%PDF-1.7 body",
+            ),
+        ));
         assert_eq!(answer.code, status::SUCCESSFUL_OK);
         assert_eq!(job_attr(&answer, "job-state"), Some(Value::Enum(9)));
         let jobs = recorder.jobs.lock().expect("lock");
@@ -1041,27 +1105,33 @@ mod tests {
     #[test]
     fn create_job_then_send_document_is_one_job_and_octet_stream_is_sniffed() {
         let (printer, recorder) = printer();
-        let created = reply(&printer.handle(&request(
-            op::CREATE_JOB,
-            &[("job-name", Value::Name("Invoice 1042".into()))],
-            &[],
-        )));
+        let created = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::CREATE_JOB,
+                &[("job-name", Value::Name("Invoice 1042".into()))],
+                &[],
+            ),
+        ));
         assert_eq!(job_attr(&created, "job-state"), Some(Value::Enum(3)));
         let Some(Value::Integer(id)) = job_attr(&created, "job-id") else {
             panic!("no job id");
         };
-        let sent = reply(&printer.handle(&request(
-            op::SEND_DOCUMENT,
-            &[
-                ("job-id", Value::Integer(id)),
-                ("last-document", Value::Boolean(true)),
-                (
-                    "document-format",
-                    Value::MimeMediaType("application/octet-stream".into()),
-                ),
-            ],
-            b"RaS2....",
-        )));
+        let sent = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::SEND_DOCUMENT,
+                &[
+                    ("job-id", Value::Integer(id)),
+                    ("last-document", Value::Boolean(true)),
+                    (
+                        "document-format",
+                        Value::MimeMediaType("application/octet-stream".into()),
+                    ),
+                ],
+                b"RaS2....",
+            ),
+        ));
         assert_eq!(sent.code, status::SUCCESSFUL_OK);
         assert_eq!(
             recorder.jobs.lock().expect("lock")[0].format,
@@ -1069,11 +1139,14 @@ mod tests {
         );
         assert_eq!(recorder.jobs.lock().expect("lock")[0].name, "Invoice 1042");
 
-        let again = reply(&printer.handle(&request(
-            op::SEND_DOCUMENT,
-            &[("job-id", Value::Integer(id))],
-            b"%PDF-",
-        )));
+        let again = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::SEND_DOCUMENT,
+                &[("job-id", Value::Integer(id))],
+                b"%PDF-",
+            ),
+        ));
         assert_eq!(again.code, status::CLIENT_ERROR_NOT_POSSIBLE);
     }
 
@@ -1082,14 +1155,20 @@ mod tests {
         let (printer, recorder) = printer();
         *recorder.refuse.lock().expect("lock") =
             Some(Refusal::NotAttributed("No print queue job matches.".into()));
-        let answer = reply(&printer.handle(&request(op::PRINT_JOB, &[], b"%PDF-1.7")));
+        let answer = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(op::PRINT_JOB, &[], b"%PDF-1.7"),
+        ));
         assert_eq!(answer.code, status::CLIENT_ERROR_NOT_AUTHORIZED);
         assert_eq!(job_attr(&answer, "job-state"), Some(Value::Enum(8)));
-        let jobs = reply(&printer.handle(&request(
-            op::GET_JOBS,
-            &[("which-jobs", Value::Keyword("completed".into()))],
-            &[],
-        )));
+        let jobs = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::GET_JOBS,
+                &[("which-jobs", Value::Keyword("completed".into()))],
+                &[],
+            ),
+        ));
         assert_eq!(
             jobs.groups
                 .iter()
@@ -1102,42 +1181,52 @@ mod tests {
     #[test]
     fn formats_compression_size_and_versions_are_checked() {
         let (printer, recorder) = printer();
-        let word = reply(&printer.handle(&request(
-            op::PRINT_JOB,
-            &[(
-                "document-format",
-                Value::MimeMediaType("application/msword".into()),
-            )],
-            b"doc",
-        )));
+        let word = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::PRINT_JOB,
+                &[(
+                    "document-format",
+                    Value::MimeMediaType("application/msword".into()),
+                )],
+                b"doc",
+            ),
+        ));
         assert_eq!(
             word.code,
             status::CLIENT_ERROR_DOCUMENT_FORMAT_NOT_SUPPORTED
         );
         assert!(word.group(GroupTag::Unsupported).is_some());
 
-        let gzip = reply(&printer.handle(&request(
-            op::VALIDATE_JOB,
-            &[("compression", Value::Keyword("gzip".into()))],
-            &[],
-        )));
+        let gzip = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::VALIDATE_JOB,
+                &[("compression", Value::Keyword("gzip".into()))],
+                &[],
+            ),
+        ));
         assert_eq!(gzip.code, status::CLIENT_ERROR_COMPRESSION_NOT_SUPPORTED);
 
-        let large = reply(&printer.handle(&request(op::PRINT_JOB, &[], &[b'%'; 65])));
+        let large = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(op::PRINT_JOB, &[], &[b'%'; 65]),
+        ));
         assert_eq!(large.code, status::CLIENT_ERROR_REQUEST_ENTITY_TOO_LARGE);
 
         let mut v3 = request(op::GET_PRINTER_ATTRIBUTES, &[], &[]);
         v3[0] = 3;
         assert_eq!(
-            reply(&printer.handle(&v3)).code,
+            reply(&printer.handle(ClientAccess::Print, &v3)).code,
             status::SERVER_ERROR_VERSION_NOT_SUPPORTED
         );
 
-        let garbage = reply(&printer.handle(&[2, 0, 0, 11, 0, 0, 0, 9, 0x01, 0x47]));
+        let garbage =
+            reply(&printer.handle(ClientAccess::Print, &[2, 0, 0, 11, 0, 0, 0, 9, 0x01, 0x47]));
         assert_eq!(garbage.code, status::CLIENT_ERROR_BAD_REQUEST);
         assert_eq!(garbage.request_id, 9);
 
-        let unknown = reply(&printer.handle(&request(0x0010, &[], &[])));
+        let unknown = reply(&printer.handle(ClientAccess::Print, &request(0x0010, &[], &[])));
         assert_eq!(unknown.code, status::SERVER_ERROR_OPERATION_NOT_SUPPORTED);
         assert!(recorder.jobs.lock().expect("lock").is_empty());
     }
@@ -1145,27 +1234,30 @@ mod tests {
     #[test]
     fn a_pending_job_can_be_cancelled_but_a_finished_one_cannot() {
         let (printer, _) = printer();
-        let created = reply(&printer.handle(&request(op::CREATE_JOB, &[], &[])));
+        let created =
+            reply(&printer.handle(ClientAccess::Print, &request(op::CREATE_JOB, &[], &[])));
         let Some(Value::Integer(id)) = job_attr(&created, "job-id") else {
             panic!("no job id");
         };
         let cancel = |printer: &Printer<Arc<Recorder>>| {
-            reply(&printer.handle(&request(
-                op::CANCEL_JOB,
-                &[("job-id", Value::Integer(id))],
-                &[],
-            )))
+            reply(&printer.handle(
+                ClientAccess::Print,
+                &request(op::CANCEL_JOB, &[("job-id", Value::Integer(id))], &[]),
+            ))
         };
         assert_eq!(cancel(&printer).code, status::SUCCESSFUL_OK);
         assert_eq!(cancel(&printer).code, status::CLIENT_ERROR_NOT_POSSIBLE);
-        let looked_up = reply(&printer.handle(&request(
-            op::GET_JOB_ATTRIBUTES,
-            &[(
-                "job-uri",
-                Value::Uri(format!("ipp://127.0.0.1:49631/ipp/print/{id}")),
-            )],
-            &[],
-        )));
+        let looked_up = reply(&printer.handle(
+            ClientAccess::Print,
+            &request(
+                op::GET_JOB_ATTRIBUTES,
+                &[(
+                    "job-uri",
+                    Value::Uri(format!("ipp://127.0.0.1:49631/ipp/print/{id}")),
+                )],
+                &[],
+            ),
+        ));
         assert_eq!(job_attr(&looked_up, "job-state"), Some(Value::Enum(7)));
         assert!(
             job_attr(&looked_up, "job-name").is_none(),

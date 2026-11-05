@@ -326,6 +326,10 @@ jobs:
           TRENOVA_SIGNING_PROFILE: ${{ secrets.TRENOVA_SIGNING_PROFILE }}
         run: ./installer/build.ps1 -Version $env:VERSION -Sign
 
+      - name: Check the installed behaviour
+        shell: pwsh
+        run: ./installer/verify-install.ps1 -Msi "installer/out/TrenovaCapture-$env:VERSION-x64.msi"
+
       - name: Release notes
         if: env.RELEASE == 'true'
         shell: pwsh

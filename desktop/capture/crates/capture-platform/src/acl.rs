@@ -4,18 +4,24 @@ use std::io;
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 
-use windows::Win32::Foundation::{ERROR_ALREADY_EXISTS, HLOCAL, LocalFree};
+use windows::Win32::Foundation::{
+    CloseHandle, ERROR_ALREADY_EXISTS, HANDLE, HLOCAL, LUID, LocalFree,
+};
 use windows::Win32::Security::Authorization::{
     ConvertStringSecurityDescriptorToSecurityDescriptorW, GetNamedSecurityInfoW, SDDL_REVISION_1,
     SE_FILE_OBJECT, SetNamedSecurityInfoW,
 };
 use windows::Win32::Security::{
-    ACL, DACL_SECURITY_INFORMATION, GetSecurityDescriptorDacl, IsWellKnownSid,
+    ACL, AdjustTokenPrivileges, DACL_SECURITY_INFORMATION, GetSecurityDescriptorDacl,
+    GetSecurityDescriptorOwner, IsWellKnownSid, LUID_AND_ATTRIBUTES, LookupPrivilegeValueW,
     OWNER_SECURITY_INFORMATION, PROTECTED_DACL_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, PSID,
-    SECURITY_ATTRIBUTES, WinBuiltinAdministratorsSid, WinLocalSystemSid,
+    SE_PRIVILEGE_ENABLED, SE_RESTORE_NAME, SE_TAKE_OWNERSHIP_NAME, SECURITY_ATTRIBUTES,
+    TOKEN_ADJUST_PRIVILEGES, TOKEN_PRIVILEGES, TOKEN_QUERY, WinBuiltinAdministratorsSid,
+    WinLocalSystemSid,
 };
 use windows::Win32::Storage::FileSystem::{CreateDirectoryW, FILE_ATTRIBUTE_REPARSE_POINT};
-use windows_core::{BOOL, HSTRING};
+use windows::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
+use windows_core::{BOOL, HSTRING, PCWSTR};
 
 /// A protected DACL for SYSTEM and Administrators only.
 pub const SYSTEM_ONLY_SDDL: &str = "D:P(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)";
@@ -139,16 +145,91 @@ fn owned_by_administrators(path: &Path) -> io::Result<bool> {
     Ok(trusted)
 }
 
-/// Creates `path` for a process running as SYSTEM to trust: one a standard user
-/// made first, or one that redirects elsewhere, is refused rather than used.
-pub fn create_trusted(path: &Path, sddl: &str) -> io::Result<()> {
+/// Enables a privilege the process holds but has not switched on.
+fn enable_privilege(name: PCWSTR) -> io::Result<()> {
+    let mut luid = LUID::default();
+    // SAFETY: a static privilege name and an out LUID.
+    unsafe { LookupPrivilegeValueW(None, name, &raw mut luid) }.map_err(io::Error::other)?;
+    let mut token = HANDLE::default();
+    // SAFETY: the pseudo handle of this process and an out token, closed below.
+    unsafe {
+        OpenProcessToken(
+            GetCurrentProcess(),
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+            &raw mut token,
+        )
+    }
+    .map_err(io::Error::other)?;
+    let state = TOKEN_PRIVILEGES {
+        PrivilegeCount: 1,
+        Privileges: [LUID_AND_ATTRIBUTES {
+            Luid: luid,
+            Attributes: SE_PRIVILEGE_ENABLED,
+        }],
+    };
+    // SAFETY: the token opened above and a state that outlives the call.
+    let adjusted =
+        unsafe { AdjustTokenPrivileges(token, false, Some(&raw const state), 0, None, None) };
+    // SAFETY: the handle opened above, closed once.
+    let _ = unsafe { CloseHandle(token) };
+    adjusted.map_err(io::Error::other)
+}
+
+/// Makes the Administrators group the owner of `path`, whoever made it. An
+/// owner can always rewrite a DACL, so a directory someone else created is not
+/// secured until it stops being theirs.
+fn take_ownership(path: &Path) -> io::Result<()> {
+    enable_privilege(SE_TAKE_OWNERSHIP_NAME)?;
+    enable_privilege(SE_RESTORE_NAME)?;
+    let descriptor = Descriptor::from_sddl("O:BA")?;
+    let mut owner = PSID::default();
+    let mut defaulted = BOOL::default();
+    // SAFETY: a descriptor that outlives the owner it points to.
+    unsafe { GetSecurityDescriptorOwner(descriptor.as_ptr(), &raw mut owner, &raw mut defaulted) }
+        .map_err(io::Error::other)?;
+    // SAFETY: a NUL-terminated path and an owner inside the live descriptor.
+    unsafe {
+        SetNamedSecurityInfoW(
+            &HSTRING::from(path.as_os_str()),
+            SE_FILE_OBJECT,
+            OWNER_SECURITY_INFORMATION,
+            Some(owner),
+            None,
+            None,
+            None,
+        )
+    }
+    .ok()
+    .map_err(io::Error::other)
+}
+
+/// Makes `path` a directory only this installation controls: it must not
+/// redirect elsewhere, and it ends up owned by Administrators with the DACL
+/// `sddl`, even if a standard user created it first.
+pub fn secure_directory(path: &Path, sddl: &str) -> io::Result<()> {
     create_secured(path, sddl)?;
     refuse_reparse(path)?;
-    if !owned_by_administrators(path)? {
-        return Err(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            format!("{} was not created by this computer's administrators", path.display()),
-        ));
+    take_ownership(path)?;
+    apply_dacl(path, sddl)
+}
+
+/// Creates `path` for a process running as SYSTEM to trust. It and the
+/// `ancestors` directories above it must be real directories that only
+/// administrators own, because the owner of any one of them can swap what is
+/// inside. Anything else is refused rather than used.
+pub fn create_trusted(path: &Path, sddl: &str, ancestors: usize) -> io::Result<()> {
+    create_secured(path, sddl)?;
+    for directory in path.ancestors().take(ancestors + 1) {
+        refuse_reparse(directory)?;
+        if !owned_by_administrators(directory)? {
+            return Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                format!(
+                    "{} was not created by this computer's administrators",
+                    directory.display()
+                ),
+            ));
+        }
     }
     Ok(())
 }

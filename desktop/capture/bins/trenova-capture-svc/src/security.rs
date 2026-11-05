@@ -75,7 +75,11 @@ mod tests {
 
         assert_eq!(
             directory_rights
-                & (FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | DELETE),
+                & (FILE_WRITE_DATA
+                    | FILE_APPEND_DATA
+                    | FILE_WRITE_EA
+                    | FILE_WRITE_ATTRIBUTES
+                    | DELETE),
             0
         );
     }

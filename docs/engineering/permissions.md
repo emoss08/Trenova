@@ -574,8 +574,10 @@ counts as `authctx.UnprovenAssurance`: it fails an MFA requirement and passes no
 unproven session (`SetCaptureDeviceContext`), so a policy asking for MFA holds for a device too.
 Where an organization requires role activation, an unproven session holds no roles: nothing
 activated them, so a queued or scheduled turn is refused rather than running with every role
-(`engine.withoutActivatedRoles`). A capture device is exempt from that part, because it has no way
-to activate one and its routes are its own.
+(`engine.withoutActivatedRoles`). A capture device holds the roles active in the session that
+approved its pairing, kept on the device; a device paired with none holds none where activation is
+required. It also keeps the person's session epoch, so a password change, a reset or a second-factor
+reset revokes the device at its next refresh.
 
 A principal that is not a person (an API key, an unattended agent, a job with no person behind it)
 has no session to prove anything with, so a requirement does not refuse it. Scope a plain Deny to

@@ -93,6 +93,7 @@ export function useBulkRun() {
     invalidate();
 
     if (run.status === "Undone") {
+      // oxlint-disable-next-line react/set-state-in-effect -- a polled run ended: an event, not derived state
       markReverted(run.id);
       return;
     }

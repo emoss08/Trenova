@@ -18,7 +18,7 @@ type Suggestion = {
   detail: string;
   action: string;
   /** Starting a batch returns its run; opening an item or the hold dialog returns nothing. */
-  run: () => Promise<BillingQueueApprovalRun> | void;
+  run: (() => Promise<BillingQueueApprovalRun>) | (() => void);
 };
 
 /** Batches whose press clears items outright; the first of them is the primary. */

@@ -579,6 +579,13 @@ function pollFailing(transport: EdiPartnerTransport): boolean {
 }
 
 /** What wants a person, worst first: failing pickups and lines, dead letters, late acks, set-aside files. */
+export function acceptsUnsignedInbound(transport: EdiPartnerTransport): boolean {
+  if (transport.profile.method !== "AS2") return false;
+  const config = transport.profile.config as Record<string, unknown> | null | undefined;
+  const required = config?.requireSignedInbound;
+  return required === false || required === "false";
+}
+
 export function attentionItems(
   card: DeskEdiPartnerCard,
   now: number,
@@ -604,6 +611,18 @@ export function attentionItems(
       });
     }
     if (transport.profile.status !== "Active") continue;
+    if (acceptsUnsignedInbound(transport)) {
+      items.push({
+        key: `unsigned-inbound:${transport.profile.id}`,
+        state: "warn",
+        title: t("Unsigned documents are accepted"),
+        body: t(
+          "{0} takes inbound documents with no proof of who sent them. Require a signature on the partner's page.",
+          transport.profile.name,
+        ),
+        when: "",
+      });
+    }
     for (const credential of transport.credentials) {
       if (credential.required && !credential.onFile) {
         items.push({
