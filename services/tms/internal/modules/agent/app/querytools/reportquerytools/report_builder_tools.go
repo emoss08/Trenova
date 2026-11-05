@@ -1073,7 +1073,7 @@ func previewOf(
 	preview.Rows = sampleRows(shape, result.Rows, maxPreviewRows)
 	shown := len(preview.Rows)
 	if shape.written && shown > 0 {
-		preview.outside = outsideReport(source.Definition.Entity)
+		preview.outside = OutsideReport(source.Definition.Entity)
 	}
 	if len(result.Totals) > 0 {
 		preview.Totals = shape.row(result.Totals)
@@ -1114,8 +1114,22 @@ type sampleShape struct {
 	written bool
 }
 
-func outsideReport(id string) []agentrecord.RecordRef {
+func OutsideReport(id string) []agentrecord.RecordRef {
 	return []agentrecord.RecordRef{{EntityType: agent.TaintEntityReport, ID: id}}
+}
+
+func HoldsWrittenText(columns []table.Column) bool {
+	for idx := range columns {
+		if writtenColumn(&columns[idx]) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func writtenColumn(column *table.Column) bool {
+	return column.Type == value.String || column.Type == value.JSON
 }
 
 func newSampleShape(width int, clk filtercatalog.Clock) sampleShape {
@@ -1127,7 +1141,7 @@ func newSampleShape(width int, clk filtercatalog.Clock) sampleShape {
 }
 
 func (s *sampleShape) add(column *table.Column) previewColumnRow {
-	s.written = s.written || column.Type == value.String || column.Type == value.JSON
+	s.written = s.written || writtenColumn(column)
 	label := column.Label
 	if label == "" {
 		label = column.ID

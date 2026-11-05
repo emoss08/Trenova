@@ -66,23 +66,26 @@ func (s *Dispatcher) runScriptTool(
 		outcome.Continuation = scriptContinuation(outcome.Data)
 		outcome.Unread = scriptReadNothing(outcome.Data)
 	}
-	marks := broker.TaintMarks()
-	outcome.Taint = append(outcome.Taint, marks...)
-
-	read := p.taint.Clone()
-	if read == nil && len(marks) > 0 {
-		read = &agent.RunTaint{}
-	}
-	read.Absorb(marks)
+	outcome.Taint = append(outcome.Taint, broker.TaintMarks()...)
 	outcome.Batch = broker.Settle(ctx, &ScriptSettlement{
 		Completed:     !outcome.Failed && scriptCompleted(outcome.Data),
-		Taint:         read,
+		Taint:         scriptRead(p.taint, outcome.Taint),
 		AfterExternal: p.afterExternal,
 		Beyond:        p.beyond,
 		MoneySpent:    p.moneySpent,
 	})
 
 	return outcome
+}
+
+func scriptRead(taint *agent.RunTaint, marks []agent.TaintMark) *agent.RunTaint {
+	read := taint.Clone()
+	if read == nil && len(marks) > 0 {
+		read = &agent.RunTaint{}
+	}
+	read.Absorb(marks)
+
+	return read
 }
 
 // scriptSettings is what the provider that asked for the script holds now.

@@ -802,7 +802,7 @@ func attachRunSample(
 	}
 	status.Rows = sampleRows(shape, reportvalue.TableRows(envelope.Table).Detail, maxRunSampleRows)
 	if shape.written && len(status.Rows) > 0 {
-		status.outside = outsideReport(run.ID.String())
+		status.outside = OutsideReport(run.ID.String())
 	}
 
 	status.Note += sampleNote(len(status.Rows), run.RowCount)

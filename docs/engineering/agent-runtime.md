@@ -678,8 +678,10 @@ a new turn opens capped when the thread's taint names a capping read
 
 A shipment entered over EDI is outside text wherever it is read, not only as a run's subject:
 `shipment_get` and `shipment_list` mark it. Report rows are marked when a column of the result
-is free text (`report_preview`, `report_get_run`, `report_run`), because no catalog field says
-who wrote it, and a comparison of runs always is. A report of figures and enums taints nothing.
+is free text (`report_preview`, `report_get_run`, `report_run`, and a report a script reads as a
+dataset), because no catalog field says who wrote it, and a comparison of runs always is. A report
+of figures and enums taints nothing. What a script's own call read counts with what its reads
+brought in when its prepared changes are settled.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
