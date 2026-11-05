@@ -142,7 +142,7 @@ pub fn harden(_policy: &HardeningPolicy) -> HardeningReport {
 mod landlock {
     use landlock::{
         ABI, Access, AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetCreatedAttr,
-        RulesetStatus,
+        RulesetStatus, Scope,
     };
 
     use super::{HardeningPolicy, LandlockStatus};
@@ -174,11 +174,28 @@ mod landlock {
                 .map_err(|err| err.to_string())?;
         }
         let status = ruleset.restrict_self().map_err(|err| err.to_string())?;
+        scope_signals()?;
         Ok(match status.ruleset {
             RulesetStatus::FullyEnforced => LandlockStatus::Full,
             RulesetStatus::PartiallyEnforced => LandlockStatus::Partial,
             RulesetStatus::NotEnforced => LandlockStatus::None,
         })
+    }
+
+    /// Keeps signals from reaching any process outside this child, including
+    /// the ones `fcntl` can arrange. It is a ruleset of its own because not
+    /// every kernel the pool runs on has it: seccomp already holds `tgkill`
+    /// to the child itself, so a kernel without this is no reason to report
+    /// the filesystem rules as partial and refuse the child.
+    fn scope_signals() -> Result<(), String> {
+        Ruleset::default()
+            .scope(Scope::Signal)
+            .map_err(|err| err.to_string())?
+            .create()
+            .map_err(|err| err.to_string())?
+            .restrict_self()
+            .map(|_| ())
+            .map_err(|err| err.to_string())
     }
 }
 
