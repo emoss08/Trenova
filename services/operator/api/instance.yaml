@@ -51,6 +51,19 @@ paths:
           description: The operator already holds the desired revision.
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "503":
+          description: |
+            The desired spec names no release yet: it was written before staff set its channel.
+            Retry after `Retry-After`; the rollout writes a revision that names one.
+          headers:
+            Retry-After:
+              description: Seconds to wait.
+              schema:
+                type: integer
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
         "429":
           $ref: "#/components/responses/RateLimited"
 
@@ -273,6 +286,9 @@ components:
 
     SpecRelease:
       type: object
+      description: |
+        The Trenova release the instance runs. Staff point each channel at a version; every spec
+        on the channel names it, and a new version reaches instances as a new spec revision.
       required: [channel, version]
       properties:
         channel:
@@ -281,10 +297,10 @@ components:
         version:
           type: string
           maxLength: 64
+          pattern: '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
           description: |
-            The Trenova release to run, without a leading "v" (0.11.0). The control plane pins it
-            for the channel; the operator installs chart oci://ghcr.io/emoss08/charts/trenova at
-            exactly this version.
+            The exact release to run, as its Helm chart (`oci://ghcr.io/emoss08/charts/trenova`) and
+            images are tagged, without a leading "v", such as `0.11.0`.
 
     SpecPlan:
       type: object

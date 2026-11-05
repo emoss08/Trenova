@@ -30,20 +30,21 @@ import (
 type Server struct {
 	InstanceID uuid.UUID
 
-	caKey    *ecdsa.PrivateKey
-	caCert   *x509.Certificate
-	caPEM    []byte
-	server   tls.Certificate
-	url      string
-	mu       sync.Mutex
-	valid    map[string]bool
-	used     map[string]bool
-	revision int64
-	spec     instanceapi.InstanceSpec
-	reports  []instanceapi.StatusReport
-	renewals int
-	limited  int
-	lifetime time.Duration
+	caKey       *ecdsa.PrivateKey
+	caCert      *x509.Certificate
+	caPEM       []byte
+	server      tls.Certificate
+	url         string
+	mu          sync.Mutex
+	valid       map[string]bool
+	used        map[string]bool
+	revision    int64
+	spec        instanceapi.InstanceSpec
+	reports     []instanceapi.StatusReport
+	renewals    int
+	limited     int
+	unavailable int
+	lifetime    time.Duration
 }
 
 type Params struct {
@@ -197,6 +198,12 @@ func (s *Server) RateLimitNext(n int) {
 	s.limited = n
 }
 
+func (s *Server) UnavailableNext(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.unavailable = n
+}
+
 func (s *Server) RevokeAll() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -267,7 +274,16 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	rev, spec := s.revision, s.spec
+	unavailable := s.unavailable > 0
+	if unavailable {
+		s.unavailable--
+	}
 	s.mu.Unlock()
+	if unavailable {
+		w.Header().Set("Retry-After", "1")
+		problem(w, http.StatusServiceUnavailable, "unavailable")
+		return
+	}
 	etag := strconv.Quote(strconv.FormatInt(rev, 10))
 	if r.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)

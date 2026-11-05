@@ -263,6 +263,20 @@ func TestWaitsOutARateLimit(t *testing.T) {
 	require.Len(t, w.cp.Reports(), 1)
 }
 
+func TestWaitsForAnUnreadySpec(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.cp.UnavailableNext(1)
+	w.loop.Tick(t.Context())
+	require.Empty(t, w.cp.Reports())
+	require.Zero(t, w.releases.applies)
+
+	w.now = w.now.Add(2 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 1, w.releases.applies)
+	require.Len(t, w.cp.Reports(), 1)
+}
+
 func TestRecoversFromAReenrolment(t *testing.T) {
 	t.Parallel()
 	w := newWorld(t)

@@ -72,8 +72,8 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 The applied revision is the desired revision whose rendered state is the deployed one. It needs
 no storage of its own: after a restart the operator renders the spec again and finds the release
 already matches. A failed render or apply keeps reporting the revision it last applied, with the
-reason as the message. A 429 pauses the loop until `Retry-After`. An unknown `schemaVersion` is
-reported and never applied.
+reason as the message. A 429, or a 503 while the control plane has no version for the spec yet,
+pauses the loop until `Retry-After`. An unknown `schemaVersion` is reported and never applied.
 
 **Recovery.** A release left `pending-*` by a crash mid-upgrade is rolled back to its last
 deployed revision before the next apply; one that never deployed is uninstalled and installed

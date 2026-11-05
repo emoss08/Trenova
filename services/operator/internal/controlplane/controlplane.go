@@ -15,12 +15,13 @@ import (
 
 var ErrUnauthenticated = errors.New("the control plane does not accept this certificate")
 
-type RateLimitedError struct {
+type RetryLaterError struct {
+	Reason     string
 	RetryAfter time.Duration
 }
 
-func (e *RateLimitedError) Error() string {
-	return fmt.Sprintf("rate limited by the control plane; retry after %s", e.RetryAfter)
+func (e *RetryLaterError) Error() string {
+	return fmt.Sprintf("the control plane asks to retry after %s: %s", e.RetryAfter, e.Reason)
 }
 
 type ProblemError struct {
@@ -91,6 +92,7 @@ func (c *Client) Spec(ctx context.Context, etag string) (Desired, bool, error) {
 			res.HTTPResponse,
 			res.ApplicationproblemJSON401,
 			res.ApplicationproblemJSON429,
+			res.ApplicationproblemJSON503,
 		)
 	}
 }
@@ -138,7 +140,15 @@ func failure(res *http.Response, problems ...*instanceapi.Problem) error {
 	case http.StatusUnauthorized:
 		return ErrUnauthenticated
 	case http.StatusTooManyRequests:
-		return &RateLimitedError{RetryAfter: retryAfter(res.Header.Get("Retry-After"))}
+		return &RetryLaterError{
+			Reason:     "rate limited",
+			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
+		}
+	case http.StatusServiceUnavailable:
+		return &RetryLaterError{
+			Reason:     "the desired spec is not ready",
+			RetryAfter: retryAfter(res.Header.Get("Retry-After")),
+		}
 	}
 	pe := &ProblemError{Status: res.StatusCode}
 	for _, p := range problems {

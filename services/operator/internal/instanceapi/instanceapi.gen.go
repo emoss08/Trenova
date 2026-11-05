@@ -272,13 +272,16 @@ type InstanceSpec struct {
 	// data: its subscription lapsed and it resumes when paid again. `decommissioned` means take
 	// the final backup and report it as `finalBackup` on the status report; the instance is
 	// torn down after.
-	Lifecycle      InstanceSpecLifecycle     `json:"lifecycle"`
-	Name           string                    `json:"name"`
-	OrganizationId openapi_types.UUID        `json:"organizationId"`
-	Placement      SpecPlacement             `json:"placement"`
-	Plan           SpecPlan                  `json:"plan"`
-	Release        SpecRelease               `json:"release"`
-	SchemaVersion  InstanceSpecSchemaVersion `json:"schemaVersion"`
+	Lifecycle      InstanceSpecLifecycle `json:"lifecycle"`
+	Name           string                `json:"name"`
+	OrganizationId openapi_types.UUID    `json:"organizationId"`
+	Placement      SpecPlacement         `json:"placement"`
+	Plan           SpecPlan              `json:"plan"`
+
+	// Release The Trenova release the instance runs. Staff point each channel at a version; every spec
+	// on the channel names it, and a new version reaches instances as a new spec revision.
+	Release       SpecRelease               `json:"release"`
+	SchemaVersion InstanceSpecSchemaVersion `json:"schemaVersion"`
 }
 
 // InstanceSpecAiProvider Whose AI keys the instance uses.
@@ -394,13 +397,13 @@ type SpecPlanBackup string
 // SpecPlanSupport defines model for SpecPlan.Support.
 type SpecPlanSupport string
 
-// SpecRelease defines model for SpecRelease.
+// SpecRelease The Trenova release the instance runs. Staff point each channel at a version; every spec
+// on the channel names it, and a new version reaches instances as a new spec revision.
 type SpecRelease struct {
 	Channel SpecReleaseChannel `json:"channel"`
 
-	// Version The Trenova release to run, without a leading "v" (0.11.0). The control plane pins it
-	// for the channel; the operator installs chart oci://ghcr.io/emoss08/charts/trenova at
-	// exactly this version.
+	// Version The exact release to run, as its Helm chart (`oci://ghcr.io/emoss08/charts/trenova`) and
+	// images are tagged, without a leading "v", such as `0.11.0`.
 	Version string `json:"version"`
 }
 
@@ -1165,6 +1168,11 @@ type GetSpecResponse429Headers struct {
 	RetryAfter *int
 }
 
+// GetSpecResponse503Headers the declared response headers of an HTTP 503 response for GetSpec
+type GetSpecResponse503Headers struct {
+	RetryAfter *int
+}
+
 type GetSpecResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1174,10 +1182,14 @@ type GetSpecResponse struct {
 	ApplicationproblemJSON401 *Unauthenticated
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *RateLimited
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *Problem
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *GetSpecResponse200Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *GetSpecResponse429Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetSpecResponse503Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1193,6 +1205,11 @@ func (r GetSpecResponse) GetApplicationproblemJSON401() *Unauthenticated {
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
 func (r GetSpecResponse) GetApplicationproblemJSON429() *RateLimited {
 	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetSpecResponse) GetApplicationproblemJSON503() *Problem {
+	return r.ApplicationproblemJSON503
 }
 
 // GetBody returns the raw response body bytes
@@ -1580,6 +1597,13 @@ func ParseGetSpecResponse(rsp *http.Response) (*GetSpecResponse, error) {
 		}
 		response.ApplicationproblemJSON429 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
 	}
 
 	switch {
@@ -1603,6 +1627,16 @@ func ParseGetSpecResponse(rsp *http.Response) (*GetSpecResponse, error) {
 			headers.RetryAfter = &value
 		}
 		response.Headers429 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetSpecResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil

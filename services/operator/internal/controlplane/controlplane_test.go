@@ -59,7 +59,7 @@ func TestRateLimitsCarryRetryAfter(t *testing.T) {
 	cp.RateLimitNext(1)
 
 	err := c.ReportStatus(t.Context(), instanceapi.StatusReport{Ready: true, Components: []instanceapi.ComponentStatus{}})
-	var rl *controlplane.RateLimitedError
+	var rl *controlplane.RetryLaterError
 	require.True(t, errors.As(err, &rl))
 	require.Equal(t, time.Second, rl.RetryAfter)
 
@@ -89,4 +89,19 @@ func TestRenewRefusesTheCurrentKey(t *testing.T) {
 	require.True(t, errors.As(err, &pe))
 	require.Equal(t, http.StatusBadRequest, pe.Status)
 	require.Equal(t, "validation_failed", pe.Code)
+}
+
+func TestAnUnreadySpecAsksToRetry(t *testing.T) {
+	t.Parallel()
+	cp, c := client(t)
+	cp.UnavailableNext(1)
+
+	_, _, err := c.Spec(t.Context(), "")
+	var later *controlplane.RetryLaterError
+	require.True(t, errors.As(err, &later))
+	require.Equal(t, time.Second, later.RetryAfter)
+
+	_, changed, err := c.Spec(t.Context(), "")
+	require.NoError(t, err)
+	require.True(t, changed)
 }

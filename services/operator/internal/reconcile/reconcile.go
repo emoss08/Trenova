@@ -278,11 +278,17 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 }
 
 func (l *Loop) handle(ctx context.Context, err error) bool {
-	var rl *controlplane.RateLimitedError
+	var later *controlplane.RetryLaterError
 	switch {
-	case errors.As(err, &rl):
-		l.retryAfter = l.now().Add(rl.RetryAfter)
-		l.logger.Warn("rate limited by the control plane", "retryAfter", rl.RetryAfter)
+	case errors.As(err, &later):
+		l.retryAfter = l.now().Add(later.RetryAfter)
+		l.logger.Warn(
+			"waiting for the control plane",
+			"reason",
+			later.Reason,
+			"retryAfter",
+			later.RetryAfter,
+		)
 		return true
 	case errors.Is(err, controlplane.ErrUnauthenticated):
 		if rerr := l.creds.Recover(ctx); rerr != nil {
