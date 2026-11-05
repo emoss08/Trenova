@@ -26,7 +26,11 @@ func Open(
 		taint = &agent.RunTaint{}
 	}
 
-	opened := taint.Absorb(contextTaint(rc, now))
+	marks := contextTaint(rc, now)
+	if req.AfterExternalContent {
+		marks = append(marks, agent.OutsideInputTaint(now))
+	}
+	opened := taint.Absorb(marks)
 
 	return taint, opened
 }

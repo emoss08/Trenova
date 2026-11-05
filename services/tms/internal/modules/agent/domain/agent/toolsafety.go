@@ -360,6 +360,10 @@ func RunRecordTaint(runID pulid.ID, at int64) *RunTaint {
 	return taint
 }
 
+func OutsideInputTaint(at int64) TaintMark {
+	return TaintMark{Source: TaintSourceWeb, At: at}
+}
+
 func AttachmentTaint(documentID string, at int64) TaintMark {
 	return TaintMark{
 		Source: TaintSourceAttachment,

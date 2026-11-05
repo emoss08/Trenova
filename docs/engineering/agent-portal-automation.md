@@ -241,7 +241,9 @@ began it would start a second browser doing the same thing.
   (`WaitResolved`) or run (trigger `Wait`) that opens with outside content
   already read (`RunRequest.AfterExternalContent`, from
   `Wait.CarriesOutsideText`), so whatever the agent does with the answer is held
-  for a person. A wait that cannot be set does not undo the action: the task is
+  for a person. The turn opens with a `web` mark for it (`agent.OutsideInputTaint`),
+  which the conversation keeps, so the turns after it open capped and tainted too.
+  A wait that cannot be set does not undo the action: the task is
   followed to its end either way and its outcome is recorded.
 
 The wait service does not depend on the extension service (that would close a
