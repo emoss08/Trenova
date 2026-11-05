@@ -85,7 +85,6 @@ jobs:
           declare -A shapes=(
             [default]=""
             [everything]="--set docling.enabled=true --set clamav.enabled=true --set ingress.enabled=true --set ingress.className=traefik --set bootstrap.adminEmail=admin@example.com --set networkPolicy.metricsFrom[0].namespaceSelector.matchLabels.monitoring=enabled"
-            [rls-off]="--set postgres.rlsMode=off"
             [external-storage]="--set minio.enabled=false --set storage.external.endpoint=s3.example.com --set storage.external.publicEndpoint=https://s3.example.com --set storage.external.existingSecret=s3 --set secrets.existingSecret=app --set postgres.existingSecret=db"
             [cloud-edge]="--set client.enabled=false --set networkPolicy.enabled=false --set imaging.tls.existingServerSecret=a --set imaging.tls.existingClientSecret=b"
             [ci]="-f $CHART/ci/install-values.yaml"

@@ -23,7 +23,7 @@ func renderChart(t *testing.T, b map[string]any) (*chart.Chart, map[string]any, 
 	t.Helper()
 	ch, err := loader.Load(chartDir)
 	require.NoError(t, err)
-	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b)
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b, operatorNS)
 	require.NoError(t, err)
 	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
 		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
@@ -49,8 +49,11 @@ func TestChartHasNoModeThatSignsInAsTheOwner(t *testing.T) {
 	t.Parallel()
 	b := base()
 	b["postgres"] = map[string]any{"rlsMode": "off"}
-	ch, vals, _ := renderChart(t, b)
-	require.ErrorContains(t, chartutil.ValidateAgainstSchema(ch, vals), "rlsMode")
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b, operatorNS)
+	require.NoError(t, err)
+	require.ErrorContains(t, chartutil.ValidateAgainstSchema(ch, r.Values), "rlsMode")
 }
 
 func TestApplicationSignsInAsItsOwnRoleInEveryMode(t *testing.T) {
