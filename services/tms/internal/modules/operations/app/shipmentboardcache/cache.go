@@ -3,8 +3,10 @@ package shipmentboardcache
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +25,15 @@ func GetOrCompute[T any](
 	compute func(ctx context.Context) (*T, error),
 ) (*T, error) {
 	if cache == nil {
+		return compute(ctx)
+	}
+
+	narrowed, err := readscope.Narrows(ctx, permission.ResourceShipment.String())
+	if err != nil {
+		logger.Warn("shipment board cache skipped: read scope unresolved", zap.Error(err))
+		return compute(ctx)
+	}
+	if narrowed {
 		return compute(ctx)
 	}
 
