@@ -53,7 +53,9 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.15.0
+          # The version and settings the TMS lint uses with the same config.
+          version: v2.12.2
+          verify: false
           working-directory: services/operator
           args: --config ../../.golangci.yml
       - name: Test
