@@ -443,6 +443,13 @@ func (s *Service) Post(
 	}
 	original := *entity
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if err := s.validator.HoldPostingPeriod(
+			txCtx,
+			resolved.ResolvedFiscalPeriodID,
+			req.TenantInfo,
+		); err != nil {
+			return err
+		}
 		if err := s.journalPostingRepo.CreatePosting(
 			txCtx,
 			journalentryports.CreateJournalPostingParams{
