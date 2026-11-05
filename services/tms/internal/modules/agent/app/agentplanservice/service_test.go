@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
@@ -209,6 +210,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 	}
 	h.svc = &Service{
 		l: zap.NewNop(), plans: h.plans, proposals: h.steps, decisions: h.decider, shadow: fakeShadow{shadow: shadow},
+		activity: &announcedPlans{}, watchtower: agenttest.QuietWatchtower{}, followUps: agenttest.QuietFollowUps{},
 	}
 
 	return h

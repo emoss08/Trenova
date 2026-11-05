@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -14,6 +15,14 @@ import (
 )
 
 func Recorder(runs *StubRunRepo, proposals *StubProposalRepo) *proposalrecorder.Service {
+	return RecorderOn(runs, proposals)
+}
+
+// RecorderOn is a recorder writing to the stores given, with nobody told.
+func RecorderOn(
+	runs agentruntimeports.AgentRunRepository,
+	proposals agentproposalports.AgentProposalRepository,
+) *proposalrecorder.Service {
 	return proposalrecorder.New(proposalrecorder.Params{
 		Logger:     zap.NewNop(),
 		DB:         dbtest.NopConnection{},

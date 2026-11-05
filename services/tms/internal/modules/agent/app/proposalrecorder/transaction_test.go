@@ -135,7 +135,7 @@ func recordInTx(
 ) (*RecordResult, error) {
 	t.Helper()
 
-	svc := NewWithStores(nil, stagingRuns{}, proposals).
+	svc := recorderOn(stagingRuns{}, proposals).
 		WithPlans(stagingPlans{}).
 		WithTransactor(tx)
 	svc.activity = activity

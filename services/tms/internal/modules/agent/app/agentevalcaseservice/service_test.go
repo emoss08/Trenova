@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -396,6 +397,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		feedback:      feedback,
 		retention:     fakeRetention{},
 		redactor:      testRedactor(t),
+		audit:         &mocks.NoopAuditService{},
 		now:           func() int64 { return 1_700_000_000 },
 	}
 

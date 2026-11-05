@@ -4,15 +4,19 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -103,8 +107,32 @@ func (f *fakeLabeler) Label(
 	return f.label, f.err
 }
 
+type quietIndexer struct {
+	retrievalports.RetrievalIndexer
+}
+
+func (quietIndexer) MarkStale(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+	...pulid.ID,
+) error {
+	return nil
+}
+
+// wired gives a test's service the dependencies its test does not care about.
+func wired(svc *Service) *Service {
+	svc.ranker = agentmemoryrank.NewRecencyRanker()
+	svc.indexer = quietIndexer{}
+	if svc.audit == nil {
+		svc.audit = &mocks.NoopAuditService{}
+	}
+
+	return svc
+}
+
 func newService(repo *fakeMemoryRepo, runs *fakeRuns, labeler *fakeLabeler) *Service {
-	return &Service{l: zap.NewNop(), repo: repo, runs: runs, labeler: labeler}
+	return wired(&Service{l: zap.NewNop(), repo: repo, runs: runs, labeler: labeler})
 }
 
 // fakePermissions answers every check the same way: a manager of shared

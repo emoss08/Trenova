@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -149,7 +150,9 @@ func TestStartForDefinitionRejectsDisabledDefinition(t *testing.T) {
 	startCalled := false
 	def := definitionFixture(false)
 	svc := &Service{
-		l: zap.NewNop(),
+		l:        zap.NewNop(),
+		budgets:  &agenttest.StubMoneyBudgets{},
+		activity: agenttest.QuietActivity{},
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
 				createCalled = true
@@ -203,6 +206,8 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	audit := &fakeAuditService{}
 	svc := &Service{
 		l:           zap.NewNop(),
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
@@ -308,6 +313,8 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 	var started client.StartWorkflowOptions
 	svc := &Service{
 		l:           zap.NewNop(),
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
@@ -370,6 +377,8 @@ func TestStartForDefinitionRecordsNothingWhenWorkflowStartFails(t *testing.T) {
 	created := false
 	svc := &Service{
 		l:           zap.NewNop(),
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
@@ -410,6 +419,8 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 	created := false
 	svc := &Service{
 		l:           zap.NewNop(),
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
@@ -448,6 +459,8 @@ func TestStartForDefinitionRejectsWhenWorkflowEngineUnavailable(t *testing.T) {
 
 	svc := &Service{
 		l:         zap.NewNop(),
+		budgets:   &agenttest.StubMoneyBudgets{},
+		activity:  agenttest.QuietActivity{},
 		workflows: &fakeWorkflowStarter{enabled: false},
 	}
 
@@ -461,6 +474,8 @@ func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
 
 	svc := &Service{
 		l:           zap.NewNop(),
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		workflows:   &fakeWorkflowStarter{enabled: true},
 		definitions: &fakeDefinitionRepo{},
 	}

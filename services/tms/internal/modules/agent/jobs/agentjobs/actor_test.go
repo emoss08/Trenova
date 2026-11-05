@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
@@ -108,6 +108,8 @@ func (noProposalsYet) ListByRun(
 }
 
 type createdProposals struct {
+	agentproposalports.AgentProposalRepository
+
 	created []*agent.AgentProposal
 }
 
@@ -133,7 +135,7 @@ func TestRecordProposals_AnAutomaticWriteIsExecutedByTheSystemUser(t *testing.T)
 		logger:       zap.NewNop(),
 		users:        users,
 		proposalRepo: noProposalsYet{},
-		recorder:     proposalrecorder.NewWithStores(zap.NewNop(), nil, store),
+		recorder:     assistanttest.RecorderOn(nil, store),
 	}
 	scope := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
@@ -166,7 +168,7 @@ func TestRecordProposals_NothingToFileReadsNoSystemUser(t *testing.T) {
 		logger:       zap.NewNop(),
 		users:        tenantportsmock.NewMockUserRepository(t),
 		proposalRepo: noProposalsYet{},
-		recorder:     proposalrecorder.NewWithStores(zap.NewNop(), nil, &createdProposals{}),
+		recorder:     assistanttest.RecorderOn(nil, &createdProposals{}),
 	}
 
 	_, err := activities.recordProposals(t.Context(), recordProposalsParams{

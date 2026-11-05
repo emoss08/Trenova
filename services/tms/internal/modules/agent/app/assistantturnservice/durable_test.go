@@ -9,13 +9,19 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type quietChapters struct{}
+
+func (quietChapters) Cue(context.Context, *assistantchapterports.ChapterTurnRequest) {}
 
 // recordingTurns remembers how a turn was closed, which is the thing worth
 // asserting when a start fails.
@@ -58,7 +64,12 @@ func (r *recordingTurns) MarkWorkflow(
 }
 
 func newDurable(turns *recordingTurns) *Service {
-	return &Service{l: zap.NewNop(), turns: turns}
+	return &Service{
+		l:        zap.NewNop(),
+		turns:    turns,
+		realtime: &mocks.NoopRealtimeService{},
+		chapters: quietChapters{},
+	}
 }
 
 // stopWith stops a turn with cancel standing in for the engine running it.

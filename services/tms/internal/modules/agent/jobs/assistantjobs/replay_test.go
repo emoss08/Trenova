@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
@@ -24,7 +25,7 @@ import (
 const replayToolName = "shipment_get"
 
 func replayRuntime() *agentruntime.Service {
-	return agentruntime.New(agentruntime.Params{
+	return assistanttest.Runtime(agentruntime.Params{
 		Logger:     zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{},
 		QueryTools: &agenttest.StubQueryRegistry{

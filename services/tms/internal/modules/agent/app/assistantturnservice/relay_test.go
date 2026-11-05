@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -96,7 +97,13 @@ func (s *stubReader) Read(
 }
 
 func newRelay(turns *stubTurns, reader *stubReader) *Service {
-	return &Service{l: zap.NewNop(), turns: turns, reader: reader}
+	return &Service{
+		l:        zap.NewNop(),
+		turns:    turns,
+		reader:   reader,
+		realtime: &mocks.NoopRealtimeService{},
+		chapters: quietChapters{},
+	}
 }
 
 func runningTurn() *conversationturn.AssistantTurn {

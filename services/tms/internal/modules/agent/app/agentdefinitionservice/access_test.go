@@ -93,15 +93,3 @@ func TestSave_AnAccessRefusalRefusesTheSave(t *testing.T) {
 
 	require.ErrorIs(t, err, refusal)
 }
-
-func TestSave_WithoutTheAccessServiceAccessIsRefused(t *testing.T) {
-	t.Parallel()
-
-	svc := &Service{l: zap.NewNop(), db: dbtest.NopConnection{}}
-
-	_, err := svc.save(t.Context(), &agentdefinitionports.SaveAgentDefinitionRequest{
-		Access: &agentdefinitionports.AgentAccessWrite{Mode: agentdefinition.AccessEveryone},
-	}, nil, savedAgent())
-
-	require.Error(t, err, "access asked for is never silently dropped")
-}

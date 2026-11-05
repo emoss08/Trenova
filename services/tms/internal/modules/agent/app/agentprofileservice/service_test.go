@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -352,16 +354,28 @@ func newHarness(t *testing.T) *harness {
 	h.plans.EXPECT().RequireCapability(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Maybe()
 
+	dispatchControls := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
+	dispatchControls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	billingControls := tenantportsmock.NewMockBillingControlRepository(t)
+	billingControls.EXPECT().GetByOrgID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	shipmentControls := tenantportsmock.NewMockShipmentControlRepository(t)
+	shipmentControls.EXPECT().Get(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+
 	h.svc = New(Params{
-		Logger:        zap.NewNop(),
-		Profiles:      h.profiles,
-		Guidance:      h.guidance,
-		Facts:         h.facts,
-		Organizations: orgs,
-		Controls:      h.controls,
-		Plans:         h.plans,
-		Scheduler:     h.scheduler,
-		Memories:      h.memories,
+		Logger:           zap.NewNop(),
+		Profiles:         h.profiles,
+		Guidance:         h.guidance,
+		Facts:            h.facts,
+		Organizations:    orgs,
+		Controls:         h.controls,
+		DispatchControls: dispatchControls,
+		BillingControls:  billingControls,
+		ShipmentControls: shipmentControls,
+		Plans:            h.plans,
+		Scheduler:        h.scheduler,
+		Audit:            &mocks.NoopAuditService{},
+		Realtime:         &mocks.NoopRealtimeService{},
+		Memories:         h.memories,
 	})
 	h.svc.now = func() int64 { return testNow }
 

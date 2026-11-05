@@ -43,12 +43,16 @@ func newExceptionFixture(t *testing.T, perms permissionports.PermissionEngine) *
 	t.Helper()
 
 	repo := newStubRepo()
-	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
+	projector := NewProjector(ProjectorParams{
+		Logger:   zap.NewNop(),
+		Repo:     repo,
+		Realtime: &recordingRealtime{},
+	})
 	exceptions := NewExceptions(ExceptionsParams{
 		Logger:      zap.NewNop(),
 		Repo:        repo,
 		Projector:   projector,
-		Router:      NewRouter(RouterParams{Logger: zap.NewNop()}),
+		Router:      NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
 		Permissions: perms,
 	})
 	exceptions.now = func() int64 { return 1_700_000_000 }

@@ -59,6 +59,7 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       &fakeTrust{},
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
+		rules:       &fakeRules{},
 	})
 }
 
@@ -84,6 +85,7 @@ func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
 		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       trust,
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
+		rules:       &fakeRules{},
 	})
 }
 

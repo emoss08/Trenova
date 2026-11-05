@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -89,7 +90,7 @@ func (f *fakeRepo) rows() []*agentrunevent.AgentRunEvent {
 func newRecorder(t *testing.T, repo *fakeRepo) agentruntimeports.AgentRunEventRecorder {
 	t.Helper()
 
-	return New(Params{Logger: zap.NewNop(), Repo: repo})
+	return New(Params{Logger: zap.NewNop(), Repo: repo, Metrics: &metrics.Registry{}})
 }
 
 func owner() agentruntimeports.RunStepOwner {

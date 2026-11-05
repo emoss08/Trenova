@@ -149,6 +149,7 @@ func newExecutor(
 		proposalRepo: repo,
 		permissions:  perms,
 		audit:        noopAudit{},
+		definitions:  fixedDefinition{},
 	}
 }
 

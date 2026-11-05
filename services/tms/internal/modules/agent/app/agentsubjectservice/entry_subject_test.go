@@ -9,10 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -83,6 +85,7 @@ func TestService_MarksAShipmentEnteredByEDIAsWrittenOutside(t *testing.T) {
 			t.Parallel()
 
 			svc := &Service{
+				stopEtas: noStopEtas{},
 				shipments: &fakeShipments{entity: &shipment.Shipment{
 					ProNumber:   "S-2001",
 					EntryMethod: method,
@@ -199,12 +202,25 @@ func TestService_ReadsACoveredOrFinishedMoveOffTheBoard(t *testing.T) {
 		"a delivered move is Completed, which the board leaves out by default")
 }
 
+type noStopEtas struct {
+	stopetaports.Repository
+}
+
+func (noStopEtas) ListByShipmentIDs(
+	context.Context,
+	pagination.TenantInfo,
+	[]pulid.ID,
+) ([]*stopeta.StopETA, error) {
+	return nil, nil
+}
+
 func TestService_ShipmentSubjectReadsEveryOneOfItsMoves(t *testing.T) {
 	t.Parallel()
 
 	first, last := pulid.MustNew("smv_"), pulid.MustNew("smv_")
 	console := &fakeConsole{}
 	svc := &Service{
+		stopEtas: noStopEtas{},
 		shipments: &fakeShipments{entity: &shipment.Shipment{
 			ProNumber: "S-2005",
 			Moves:     []*shipment.ShipmentMove{{ID: first}, {ID: last}},

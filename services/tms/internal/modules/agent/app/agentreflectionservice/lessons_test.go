@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,6 +114,7 @@ func lessonService(memories *fakeMemories) *Service {
 	return &Service{
 		l:        zap.NewNop(),
 		memories: memories,
+		realtime: &mocks.NoopRealtimeService{},
 		now:      func() int64 { return 1_790_000_000 },
 	}
 }

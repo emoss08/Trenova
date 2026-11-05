@@ -155,6 +155,8 @@ func newFixture() *fixture {
 			&agenttest.StubQueryTool{ToolName: "invoice_list"},
 		}},
 		Permissions: permissions,
+		Budgets:     &agenttest.StubMoneyBudgets{},
+		Providers:   &agenttest.StubProviders{},
 	}).(*Service)
 
 	return &fixture{

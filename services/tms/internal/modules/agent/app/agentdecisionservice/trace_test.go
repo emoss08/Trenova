@@ -11,10 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -133,6 +136,34 @@ type decideHarness struct {
 	proposing trace.SpanContext
 }
 
+type quietTrust struct {
+	agenttrustports.AgentTrustService
+}
+
+func (quietTrust) RecordDecision(
+	context.Context,
+	*agent.AgentProposal,
+	*agentdecision.AgentDecision,
+) error {
+	return nil
+}
+
+func (quietTrust) RecordExecutionFailure(context.Context, *agent.AgentProposal) error {
+	return nil
+}
+
+type quietMemories struct {
+	agentmemoryports.AgentMemoryService
+}
+
+func (quietMemories) RecordCorrection(
+	context.Context,
+	*agent.AgentProposal,
+	*agentdecision.AgentDecision,
+) (*agentmemory.Memory, error) {
+	return nil, nil
+}
+
 func newDecideHarness(t *testing.T) *decideHarness {
 	t.Helper()
 	aitracetest.Install()
@@ -189,6 +220,12 @@ func newDecideHarness(t *testing.T) *decideHarness {
 			shadow:       agentshadow.New(agentshadow.Params{Control: traceControls{}, Runs: runs}),
 			executor:     executor,
 			audit:        traceAudit{},
+			previews:     &fakePreviews{},
+			activity:     agenttest.QuietActivity{},
+			watchtower:   agenttest.QuietWatchtower{},
+			followUps:    agenttest.QuietFollowUps{},
+			trust:        quietTrust{},
+			memories:     quietMemories{},
 		},
 		proposals: proposals,
 		decisions: decisions,

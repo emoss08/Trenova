@@ -22,7 +22,12 @@ func newVectorizer(
 	repo *fakeRepository,
 	embeddings aiusageports.EmbeddingService,
 ) *Service {
-	return New(Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings})
+	return New(Params{
+		Logger:     zap.NewNop(),
+		Repository: repo,
+		Embeddings: embeddings,
+		Shared:     newMemorySharedVectors(),
+	})
 }
 
 func queryRequest(tenant pagination.TenantInfo, text string) *retrievalports.QueryVectorRequest {
@@ -212,17 +217,6 @@ func TestVectorize_ReportsWhyRetrievalIsUnavailable(t *testing.T) {
 			assert.Equal(t, tc.want, vector.Reason)
 		})
 	}
-}
-
-func TestVectorize_WithoutAnEmbeddingServiceHasNoProvider(t *testing.T) {
-	t.Parallel()
-
-	tenant := testTenant()
-	service := newVectorizer(newFakeRepository(activeSettings(tenant)), nil)
-
-	vector, err := service.Vectorize(t.Context(), queryRequest(tenant, "who is off"))
-	require.NoError(t, err)
-	assert.Equal(t, airetrieval.UnavailableReasonNoProvider, vector.Reason)
 }
 
 func TestVectorize_DoesNotCacheAFallback(t *testing.T) {

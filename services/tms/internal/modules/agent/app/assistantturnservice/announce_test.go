@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +54,9 @@ func (r *recordingRealtime) actions() []string {
 func announcing(turns assistantturnports.AssistantTurnRepository) (*Service, *recordingRealtime) {
 	realtime := &recordingRealtime{}
 
-	return &Service{l: zap.NewNop(), turns: turns, realtime: realtime}, realtime
+	return &Service{
+		l: zap.NewNop(), turns: turns, realtime: realtime, chapters: quietChapters{},
+	}, realtime
 }
 
 func announced(
@@ -247,7 +250,12 @@ func TestStopAllForUser_StopsEveryReplyAndReportsTheOnesItCouldNot(t *testing.T)
 
 	cancelled, gone, stuck := liveTurn(), liveTurn(), liveTurn()
 	turns := &liveTurns{live: []*assistantturnports.LiveAssistantTurn{cancelled, gone, stuck}}
-	svc := &Service{l: zap.NewNop(), turns: turns}
+	svc := &Service{
+		l:        zap.NewNop(),
+		turns:    turns,
+		realtime: &mocks.NoopRealtimeService{},
+		chapters: quietChapters{},
+	}
 
 	var asked []string
 	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
@@ -290,7 +298,12 @@ func TestStopAllForUser_StopsEveryReplyAndReportsTheOnesItCouldNot(t *testing.T)
 func TestStopAllForUser_HasNothingToDoForSomeoneWithNoReplies(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop(), turns: &liveTurns{}}
+	svc := &Service{
+		l:        zap.NewNop(),
+		turns:    &liveTurns{},
+		realtime: &mocks.NoopRealtimeService{},
+		chapters: quietChapters{},
+	}
 	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(context.Context, string) error {
 			t.Fatal("nothing is in progress, so nothing is cancelled")

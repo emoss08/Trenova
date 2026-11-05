@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -64,6 +65,7 @@ type stubBatches struct {
 	submitted *llmports.NovaBatch
 	ended     bool
 	results   map[string]llmports.BatchItemResult
+	err       error
 }
 
 func (b *stubBatches) SubmitTasks(
@@ -71,6 +73,9 @@ func (b *stubBatches) SubmitTasks(
 	batch *llmports.NovaBatch,
 ) (*llmports.BatchHandle, error) {
 	b.submitted = batch
+	if b.err != nil {
+		return nil, b.err
+	}
 
 	return &llmports.BatchHandle{BatchID: "msgbatch_1", ProviderID: pulid.MustNew("aip_")}, nil
 }
@@ -93,6 +98,10 @@ func (b *stubBatches) BatchResults(
 	return b.results, nil
 }
 
+func unbatchable() *stubBatches {
+	return &stubBatches{err: llmports.ErrBatchUnsupported}
+}
+
 func narratingService(
 	repo insightports.InsightRepository,
 	nova llmports.TaskRunner,
@@ -109,6 +118,7 @@ func narratingService(
 			Batches: batches,
 		}),
 		permissions: &stubPermissions{},
+		watchtower:  agenttest.QuietWatchtower{},
 	}
 }
 
@@ -141,7 +151,7 @@ func TestRefresh_KeepsTheWordingOfAFindingWhoseFiguresHaveNotMoved(t *testing.T)
 		},
 	}}
 	nova := &answeringNova{text: `{"insights":[]}`}
-	svc := narratingService(repo, nova, nil, ontime(same, moved))
+	svc := narratingService(repo, nova, unbatchable(), ontime(same, moved))
 
 	tn := tenant()
 	result, err := svc.Refresh(
@@ -197,7 +207,7 @@ func TestRefresh_DeferredNarratesNowWhereTheProviderCannotBatch(t *testing.T) {
 
 	repo := &storingRepo{}
 	nova := &answeringNova{text: narrationReply}
-	svc := narratingService(repo, nova, nil, ontime(testFinding("ontime:cus_1")))
+	svc := narratingService(repo, nova, unbatchable(), ontime(testFinding("ontime:cus_1")))
 
 	result, err := svc.Refresh(t.Context(), RefreshRequest{
 		TenantInfo: tenant(), Now: 1_800_000_000, Deferred: true,

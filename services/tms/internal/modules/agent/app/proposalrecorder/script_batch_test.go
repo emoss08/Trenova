@@ -147,7 +147,7 @@ func TestRecord_KeepsTheScriptABatchCameFromOnItsPlan(t *testing.T) {
 		},
 	}}
 	plans := &capturingPlans{}
-	result, err := NewWithStores(nil, nil, &capturingStore{}).
+	result, err := recorderOn(nil, &capturingStore{}).
 		WithPlans(plans).
 		WithScriptSteps(ledger).
 		Record(t.Context(), &RecordRequest{
@@ -175,7 +175,7 @@ func TestRecord_FilesABatchWhoseScriptCannotBeRead(t *testing.T) {
 
 	plans := &capturingPlans{}
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	result, err := NewWithStores(nil, nil, &capturingStore{}).
+	result, err := recorderOn(nil, &capturingStore{}).
 		WithPlans(plans).
 		WithScriptSteps(&scriptLedger{}).
 		Record(t.Context(), &RecordRequest{

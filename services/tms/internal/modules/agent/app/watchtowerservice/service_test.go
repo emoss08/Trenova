@@ -387,7 +387,7 @@ func newExceptions(
 		Logger:      zap.NewNop(),
 		Repo:        repo,
 		Projector:   projector,
-		Router:      NewRouter(RouterParams{Logger: zap.NewNop()}),
+		Router:      NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
 		Permissions: perms,
 	})
 	exceptions.now = func() int64 { return 1_700_000_000 }

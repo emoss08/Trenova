@@ -95,7 +95,7 @@ func suggestion() *agentmemory.Memory {
 // shared memory, which the suggestions kept for an agent or the organization
 // take to decide.
 func suggestionService(repo *suggestionRepo) *Service {
-	return &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: true}}
+	return wired(&Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: true}})
 }
 
 // A memory kept for an agent or the organization is retired by someone who
@@ -106,7 +106,7 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	shared := suggestion()
 	shared.Status = agentmemory.MemoryStatusActive
 	repo := &suggestionRepo{memory: shared}
-	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}})
 
 	_, err := svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: shared.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
@@ -126,7 +126,7 @@ func TestSetStatus_ASharedMemoryIsAnAdministratorsToRetire(t *testing.T) {
 	own.Status = agentmemory.MemoryStatusActive
 	own.SetAudience(agentmemory.MemoryScopeUser, owner.UserID, pulid.Nil)
 	repo = &suggestionRepo{memory: own}
-	svc = &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+	svc = wired(&Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}})
 
 	updated, err := svc.SetStatus(t.Context(), &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID: own.ID, TenantInfo: tenant(), Status: agentmemory.MemoryStatusRetired,
@@ -385,7 +385,7 @@ func TestUpdate_ASharedMemoryIsAnAdministratorsToRewrite(t *testing.T) {
 	}
 
 	repo := &suggestionRepo{memory: shared}
-	svc := &Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, permissions: &fakePermissions{manages: false}})
 	_, err := svc.Update(t.Context(), req, userActor())
 	require.Error(t, err)
 	assert.True(t, errortypes.IsAuthorizationError(err))
