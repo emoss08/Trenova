@@ -15,7 +15,7 @@ use capture_protocol::handoff::Inbox;
 use capture_protocol::helper::{PageMeta, ScanCondition, ScanJob};
 use capture_protocol::page_checksum;
 use capture_protocol::release::{
-    Installer, PRODUCT, Release, encode_key_pair, public_key, sign, signing_key,
+    Installer, PRODUCT, Release, encode_key_pair, public_key, sign, signing_key, unix_now,
 };
 use serde_json::json;
 use tokio::sync::mpsc;
@@ -138,6 +138,7 @@ async fn publish(server: &MockServer, version: &str) {
         product: PRODUCT.into(),
         version: version.into(),
         published_at: 1_780_000_000,
+        expires_at: Some(unix_now() + 3600),
         minimum_windows_build: 19045,
         installer: Installer {
             file_name: format!("TrenovaCapture-{version}-x64.msi"),

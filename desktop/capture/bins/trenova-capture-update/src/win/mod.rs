@@ -13,7 +13,7 @@ use std::time::Duration;
 
 use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_trusted};
 use capture_platform::{logging, machine, paths, settings};
-use capture_protocol::release::pinned_public_key;
+use capture_protocol::release::{pinned_public_key, unix_now};
 use tokio::sync::watch;
 use trenova_capture_update::signature::Revocation;
 use trenova_capture_update::{Http, Installer, Stop, UpdaterError, manifest_url, run};
@@ -81,6 +81,10 @@ impl Installer for WindowsInstaller {
 
     fn windows_build(&self) -> u32 {
         machine::windows_build()
+    }
+
+    fn now(&self) -> i64 {
+        unix_now()
     }
 
     fn policy_allows(&self) -> bool {

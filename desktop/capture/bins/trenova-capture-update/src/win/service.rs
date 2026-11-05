@@ -110,6 +110,10 @@ fn serve(arguments: &[OsString]) {
             tracing::info!("stopped before installing anything");
             ServiceExitCode::Win32(0)
         }
+        Err(err @ UpdaterError::OutOfDate(_)) => {
+            tracing::warn!(error = %err, "updates are paused: the server serves an out-of-date release manifest");
+            ServiceExitCode::ServiceSpecific(NOT_UPDATED)
+        }
         Err(err) => {
             tracing::error!(error = %err, "the update did not happen");
             ServiceExitCode::ServiceSpecific(NOT_UPDATED)

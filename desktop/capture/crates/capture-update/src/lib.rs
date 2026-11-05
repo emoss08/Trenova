@@ -4,15 +4,15 @@
 //! The agent uses [`decide`] to know whether to offer or start an update; the
 //! updater, which runs with the rights to install, does not take the agent's
 //! word for any of it and repeats every check: it reads the manifest itself,
-//! verifies the signature against the key built into it, decides again with
-//! its own version, and [`download`]s the installer, refusing anything whose
+//! verifies the signature against the key built into it, checks the manifest
+//! has not expired, decides again with its own version, and [`download`]s the installer, refusing anything whose
 //! size or SHA-256 differs from the manifest. Whether the file is a
 //! Trenova-signed installer is Windows' question, asked afterwards.
 
 use std::path::{Path, PathBuf};
 
 use capture_protocol::release::{
-    MAX_SIGNED_BYTES, Release, ReleaseError, SignedRelease, Version, is_newer, verify,
+    MAX_SIGNED_BYTES, Release, ReleaseError, SignedRelease, Version, is_newer, unix_now, verify,
 };
 use ed25519_dalek::VerifyingKey;
 use futures_util::StreamExt;
@@ -93,16 +93,18 @@ pub async fn fetch_signed(
 
 /// Reads and verifies the manifest at `url`. `None` when none is published.
 /// Nothing about the URL is trusted: only a manifest the key signed comes
-/// back, and only after [`Release::validate`] passed.
+/// back, only after [`Release::validate`] passed, and only before it expires.
 pub async fn fetch_release(
     client: &Client,
     url: &str,
     key: &VerifyingKey,
 ) -> Result<Option<Release>, UpdateError> {
-    match fetch_signed(client, url).await? {
-        Some(signed) => Ok(Some(verify(&signed, key)?)),
-        None => Ok(None),
-    }
+    let Some(signed) = fetch_signed(client, url).await? else {
+        return Ok(None);
+    };
+    let release = verify(&signed, key)?;
+    release.check_current(unix_now())?;
+    Ok(Some(release))
 }
 
 /// Reads a body of at most `limit` bytes; `None` when it is larger.
@@ -208,6 +210,7 @@ mod tests {
             product: PRODUCT.into(),
             version: version.into(),
             published_at: 0,
+            expires_at: Some(1),
             minimum_windows_build,
             installer: Installer {
                 file_name: "TrenovaCapture.msi".into(),

@@ -7,7 +7,8 @@
 //! server's manifest route on a host off this machine, and a redirect may not
 //! leave that origin: the system's network position answers for one fixed
 //! route and nothing else. It reads the manifest itself, verifies the signature
-//! against the key built into it, decides against its own version, downloads
+//! against the key built into it, refuses a manifest past its signed expiry
+//! (or with none), decides against its own version, downloads
 //! the installer and checks its size and SHA-256, and then, on Windows, has
 //! the system verify the installer's Authenticode signature, revocation
 //! included, and checks that the signer is the same publisher as the running
@@ -24,7 +25,7 @@ pub mod signature;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use capture_protocol::release::{MANIFEST_ROUTE, Release, SignedRelease, verify};
+use capture_protocol::release::{MANIFEST_ROUTE, Release, ReleaseError, SignedRelease, verify};
 use capture_update::ed25519_dalek::VerifyingKey;
 use capture_update::{Decision, UpdateError, decide, download, fetch_signed};
 use tokio::sync::watch;
@@ -49,6 +50,10 @@ pub enum UpdaterError {
     NoKey,
     #[error("no release is published")]
     NoRelease,
+    #[error(
+        "the release manifest is out of date ({0}); the installed release keeps running and updates resume once a current manifest is served"
+    )]
+    OutOfDate(ReleaseError),
     #[error("the installed {installed} is already current ({available} is published)")]
     UpToDate {
         installed: String,
@@ -152,6 +157,9 @@ pub trait Installer: Send + Sync {
     fn installed_version(&self) -> String;
     /// The Windows build, as `RtlGetVersion` reports it.
     fn windows_build(&self) -> u32;
+    /// The time now in Unix seconds, which a manifest's expiry is checked
+    /// against.
+    fn now(&self) -> i64;
     /// Whether this computer's policy allows updates at all. The
     /// organization's say is the agent's to enforce; this is IT's, and the
     /// updater enforces it so an agent cannot talk it round.
@@ -260,6 +268,9 @@ pub async fn run(
         .await?
         .ok_or(UpdaterError::NoRelease)?;
     let release = verify(&signed, key).map_err(UpdateError::from)?;
+    release
+        .check_current(installer.now())
+        .map_err(UpdaterError::OutOfDate)?;
     let current = installer.installed_version();
     match decide(&current, &release, installer.windows_build()) {
         Decision::Install => {}

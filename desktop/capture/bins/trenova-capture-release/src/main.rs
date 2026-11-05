@@ -2,13 +2,20 @@
 //!
 //! ```text
 //! trenova-capture-release keygen
-//! trenova-capture-release sign --msi <file> --version <x.y.z> --url <https://…> [--notes <file>] [--min-windows-build <n>] [--out <file>]
+//! trenova-capture-release sign --msi <file> --version <x.y.z> --url <https://…> [--notes <file>] [--min-windows-build <n>] [--valid-days <n>] [--out <file>]
+//! trenova-capture-release resign --manifest <file> --public-key <base64> [--version <x.y.z>] [--valid-days <n>] [--out <file>]
 //! trenova-capture-release verify --manifest <file> --public-key <base64>
 //! ```
 //!
-//! `sign` reads the private key from `TRENOVA_CAPTURE_SIGNING_KEY`, never
-//! from the command line, where it would land in process listings and shell
-//! history.
+//! A manifest expires `--valid-days` after it is signed (14 unless given, at
+//! most 31). `resign` signs a published manifest again with a fresh expiry
+//! and nothing else changed, which a scheduled job does every day; it renews
+//! only a manifest the same key signed, expired or not, with an expiry or
+//! from before manifests carried one. `verify` also refuses an expired one.
+//!
+//! `sign` and `resign` read the private key from
+//! `TRENOVA_CAPTURE_SIGNING_KEY`, never from the command line, where it would
+//! land in process listings and shell history.
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -17,7 +24,8 @@ use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use capture_protocol::release::{
-    self, Installer, PRODUCT, Release, SignedRelease, encode_key_pair, public_key, signing_key,
+    self, DEFAULT_VALIDITY_DAYS, Installer, PRODUCT, Release, SignedRelease, encode_key_pair,
+    expiry, public_key, signing_key, unix_now,
 };
 use sha2::{Digest, Sha256};
 
@@ -45,6 +53,36 @@ fn required<'a>(options: &'a HashMap<String, String>, name: &str) -> Result<&'a 
         .get(name)
         .map(String::as_str)
         .ok_or_else(|| format!("--{name} is required").into())
+}
+
+/// How many days a manifest signed now is valid for.
+fn valid_days(options: &HashMap<String, String>) -> Result<i64, Failure> {
+    match options.get("valid-days") {
+        Some(days) => Ok(days.parse()?),
+        None => Ok(DEFAULT_VALIDITY_DAYS),
+    }
+}
+
+/// Reads a signed manifest from disk, no larger than any reader would take.
+fn read_signed(path: &str) -> Result<SignedRelease, Failure> {
+    let bytes = std::fs::read(path)?;
+    if bytes.len() > release::MAX_SIGNED_BYTES {
+        return Err("the manifest is too large".into());
+    }
+    Ok(serde_json::from_slice(&bytes)?)
+}
+
+fn write_signed(
+    options: &HashMap<String, String>,
+    signed: &SignedRelease,
+    out: &mut impl Write,
+) -> Result<(), Failure> {
+    let json = serde_json::to_string_pretty(signed)?;
+    match options.get("out") {
+        Some(path) => std::fs::write(path, json + "\n")?,
+        None => writeln!(out, "{json}")?,
+    }
+    Ok(())
 }
 
 /// SHA-256 and size of a file, read in blocks.
@@ -89,12 +127,14 @@ fn sign(options: &HashMap<String, String>, key: &str, out: &mut impl Write) -> R
         Some(build) => build.parse()?,
         None => DEFAULT_MIN_WINDOWS_BUILD,
     };
+    let published_at = i64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())?;
     let release = Release {
         product: PRODUCT.into(),
         version: required(options, "version")?
             .trim_start_matches('v')
             .to_owned(),
-        published_at: i64::try_from(SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs())?,
+        published_at,
+        expires_at: Some(expiry(published_at, valid_days(options)?)?),
         minimum_windows_build,
         installer: Installer {
             file_name,
@@ -105,36 +145,60 @@ fn sign(options: &HashMap<String, String>, key: &str, out: &mut impl Write) -> R
         notes,
     };
     let signed = release::sign(&release, &signing_key(key)?)?;
-    let json = serde_json::to_string_pretty(&signed)?;
-    match options.get("out") {
-        Some(path) => std::fs::write(path, json + "\n")?,
-        None => writeln!(out, "{json}")?,
+    write_signed(options, &signed, out)
+}
+
+fn resign(
+    options: &HashMap<String, String>,
+    key: &str,
+    out: &mut impl Write,
+) -> Result<(), Failure> {
+    let signed = read_signed(required(options, "manifest")?)?;
+    let pinned = public_key(required(options, "public-key")?)?;
+    let key = signing_key(key)?;
+    if key.verifying_key() != pinned {
+        return Err(format!("{KEY_VARIABLE} is not the private half of --public-key").into());
     }
-    Ok(())
+    let current = release::verify(&signed, &pinned)?;
+    if let Some(expected) = options.get("version")
+        && current.version != expected.trim_start_matches('v')
+    {
+        return Err(format!("the manifest is for {}, not {expected}", current.version).into());
+    }
+    let expires_at = expiry(unix_now(), valid_days(options)?)?;
+    let renewed = release::renew(&signed, &key, expires_at)?;
+    write_signed(options, &renewed, out)
 }
 
 fn verify(options: &HashMap<String, String>, out: &mut impl Write) -> Result<(), Failure> {
-    let bytes = std::fs::read(required(options, "manifest")?)?;
-    if bytes.len() > release::MAX_SIGNED_BYTES {
-        return Err("the manifest is too large".into());
-    }
-    let signed: SignedRelease = serde_json::from_slice(&bytes)?;
+    let signed = read_signed(required(options, "manifest")?)?;
     let release = release::verify(&signed, &public_key(required(options, "public-key")?)?)?;
+    release.check_current(unix_now())?;
     writeln!(
         out,
-        "verified: {} {} ({} bytes, sha256 {})",
-        release.product, release.version, release.installer.size, release.installer.sha256
+        "verified: {} {} ({} bytes, sha256 {}), expires at Unix time {}",
+        release.product,
+        release.version,
+        release.installer.size,
+        release.installer.sha256,
+        release.expires_at.unwrap_or_default()
     )?;
     Ok(())
 }
 
 fn run(args: &[String], key: Option<String>, out: &mut impl Write) -> Result<(), Failure> {
-    let (command, rest) = args.split_first().ok_or("usage: keygen | sign | verify")?;
+    let (command, rest) = args
+        .split_first()
+        .ok_or("usage: keygen | sign | resign | verify")?;
     match command.as_str() {
         "keygen" => keygen(out),
         "sign" => {
             let key = key.ok_or_else(|| format!("{KEY_VARIABLE} is not set"))?;
             sign(&options(rest)?, &key, out)
+        }
+        "resign" => {
+            let key = key.ok_or_else(|| format!("{KEY_VARIABLE} is not set"))?;
+            resign(&options(rest)?, &key, out)
         }
         "verify" => verify(&options(rest)?, out),
         other => Err(format!("unknown command {other}").into()),
@@ -237,6 +301,162 @@ mod tests {
                 &mut Vec::new(),
             )
             .is_err()
+        );
+    }
+
+    /// The release a manifest on disk describes, checked against `public`.
+    fn read_back(path: &Path, public: &str) -> Release {
+        let signed = read_signed(path.to_str().expect("path")).expect("reads");
+        release::verify(&signed, &public_key(public).expect("key")).expect("verifies")
+    }
+
+    fn sign_one(dir: &Path, private: &str, days: &str) -> std::path::PathBuf {
+        let msi = dir.join("TrenovaCapture-1.2.0-x64.msi");
+        std::fs::write(&msi, b"not really an msi").expect("msi");
+        let manifest = dir.join(format!("manifest-{days}.json"));
+        run(
+            &args(&[
+                "sign",
+                "--msi",
+                msi.to_str().expect("path"),
+                "--version",
+                "1.2.0",
+                "--url",
+                "https://example.test/TrenovaCapture-1.2.0-x64.msi",
+                "--valid-days",
+                days,
+                "--out",
+                manifest.to_str().expect("path"),
+            ]),
+            Some(private.to_owned()),
+            &mut Vec::new(),
+        )
+        .expect("signs");
+        manifest
+    }
+
+    #[test]
+    fn a_manifest_expires_the_given_days_after_it_is_signed() {
+        let dir = tempfile::tempdir().expect("dir");
+        let (private, public) = encode_key_pair([3u8; 32]);
+
+        let before = unix_now();
+        let release = read_back(&sign_one(dir.path(), &private, "14"), &public);
+        let expires_at = release.expires_at.expect("an expiry");
+        assert!(expires_at >= before + 14 * 86_400 && expires_at <= unix_now() + 14 * 86_400);
+
+        for days in ["0", "32", "soon"] {
+            let msi = dir.path().join("TrenovaCapture-1.2.0-x64.msi");
+            assert!(
+                run(
+                    &args(&[
+                        "sign",
+                        "--msi",
+                        msi.to_str().expect("path"),
+                        "--version",
+                        "1.2.0",
+                        "--url",
+                        "https://example.test/TrenovaCapture-1.2.0-x64.msi",
+                        "--valid-days",
+                        days,
+                    ]),
+                    Some(private.clone()),
+                    &mut Vec::new(),
+                )
+                .is_err(),
+                "{days}"
+            );
+        }
+    }
+
+    #[test]
+    fn resigning_renews_the_expiry_and_changes_nothing_else() {
+        let dir = tempfile::tempdir().expect("dir");
+        let (private, public) = encode_key_pair([3u8; 32]);
+        let first = sign_one(dir.path(), &private, "1");
+        let renewed = dir.path().join("renewed.json");
+
+        run(
+            &args(&[
+                "resign",
+                "--manifest",
+                first.to_str().expect("path"),
+                "--public-key",
+                &public,
+                "--version",
+                "1.2.0",
+                "--valid-days",
+                "20",
+                "--out",
+                renewed.to_str().expect("path"),
+            ]),
+            Some(private.clone()),
+            &mut Vec::new(),
+        )
+        .expect("resigns");
+
+        let original = read_back(&first, &public);
+        let again = read_back(&renewed, &public);
+        assert!(
+            again.expires_at.expect("an expiry")
+                >= original.expires_at.expect("an expiry") + 19 * 86_400
+        );
+        assert_eq!(
+            again,
+            Release {
+                expires_at: again.expires_at,
+                ..original
+            }
+        );
+
+        let mut verified = Vec::new();
+        run(
+            &args(&[
+                "verify",
+                "--manifest",
+                renewed.to_str().expect("path"),
+                "--public-key",
+                &public,
+            ]),
+            None,
+            &mut verified,
+        )
+        .expect("verifies");
+        assert!(text(verified).contains("expires at Unix time"));
+    }
+
+    #[test]
+    fn resigning_refuses_another_key_another_version_or_a_long_expiry() {
+        let dir = tempfile::tempdir().expect("dir");
+        let (private, public) = encode_key_pair([3u8; 32]);
+        let (stranger, stranger_public) = encode_key_pair([4u8; 32]);
+        let manifest = sign_one(dir.path(), &private, "14");
+        let manifest = manifest.to_str().expect("path");
+        let resign = |key: &str, public: &str, extra: &[&str]| {
+            let mut all = vec!["resign", "--manifest", manifest, "--public-key", public];
+            all.extend_from_slice(extra);
+            run(&args(&all), Some(key.to_owned()), &mut Vec::new())
+        };
+
+        assert!(resign(&private, &public, &[]).is_ok());
+        assert!(
+            resign(&stranger, &public, &[]).is_err(),
+            "the key is not the pinned key's pair"
+        );
+        assert!(
+            resign(&stranger, &stranger_public, &[]).is_err(),
+            "the manifest was signed by another key"
+        );
+        assert!(resign(&private, &public, &["--version", "1.3.0"]).is_err());
+        assert!(resign(&private, &public, &["--valid-days", "32"]).is_err());
+        assert!(
+            run(
+                &args(&["resign", "--manifest", manifest, "--public-key", &public]),
+                None,
+                &mut Vec::new()
+            )
+            .is_err(),
+            "the key comes from the environment"
         );
     }
 
