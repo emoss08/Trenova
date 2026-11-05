@@ -41,33 +41,6 @@ func TestOptionsReconcileRowLevelSecurityAfterEveryRun(t *testing.T) {
 	assert.Equal(t, []string{"SELECT trenova_rls.reconcile()"}, Options().After)
 }
 
-func TestSetMergesEditionSourcesIntoOneVersionLine(t *testing.T) {
-	t.Parallel()
-
-	edition := migrate.Source{Name: "edition", FS: mapFS(map[string]string{
-		"29991231000000_edition_table.sql": "CREATE TABLE edition_table (id text);",
-	})}
-
-	set := Set(edition)
-	require.NoError(t, set.Err())
-	assert.Equal(t, "29991231000000", set.Version())
-
-	ms, err := set.Migrations()
-	require.NoError(t, err)
-	assert.Equal(t, "edition", ms[len(ms)-1].Source)
-}
-
-func TestSetRefusesAnEditionVersionTheCoreAlreadyHas(t *testing.T) {
-	t.Parallel()
-
-	core := coreMigrations(t)
-	clash := migrate.Source{Name: "edition", FS: mapFS(map[string]string{
-		core[0].Version + "_clash.sql": "SELECT 1;",
-	})}
-
-	require.Error(t, Set(clash).Err())
-}
-
 func TestLatestConstraintDefinitionReturnsTheNewestDefinition(t *testing.T) {
 	t.Parallel()
 

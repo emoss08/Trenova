@@ -29,7 +29,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
@@ -46,8 +45,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -108,44 +105,12 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(aianalytics.StoredProviderErrors()),
 		},
 		{
-			name:   "ck_ai_retraining_cycles_status",
-			values: stringsOf(airetraining.AllRetrainingStatuses()),
-		},
-		{
-			name:   "ck_ai_retraining_cycles_trigger",
-			values: stringsOf(airetraining.AllRetrainingTriggers()),
-		},
-		{
-			name:   "ck_ai_retraining_cycles_skip_reason",
-			values: stringsOf(airetraining.AllRetrainingSkipReasons()),
-		},
-		{
 			name:   "ck_ai_providers_reasoning_effort",
 			values: stringsOf(aireasoning.AllReasoningEfforts()),
 		},
 		{
-			name:   "ck_ai_retraining_cycles_structured_output_mode",
+			name:   "ck_ai_providers_structured_output_mode",
 			values: stringsOf(aiprovider.AllStructuredOutputModes()),
-		},
-		{
-			name:   "ck_extraction_rollouts_halt_reason",
-			values: stringsOf(extractionrollout.AllHaltReasons()),
-		},
-		{
-			name:   "ck_extraction_rollout_assignments_arm",
-			values: stringsOf(extractionrollout.AllArms()),
-		},
-		{
-			name:   "ck_extraction_rollout_assignments_outcome",
-			values: stringsOf(extractionrollout.AllOutcomes()),
-		},
-		{
-			name:   "ck_extraction_shadow_results_status",
-			values: stringsOf(extractionshadow.AllResultStatuses()),
-		},
-		{
-			name:   "ck_extraction_shadow_results_verdict",
-			values: stringsOf(extractionshadow.AllVerdicts()),
 		},
 		{
 			name:   "ck_accounting_connections_status",

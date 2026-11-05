@@ -191,7 +191,7 @@ func TestDetentionWatchlist_NamesTheCustomerThroughItsView(t *testing.T) {
 	assert.NotNil(t, read.Items[0].Customer, "the ceiling applies only without the kind's read")
 }
 
-func tomorrowsPickups() *TomorrowsPickupsCard {
+func tomorrowsPickupsFixture() *TomorrowsPickupsCard {
 	return buildTomorrowsPickupsCard(
 		time.Date(2026, time.May, 8, 0, 0, 0, 0, time.UTC),
 		[]tomorrowPickupRow{{
@@ -210,7 +210,7 @@ func tomorrowsPickups() *TomorrowsPickupsCard {
 func TestTomorrowsPickups_ShowsLinkedRecordsThroughTheirViews(t *testing.T) {
 	t.Parallel()
 
-	card := tomorrowsPickups()
+	card := tomorrowsPickupsFixture()
 	reader{denied: withoutLinkedReads}.gate(t, map[string]any{"tomorrowsPickups": card})
 
 	pickup := card.Pickups[0]
@@ -224,7 +224,7 @@ func TestTomorrowsPickups_ShowsLinkedRecordsThroughTheirViews(t *testing.T) {
 func TestTomorrowsPickups_HoldsViewFieldsToTheCeiling(t *testing.T) {
 	t.Parallel()
 
-	card := tomorrowsPickups()
+	card := tomorrowsPickupsFixture()
 	reader{
 		denied:  []permission.Resource{permission.ResourceWorker, permission.ResourceLocation},
 		ceiling: belowInternal,
@@ -274,15 +274,4 @@ func TestProfitability_ShowsTheMarginFiguresOnlyWithTheMarginsGroup(t *testing.T
 	assert.Nil(t, held.UnprofitableCount, "how many loads lost money is a margin figure")
 	assert.True(t, held.HasMargin)
 	assert.InDelta(t, 1.9, held.AvgCPM, 0.001)
-}
-
-func TestGetAnalyticsData_WithholdsEveryLinkedValueWithoutTheViewsPort(t *testing.T) {
-	t.Parallel()
-
-	card := tomorrowsPickups()
-	(&Provider{}).accessFor(t.Context(), &kernelports.AnalyticsRequestOptions{}).
-		gate(t.Context(), map[string]any{"tomorrowsPickups": card})
-
-	assert.Nil(t, card.Pickups[0].Customer)
-	assert.Nil(t, card.Pickups[0].Driver)
 }

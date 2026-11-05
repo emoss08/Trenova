@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -36,10 +37,12 @@ func setupCustomFieldHandler(
 	logger := zap.NewNop()
 
 	service := customfieldservice.New(customfieldservice.Params{
-		Logger:       logger,
-		Repo:         repo,
-		ValueRepo:    valueRepo,
-		Validator:    customfieldservice.NewTestValidator(),
+		Logger:    logger,
+		Repo:      repo,
+		ValueRepo: valueRepo,
+		Validator: customfieldservice.NewValidator(
+			customfieldservice.ValidatorParams{DB: pgstubtest.NewConnection(t)},
+		),
 		AuditService: &mocks.NoopAuditService{},
 	})
 

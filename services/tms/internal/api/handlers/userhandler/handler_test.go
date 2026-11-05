@@ -22,15 +22,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,6 +59,10 @@ type setupOptions struct {
 	mfa         sessionports.MFAService
 	cfg         *config.Config
 }
+
+type noopAuthEvents struct{}
+
+func (noopAuthEvents) Record(context.Context, *iamports.AuthEventRecord) {}
 
 func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	t.Helper()
@@ -92,7 +100,17 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 
 	logger := zap.NewNop()
 
+	ssoConfigs := tenantportsmock.NewMockSSOConfigRepository(t)
+	ssoConfigs.EXPECT().
+		ListEnabledByOrganizationID(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+
 	userSvc := userservice.New(userservice.Params{
+		DB:                dbtest.NopConnection{},
+		Auditor:           &securityaudittest.Recorder{},
+		AuthEvents:        noopAuthEvents{},
+		ContentGate:       contentscanportsmock.NewCleanGate(),
 		Logger:            logger,
 		Repo:              opts.userRepo,
 		SessionRepository: opts.sessionRepo,
@@ -101,8 +119,9 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Realtime:          &mocks.NoopRealtimeService{},
 		Storage:           opts.storage,
 		StorageConfig:     &opts.cfg.Storage,
-		Validator:         userservice.NewTestValidator(),
+		Validator:         userservice.NewValidator(userservice.ValidatorParams{Repo: opts.userRepo}),
 		PermissionEngine:  opts.permEngine,
+		SSOConfigs:        ssoConfigs,
 	})
 
 	roleSvc := roleservice.New(roleservice.Params{
@@ -110,7 +129,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		RoleRepo:         opts.roleRepo,
 		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: opts.permEngine,
-		Validator:        roleservice.NewTestValidator(),
+		Validator:        roleservice.NewValidator(roleservice.ValidatorParams{}),
 		Registry:         permissioncatalog.NewEmptyRegistry(),
 	})
 

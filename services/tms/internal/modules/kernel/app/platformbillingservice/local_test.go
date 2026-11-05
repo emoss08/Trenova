@@ -3,32 +3,17 @@ package platformbillingservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type fakeCatalog struct{}
-
-func (fakeCatalog) GetFeature(platformcatalog.FeatureKey) (platformcatalog.Feature, bool) {
-	return platformcatalog.Feature{}, false
-}
-
-func (fakeCatalog) ListFeatures() []platformcatalog.Feature {
-	return []platformcatalog.Feature{{Key: platformcatalog.FeatureCoreTMS}}
-}
-
-func (fakeCatalog) ListMeters() []platformcatalog.Meter {
-	return []platformcatalog.Meter{{Key: platformcatalog.MeterAPIRequests, Unit: "request"}}
-}
-
-func TestLocalBillingProvider_WithoutACatalogIsAnActiveCommunityPlan(t *testing.T) {
+func TestLocalBillingProvider_IsAnActiveCommunityPlan(t *testing.T) {
 	t.Parallel()
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	summary, err := NewLocalBillingProvider(LocalBillingProviderParams{}).GetBillingSummary(
+	summary, err := NewLocalBillingProvider().GetBillingSummary(
 		t.Context(),
 		&platformcatalogports.BillingSummaryRequest{OrganizationID: orgID, BusinessUnitID: buID, CheckedAt: 7},
 	)
@@ -45,16 +30,12 @@ func TestLocalBillingProvider_WithoutACatalogIsAnActiveCommunityPlan(t *testing.
 	assert.Equal(t, int64(7), summary.CheckedAt)
 }
 
-func TestLocalBillingProvider_ReportsEveryCatalogFeatureAndMeter(t *testing.T) {
+func TestLocalBillingProvider_StampsTheCheckTime(t *testing.T) {
 	t.Parallel()
 
-	summary, err := NewLocalBillingProvider(LocalBillingProviderParams{Catalog: fakeCatalog{}}).
+	summary, err := NewLocalBillingProvider().
 		GetBillingSummary(t.Context(), &platformcatalogports.BillingSummaryRequest{})
 	require.NoError(t, err)
 
-	require.Len(t, summary.Features, 1)
-	assert.True(t, summary.Features[0].Allowed)
-	require.Len(t, summary.Usage, 1)
-	assert.Equal(t, "request", summary.Usage[0].Unit)
 	assert.NotZero(t, summary.CheckedAt)
 }

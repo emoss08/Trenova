@@ -34,18 +34,6 @@ func TestNew_UsesDefaultHTTPClientWithTimeout(t *testing.T) {
 	assert.NotNil(t, svc.httpClient.Transport)
 }
 
-func TestNew_UsesInjectedHTTPClient(t *testing.T) {
-	t.Parallel()
-
-	client := &http.Client{Timeout: 2 * time.Second}
-	svc := New(Params{
-		Logger:     zap.NewNop(),
-		HTTPClient: client,
-	})
-
-	assert.Same(t, client, svc.httpClient)
-}
-
 type stubExchangeRateRepository struct {
 	getRateResult *exchangerate.ExchangeRate
 	getRateErr    error
@@ -317,12 +305,14 @@ func newTestService(
 		Encryption: encryption,
 	})
 
-	return New(Params{
+	svc := New(Params{
 		Logger:             zap.NewNop(),
 		IntegrationService: integrationSvc,
 		ExchangeRateRepo:   repo,
-		HTTPClient:         &http.Client{Timeout: 2 * time.Second},
 	})
+	svc.httpClient = &http.Client{Timeout: 2 * time.Second}
+
+	return svc
 }
 
 func TestCachedRateReadsOnlyTheRateTableAndReportsAMiss(t *testing.T) {

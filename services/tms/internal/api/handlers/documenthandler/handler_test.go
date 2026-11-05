@@ -20,19 +20,25 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -251,20 +257,48 @@ func setupHandlerWithConfig(
 	)
 	thumbnailGen := thumbnailservice.NewGenerator(imagingfake.New())
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, customerports.ErrCacheMiss).
+		Maybe()
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
-	service := documentservice.NewTestService(
-		logger,
-		repo,
-		cacheRepo,
-		sessionRepo,
-		storageClient,
-		validator,
-		&mocks.NoopAuditService{},
-		&cfg.Storage,
-		thumbnailGen,
-		nil,
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
+	workflows.EXPECT().
+		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
+
+	service := documentservice.New(documentservice.Params{
+		Logger:               logger,
+		DB:                   dbtest.NopConnection{},
+		Repo:                 repo,
+		CacheRepo:            cacheRepo,
+		SessionRepo:          sessionRepo,
+		Storage:              storageClient,
+		Validator:            validator,
+		AuditService:         &mocks.NoopAuditService{},
+		ContentGate:          contentscanportsmock.NewCleanGate(),
+		DocumentIntelligence: noopDocumentContent{},
+		Paperwork:            noopPaperwork{},
+		SearchProjection:     noopSearchProjection{},
+		WorkflowStarter:      workflows,
+		UsageProvider:        usageservice.NewNoopUsageProvider(),
+		StorageConfig:        &cfg.Storage,
+		ThumbnailGenerator:   thumbnailGen,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:       storageClient,
+			Encryption:    encryption,
+			Generator:     thumbnailGen,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        logger,
+		}),
+		Encryption:  encryption,
+		Realtime:    &mocks.NoopRealtimeService{},
+		Permissions: &mocks.AllowAllPermissionEngine{},
+	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 		Logger:    logger,
@@ -466,8 +500,6 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 		})
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
-	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -482,6 +514,7 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "test.pdf", resp["originalName"])
+	deps.cacheRepo.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestDocumentHandler_Get_NotFound(t *testing.T) {
@@ -494,8 +527,6 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
-	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -506,6 +537,7 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+	deps.cacheRepo.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestDocumentHandler_Get_InvalidID(t *testing.T) {

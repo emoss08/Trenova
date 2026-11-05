@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
@@ -165,19 +166,29 @@ func TestCustomerMixWindowIsTwoBackToBackThirtyDayWindows(t *testing.T) {
 	assert.Equal(t, now-60*24*60*60, previousStart)
 }
 
+func projectionArgs(t *testing.T, q keel.Projection) []any {
+	t.Helper()
+
+	renderer, ok := q.(keeltest.Renderer)
+	require.True(t, ok, "the projection renders as a query")
+	_, args := keeltest.Render(t, renderer)
+
+	return args
+}
+
 func TestLaneHeatmapReadDefaultsToSevenDays(t *testing.T) {
 	t.Parallel()
 
 	now := int64(10_000_000)
 	days, q := laneHeatmapRead(now, 0)
 	assert.Equal(t, 7, days)
-	_, args := keeltest.Render(t, q)
+	args := projectionArgs(t, q)
 	assert.Contains(t, args, now-7*24*60*60)
 	assert.Contains(t, args, now)
 
 	days, q = laneHeatmapRead(now, 30)
 	assert.Equal(t, 30, days)
-	_, args = keeltest.Render(t, q)
+	args = projectionArgs(t, q)
 	assert.Contains(t, args, now-30*24*60*60)
 }
 

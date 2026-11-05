@@ -19,11 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -125,15 +123,10 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 		"worker-binary": fx.Options(core.Options(), workerapp.Modules(), workerapp.Options()),
 	}
 
-	workerReachable := fx.Invoke(func(extractionevalports.ExtractionPredictor) {})
-
 	for name, processOptions := range options {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			if name != "api-binary" {
-				processOptions = fx.Options(processOptions, workerReachable)
-			}
 			if strings.HasPrefix(name, "worker") {
 				processOptions = fx.Options(
 					processOptions,
@@ -167,9 +160,6 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						agentruntimeports.RecordLabeler,
 						aicorrectionports.AICorrectionService,
 						agentqualityports.EvaluationBudget,
-						extractionevalports.ExtractionEvalRunStarter,
-						extractionevalports.ExtractionEvalRunner,
-						aitrainingports.AITrainingHistoryService,
 						ediports.EditionInfo,
 						platformcatalogports.EntitlementProvider,
 						platformcatalogports.BillingProvider,

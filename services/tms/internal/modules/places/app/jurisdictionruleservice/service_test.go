@@ -278,12 +278,12 @@ func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
 	assert.True(t, captured.BusinessUnitID.IsNil())
 }
 
-func TestWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
+func TestWrites_AreRefusedForATenantThatIsNotAListedSteward(t *testing.T) {
 	steward := pulid.MustNew("org_")
 	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
-		Mode:                  platformconfig.ModeCloud,
+		Mode:                  platformconfig.ModeSelfHosted,
 		ReferenceDataStewards: []string{steward.String()},
-	}, editioninfo.NewStatic("cloud", true))
+	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
 	repo := &repoStub{stored: validRule()}
