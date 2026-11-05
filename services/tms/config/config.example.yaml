@@ -279,6 +279,7 @@ security:
     apiKey: { requestsPerMinute: 300, burstSize: 30 } # Bearer tokens, keyed by API key id
     tenant: { requestsPerMinute: 6000, burstSize: 600 } # Shared ceiling across one organization's API keys
     publicToken: { requestsPerMinute: 60, burstSize: 20 } # Token-addressed public pages, keyed by token hash
+    scim: { requestsPerMinute: 600, burstSize: 100 } # SCIM provisioning, keyed by directory; identity providers retry on 429
   passwordReset:
     baseUrl: http://localhost:5173 # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.

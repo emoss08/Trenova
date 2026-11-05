@@ -2566,6 +2566,32 @@ writes:
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
 
+  # scim
+  "DELETE /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "DELETE /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PATCH /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PATCH /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "POST /api/v1/scim/:tenantSlug/v2/Groups":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "POST /api/v1/scim/:tenantSlug/v2/Users":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PUT /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PUT /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+
   # selfservice
   "mutation createWorkerPolicy":
     exempt: configuration
