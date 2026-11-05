@@ -1,0 +1,21 @@
+# The operator in the CI install (.github/workflows/operator.yml): images built
+# from the commit, and the Trenova chart from the registry inside k3d.
+image: { repository: trenova-operator, tag: ci, pullPolicy: Never }
+chart:
+  ref: oci://k3d-trenova-registry:5000/charts/trenova
+  plainHTTP: true
+pollInterval: 10s
+reportInterval: 30s
+logLevel: debug
+trenovaValues:
+  clamav: { enabled: false }
+  ingress: { enabled: false }
+  tms:
+    image: { repository: trenova-tms, tag: ci, pullPolicy: Never }
+    dbImage: { repository: trenova-tms-db, tag: ci, pullPolicy: Never }
+  imaging:
+    image: { repository: trenova-imaging, tag: ci, pullPolicy: Never }
+  client:
+    image: { repository: trenova-client, tag: ci, pullPolicy: Never }
+  postgres:
+    image: { repository: trenova-postgres, tag: "18-ci" }

@@ -1,0 +1,243 @@
+name: Operator
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "services/operator/**"
+      - "deploy/helm/**"
+      - "deploy/Dockerfile.*"
+      - ".golangci.yml"
+      - ".github/workflows/operator.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "services/operator/**"
+      - "deploy/helm/**"
+      - "deploy/Dockerfile.*"
+      - ".golangci.yml"
+      - ".github/workflows/operator.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HELM_VERSION: v3.19.0
+  KUBECONFORM_VERSION: v0.7.0
+  CNPG_VERSION: 1.30.1
+  # The operator is its own module, outside go.work.
+  GOWORK: "off"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/operator
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: operator
+      - name: Vet
+        run: go vet ./...
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          # The version and settings the TMS lint uses with the same config.
+          version: v2.12.2
+          verify: false
+          working-directory: services/operator
+          args: --config ../../.golangci.yml
+      - name: Test
+        run: go test -race -count=1 ./...
+      - name: The instance API client matches the contract
+        run: |
+          go generate ./internal/instanceapi/...
+          git diff --exit-code -- internal/instanceapi
+
+  chart:
+    name: Chart
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Helm and kubeconform
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C /tmp kubeconform
+          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
+      - name: Lint and validate
+        run: |
+          set -euo pipefail
+          for values in "" "-f deploy/helm/trenova-operator/ci/e2e-values.yaml"; do
+            # shellcheck disable=SC2086
+            helm lint --strict deploy/helm/trenova-operator $values
+            # shellcheck disable=SC2086
+            helm template trenova-operator deploy/helm/trenova-operator -n trenova-system $values \
+              | kubeconform -strict -summary -kubernetes-version 1.31.0
+          done
+
+  e2e:
+    name: Operate on k3d
+    needs: [test, chart]
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the operator image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: operator
+          load: true
+          tags: trenova-operator:ci
+          cache-from: type=gha,scope=operator
+          cache-to: type=gha,scope=operator,mode=max
+      - name: Build the control plane stub image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: controlplane-stub
+          load: true
+          tags: trenova-controlplane-stub:ci
+          cache-from: type=gha,scope=operator
+      - name: Build the TMS image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.tms
+          target: tms
+          load: true
+          tags: trenova-tms:ci
+          cache-from: type=gha
+      - name: Build the trenova-db image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.tms
+          target: trenova-db
+          load: true
+          tags: trenova-tms-db:ci
+          cache-from: type=gha
+      - name: Build the imaging worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./deploy/Dockerfile.imaging
+          target: runtime
+          load: true
+          tags: trenova-imaging:ci
+          cache-from: type=gha,scope=imaging-runtime
+      - name: Build the PostgreSQL image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deploy
+          file: ./deploy/Dockerfile.postgres
+          load: true
+          tags: trenova-postgres:18-ci
+          cache-from: type=gha,scope=trenova-postgres
+      - name: Build the client image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.client
+          load: true
+          tags: trenova-client:ci
+          cache-from: type=gha
+          build-args: |
+            VITE_API_URL=/api/v1
+
+      - name: Install Helm and k3d
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          curl -fsSL -o /tmp/k3d https://github.com/k3d-io/k3d/releases/download/v5.8.3/k3d-linux-amd64
+          sudo install /tmp/k3d /usr/local/bin/k3d
+
+      - name: Create the cluster and its chart registry
+        run: |
+          set -euo pipefail
+          k3d registry create trenova-registry --port 5000
+          k3d cluster create trenova --image rancher/k3s:v1.31.5-k3s1 --no-lb \
+            --k3s-arg "--disable=traefik@server:0" --registry-use k3d-trenova-registry:5000 --wait
+          k3d image import -c trenova trenova-operator:ci trenova-controlplane-stub:ci trenova-tms:ci \
+            trenova-tms-db:ci trenova-imaging:ci trenova-postgres:18-ci trenova-client:ci
+          kubectl apply --server-side -f "https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-${CNPG_VERSION%.*}/releases/cnpg-${CNPG_VERSION}.yaml"
+          kubectl -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=5m
+
+      - name: Publish the chart at the version the stub pins
+        run: |
+          set -euo pipefail
+          helm package deploy/helm/trenova --version 0.11.0-ci --app-version ci -d "$RUNNER_TEMP"
+          helm push "$RUNNER_TEMP/trenova-0.11.0-ci.tgz" oci://localhost:5000/charts --plain-http
+
+      - name: Start the control plane stub and enrol the operator
+        run: |
+          set -euo pipefail
+          kubectl apply -f deploy/helm/trenova-operator/ci/stub.yaml
+          kubectl -n trenova-cp rollout status deployment/controlplane-stub --timeout=3m
+          kubectl -n trenova-cp port-forward svc/controlplane-stub 18080:8080 > /dev/null 2>&1 &
+          for _ in $(seq 1 30); do curl -fsS localhost:18080/bundle -o "$RUNNER_TEMP/enrolment.json" && break; sleep 2; done
+          kubectl create namespace trenova-system
+          kubectl -n trenova-system create secret generic trenova-operator-enrolment \
+            --from-file=enrolment.json="$RUNNER_TEMP/enrolment.json"
+          helm install trenova-operator deploy/helm/trenova-operator -n trenova-system \
+            -f deploy/helm/trenova-operator/ci/e2e-values.yaml --wait --timeout 5m
+
+      - name: The operator installs Trenova and reports it ready
+        run: |
+          set -euo pipefail
+          wait_for() {
+            want_revision="$1"; deadline=$(( $(date +%s) + $2 ))
+            until body="$(curl -fsS localhost:18080/report 2>/dev/null)" &&
+              echo "$body" | jq -e --argjson r "$want_revision" '.revision == $r and .report.appliedRevision == $r and .report.ready' > /dev/null; do
+              if [ "$(date +%s)" -gt "$deadline" ]; then
+                echo "::error::no ready report on revision $want_revision"; echo "${body:-no report}"; exit 1
+              fi
+              sleep 10
+            done
+            echo "$body" | jq .
+          }
+          kubectl -n trenova-cp port-forward svc/controlplane-stub 18080:8080 > /dev/null 2>&1 &
+          sleep 2
+          wait_for 1 1800
+
+          curl -fsS -X PUT localhost:18080/lifecycle/suspended
+          wait_for 2 600
+          test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 0
+          test "$(kubectl -n trenova get cluster trenova-postgres -o jsonpath='{.metadata.annotations.cnpg\.io/hibernation}')" = on
+
+          curl -fsS -X PUT localhost:18080/lifecycle/active
+          wait_for 3 1200
+          test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 1
+
+      - name: What the cluster looked like
+        if: failure()
+        run: |
+          kubectl get pods,jobs,clusters.postgresql.cnpg.io -A -o wide || true
+          kubectl -n trenova-system logs deployment/trenova-operator --tail=200 || true
+          kubectl -n trenova-cp logs deployment/controlplane-stub --tail=50 || true
+          kubectl -n trenova get events --sort-by=.lastTimestamp | tail -60 || true
+          for pod in $(kubectl -n trenova get pods -o name); do
+            echo "::group::$pod"
+            kubectl -n trenova describe "$pod" | tail -30 || true
+            kubectl -n trenova logs "$pod" --all-containers --tail=80 || true
+            echo "::endgroup::"
+          done

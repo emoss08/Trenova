@@ -552,6 +552,9 @@
               "boolean"
             ]
           }
+        },
+        "hibernate": {
+          "type": "boolean"
         }
       },
       "required": []
@@ -1534,6 +1537,10 @@
         }
       },
       "required": []
+    },
+    "stopped": {
+      "type": "boolean",
+      "description": "Stops every workload but PostgreSQL."
     }
   },
   "allOf": [
