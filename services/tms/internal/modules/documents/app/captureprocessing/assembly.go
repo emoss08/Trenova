@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +46,7 @@ func (s *Service) AssembleItem(
 	item *capture.CaptureItem,
 	pages []*capture.CapturePage,
 ) ([]byte, error) {
+	ctx = dbscope.EnsureTenant(ctx, tenantInfo.DBTenant())
 	byID := make(map[pulid.ID]*capture.CapturePage, len(pages))
 	for _, page := range pages {
 		byID[page.ID] = page
