@@ -15,6 +15,7 @@ import (
 
 const (
 	stepUpErrorThrottled   = "step_up_throttled"
+	stepUpErrorUnavailable = "step_up_throttle_unavailable"
 	stepUpErrorRejected    = "step_up_rejected"
 	stepUpMFAStateVerified = "verified"
 	stepUpMFAStateRejected = "rejected"
@@ -50,8 +51,12 @@ func (s *Service) beginStepUp(
 
 	decision, err := s.throttle.Begin(ctx, attempt.key)
 	if err != nil {
-		s.l.Warn("two-factor step-up throttle check failed; allowing the attempt", zap.Error(err))
-		return attempt, nil
+		s.l.Error("two-factor step-up throttle check failed; refusing the attempt", zap.Error(err))
+		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorUnavailable)
+		return nil, errortypes.NewRateLimitError(
+			"code",
+			"Verification is briefly unavailable. Try again in a moment.",
+		).WithRetryAfter(sessionports.LoginThrottleUnavailableRetry).WithInternal(err)
 	}
 	if decision.Blocked {
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorThrottled)
@@ -76,7 +81,7 @@ func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err 
 	}
 
 	s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeFailed, stepUpErrorRejected)
-	if attempt.decision != nil && attempt.decision.Tripped {
+	if attempt.decision.Tripped {
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorThrottled)
 	}
 }

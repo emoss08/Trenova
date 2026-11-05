@@ -1,13 +1,14 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -186,13 +187,35 @@ func TestLoginSuccessClearsTheAccountCounter(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestLoginThrottleFailsOpenWhenRedisIsDown(t *testing.T) {
+func TestLoginRefusedWhenTheThrottleCannotAnswer(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	store := withThrottle(t, deps)
 	usr := newTestUser(t)
 
 	store.EXPECT().Begin(mock.Anything, mock.Anything).Return(nil, errors.New("redis down"))
+
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
+		EmailAddress: usr.EmailAddress,
+		Password:     "password123",
+	})
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	retryAfter, ok := errortypes.RetryAfterOf(err)
+	require.True(t, ok)
+	assert.Equal(t, sessionports.LoginThrottleUnavailableRetry, retryAfter)
+	assert.Equal(t, authErrorThrottleUnavailable, deps.authEvents.only(t).ErrorCode)
+	deps.userRepo.AssertNotCalled(t, "FindByEmail", mock.Anything, mock.Anything)
+}
+
+func TestLoginSucceedsWhenOnlyClearingTheCounterFails(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	store := withThrottle(t, deps)
+	usr := newTestUser(t)
+
+	store.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
 	store.EXPECT().Succeed(mock.Anything, mock.Anything).Return(errors.New("redis down"))
 	expectSuccessfulSession(deps, usr)

@@ -31,8 +31,12 @@ func (s *Service) beginLoginAttempt(
 ) (*sessionports.LoginThrottleDecision, error) {
 	decision, err := s.throttle.Begin(ctx, key)
 	if err != nil {
-		s.l.Warn("login throttle check failed; allowing the attempt", zap.Error(err))
-		return nil, nil //nolint:nilnil // the throttle fails open
+		s.l.Error("login throttle check failed; refusing the attempt", zap.Error(err))
+		attempt.fail(authErrorThrottleUnavailable)
+		return nil, errortypes.NewRateLimitError(
+			"emailAddress",
+			"Sign-in is briefly unavailable. Try again in a moment.",
+		).WithRetryAfter(sessionports.LoginThrottleUnavailableRetry).WithInternal(err)
 	}
 	if !decision.Blocked {
 		return decision, nil
@@ -57,7 +61,7 @@ func (s *Service) recordLoginFailure(
 	ctx context.Context,
 	decision *sessionports.LoginThrottleDecision,
 ) {
-	if decision == nil || !decision.Tripped {
+	if !decision.Tripped {
 		return
 	}
 

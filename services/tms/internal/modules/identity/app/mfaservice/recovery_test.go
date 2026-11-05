@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -146,6 +147,36 @@ func TestLegacyRecoveryCodesKeepWorkingUntilReplaced(t *testing.T) {
 		RecoveryCode: legacy[1],
 	})
 	require.ErrorIs(t, err, errInvalidRecoveryCode)
+}
+
+func TestRegenerateRecoveryCodesRefusesWhenTheThrottleCannotAnswer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	secret, _ := h.enroll(t)
+	before := h.repo.codes
+
+	throttle := sessionportsmock.NewMockLoginThrottleStore(t)
+	events := &recordingAuthEvents{}
+	h.svc.throttle = throttle
+	h.svc.authEvents = events
+	throttle.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(nil, errors.New("redis down")).Once()
+
+	h.clock = h.clock.Add(time.Minute)
+	_, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	assert.Equal(t, before, h.repo.codes)
+	recorded := events.snapshot()
+	require.Len(t, recorded, 1)
+	assert.Equal(t, iam.AuthEventOutcomeDenied, recorded[0].Outcome)
+	assert.Equal(t, stepUpErrorUnavailable, recorded[0].ErrorCode)
 }
 
 func TestRegenerateRecoveryCodesRefusesWhileThrottled(t *testing.T) {
