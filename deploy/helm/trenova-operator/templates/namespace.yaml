@@ -1,0 +1,12 @@
+{{- if .Values.target.createNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.target.namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+  annotations:
+    # The instance's data lives in this namespace: uninstalling the operator
+    # must never take it with it.
+    helm.sh/resource-policy: keep
+{{- end }}

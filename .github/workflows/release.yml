@@ -11,6 +11,7 @@ env:
   TMS_DB_IMAGE_NAME: emoss08/trenova/tms-db
   CLIENT_IMAGE_NAME: emoss08/trenova/client
   IMAGING_IMAGE_NAME: emoss08/trenova/imaging
+  OPERATOR_IMAGE_NAME: emoss08/trenova/operator
 
 jobs:
   verify-source:
@@ -298,9 +299,54 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
-  # The Helm chart, versioned with the release, as an OCI artifact beside the
-  # images: oci://ghcr.io/emoss08/charts/trenova. Published once every image
-  # it names exists.
+  # The Trenova Cloud operator (services/operator, its own module).
+  build-and-push-operator:
+    name: Build and Push Operator Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Build and push operator image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: operator
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=operator
+          cache-to: type=gha,scope=operator,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  # The Helm charts, versioned with the release, as OCI artifacts beside the
+  # images: oci://ghcr.io/emoss08/charts/trenova and trenova-operator.
+  # Published once every image they name exists.
   publish-chart:
     name: Publish Helm Chart
     runs-on: ubuntu-latest
@@ -310,11 +356,13 @@ jobs:
       - build-and-push-client
       - build-and-push-imaging
       - build-and-push-postgres
+      - build-and-push-operator
     if: >-
       ${{ !cancelled()
       && needs.build-and-push-tms.result == 'success'
       && needs.build-and-push-client.result == 'success'
       && needs.build-and-push-imaging.result == 'success'
+      && needs.build-and-push-operator.result == 'success'
       && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
     permissions:
       contents: read
@@ -351,7 +399,7 @@ jobs:
           PY
           grep -n -A4 '^postgres:' deploy/helm/trenova/values.yaml
 
-      - name: Package and push the chart
+      - name: Package and push the charts
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -359,5 +407,8 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           echo "${GHCR_TOKEN}" | helm registry login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
           helm lint deploy/helm/trenova --set domain=trenova.example.com --set storageDomain=storage.trenova.example.com
-          helm package deploy/helm/trenova --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
-          helm push "${RUNNER_TEMP}/trenova-${version}.tgz" "oci://${REGISTRY}/emoss08/charts"
+          helm lint deploy/helm/trenova-operator
+          for chart in trenova trenova-operator; do
+            helm package "deploy/helm/${chart}" --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
+            helm push "${RUNNER_TEMP}/${chart}-${version}.tgz" "oci://${REGISTRY}/emoss08/charts"
+          done

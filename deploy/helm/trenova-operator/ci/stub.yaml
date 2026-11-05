@@ -1,0 +1,47 @@
+# The control plane stub the CI install enrols against (services/operator/cmd/
+# controlplane-stub): the instance API over mutual TLS on 8443, and an admin
+# port on 8080 the workflow drives. CI only.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trenova-cp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controlplane-stub
+  namespace: trenova-cp
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: controlplane-stub }
+  template:
+    metadata:
+      labels: { app: controlplane-stub }
+    spec:
+      containers:
+        - name: stub
+          image: trenova-controlplane-stub:ci
+          imagePullPolicy: Never
+          env:
+            - { name: STUB_HOSTS, value: "controlplane-stub.trenova-cp.svc,controlplane-stub.trenova-cp.svc.cluster.local" }
+            - { name: STUB_URL, value: "https://controlplane-stub.trenova-cp.svc:8443" }
+            - { name: STUB_HOSTNAME, value: "trenova.ci.test" }
+            - { name: STUB_VERSION, value: "0.11.0-ci" }
+            - { name: STUB_VCPU, value: "2" }
+            - { name: STUB_MEMORY_GIB, value: "8" }
+            - { name: STUB_DISK_GIB, value: "40" }
+          ports:
+            - { name: api, containerPort: 8443 }
+            - { name: admin, containerPort: 8080 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: controlplane-stub
+  namespace: trenova-cp
+spec:
+  selector: { app: controlplane-stub }
+  ports:
+    - { name: api, port: 8443, targetPort: api }
+    - { name: admin, port: 8080, targetPort: admin }

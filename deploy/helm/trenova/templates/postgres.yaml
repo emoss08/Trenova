@@ -26,6 +26,8 @@ metadata:
     # The operator deletes a cluster's volumes with it, so uninstalling the
     # release leaves the cluster, and the data, in place.
     helm.sh/resource-policy: keep
+    # Hibernation stops every instance and keeps the volumes.
+    cnpg.io/hibernation: {{ ternary "on" "off" .Values.postgres.hibernate | quote }}
 spec:
   instances: {{ .Values.postgres.instances }}
   imageCatalogRef:

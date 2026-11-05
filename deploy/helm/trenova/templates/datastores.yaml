@@ -22,7 +22,7 @@ metadata:
   labels:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
   serviceName: {{ include "trenova.name" $c }}
   selector:
     matchLabels:
@@ -106,7 +106,7 @@ metadata:
   labels:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
   serviceName: {{ include "trenova.name" $c }}
   selector:
     matchLabels:
@@ -195,7 +195,7 @@ metadata:
   labels:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" 1) }}
   serviceName: {{ include "trenova.name" $c }}
   selector:
     matchLabels:

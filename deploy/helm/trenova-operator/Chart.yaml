@@ -1,0 +1,15 @@
+apiVersion: v2
+name: trenova-operator
+description: >-
+  The Trenova Cloud operator: enrols with the control plane, runs the Trenova
+  chart at the version and size the instance's spec asks for, and reports its
+  status. One per instance, on the instance's own cluster.
+type: application
+# The release workflow packages the chart with the release's version as both
+# the chart version and appVersion.
+version: 0.0.0-dev
+appVersion: 0.0.0-dev
+kubeVersion: ">=1.29.0-0"
+home: https://github.com/emoss08/trenova
+sources:
+  - https://github.com/emoss08/trenova/tree/master/services/operator

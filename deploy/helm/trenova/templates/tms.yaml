@@ -24,7 +24,7 @@ metadata:
   labels:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
-  replicas: {{ $v.replicas }}
+  replicas: {{ include "trenova.replicas" (dict "root" $ "replicas" $v.replicas) }}
   selector:
     matchLabels:
       {{- include "trenova.selectorLabels" $c | nindent 6 }}
@@ -117,7 +117,7 @@ metadata:
   labels:
     {{- include "trenova.labels" $c | nindent 4 }}
 spec:
-  replicas: {{ .Values.client.replicas }}
+  replicas: {{ include "trenova.replicas" (dict "root" . "replicas" .Values.client.replicas) }}
   selector:
     matchLabels:
       {{- include "trenova.selectorLabels" $c | nindent 6 }}
