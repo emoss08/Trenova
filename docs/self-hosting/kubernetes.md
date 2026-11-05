@@ -118,6 +118,7 @@ The ones you are most likely to change:
 | `tms.extraEnv` | Integration credentials and other `TRENOVA_*` settings, as env entries (`valueFrom` works) |
 | `*.resources`, `postgres.parameters` | Sizing; raise `shared_buffers` with the PostgreSQL memory limit |
 | `secrets.existingSecret`, `postgres.existingSecret` | Secrets you manage; see [Secrets](#secrets) |
+| `stopped`, `postgres.hibernate` | Stop every workload but PostgreSQL, and PostgreSQL too, keeping every volume; set both back to `false` to start again |
 
 The TMS decodes its configuration strictly, so a key in `tms.config` that the release does
 not know stops the API, the worker and the release Job; their logs name the key.

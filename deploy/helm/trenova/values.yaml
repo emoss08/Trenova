@@ -12,6 +12,11 @@ domain: ""
 # with external storage, storage.external.publicEndpoint is used instead.
 storageDomain: ""
 
+# Stops every workload but PostgreSQL (replicas 0, no release Job) and keeps
+# every volume and Secret; set it back to false to start them again. Trenova
+# Cloud's operator stops a suspended or decommissioned instance this way.
+stopped: false
+
 # Applied to every pod the chart makes.
 imagePullSecrets: []
 nodeSelector: {}
@@ -286,6 +291,9 @@ postgres:
   uid: 70
   gid: 70
   instances: 1
+  # Stops PostgreSQL too (CloudNativePG's declarative hibernation), keeping
+  # its volumes. Use it with stopped: true.
+  hibernate: false
   database: trenova
   # Owns the tables; migrations and seeds run as it.
   owner: trenova

@@ -290,3 +290,9 @@ the cluster exists (off). The processes then wait for the schema themselves. */}
     - port: 53
       protocol: TCP
 {{- end -}}
+
+{{/* A workload's replica count: none while the release is stopped. Call with
+(dict "root" $ "replicas" n). */}}
+{{- define "trenova.replicas" -}}
+{{- if .root.Values.stopped }}0{{ else }}{{ .replicas }}{{ end -}}
+{{- end -}}

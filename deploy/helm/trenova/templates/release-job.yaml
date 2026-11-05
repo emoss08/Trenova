@@ -10,8 +10,9 @@ order the database needs it:
 
 Every step is idempotent. The API and worker start alongside it and wait for
 their role and their schema version, so `helm upgrade --wait --wait-for-jobs`
-waits for both without ordering hooks.
+waits for both without ordering hooks. A stopped release runs no Job.
 */ -}}
+{{- if not .Values.stopped }}
 {{- $c := dict "root" . "component" "release" -}}
 {{- $db := include "trenova.dbSecret" . -}}
 {{- $app := include "trenova.appSecret" . -}}
@@ -179,3 +180,4 @@ spec:
         - name: files
           configMap:
             name: {{ $files }}
+{{- end }}
