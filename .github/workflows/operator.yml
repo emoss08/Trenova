@@ -219,6 +219,17 @@ jobs:
           sleep 2
           wait_for 1 1800
 
+          # The usage relay runs once the instance is ready: readings from the
+          # TMS's managed API reach the control plane, and its answer goes back.
+          deadline=$(( $(date +%s) + 300 ))
+          until usage="$(curl -fsS localhost:18080/usage 2>/dev/null)"; do
+            if [ "$(date +%s)" -gt "$deadline" ]; then
+              echo "::error::no usage report from the operator"; exit 1
+            fi
+            sleep 10
+          done
+          echo "$usage" | jq .
+
           curl -fsS -X PUT localhost:18080/lifecycle/suspended
           wait_for 2 600
           test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 0

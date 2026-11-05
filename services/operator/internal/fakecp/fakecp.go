@@ -27,6 +27,13 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 )
 
+const maxReadings = 1000
+
+type usageKey struct {
+	meter string
+	hour  time.Time
+}
+
 type Server struct {
 	InstanceID uuid.UUID
 
@@ -41,6 +48,10 @@ type Server struct {
 	revision    int64
 	spec        instanceapi.InstanceSpec
 	reports     []instanceapi.StatusReport
+	usage       []instanceapi.UsageReport
+	readings    map[usageKey]int64
+	ack         *instanceapi.UsageAck
+	usageFail   int
 	renewals    int
 	limited     int
 	unavailable int
@@ -83,6 +94,7 @@ func New(p *Params) (*Server, error) {
 		url:        p.URL,
 		valid:      map[string]bool{},
 		used:       map[string]bool{},
+		readings:   map[usageKey]int64{},
 		revision:   1,
 		spec:       p.Spec,
 		lifetime:   30 * 24 * time.Hour,
@@ -136,6 +148,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/spec", s.getSpec)
 	mux.HandleFunc("PUT /v1/status", s.putStatus)
 	mux.HandleFunc("POST /v1/certificate", s.renew)
+	mux.HandleFunc("POST /v1/usage", s.reportUsage)
 	return s.authenticate(mux)
 }
 
@@ -214,6 +227,24 @@ func (s *Server) Reports() []instanceapi.StatusReport {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]instanceapi.StatusReport(nil), s.reports...)
+}
+
+func (s *Server) UsageReports() []instanceapi.UsageReport {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.UsageReport(nil), s.usage...)
+}
+
+func (s *Server) SetUsageAck(ack *instanceapi.UsageAck) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ack = ack
+}
+
+func (s *Server) FailUsageNext(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.usageFail = n
 }
 
 func (s *Server) Renewals() int {
@@ -303,6 +334,66 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	s.reports = append(s.reports, report)
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) reportUsage(w http.ResponseWriter, r *http.Request) {
+	var report instanceapi.UsageReport
+	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&report); err != nil ||
+		len(report.Readings) > maxReadings {
+		problem(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.usageFail > 0 {
+		s.usageFail--
+		problem(w, http.StatusInternalServerError, "internal")
+		return
+	}
+	s.usage = append(s.usage, report)
+	for _, rd := range report.Readings {
+		s.readings[usageKey{meter: rd.Meter, hour: rd.Hour.UTC()}] = rd.Quantity
+	}
+	if s.ack != nil {
+		write(w, http.StatusOK, s.ack)
+		return
+	}
+	write(w, http.StatusOK, s.defaultAck(time.Now().UTC()))
+}
+
+func (s *Server) defaultAck(now time.Time) instanceapi.UsageAck {
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	window := instanceapi.UsageWindow{Start: start, End: start.AddDate(0, 1, 0)}
+	ack := instanceapi.UsageAck{
+		Window:  &window,
+		Overage: true,
+		Meters:  make([]instanceapi.MeterUsage, 0, len(s.spec.Allowances)),
+	}
+	for _, a := range s.spec.Allowances {
+		var quantity int64
+		var latest time.Time
+		for k, q := range s.readings {
+			if k.meter != a.Meter || k.hour.Before(window.Start) || !k.hour.Before(window.End) {
+				continue
+			}
+			if a.Unit != instanceapi.SpecAllowanceUnitBytes {
+				quantity += q
+				continue
+			}
+			if !k.hour.Before(latest) {
+				quantity, latest = q, k.hour
+			}
+		}
+		ack.Meters = append(ack.Meters, instanceapi.MeterUsage{
+			Meter:     a.Meter,
+			Unit:      instanceapi.MeterUsageUnit(a.Unit),
+			Quantity:  quantity,
+			Allowance: a.Quantity,
+			HardCap:   a.HardCap,
+			Stopped:   a.HardCap && quantity >= a.Quantity,
+		})
+	}
+	return ack
 }
 
 func (s *Server) renew(w http.ResponseWriter, r *http.Request) {

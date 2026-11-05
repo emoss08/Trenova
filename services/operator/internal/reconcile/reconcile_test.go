@@ -32,6 +32,9 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/tmstest"
+	"github.com/emoss08/trenova/operator/internal/usage"
 )
 
 var chartDir = filepath.Join("..", "..", "..", "..", "deploy", "helm", "trenova")
@@ -78,17 +81,59 @@ func (c *countingReleases) Apply(ctx context.Context, ch *chart.Chart, vals map[
 	return c.Releaser.Apply(ctx, ch, vals)
 }
 
+type fakeUsage struct {
+	mu   sync.Mutex
+	now  func() time.Time
+	runs []time.Time
+	err  error
+}
+
+func (f *fakeUsage) Run(_ context.Context, _ []instanceapi.SpecAllowance) (usage.Result, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.runs = append(f.runs, f.now())
+	return usage.Result{}, f.err
+}
+
+func (f *fakeUsage) count() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.runs)
+}
+
+func (f *fakeUsage) fail(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.err = err
+}
+
 type world struct {
 	cp       *controlplanetest.Server
 	loop     *reconcile.Loop
 	health   *fakeHealth
 	releases *countingReleases
+	usage    *fakeUsage
 	now      time.Time
+}
+
+type relayParams struct {
+	kube   *fake.Clientset
+	client *controlplane.Client
+	now    func() time.Time
 }
 
 func newWorld(t *testing.T) *world {
 	t.Helper()
-	cp := controlplanetest.New(t, controlplanetest.Spec(uuid.New()))
+	return newWorldWith(t, controlplanetest.Spec(uuid.New()), nil)
+}
+
+func newWorldWith(
+	t *testing.T,
+	spec instanceapi.InstanceSpec,
+	relay func(relayParams) reconcile.Usage,
+) *world {
+	t.Helper()
+	cp := controlplanetest.New(t, spec)
 	kube := fake.NewClientset()
 	body, err := sonic.Marshal(cp.Bundle(7 * 24 * time.Hour))
 	require.NoError(t, err)
@@ -103,6 +148,11 @@ func newWorld(t *testing.T) *world {
 	client, err := controlplane.New(cp.URL, &http.Client{Transport: transport, Timeout: 10 * time.Second})
 	require.NoError(t, err)
 	w := &world{cp: cp, health: &fakeHealth{}, now: time.Now()}
+	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
+	var relayer reconcile.Usage = w.usage
+	if relay != nil {
+		relayer = relay(relayParams{kube: kube, client: client, now: func() time.Time { return w.now }})
+	}
 	creds := credential.NewManager(&credential.ManagerParams{
 		Store: credential.NewStore(credential.StoreParams{
 			Client: kube, Namespace: "trenova-system", Enrolment: "enrolment", Identity: "identity",
@@ -131,11 +181,14 @@ func newWorld(t *testing.T) *world {
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
 		Releases:     w.releases,
 		Health:       w.health,
+		Usage:        relayer,
 		Base:         map[string]any{"clamav": map[string]any{"enabled": true}},
+		Namespace:    "trenova-system",
 		Logger:       logger,
 		Now:          func() time.Time { return w.now },
 		Poll:         15 * time.Second,
 		Report:       time.Minute,
+		UsageEvery:   15 * time.Minute,
 	})
 	return w
 }
@@ -314,4 +367,165 @@ func TestRefusesASpecForAnotherInstance(t *testing.T) {
 	assert.False(t, last.Ready)
 	require.NotNil(t, last.Message)
 	assert.Contains(t, *last.Message, "is for instance")
+}
+
+func TestRelaysUsageOnlyWhenActiveAndReady(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.loop.Tick(t.Context())
+	require.Zero(t, w.usage.count(), "not while the release is not ready")
+
+	w.health.set(true)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 1, w.usage.count(), "as soon as it is ready")
+
+	w.now = w.now.Add(14 * time.Minute)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 1, w.usage.count(), "at most every interval")
+
+	w.now = w.now.Add(time.Minute)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.usage.count())
+
+	w.health.set(false)
+	w.now = w.now.Add(15 * time.Minute)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.usage.count(), "not while a component is not ready")
+
+	w.health.set(true)
+	spec := controlplanetest.Spec(w.cp.InstanceID)
+	spec.Lifecycle = instanceapi.Suspended
+	w.cp.SetSpec(spec)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.True(t, w.lastReport(t).Ready)
+	require.Equal(t, 2, w.usage.count(), "not while suspended")
+
+	spec.Lifecycle = instanceapi.Active
+	w.cp.SetSpec(spec)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 3, w.usage.count(), "at once on resuming")
+}
+
+func TestRetriesUsageAfterAFailure(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		err  error
+		wait time.Duration
+	}{
+		{name: "failure", err: errors.New("the TMS is unreachable"), wait: time.Minute},
+		{
+			name: "rate limited",
+			err:  &controlplane.RetryLaterError{Reason: "rate limited", RetryAfter: 5 * time.Minute},
+			wait: 5 * time.Minute,
+		},
+		{
+			name: "a short Retry-After waits the retry minute",
+			err:  &controlplane.RetryLaterError{Reason: "rate limited", RetryAfter: time.Second},
+			wait: time.Minute,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			w := newWorld(t)
+			w.health.set(true)
+			w.usage.fail(tc.err)
+			w.loop.Tick(t.Context())
+			require.Equal(t, 1, w.usage.count())
+
+			w.now = w.now.Add(tc.wait - time.Second)
+			w.loop.Tick(t.Context())
+			require.Equal(t, 1, w.usage.count())
+
+			w.usage.fail(nil)
+			w.now = w.now.Add(time.Second)
+			w.loop.Tick(t.Context())
+			require.Equal(t, 2, w.usage.count())
+
+			w.now = w.now.Add(time.Minute)
+			w.loop.Tick(t.Context())
+			require.Equal(t, 2, w.usage.count(), "back to the interval after a success")
+		})
+	}
+}
+
+func TestAUsageFailureDoesNotStopConverging(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.health.set(true)
+	w.usage.fail(errors.New("boom"))
+	w.loop.Tick(t.Context())
+	require.True(t, w.lastReport(t).Ready)
+
+	spec := controlplanetest.Spec(w.cp.InstanceID)
+	spec.Plan.Vcpu = 16
+	spec.Plan.MemoryGiB = 64
+	w.cp.SetSpec(spec)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.releases.applies)
+	require.Equal(t, int64(2), *w.lastReport(t).AppliedRevision)
+	require.NoError(t, w.loop.Healthy())
+}
+
+func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
+	t.Parallel()
+	app := "shipments.total"
+	spec := controlplanetest.Spec(uuid.New())
+	spec.Allowances = []instanceapi.SpecAllowance{
+		{
+			Meter:    "shipments",
+			AppMeter: &app,
+			Unit:     instanceapi.SpecAllowanceUnitCount,
+			Quantity: 10,
+			HardCap:  true,
+		},
+	}
+	srv := tmstest.New(t, "")
+	var kube *fake.Clientset
+	w := newWorldWith(t, spec, func(p relayParams) reconcile.Usage {
+		kube = p.kube
+		client, err := tms.New(tms.Params{
+			URL: srv.URL,
+			Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+				Client: p.kube, Namespace: "trenova", Name: "trenova-secrets",
+			}),
+		})
+		require.NoError(t, err)
+		return usage.New(usage.Params{ControlPlane: p.client, TMS: client, Now: p.now})
+	})
+	current := w.now.UTC().Truncate(time.Hour)
+	srv.SetReadings([]tms.Reading{
+		{Meter: app, Hour: current, Quantity: 12},
+		{Meter: "ai.spend_cents", Hour: current, Quantity: 250},
+	})
+	w.health.set(true)
+
+	w.loop.Tick(t.Context())
+	require.True(t, w.lastReport(t).Ready)
+	require.Empty(t, w.cp.UsageReports(), "the chart has not written the token yet")
+
+	srv.SetToken("managed-token")
+	_, err := kube.CoreV1().Secrets("trenova").Create(t.Context(), &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: "trenova-secrets", Namespace: "trenova"},
+		Data:       map[string][]byte{tms.TokenKey: []byte("managed-token")},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	w.now = w.now.Add(time.Minute)
+	w.loop.Tick(t.Context())
+
+	reports := w.cp.UsageReports()
+	require.Len(t, reports, 1)
+	require.Len(t, reports[0].Readings, 1, "ai.spend_cents has no allowance here")
+	since := srv.Since()
+	require.Equal(t, w.now.UTC().Truncate(time.Hour).Add(-2*time.Hour), since[len(since)-1])
+	states := srv.States()
+	require.Len(t, states, 1)
+	require.Equal(t, []tms.Meter{{
+		Meter: app, Unit: "count", Quantity: 12, Allowance: 10, HardCap: true, Stopped: true,
+	}}, states[0].Meters)
 }

@@ -24,6 +24,9 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/tms"
+	"github.com/emoss08/trenova/operator/internal/usage"
+	"github.com/emoss08/trenova/operator/internal/values"
 )
 
 const chartName = "trenova"
@@ -41,6 +44,8 @@ type config struct {
 	valuesFile      string
 	poll            time.Duration
 	report          time.Duration
+	usage           time.Duration
+	tmsURL          string
 	healthAddr      string
 	logLevel        slog.Level
 }
@@ -101,6 +106,18 @@ func run(logger *slog.Logger) error {
 	})
 	cp.creds = creds
 
+	tmsClient, err := tms.New(tms.Params{
+		URL: cfg.tmsURL,
+		Tokens: tms.NewSecretTokens(tms.SecretTokensParams{
+			Client:    kube,
+			Namespace: cfg.targetNamespace,
+			Name:      values.AppSecret(cfg.release, base),
+		}),
+	})
+	if err != nil {
+		return err
+	}
+
 	loop := reconcile.New(&reconcile.Params{
 		ControlPlane: cp,
 		Credentials:  creds,
@@ -123,10 +140,13 @@ func run(logger *slog.Logger) error {
 			Release:   cfg.release,
 			Chart:     chartName,
 		}),
-		Base:   base,
-		Logger: logger,
-		Poll:   cfg.poll,
-		Report: cfg.report,
+		Usage:      usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
+		Base:       base,
+		Namespace:  cfg.namespace,
+		Logger:     logger,
+		Poll:       cfg.poll,
+		Report:     cfg.report,
+		UsageEvery: cfg.usage,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -146,6 +166,7 @@ func run(logger *slog.Logger) error {
 		"targetNamespace", cfg.targetNamespace,
 		"release", cfg.release,
 		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
+		"tms", cfg.tmsURL,
 	)
 	return loop.Run(ctx)
 }
@@ -212,6 +233,17 @@ func (c *lazyClient) ReportStatus(ctx context.Context, r instanceapi.StatusRepor
 	return api.ReportStatus(ctx, r)
 }
 
+func (c *lazyClient) ReportUsage(
+	ctx context.Context,
+	r instanceapi.UsageReport,
+) (instanceapi.UsageAck, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.UsageAck{}, err
+	}
+	return api.ReportUsage(ctx, r)
+}
+
 func (c *lazyClient) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
 	api, err := c.client()
 	if err != nil {
@@ -261,6 +293,20 @@ func load() (config, error) {
 			"TRENOVA_OPERATOR_REPORT_INTERVAL must be at most 1m: the control plane expects a report every minute",
 		)
 	}
+	if cfg.usage, err = duration("TRENOVA_OPERATOR_USAGE_INTERVAL", 15*time.Minute); err != nil {
+		return config{}, err
+	}
+	if cfg.usage > 15*time.Minute {
+		return config{}, errors.New(
+			"TRENOVA_OPERATOR_USAGE_INTERVAL must be at most 15m: windows are billed 30m after they end",
+		)
+	}
+	cfg.tmsURL = env("TRENOVA_OPERATOR_TMS_URL", fmt.Sprintf(
+		"http://%s.%s.svc:%d",
+		values.APIService(cfg.release),
+		cfg.targetNamespace,
+		tms.Port,
+	))
 	if err = cfg.logLevel.UnmarshalText(
 		[]byte(env("TRENOVA_OPERATOR_LOG_LEVEL", "info")),
 	); err != nil {

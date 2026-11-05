@@ -20,6 +20,8 @@ import (
 
 var chartDir = filepath.Join("..", "..", "..", "..", "deploy", "helm", "trenova")
 
+const operatorNS = "trenova-system"
+
 var plans = []instanceapi.SpecPlan{
 	{Key: "sandbox", Vcpu: 4, MemoryGiB: 16, DiskGiB: 50},
 	{Key: "production", Vcpu: 8, MemoryGiB: 32, DiskGiB: 200},
@@ -51,7 +53,7 @@ func TestEveryPlanAndLifecycleRendersThroughTheChart(t *testing.T) {
 				name := fmt.Sprintf("%s/%s/%v", plan.Key, lc, comps)
 				t.Run(name, func(t *testing.T) {
 					t.Parallel()
-					r, err := values.Render(ptr(spec(plan, lc, comps...)), base())
+					r, err := values.Render(ptr(spec(plan, lc, comps...)), base(), operatorNS)
 					require.NoError(t, err)
 					require.Equal(t, "0.11.0", r.Version)
 
@@ -79,7 +81,7 @@ func TestEveryPlanAndLifecycleRendersThroughTheChart(t *testing.T) {
 func TestRequestsFitThePlan(t *testing.T) {
 	t.Parallel()
 	for _, plan := range plans {
-		r, err := values.Render(ptr(spec(plan, instanceapi.Active, "docling")), base())
+		r, err := values.Render(ptr(spec(plan, instanceapi.Active, "docling")), base(), operatorNS)
 		require.NoError(t, err)
 		var mem, cpu int64
 		for _, path := range [][]string{
@@ -105,7 +107,7 @@ func TestLifecycles(t *testing.T) {
 		instanceapi.Decommissioned: {true, false},
 	}
 	for lc, want := range cases {
-		r, err := values.Render(ptr(spec(plans[0], lc)), base())
+		r, err := values.Render(ptr(spec(plans[0], lc)), base(), operatorNS)
 		require.NoError(t, err)
 		require.Equal(t, want[0], r.Values["stopped"], lc)
 		require.Equal(t, want[1], lookup(t, r.Values, []string{"postgres"})["hibernate"], lc)
@@ -118,7 +120,7 @@ func TestDerivedValuesOverrideTheBase(t *testing.T) {
 	b["domain"] = "wrong.example.com"
 	b["tms"] = map[string]any{"image": map[string]any{"tag": "ci"}}
 	s := spec(plans[1], instanceapi.Active, "docling")
-	r, err := values.Render(&s, b)
+	r, err := values.Render(&s, b, operatorNS)
 	require.NoError(t, err)
 	require.Equal(t, s.Hostname, r.Values["domain"])
 	require.Equal(t, "k7q2m9x4p1r8t3v6-files.trenova.cloud", r.Values["storageDomain"])
@@ -133,7 +135,7 @@ func TestRefusesWhatItCannotApply(t *testing.T) {
 	t.Parallel()
 	s := spec(plans[0], instanceapi.Active)
 	s.SchemaVersion = 2
-	_, err := values.Render(&s, base())
+	_, err := values.Render(&s, base(), operatorNS)
 	require.ErrorIs(t, err, values.ErrSchemaVersion)
 
 	for name, mutate := range map[string]func(*instanceapi.InstanceSpec){
@@ -145,8 +147,77 @@ func TestRefusesWhatItCannotApply(t *testing.T) {
 	} {
 		s := spec(plans[0], instanceapi.Active)
 		mutate(&s)
-		_, err := values.Render(&s, base())
+		_, err := values.Render(&s, base(), operatorNS)
 		require.ErrorIs(t, err, values.ErrInvalidSpec, name)
+	}
+}
+
+func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
+	t.Parallel()
+	s := spec(plans[0], instanceapi.Active)
+	r, err := values.Render(&s, base(), operatorNS)
+	require.NoError(t, err)
+	managed := lookup(t, r.Values, []string{"managed"})
+	require.Equal(t, true, managed["enabled"])
+	require.Equal(t, []any{map[string]any{
+		"namespaceSelector": map[string]any{
+			"matchLabels": map[string]any{"kubernetes.io/metadata.name": operatorNS},
+		},
+	}}, managed["from"])
+
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+	policies := out["trenova/templates/networkpolicy.yaml"]
+	require.Contains(t, policies, "port: 8090")
+	require.Contains(t, policies, "kubernetes.io/metadata.name: "+operatorNS)
+	require.Contains(t, out["trenova/templates/tms.yaml"], "name: managed")
+	require.Contains(t, out["trenova/templates/secrets.yaml"], "managedToken:")
+	require.Contains(t, out["trenova/templates/configmap.yaml"], "port: 8090")
+
+	_, err = values.Render(&s, base(), "")
+	require.Error(t, err)
+}
+
+func TestNamesFollowTheChart(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		release string
+		base    map[string]any
+		secret  string
+		api     string
+	}{
+		{release: "trenova", secret: "trenova-secrets", api: "trenova-api"},
+		{release: "trenova-prod", secret: "trenova-prod-secrets", api: "trenova-prod-api"},
+		{release: "acme", secret: "acme-trenova-secrets", api: "acme-trenova-api"},
+		{
+			release: "trenova",
+			base:    map[string]any{"secrets": map[string]any{"existingSecret": "app"}},
+			secret:  "app",
+			api:     "trenova-api",
+		},
+		{
+			release: "a-very-long-release-name-that-goes-on-and-on",
+			secret:  "a-very-long-release-name-that-goes-on-an-secrets",
+			api:     "a-very-long-release-name-that-goes-on-an-api",
+		},
+		{
+			release: "abcdefghijklmnopqrstuvwxyz-0123456789ab",
+			secret:  "abcdefghijklmnopqrstuvwxyz-0123456789ab-secrets",
+			api:     "abcdefghijklmnopqrstuvwxyz-0123456789ab-api",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.release, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tc.secret, values.AppSecret(tc.release, tc.base))
+			require.Equal(t, tc.api, values.APIService(tc.release))
+		})
 	}
 }
 

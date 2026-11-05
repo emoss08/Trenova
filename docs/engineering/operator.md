@@ -9,11 +9,12 @@ record `0008-instances` and the contract `api/instance.yaml`; this doc is the in
 
 ```
 control plane (instance API, mutual TLS)
-   ▲ GET /v1/spec (ETag)       │ PUT /v1/status every minute      │ POST /v1/certificate
-   │                           ▼                                  ▼
+   ▲ GET /v1/spec (ETag)    │ PUT /v1/status every minute   │ POST /v1/certificate   │ POST /v1/usage
+   │                        ▼                               ▼                        ▼ every 15 minutes
 operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --install trenova@<version>
    │                                                    │
-   └── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
+   ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
+   └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state
 ```
 
 ## Packages
@@ -24,11 +25,14 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/instanceapi` | the client generated from `api/instance.yaml`, the operator's copy of the control plane's contract |
 | `internal/controlplane` | that client with problem details turned into errors: `ErrUnauthenticated` (never retry with that certificate), `RateLimitedError` (`Retry-After`), `ProblemError` |
 | `internal/credential` | the enrolment bundle, the operator's own key and identity, the Secret store, the transport that swaps certificates, enrolment and renewal (`Manager`) |
-| `internal/values` | the spec turned into chart values: hostname, lifecycle, components, sizing |
+| `internal/values` | the spec turned into chart values: hostname, lifecycle, components, sizing, managed mode; the chart's names (`Fullname`, `AppSecret`, `APIService`) |
 | `internal/release` | the chart from OCI at the pinned version, `upgrade --install`, recovery of an interrupted release |
 | `internal/health` | each component's readiness, read from the cluster |
+| `internal/tms` | the client of the TMS's managed API, and the token read from the release's app Secret |
+| `internal/usage` | the usage relay: readings from the TMS to the control plane, its answer back |
 | `internal/reconcile` | the loop |
 | `internal/fakecp`, `internal/controlplanetest`, `cmd/controlplane-stub` | a control plane for tests: in process (`httptest`) and in a cluster (CI) |
+| `internal/tmstest` | the TMS's managed API for tests |
 
 The module is not in `go.work`: Helm and client-go would raise the versions of dependencies the
 TMS shares with it in workspace builds. Build and test it with `GOWORK=off`.
@@ -94,7 +98,8 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 3. render the chart values; pull the chart at `release.version` (cached, two versions);
 4. compare with the deployed release: apply only when the chart version or the values differ;
 5. read readiness; report when something changed, and at least every minute
-   (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m).
+   (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m);
+6. relay usage when it is due (below).
 
 The applied revision is the desired revision whose rendered state is the deployed one. It needs
 no storage of its own: after a restart the operator renders the spec again and finds the release
@@ -116,6 +121,7 @@ first, and what the spec decides is merged over them:
 | `hostname` | `domain`; `storageDomain` is `<first label>-files.<rest>` |
 | `instanceId` | `tms.instanceId` |
 | `components` contains `docling` | `docling.enabled` |
+| (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
 | `lifecycle: suspended` | `stopped: true`, `postgres.hibernate: true`: nothing runs, every volume is kept |
 | `lifecycle: decommissioned` | `stopped: true`, `postgres.hibernate: false`: PostgreSQL stays up for the final backup |
@@ -134,6 +140,47 @@ plan and lifecycle through the real chart and its schema, and checks the request
 
 Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it
 is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes.
+
+## Usage relay
+
+The TMS counts metered actions (its app meters: `shipments.total`, `ai.spend_cents`,
+`document_intelligence.extractions`, `documents.storage_bytes`, …) and the control plane bills
+them against the subscription's allowances. The operator carries the readings one way and the
+answer the other (`internal/usage`), through the TMS's managed API: a listener on the API pods'
+port 8090 that the chart serves only with `managed.enabled`. The chart generates its bearer
+token into the app Secret (`managedToken` in `<fullname>-secrets`, or `secrets.existingSecret`),
+and its NetworkPolicy admits port 8090 from `managed.from` alone, which the operator sets to its
+own namespace. The operator reads the token from that Secret in the target namespace, and reads
+it again whenever the TMS answers 401, so a token the chart has just created or replaced is
+picked up on the next call.
+
+**When.** After the tick's converge and report, while the spec's lifecycle is `active` and that
+converge reported ready (the desired revision deployed, every component ready): the first time
+as soon as that holds, then every 15 minutes (`TRENOVA_OPERATOR_USAGE_INTERVAL`, at most 15m,
+because the control plane bills a window 30 minutes after it ends). A suspended or
+decommissioned instance, or one that is not ready, relays nothing; resuming relays at once.
+
+**A run.**
+
+1. `GET /managed/v1/readings?since=<current hour − 2h>`: every counted meter's hours from then
+   to the current hour (zeros included) and storage's level for the current hour. Two hours
+   cover the control plane's 30-minute close grace, and resending an hour replaces it, so a
+   missed run is made good by the next.
+2. Map each app meter to its catalog meter through the current spec's allowances (`appMeter`);
+   a reading with no allowance is dropped. An allowance without `appMeter` is an instance
+   counter the TMS does not count. The mapping is one to one; the first allowance wins.
+3. `POST /v1/usage`, at most 1,000 readings per request (an empty report still gets an answer).
+4. Map the last answer's meters back to app meters, dropping any without one, and
+   `PUT /managed/v1/state` with the window (none when the subscription has no open window, which
+   stops every metered action), whether overage is billed, and each meter's quantity, allowance,
+   hard cap and `stopped`.
+
+**Failures** never hold up converging or status reports: a run happens after both, within a
+minute's deadline, and is only logged. Any failure retries after a minute; a 429 waits out its
+`Retry-After` (at least the minute); a 401 from the control plane goes to the same credential
+recovery as the rest of the loop. A missing token (the release not deployed with managed mode
+yet), a TMS that refuses the token after it was read again, or an unreachable TMS are logged
+and retried the same way. The TMS keeps the last state it was sent until the next.
 
 ## Readiness
 
@@ -167,19 +214,18 @@ uninstall, is created by its chart.
 - `go test ./...` in `services/operator`, against the in-process fake control plane, a fake
   Kubernetes, and Helm's memory storage with the real chart: enrolment, renewal, re-enrolment,
   revocation, rate limits, every plan and lifecycle through the chart's schema, install and
-  no-op detection, recovery, readiness, and the loop end to end.
+  no-op detection, recovery, readiness, the usage relay (mapping, chunking, scheduling, the
+  token read again on a 401) against an in-process TMS, and the loop end to end.
 - `.github/workflows/operator.yml` installs the operator on k3d against
   `cmd/controlplane-stub`, with every image built from the commit and the Trenova chart pushed
   to a registry in the cluster at the version the stub pins. It waits for a ready report on
-  revision 1, suspends (revision 2: workloads at zero, PostgreSQL hibernated) and resumes
-  (revision 3).
+  revision 1 and a usage report relayed from the TMS's managed API, suspends (revision 2:
+  workloads at zero, PostgreSQL hibernated) and resumes (revision 3).
 - The contract: the operator's `api/instance.yaml` is a copy of the control plane's, and the
   control plane's CI compares the two, so a contract change lands in both.
 
 ## Not in the operator yet
 
-- **Usage.** Hourly meter readings (`POST /v1/usage`) and stopping metered actions need the TMS's
-  managed mode, which counts them.
 - **The final backup.** A decommissioned instance keeps PostgreSQL up, and staff take the final
   backup by hand, as `0008-instances` allows, until the operator takes backups.
 - **Secrets from the control plane.** The Trenova chart generates the instance's secrets in the

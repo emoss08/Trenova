@@ -60,6 +60,8 @@ spec:
               value: {{ .Values.pollInterval | quote }}
             - name: TRENOVA_OPERATOR_REPORT_INTERVAL
               value: {{ .Values.reportInterval | quote }}
+            - name: TRENOVA_OPERATOR_USAGE_INTERVAL
+              value: {{ .Values.usageInterval | quote }}
             - name: TRENOVA_OPERATOR_LOG_LEVEL
               value: {{ .Values.logLevel | quote }}
             # Helm keeps its registry login and cache under these.
