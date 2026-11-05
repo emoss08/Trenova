@@ -27,6 +27,12 @@ func TargetBoundSecretKeys() []string {
 	return []string{secretKeyPassword, secretKeyPrivateKey, SecretKeyBasicAuthPassword}
 }
 
+// SecretBoundToTarget says whether a secret is presented to the target, and so
+// must not follow a change of address. An AS2 private key only signs here.
+func SecretBoundToTarget(method edi.ConnectionMethod, key string) bool {
+	return method != edi.ConnectionMethodAS2 || key != SecretKeyAS2PrivateKey
+}
+
 func SecretInUse(method edi.ConnectionMethod, config map[string]any, key string) bool {
 	switch method {
 	case edi.ConnectionMethodAS2:

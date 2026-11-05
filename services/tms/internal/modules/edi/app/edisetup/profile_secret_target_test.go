@@ -4,6 +4,8 @@ import (
 	"maps"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +89,7 @@ func TestProfileRequiresAS2CredentialsAgainWhenTheEndpointChanges(t *testing.T) 
 	for _, fieldErr := range multiErr.Errors {
 		fields = append(fields, fieldErr.Field)
 	}
-	assert.ElementsMatch(t, []string{"secrets.privateKey", "secrets.basicAuthPassword"}, fields)
+	assert.ElementsMatch(t, []string{"secrets.basicAuthPassword"}, fields)
 }
 
 func TestProfileKeepsSecretsWhenTheTargetIsUnchanged(t *testing.T) {
@@ -146,4 +148,25 @@ func TestProfileDropsTheUnusedCredentialWhenTheTargetChanges(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"password": "sealed-new"}, secrets)
+}
+
+func TestAS2KeepsItsSigningKeyWhenTheAddressChanges(t *testing.T) {
+	t.Parallel()
+
+	secrets := map[string]string{editransport.SecretKeyAS2PrivateKey: "signing-key"}
+	err := requireSecretsForNewTarget(&secretTargetCheck{
+		method: edi.ConnectionMethodAS2,
+		config: map[string]any{editransport.ConfigKeyEndpointURL: "https://new.example.com/as2"},
+		existing: &edi.EDICommunicationProfile{
+			Config: map[string]any{
+				editransport.ConfigKeyEndpointURL: "https://old.example.com/as2",
+			},
+			EncryptedSecrets: secrets,
+		},
+		entered: map[string]string{},
+		secrets: secrets,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "signing-key", secrets[editransport.SecretKeyAS2PrivateKey])
 }

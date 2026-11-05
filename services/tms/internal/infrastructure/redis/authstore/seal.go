@@ -27,6 +27,7 @@ type sealedFields struct {
 	AuthProvider          string     `json:"authProvider"`
 	ExternalIdentityID    string     `json:"externalIdentityId"`
 	ExternalSubject       string     `json:"externalSubject"`
+	ExternalIssuer        string     `json:"externalIssuer,omitempty"`
 	AuthenticatorAAL      int        `json:"authenticatorAal"`
 	FederationFAL         int        `json:"federationFal"`
 	MFAAuthenticatedAt    int64      `json:"mfaAuthenticatedAt"`
@@ -58,6 +59,7 @@ func (r *sessionRepository) sealOf(sess *session.Session) (string, error) {
 		AuthProvider:          sess.AuthProvider,
 		ExternalIdentityID:    sess.ExternalIdentityID,
 		ExternalSubject:       sess.ExternalSubject,
+		ExternalIssuer:        sess.ExternalIssuer,
 		AuthenticatorAAL:      sess.AuthenticatorAAL,
 		FederationFAL:         sess.FederationFAL,
 		MFAAuthenticatedAt:    sess.MFAAuthenticatedAt,

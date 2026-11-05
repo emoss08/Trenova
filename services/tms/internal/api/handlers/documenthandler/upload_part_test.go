@@ -143,3 +143,45 @@ func uploadPartHandler(
 		Logger:        logger,
 	})
 }
+
+func TestDocumentHandler_GetUploadSession_AConversationUploadIsItsOwners(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct {
+		owner  pulid.ID
+		status int
+	}{
+		"the person who started it": {owner: testutil.TestUserID, status: http.StatusOK},
+		"anyone else":               {owner: pulid.MustNew("usr_"), status: http.StatusNotFound},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			session := &documentupload.DocumentUploadSession{
+				ID:             pulid.MustNew("dus_"),
+				OrganizationID: testutil.TestOrgID,
+				BusinessUnitID: testutil.TestBuID,
+				ResourceType:   document.ConversationResourceType,
+				UploadedByID:   tc.owner,
+				Strategy:       documentupload.StrategySingle,
+				Status:         documentupload.StatusInitiated,
+			}
+			sessions := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+			sessions.EXPECT().GetByID(mock.Anything, mock.Anything).Return(session, nil).Once()
+
+			ginCtx := testutil.NewGinTestContext().WithDefaultAuthContext()
+			uploadPartHandler(sessions, objectstoretest.New()).
+				RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+
+			recorder := httptest.NewRecorder()
+			ginCtx.Engine.ServeHTTP(recorder, httptest.NewRequestWithContext(
+				t.Context(),
+				http.MethodGet,
+				"/api/v1/documents/uploads/"+session.ID.String()+"/",
+				http.NoBody,
+			))
+
+			assert.Equal(t, tc.status, recorder.Code)
+		})
+	}
+}

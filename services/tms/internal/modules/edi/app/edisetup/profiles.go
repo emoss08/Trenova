@@ -371,6 +371,9 @@ func requireSecretsForNewTarget(check *secretTargetCheck) error {
 
 	multiErr := errortypes.NewMultiError()
 	for _, key := range editransport.TargetBoundSecretKeys() {
+		if !editransport.SecretBoundToTarget(check.method, key) {
+			continue
+		}
 		if strings.TrimSpace(check.existing.EncryptedSecrets[key]) == "" ||
 			strings.TrimSpace(check.entered[key]) != "" {
 			continue

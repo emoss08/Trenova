@@ -714,7 +714,7 @@ func (h *Handler) listActiveUploadSessions(c *gin.Context) {
 	sessions, err := h.uploadService.ListActive(
 		c.Request.Context(),
 		&documentuploadports.ListActiveDocumentUploadSessionsRequest{
-			TenantInfo:   pagination.FromAuth(authCtx),
+			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 			ResourceID:   helpers.QueryString(c, "resourceId", ""),
 			ResourceType: helpers.QueryString(c, "resourceType", ""),
 		},
@@ -739,7 +739,7 @@ func (h *Handler) getUploadSession(c *gin.Context) {
 		c.Request.Context(),
 		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
 		},
 	)
 	if err != nil {

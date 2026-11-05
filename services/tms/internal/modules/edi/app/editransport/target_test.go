@@ -59,3 +59,11 @@ func TestSecretInUseFollowsTheMethodAndAuthMode(t *testing.T) {
 	assert.False(t, SecretInUse(edi.ConnectionMethodAS2, nil, secretKeyPassword))
 	assert.False(t, SecretInUse(edi.ConnectionMethodInternal, nil, secretKeyPassword))
 }
+
+func TestAnAS2SigningKeyIsNotBoundToTheTarget(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, SecretBoundToTarget(edi.ConnectionMethodAS2, SecretKeyAS2PrivateKey))
+	assert.True(t, SecretBoundToTarget(edi.ConnectionMethodAS2, SecretKeyBasicAuthPassword))
+	assert.True(t, SecretBoundToTarget(edi.ConnectionMethodSFTP, secretKeyPrivateKey))
+}

@@ -53,6 +53,7 @@ func TestSealBreaksWhenAProtectedFieldChanges(t *testing.T) {
 		"grace":        func(s *session.Session) { s.PreviousSecretUntil = 1_999_999_999 },
 		"epoch":        func(s *session.Session) { s.SessionEpoch = 9 },
 		"lifetime":     func(s *session.Session) { s.ExpiresAt = 1_999_999_999 },
+		"issuer":       func(s *session.Session) { s.ExternalIssuer = "https://idp.example.com" },
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
