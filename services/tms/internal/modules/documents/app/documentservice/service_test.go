@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -405,7 +406,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	err = h.service.Delete(h.ctx, documentports.DeleteDocumentRequest{
 		ID:         restored.ID,
 		TenantInfo: h.tenantInfo,
-	}, h.tenantInfo.UserID)
+	}, testutil.NewSessionActor(h.tenantInfo.UserID, h.tenantInfo.OrgID, h.tenantInfo.BuID))
 	require.NoError(t, err)
 
 	_, err = h.service.Get(h.ctx, documentports.GetDocumentByIDRequest{
