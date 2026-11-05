@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -36,6 +37,12 @@ func NewMFARepository(p MFARepositoryParams) iamports.MFARepository {
 	}
 }
 
+const personFactorScope = "a person's second factor follows them into every organization they belong to"
+
+func personScope(ctx context.Context) context.Context {
+	return dbscope.WithSystem(ctx, personFactorScope)
+}
+
 func userTOTP(ctx context.Context, userID pulid.ID) keel.Query[*iam.MFAAuthenticator] {
 	mfa := iamdb.MFAAuthenticators
 	return forTenant(
@@ -55,7 +62,7 @@ func (r *mfaRepository) GetTOTP(
 	ctx context.Context,
 	userID pulid.ID,
 ) (*iam.MFAAuthenticator, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.MFAAuthenticator, error) {
+	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (*iam.MFAAuthenticator, error) {
 		entity, err := userTOTP(ctx, userID).First(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
 			return nil, nil
@@ -72,7 +79,7 @@ func (r *mfaRepository) ReplacePendingTOTP(
 	ctx context.Context,
 	authenticator *iam.MFAAuthenticator,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+	return dbtx.WriteErr(personScope(ctx), r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
 		mfa := iamdb.MFAAuthenticators
 
@@ -104,7 +111,7 @@ func (r *mfaRepository) ActivateTOTP(
 	ctx context.Context,
 	req *iamports.ActivateTOTPRequest,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+	return dbtx.WriteErr(personScope(ctx), r.db, func(ctx context.Context) error {
 		mfa := iamdb.MFAAuthenticators
 		affected, err := forTenant(
 			ctx,
@@ -138,7 +145,7 @@ func (r *mfaRepository) RecordTOTPUse(
 	ctx context.Context,
 	req iamports.RecordTOTPUseRequest,
 ) (bool, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+	return dbtx.Write(personScope(ctx), r.db, func(ctx context.Context) (bool, error) {
 		mfa := iamdb.MFAAuthenticators
 		affected, err := forTenant(
 			ctx,
@@ -162,7 +169,7 @@ func (r *mfaRepository) RecordTOTPUse(
 }
 
 func (r *mfaRepository) DeleteAll(ctx context.Context, userID pulid.ID) (int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+	return dbtx.Write(personScope(ctx), r.db, func(ctx context.Context) (int, error) {
 		db := r.db.Keel(ctx)
 		if _, err := userRecoveryCodes(ctx, userID).Delete(ctx, db); err != nil {
 			return 0, fmt.Errorf("delete recovery codes: %w", err)
@@ -182,7 +189,7 @@ func (r *mfaRepository) ReplaceRecoveryCodes(
 	ctx context.Context,
 	req *iamports.ReplaceRecoveryCodesRequest,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+	return dbtx.WriteErr(personScope(ctx), r.db, func(ctx context.Context) error {
 		return r.replaceRecoveryCodes(ctx, req.UserID, req.Codes)
 	})
 }
@@ -212,7 +219,7 @@ func (r *mfaRepository) ConsumeRecoveryCode(
 	ctx context.Context,
 	req iamports.ConsumeRecoveryCodeRequest,
 ) (bool, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+	return dbtx.Write(personScope(ctx), r.db, func(ctx context.Context) (bool, error) {
 		rc := iamdb.MFARecoveryCodes
 		affected, err := userRecoveryCodes(ctx, req.UserID).
 			Where(
@@ -241,7 +248,7 @@ func (r *mfaRepository) CountUnusedRecoveryCodes(
 	ctx context.Context,
 	userID pulid.ID,
 ) (int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (int, error) {
 		rc := iamdb.MFARecoveryCodes
 		count, err := userRecoveryCodes(ctx, userID).
 			Where(rc.UsedAt.IsNull()).
@@ -258,7 +265,7 @@ func (r *mfaRepository) CountLegacyRecoveryCodes(
 	ctx context.Context,
 	userID pulid.ID,
 ) (int, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+	return dbtx.Read(personScope(ctx), r.db, func(ctx context.Context) (int, error) {
 		rc := iamdb.MFARecoveryCodes
 		count, err := userRecoveryCodes(ctx, userID).
 			Where(rc.UsedAt.IsNull(), rc.HashVersion.Eq(iam.RecoveryCodeHashSHA256)).

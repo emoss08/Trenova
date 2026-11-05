@@ -50,13 +50,13 @@ func baseRun() *agent.AgentRun {
 	}
 }
 
-func TestRunOwnerKind_CoversBothOwners(t *testing.T) {
+func TestRunOwnerKind_CoversEveryOwner(t *testing.T) {
 	t.Parallel()
 
 	for _, kind := range agent.AllRunOwnerKinds() {
 		assert.True(t, kind.IsValid(), kind)
 	}
-	assert.Len(t, agent.AllRunOwnerKinds(), 2)
+	assert.Len(t, agent.AllRunOwnerKinds(), 3)
 	assert.False(t, agent.RunOwnerKind("Delegate").IsValid())
 }
 

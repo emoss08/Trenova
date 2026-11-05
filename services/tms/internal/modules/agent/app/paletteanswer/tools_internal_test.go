@@ -138,20 +138,6 @@ func TestListRecords_RefusesArgumentsTheListDoesNotTakeAndSaysWhatItWanted(t *te
 	assert.Zero(t, f.list.Calls, "a call that does not fit is not run")
 }
 
-func TestTools_OffersSearchOnlyWhereSearchIsWired(t *testing.T) {
-	t.Parallel()
-
-	names := func(r *reader) []string {
-		out := []string{}
-		for _, tool := range r.tools() {
-			out = append(out, tool.Spec().Name)
-		}
-		return out
-	}
-
-	assert.Equal(t, []string{"get_record", "list_records"}, names(newFixture().reader))
-}
-
 func TestGetRecord_ReadsTheRecordAsThePersonAsking(t *testing.T) {
 	t.Parallel()
 

@@ -32,10 +32,6 @@ var viewWords = map[string][]viewWord{
 		{Label: "name", Fields: []string{"name"}},
 		{Label: "plan type", Fields: []string{"planType"}},
 	},
-	"billing_queue": {
-		{Label: "number", Fields: []string{"number"}},
-		{Label: "status", Fields: []string{"status"}},
-	},
 	"business_unit": {
 		{Label: "name", Fields: []string{"name"}},
 		{Label: "code", Fields: []string{"code"}},

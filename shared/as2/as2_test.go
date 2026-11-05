@@ -135,7 +135,7 @@ func TestParseMessageRequiresConfiguredLayers(t *testing.T) {
 	_, err = ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		RequireSignature: true,
 	})
-	require.ErrorIs(t, err, ErrSignatureRequired)
+	require.ErrorIs(t, err, ErrNoPartnerCertificate)
 
 	_, err = ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		RequireEncryption: true,

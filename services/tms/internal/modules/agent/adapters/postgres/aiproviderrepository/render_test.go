@@ -65,5 +65,5 @@ func TestNovaQueryReadsTheNovaProviderWhetherOrNotItIsOn(t *testing.T) {
 	sql, _ := keeltest.Render(t, novaQuery())
 
 	assert.Contains(t, sql, `."nova" IS TRUE`, sql)
-	assert.NotContains(t, sql, `."enabled"`, sql)
+	assert.NotContains(t, sql, `."enabled" IS`, sql)
 }

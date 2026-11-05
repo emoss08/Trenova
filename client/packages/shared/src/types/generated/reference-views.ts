@@ -85,16 +85,6 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
-  billing_queue: [
-    "businessUnitId",
-    "createdAt",
-    "id",
-    "number",
-    "organizationId",
-    "status",
-    "updatedAt",
-    "version",
-  ],
   briefing: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   business_unit: [
     "businessUnitId",

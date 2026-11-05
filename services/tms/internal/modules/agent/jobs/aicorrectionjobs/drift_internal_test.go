@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -66,12 +66,12 @@ func TestExtractionAccuracyDriftWorkflow_ChecksEachOrganization(t *testing.T) {
 type fakeDriftChecker struct {
 	notified int
 	err      error
-	got      *extractionevalports.ExtractionDriftCheckRequest
+	got      *extractionaccuracyports.ExtractionDriftCheckRequest
 }
 
 func (f *fakeDriftChecker) CheckDrift(
 	_ context.Context,
-	req *extractionevalports.ExtractionDriftCheckRequest,
+	req *extractionaccuracyports.ExtractionDriftCheckRequest,
 ) (int, error) {
 	f.got = req
 	return f.notified, f.err

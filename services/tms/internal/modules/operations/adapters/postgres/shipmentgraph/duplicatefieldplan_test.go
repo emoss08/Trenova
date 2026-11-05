@@ -114,6 +114,8 @@ var shipmentCopyPlan = map[string]fieldPlan{
 		"dimensional envelope is recomputed from the copy's own stops",
 	},
 	"ActualDeliveryDate":     {intentionallyDropped, "actuals belong to the original execution"},
+	"PickupAt":               {intentionallyDropped, "a stored projection of the stops, rebuilt for the copy"},
+	"DeliveryAt":             {intentionallyDropped, "a stored projection of the stops, rebuilt for the copy"},
 	"ActualShipDate":         {intentionallyDropped, "actuals belong to the original execution"},
 	"BillingTransferStatus":  {intentionallyDropped, "the billing lifecycle restarts for a copy"},
 	"TransferredToBillingAt": {intentionallyDropped, "the billing lifecycle restarts for a copy"},

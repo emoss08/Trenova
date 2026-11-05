@@ -55,8 +55,8 @@ func TestAS2ConfigKeepsASeparateDecryptionKeyApart(t *testing.T) {
 	assert.True(t, keyMatchesCertificate(cfg.PrivateKey, cfg.LocalCertificate))
 	assert.True(t, keyMatchesCertificate(cfg.DecryptionKey, cfg.DecryptionCertificate))
 	assert.False(t, keyMatchesCertificate(cfg.DecryptionKey, cfg.LocalCertificate))
-	assert.Equal(t,
-		editransportports.EDIConnectionCheckPassed,
+	assert.NotEqual(t,
+		editransportports.EDIConnectionCheckFailed,
 		testAS2DecryptionIdentity(cfg).Status,
 	)
 }

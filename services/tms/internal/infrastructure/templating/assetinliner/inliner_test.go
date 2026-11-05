@@ -85,7 +85,7 @@ func hasCode(diags templatediag.Diagnostics, code string) bool {
 func TestInlineLeavesNonImageMarkupUntouched(t *testing.T) {
 	in := `<h1>Invoice</h1><p>Balance due</p><table><tr><td>x</td></tr></table>`
 
-	result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{HTML: in})
+	result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{OrganizationID: "org", HTML: in})
 	require.NoError(t, err)
 	assert.Equal(t, in, result.HTML)
 	assert.Zero(t, result.Inlined)
@@ -97,7 +97,8 @@ func TestInlineResolvesStorageKeys(t *testing.T) {
 	}}
 
 	result, err := newInliner(t, store, Limits{}).Inline(t.Context(), &Request{
-		HTML: `<div><img src="org/logo.png" alt="logo"></div>`,
+		OrganizationID: "org",
+		HTML:           `<div><img src="org/logo.png" alt="logo"></div>`,
 	})
 	require.NoError(t, err)
 
@@ -127,8 +128,9 @@ func TestInlineRefusesInternalAddresses(t *testing.T) {
 	for _, target := range targets {
 		t.Run(target, func(t *testing.T) {
 			result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-				HTML:  `<img src="` + target + `">`,
-				Field: "bodyHtml",
+				OrganizationID: "org",
+				HTML:           `<img src="` + target + `">`,
+				Field:          "bodyHtml",
 			})
 			require.NoError(t, err, "a blocked asset must not fail the document")
 
@@ -158,8 +160,9 @@ func TestInlineRefusesDangerousSchemes(t *testing.T) {
 	for _, src := range schemes {
 		t.Run(src, func(t *testing.T) {
 			result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-				HTML:  `<img src="` + src + `">`,
-				Field: "bodyHtml",
+				OrganizationID: "org",
+				HTML:           `<img src="` + src + `">`,
+				Field:          "bodyHtml",
 			})
 			require.NoError(t, err)
 
@@ -181,8 +184,9 @@ func TestInlineFetchesPublicRemoteAssets(t *testing.T) {
 	defer srv.Close()
 
 	result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-		HTML:  `<img src="` + srv.URL + `/logo.png">`,
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="` + srv.URL + `/logo.png">`,
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 	assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked),
@@ -192,7 +196,8 @@ func TestInlineFetchesPublicRemoteAssets(t *testing.T) {
 func TestInlineValidatesExistingDataURIs(t *testing.T) {
 	t.Run("a real image passes through", func(t *testing.T) {
 		result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-			HTML: `<img src="` + dataURI(t, 20, 20) + `">`,
+			OrganizationID: "org",
+			HTML:           `<img src="` + dataURI(t, 20, 20) + `">`,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.Inlined)
@@ -206,8 +211,9 @@ func TestInlineValidatesExistingDataURIs(t *testing.T) {
 			"PHN2Zz48c2NyaXB0PmFsZXJ0KDEpPC9zY3JpcHQ+PC9zdmc+"
 
 		result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-			HTML:  `<img src="` + payload + `">`,
-			Field: "bodyHtml",
+			OrganizationID: "org",
+			HTML:           `<img src="` + payload + `">`,
+			Field:          "bodyHtml",
 		})
 		require.NoError(t, err)
 		assert.NotContains(t, result.HTML, "<img")
@@ -216,8 +222,9 @@ func TestInlineValidatesExistingDataURIs(t *testing.T) {
 
 	t.Run("an svg data uri is dropped", func(t *testing.T) {
 		result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-			HTML:  `<img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=">`,
-			Field: "bodyHtml",
+			OrganizationID: "org",
+			HTML:           `<img src="data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=">`,
+			Field:          "bodyHtml",
 		})
 		require.NoError(t, err)
 		assert.NotContains(t, result.HTML, "<img")
@@ -225,10 +232,11 @@ func TestInlineValidatesExistingDataURIs(t *testing.T) {
 }
 
 func TestInlineDropsAttributesItDoesNotRecognize(t *testing.T) {
-	store := &fakeStorage{objects: map[string][]byte{"logo.png": pngBytes(t, 40, 40)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/logo.png": pngBytes(t, 40, 40)}}
 
 	result, err := newInliner(t, store, Limits{}).Inline(t.Context(), &Request{
-		HTML: `<img src="logo.png" alt="ok" class="c" onerror="alert(1)" data-x="y">`,
+		OrganizationID: "org",
+		HTML:           `<img src="org/logo.png" alt="ok" class="c" onerror="alert(1)" data-x="y">`,
 	})
 	require.NoError(t, err)
 
@@ -241,11 +249,12 @@ func TestInlineDropsAttributesItDoesNotRecognize(t *testing.T) {
 // TestInlineRewritesDuplicateSrc covers the browser-precedence case: a repeated
 // attribute must not leave an unprocessed URL in the output.
 func TestInlineRewritesDuplicateSrc(t *testing.T) {
-	store := &fakeStorage{objects: map[string][]byte{"logo.png": pngBytes(t, 10, 10)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/logo.png": pngBytes(t, 10, 10)}}
 
 	result, err := newInliner(t, store, Limits{}).Inline(t.Context(), &Request{
-		HTML:  `<img src="logo.png" src="http://169.254.169.254/x">`,
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="org/logo.png" src="http://169.254.169.254/x">`,
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 
@@ -254,10 +263,10 @@ func TestInlineRewritesDuplicateSrc(t *testing.T) {
 
 func TestInlineSizesUnsizedImages(t *testing.T) {
 	// A 4000px logo is the case that used to push content off the page.
-	store := &fakeStorage{objects: map[string][]byte{"huge.png": pngBytes(t, 4000, 1000)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/huge.png": pngBytes(t, 4000, 1000)}}
 
 	result, err := newInliner(t, store, Limits{MaxAssetBytes: 8 << 20}).
-		Inline(t.Context(), &Request{HTML: `<img src="huge.png">`})
+		Inline(t.Context(), &Request{OrganizationID: "org", HTML: `<img src="org/huge.png">`})
 	require.NoError(t, err)
 
 	assert.Contains(t, result.HTML, `height="80"`)
@@ -265,10 +274,11 @@ func TestInlineSizesUnsizedImages(t *testing.T) {
 }
 
 func TestInlineRespectsAuthorDimensions(t *testing.T) {
-	store := &fakeStorage{objects: map[string][]byte{"logo.png": pngBytes(t, 400, 100)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/logo.png": pngBytes(t, 400, 100)}}
 
 	result, err := newInliner(t, store, Limits{}).Inline(t.Context(), &Request{
-		HTML: `<img src="logo.png" width="120">`,
+		OrganizationID: "org",
+		HTML:           `<img src="org/logo.png" width="120">`,
 	})
 	require.NoError(t, err)
 
@@ -277,11 +287,12 @@ func TestInlineRespectsAuthorDimensions(t *testing.T) {
 }
 
 func TestInlineEnforcesPerAssetSizeCap(t *testing.T) {
-	store := &fakeStorage{objects: map[string][]byte{"big.png": pngBytes(t, 500, 500)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/big.png": pngBytes(t, 500, 500)}}
 
 	result, err := newInliner(t, store, Limits{MaxAssetBytes: 256}).Inline(t.Context(), &Request{
-		HTML:  `<img src="big.png">`,
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="org/big.png">`,
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 
@@ -290,16 +301,17 @@ func TestInlineEnforcesPerAssetSizeCap(t *testing.T) {
 }
 
 func TestInlineEnforcesAssetCountCap(t *testing.T) {
-	store := &fakeStorage{objects: map[string][]byte{"a.png": pngBytes(t, 10, 10)}}
+	store := &fakeStorage{objects: map[string][]byte{"org/a.png": pngBytes(t, 10, 10)}}
 
 	var b strings.Builder
 	for range 5 {
-		b.WriteString(`<img src="a.png">`)
+		b.WriteString(`<img src="org/a.png">`)
 	}
 
 	result, err := newInliner(t, store, Limits{MaxAssets: 2}).Inline(t.Context(), &Request{
-		HTML:  b.String(),
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           b.String(),
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 
@@ -310,14 +322,15 @@ func TestInlineEnforcesAssetCountCap(t *testing.T) {
 
 func TestInlineEnforcesTotalByteBudget(t *testing.T) {
 	body := pngBytes(t, 200, 200)
-	store := &fakeStorage{objects: map[string][]byte{"a.png": body}}
+	store := &fakeStorage{objects: map[string][]byte{"org/a.png": body}}
 
 	result, err := newInliner(t, store, Limits{
 		MaxAssetBytes: int64(len(body)) + 1,
 		MaxTotalBytes: int64(len(body)) + 1,
 	}).Inline(t.Context(), &Request{
-		HTML:  `<img src="a.png"><img src="a.png">`,
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="org/a.png"><img src="org/a.png">`,
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 
@@ -327,7 +340,8 @@ func TestInlineEnforcesTotalByteBudget(t *testing.T) {
 
 func TestInlineKeepsSourcelessImages(t *testing.T) {
 	result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-		HTML: `<img alt="placeholder">`,
+		OrganizationID: "org",
+		HTML:           `<img alt="placeholder">`,
 	})
 	require.NoError(t, err)
 
@@ -340,8 +354,9 @@ func TestInlineReportsMissingStorageObject(t *testing.T) {
 	store := &fakeStorage{objects: map[string][]byte{}}
 
 	result, err := newInliner(t, store, Limits{}).Inline(t.Context(), &Request{
-		HTML:  `<img src="absent.png">`,
-		Field: "headerHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="org/absent.png">`,
+		Field:          "headerHtml",
 	})
 	require.NoError(t, err, "a missing decorative image must not stop an invoice")
 
@@ -352,8 +367,9 @@ func TestInlineReportsMissingStorageObject(t *testing.T) {
 
 func TestInlineWithoutStorageClient(t *testing.T) {
 	result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{
-		HTML:  `<img src="logo.png">`,
-		Field: "bodyHtml",
+		OrganizationID: "org",
+		HTML:           `<img src="org/logo.png">`,
+		Field:          "bodyHtml",
 	})
 	require.NoError(t, err)
 	assert.True(t, hasCode(result.Diags, templatediag.CodeRemoteAssetBlocked))
@@ -361,7 +377,7 @@ func TestInlineWithoutStorageClient(t *testing.T) {
 
 func TestInlineEmptyInput(t *testing.T) {
 	for _, in := range []string{"", "   ", "\n\t"} {
-		result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{HTML: in})
+		result, err := newInliner(t, nil, Limits{}).Inline(t.Context(), &Request{OrganizationID: "org", HTML: in})
 		require.NoError(t, err)
 		assert.Empty(t, result.HTML)
 	}

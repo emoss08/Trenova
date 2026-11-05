@@ -116,7 +116,6 @@ func TestStartAutomaticTransfersTheEligibleShipments(t *testing.T) {
 		})).
 		Return(ids, nil).
 		Once()
-	f.workflows.EXPECT().Enabled().Return(true).Once()
 	f.workflows.EXPECT().StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Once()

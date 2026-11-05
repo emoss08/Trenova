@@ -170,7 +170,7 @@ type MFAAuthenticator struct {
 
 	ID             pulid.ID             `json:"id"             keel:"id,pk,autoid:mfa_"`
 	UserID         pulid.ID             `json:"userId"         keel:"user_id"`
-	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id"`
+	OrganizationID pulid.ID             `json:"organizationId" keel:"organization_id,tenant"`
 	Type           MFAAuthenticatorType `json:"type"           keel:"type"`
 	Name           string               `json:"name"           keel:"name"`
 	CredentialID   string               `json:"credentialId"   keel:"credential_id,nullzero"`

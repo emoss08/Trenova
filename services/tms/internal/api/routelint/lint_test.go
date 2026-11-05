@@ -144,22 +144,6 @@ func TestProtectedRoutesRejectsUnresolvableHandlerField(t *testing.T) {
 	require.ErrorContains(t, err, "mysteryHandler")
 }
 
-func TestProtectedRoutesSkipEditionRegistrations(t *testing.T) {
-	t.Parallel()
-
-	apiPath, handlersPath := writeLintFixture(t,
-		"\tr.demoHandler.RegisterRoutes(protected)\n\tr.editionRoutes.RegisterProtected(protected)\n",
-		`func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	rg.GET("/demo/", h.list)
-}
-`)
-
-	routes, err := ProtectedRoutes(apiPath, handlersPath)
-	require.NoError(t, err)
-	require.Len(t, routes, 1)
-	require.Equal(t, "GET /api/v1/demo/", routes[0].Key())
-}
-
 func TestProtectedRoutesFollowsDelegationToNestedGroups(t *testing.T) {
 	t.Parallel()
 

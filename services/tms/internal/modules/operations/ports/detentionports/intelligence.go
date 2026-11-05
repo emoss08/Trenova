@@ -105,8 +105,8 @@ type CustomerIntelligence struct {
 	DetainedCount     int
 	PastFreeMinutes   int64
 	BilledAmount      decimal.Decimal
-	DriverPayAmount   decimal.NullDecimal
-	NetMargin         decimal.NullDecimal
+	DriverPayAmount   decimal.NullDecimal `json:"driverPayAmount"`
+	NetMargin         decimal.NullDecimal `json:"netMargin"`
 	WaivedAmount      decimal.Decimal
 	DisputeCount      int
 	NoticeDueCount    int
