@@ -175,27 +175,27 @@ func (_c *MockEDICommunicationProfileRepository_CreateProfile_Call) RunAndReturn
 	return _c
 }
 
-// GetActiveAS2ProfileByIdentifiers provides a mock function for the type MockEDICommunicationProfileRepository
-func (_mock *MockEDICommunicationProfileRepository) GetActiveAS2ProfileByIdentifiers(ctx context.Context, req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error) {
+// GetActiveAS2ProfileForInboundURL provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) GetActiveAS2ProfileForInboundURL(ctx context.Context, req edipartnerports.GetActiveAS2ProfileForInboundURLRequest) (*edi.EDICommunicationProfile, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetActiveAS2ProfileByIdentifiers")
+		panic("no return value specified for GetActiveAS2ProfileForInboundURL")
 	}
 
 	var r0 *edi.EDICommunicationProfile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetActiveAS2ProfileForInboundURLRequest) (*edi.EDICommunicationProfile, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) *edi.EDICommunicationProfile); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.GetActiveAS2ProfileForInboundURLRequest) *edi.EDICommunicationProfile); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*edi.EDICommunicationProfile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, edipartnerports.GetActiveAS2ProfileForInboundURLRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -203,27 +203,27 @@ func (_mock *MockEDICommunicationProfileRepository) GetActiveAS2ProfileByIdentif
 	return r0, r1
 }
 
-// MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveAS2ProfileByIdentifiers'
-type MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call struct {
+// MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveAS2ProfileForInboundURL'
+type MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call struct {
 	*mock.Call
 }
 
-// GetActiveAS2ProfileByIdentifiers is a helper method to define mock.On call
+// GetActiveAS2ProfileForInboundURL is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest
-func (_e *MockEDICommunicationProfileRepository_Expecter) GetActiveAS2ProfileByIdentifiers(ctx any, req any) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
-	return &MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call{Call: _e.mock.On("GetActiveAS2ProfileByIdentifiers", ctx, req)}
+//   - req edipartnerports.GetActiveAS2ProfileForInboundURLRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) GetActiveAS2ProfileForInboundURL(ctx any, req any) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call {
+	return &MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call{Call: _e.mock.On("GetActiveAS2ProfileForInboundURL", ctx, req)}
 }
 
-func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) Run(run func(ctx context.Context, req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call) Run(run func(ctx context.Context, req edipartnerports.GetActiveAS2ProfileForInboundURLRequest)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 edipartnerports.GetActiveAS2ProfileByIdentifiersRequest
+		var arg1 edipartnerports.GetActiveAS2ProfileForInboundURLRequest
 		if args[1] != nil {
-			arg1 = args[1].(edipartnerports.GetActiveAS2ProfileByIdentifiersRequest)
+			arg1 = args[1].(edipartnerports.GetActiveAS2ProfileForInboundURLRequest)
 		}
 		run(
 			arg0,
@@ -233,12 +233,12 @@ func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers
 	return _c
 }
 
-func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) Return(eDICommunicationProfile *edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call) Return(eDICommunicationProfile *edi.EDICommunicationProfile, err error) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call {
 	_c.Call.Return(eDICommunicationProfile, err)
 	return _c
 }
 
-func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) (*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileByIdentifiers_Call {
+func (_c *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.GetActiveAS2ProfileForInboundURLRequest) (*edi.EDICommunicationProfile, error)) *MockEDICommunicationProfileRepository_GetActiveAS2ProfileForInboundURL_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -766,6 +766,63 @@ func (_c *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call) R
 }
 
 func (_c *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.RecordEDIProfilePollOutcomeRequest) error) *MockEDICommunicationProfileRepository_RecordInboundPollOutcome_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RotateAS2InboundToken provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) RotateAS2InboundToken(ctx context.Context, req edipartnerports.RotateAS2InboundTokenRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RotateAS2InboundToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edipartnerports.RotateAS2InboundTokenRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RotateAS2InboundToken'
+type MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call struct {
+	*mock.Call
+}
+
+// RotateAS2InboundToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req edipartnerports.RotateAS2InboundTokenRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) RotateAS2InboundToken(ctx any, req any) *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call {
+	return &MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call{Call: _e.mock.On("RotateAS2InboundToken", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call) Run(run func(ctx context.Context, req edipartnerports.RotateAS2InboundTokenRequest)) *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 edipartnerports.RotateAS2InboundTokenRequest
+		if args[1] != nil {
+			arg1 = args[1].(edipartnerports.RotateAS2InboundTokenRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call) Return(err error) *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call) RunAndReturn(run func(ctx context.Context, req edipartnerports.RotateAS2InboundTokenRequest) error) *MockEDICommunicationProfileRepository_RotateAS2InboundToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

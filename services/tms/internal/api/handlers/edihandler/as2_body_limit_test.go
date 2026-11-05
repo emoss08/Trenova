@@ -21,7 +21,7 @@ func as2Router() *gin.Engine {
 		Logger:    zap.NewNop(),
 		AppConfig: &appconfig.Config{},
 	})}
-	router.POST("/edi/as2/inbound/", handler.receiveAS2Message)
+	handler.RegisterPublicRoutes(router.Group("/"))
 
 	return router
 }
@@ -31,7 +31,7 @@ func TestReceiveAS2RefusesADeclaredOversizedBody(t *testing.T) {
 
 	request := httptest.NewRequest(
 		http.MethodPost,
-		"/edi/as2/inbound/",
+		"/edi/as2/inbound/PROFILEADDRESS/",
 		bytes.NewReader([]byte("x")),
 	)
 	request.ContentLength = as2MaxRequestBody + 1
@@ -47,7 +47,7 @@ func TestReceiveAS2RefusesAnUndeclaredBodyPastTheLimitInsteadOfTruncatingIt(t *t
 
 	request := httptest.NewRequest(
 		http.MethodPost,
-		"/edi/as2/inbound/",
+		"/edi/as2/inbound/PROFILEADDRESS/",
 		io.LimitReader(bytes.NewReader(make([]byte, as2MaxRequestBody+1)), as2MaxRequestBody+1),
 	)
 	request.ContentLength = -1
@@ -56,4 +56,16 @@ func TestReceiveAS2RefusesAnUndeclaredBodyPastTheLimitInsteadOfTruncatingIt(t *t
 	as2Router().ServeHTTP(recorder, request)
 
 	assert.Equal(t, http.StatusRequestEntityTooLarge, recorder.Code)
+}
+
+func TestAS2MessagesAreOnlyReceivedAtAProfilesOwnAddress(t *testing.T) {
+	t.Parallel()
+
+	recorder := httptest.NewRecorder()
+	as2Router().ServeHTTP(
+		recorder,
+		httptest.NewRequest(http.MethodPost, "/edi/as2/inbound/", bytes.NewReader([]byte("x"))),
+	)
+
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
 }

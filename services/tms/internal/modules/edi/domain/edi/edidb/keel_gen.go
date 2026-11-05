@@ -47,6 +47,7 @@ var eDICommunicationProfilesTable = schema.Table{
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+		{Name: "as2_inbound_token", Quoted: `"as2_inbound_token"`, Field: "AS2InboundToken", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `AS2 Inbound Token`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Connection", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Connection`, JSON: `connection`},
@@ -54,10 +55,10 @@ var eDICommunicationProfilesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18, 19},
 	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17, 18},
 	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 18},
-	Returning:    nil,
+	Returning:    []int32{19},
 	Version:      16,
 	AutoID:       0,
 	AutoCreate:   17,
@@ -98,6 +99,7 @@ type EDICommunicationProfilesTable struct {
 	Version           keel.Int64Col
 	CreatedAt         keel.Int64Col
 	UpdatedAt         keel.Int64Col
+	AS2InboundToken   keel.StringCol
 }
 
 // EDICommunicationProfiles references the edi_communication_profiles table.
@@ -122,6 +124,7 @@ var EDICommunicationProfiles = &EDICommunicationProfilesTable{
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 16}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 17}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 18}},
+	AS2InboundToken:   keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 19}},
 }
 
 // BuildEDICommunicationProfiles builds the table of edi_communication_profiles for ref. Generated relation and alias methods call it.
@@ -147,6 +150,7 @@ func BuildEDICommunicationProfiles(r *keel.Ref) *EDICommunicationProfilesTable {
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		AS2InboundToken:   keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -581,6 +585,8 @@ func ptrEDICommunicationProfile(p unsafe.Pointer, c int32) any {
 		return &r.CreatedAt
 	case 18:
 		return &r.UpdatedAt
+	case 19:
+		return &r.AS2InboundToken
 	}
 	return nil
 }
@@ -650,6 +656,8 @@ func valueEDICommunicationProfile(p unsafe.Pointer, c int32) any {
 		return r.CreatedAt
 	case 18:
 		return r.UpdatedAt
+	case 19:
+		return r.AS2InboundToken
 	}
 	return nil
 }

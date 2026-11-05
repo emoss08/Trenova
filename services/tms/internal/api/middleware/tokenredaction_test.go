@@ -177,3 +177,24 @@ func TestTokenRedactionMiddleware_RedactsWebhookAndMailboxTokens(t *testing.T) {
 		})
 	}
 }
+
+func TestTokenRedactionMiddleware_RedactsAnAS2InboundAddress(t *testing.T) {
+	t.Parallel()
+
+	const secret = "PROFILEADDRESS0000000000000000000000"
+
+	router, logs := newTokenRedactionTestRouter(t)
+	router.POST("/edi/as2/inbound/:as2InboundToken/", func(c *gin.Context) {
+		assert.Equal(t, secret, c.Param("as2InboundToken"))
+		c.Status(http.StatusOK)
+	})
+
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(
+		recorder,
+		httptest.NewRequest(http.MethodPost, "/edi/as2/inbound/"+secret+"/", http.NoBody),
+	)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.NotContains(t, observedLogText(t, logs), secret)
+}

@@ -9,14 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
 type ApplyAS2MDNRequest struct {
+	PartnerID   pulid.ID
 	ContentType string
 	Body        []byte
 }
@@ -44,10 +45,6 @@ func (s *Service) ApplyAS2MDN(ctx context.Context, req *ApplyAS2MDNRequest) erro
 	if err != nil {
 		return err
 	}
-	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
-		OrganizationID: message.OrganizationID,
-		BusinessUnitID: message.BusinessUnitID,
-	})
 
 	if err = s.authenticateAS2MDN(ctx, message, mdn, req); err != nil {
 		s.l.Warn(
@@ -118,7 +115,7 @@ func (s *Service) authenticateAS2MDN(
 	mdn *as2.ParsedMDN,
 	req *ApplyAS2MDNRequest,
 ) error {
-	cfg, err := s.as2ConfigForMessage(ctx, message)
+	cfg, err := s.as2ConfigForMessage(ctx, message, req.PartnerID)
 	if err != nil {
 		return err
 	}
@@ -154,10 +151,16 @@ func (s *Service) authenticateAS2MDN(
 func (s *Service) as2ConfigForMessage(
 	ctx context.Context,
 	message *edimessage.EDIMessage,
+	partnerID pulid.ID,
 ) (*editransport.AS2Config, error) {
 	profile, err := s.deliveryProfileForMessage(ctx, message)
 	if err != nil {
 		return nil, err
+	}
+	if profile.EDIPartnerID != partnerID {
+		return nil, errortypes.NewAuthenticationError(
+			"AS2 MDN did not arrive at an address of the partner the message was sent to",
+		)
 	}
 	secrets, err := s.secret.TransportSecrets(profile)
 	if err != nil {

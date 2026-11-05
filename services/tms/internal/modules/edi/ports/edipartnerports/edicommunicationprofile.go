@@ -43,9 +43,16 @@ type ListEDICommunicationProfilesByPartnerRequest struct {
 	PartnerID  pulid.ID              `json:"partnerId"`
 }
 
-type GetActiveAS2ProfileByIdentifiersRequest struct {
+type GetActiveAS2ProfileForInboundURLRequest struct {
+	InboundToken string `json:"-"`
 	LocalAS2ID   string `json:"localAs2Id"`
 	PartnerAS2ID string `json:"partnerAs2Id"`
+}
+
+type RotateAS2InboundTokenRequest struct {
+	ProfileID    pulid.ID              `json:"profileId"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	InboundToken string                `json:"-"`
 }
 
 type RecordEDIProfilePollOutcomeRequest struct {
@@ -57,9 +64,9 @@ type RecordEDIProfilePollOutcomeRequest struct {
 }
 
 type EDICommunicationProfileRepository interface {
-	GetActiveAS2ProfileByIdentifiers(
+	GetActiveAS2ProfileForInboundURL(
 		ctx context.Context,
-		req GetActiveAS2ProfileByIdentifiersRequest,
+		req GetActiveAS2ProfileForInboundURLRequest,
 	) (*edi.EDICommunicationProfile, error)
 	ListProfiles(
 		ctx context.Context,

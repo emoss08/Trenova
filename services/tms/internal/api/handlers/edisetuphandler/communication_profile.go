@@ -36,6 +36,11 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 		h.pollCommunicationProfile,
 	)
 	profiles.POST(
+		"/:profileID/rotate-inbound-url/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.rotateCommunicationProfileInboundURL,
+	)
+	profiles.POST(
 		"/inspect-certificate/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.inspectCertificate,
@@ -92,6 +97,30 @@ func (h *Handler) updateCommunicationProfile(c *gin.Context) {
 	profile, err := h.setup.UpdateCommunicationProfile(
 		c.Request.Context(),
 		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, profile)
+}
+
+func (h *Handler) rotateCommunicationProfileInboundURL(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	profileID, err := pulid.MustParse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	profile, err := h.setup.RotateAS2InboundURL(
+		c.Request.Context(),
+		&edisetup.RotateAS2InboundURLRequest{
+			ProfileID:  profileID,
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+		},
 		actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {

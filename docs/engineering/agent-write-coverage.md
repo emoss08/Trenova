@@ -1081,7 +1081,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
+| `POST /api/v1/edi/as2/inbound/:as2InboundToken/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
 | `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
@@ -1117,6 +1117,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edisetuphandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/communication-profiles/`<br>edisetuphandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
 | `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edisetuphandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
+| `POST /api/v1/edi/communication-profiles/:profileID/rotate-inbound-url/`<br>edisetuphandler.rotateCommunicationProfileInboundURL | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edisetuphandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edisetuphandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/connections/`<br>edisetuphandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
