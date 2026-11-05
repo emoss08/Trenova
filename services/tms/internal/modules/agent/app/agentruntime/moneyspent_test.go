@@ -85,7 +85,7 @@ func TestRun_TheDelegateIsHandedWhatTheTurnHasAlreadyMoved(t *testing.T) {
 	pay := runtimetest.MoneyTool()
 	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: tenPaymentLimits()} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: tenPaymentLimits()} })
 
 	req := delegatingRequest(builder)
 	req.Definition = runtimetest.AutoDefinition("apply_payment")
@@ -114,7 +114,7 @@ func TestRun_ADelegateHandedTenPaymentsIsHeldAtTheEleventh(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
-	rewire(rt, func(p *Params) { p.Budgets = budgets })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = budgets })
 
 	run := runTainted(t, rt, delegatedPayments(
 		runtimetest.AutoDefinition("apply_payment"),
@@ -144,7 +144,7 @@ func TestRun_ADelegateIsHeldWhereTheTurnAndItTogetherPassTheRunTotal(t *testing.
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunAmountMinor = 50_000
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: limits} })
 
 	run := runTainted(t, rt, delegatedPayments(
 		runtimetest.AutoDefinition("apply_payment"),
@@ -167,7 +167,7 @@ func TestRun_WhatADelegateMovedCountsAgainstTheTurnAfterIt(t *testing.T) {
 		runtimetest.TextTurn("Filed the last one."),
 	}}, &stubQueryRegistry{}, &stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
-	rewire(rt, func(p *Params) { p.Budgets = budgets })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = budgets })
 
 	delegated := scriptedDelegateRun(builder)
 	delegated.Result.Actions = executedPayments(10, 10_000)
@@ -203,7 +203,7 @@ func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) 
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
-	rewire(rt, func(p *Params) { p.Budgets = budgets })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = budgets })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),
@@ -231,7 +231,7 @@ func TestRun_ASimulatedRunIsHeldWhereTheRealRunWouldBe(t *testing.T) {
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: limits} })
 
 	definition := runtimetest.AutoDefinition("apply_payment")
 	definition.SimulationMode = true

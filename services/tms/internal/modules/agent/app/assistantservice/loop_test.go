@@ -26,11 +26,13 @@ func newService(
 	return &Service{
 		logger:      zap.NewNop(),
 		permissions: &agenttest.StubPermissions{},
+		contexts:    assistanttest.BareContexts{},
+		anchors:     assistanttest.NoAnchors{},
 		guard: agentguard.New(agentguard.Params{
 			Logger:     zap.NewNop(),
 			Completion: completion,
 		}),
-		runtime: agentruntime.New(agentruntime.Params{
+		runtime: assistanttest.Runtime(agentruntime.Params{
 			Logger:      zap.NewNop(),
 			Completion:  completion,
 			QueryTools:  query,

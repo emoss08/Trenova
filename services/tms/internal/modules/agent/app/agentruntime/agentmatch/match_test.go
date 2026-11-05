@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
@@ -96,19 +98,31 @@ type matchWorld struct {
 }
 
 func (w *matchWorld) build() *Matcher {
+	catalog := agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+		QueryTools:  w.query,
+		ActionTools: w.action,
+	})
+	rates := w.rateLimits
+	if rates == nil {
+		rates = &limitedRates{allowed: true}
+	}
+
 	return NewMatcher(MatcherParams{
-		Logger:         zap.NewNop(),
-		QueryTools:     w.query,
-		ActionTools:    w.action,
-		Permissions:    w.permissions,
-		Definitions:    w.definitions,
-		Vectorizer:     w.vectorizer,
-		CatalogVectors: w.vectors,
-		RateLimits:     w.rateLimits,
-		Catalog: agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-			QueryTools:  w.query,
-			ActionTools: w.action,
+		Logger: zap.NewNop(),
+		Access: accesstest.New(&toolaccess.AccessParams{
+			QueryTools:     w.query,
+			ActionTools:    w.action,
+			Permissions:    w.permissions,
+			Catalog:        catalog,
+			Vectorizer:     w.vectorizer,
+			CatalogVectors: w.vectors,
+			Definitions:    w.definitions,
 		}),
+		Permissions: w.permissions,
+		Catalog:     catalog,
+		Vectorizer:  w.vectorizer,
+		Definitions: w.definitions,
+		RateLimits:  rates,
 	})
 }
 
@@ -664,20 +678,6 @@ func TestMatchAgent_MatchesByKeywordOncePastThePersonsEmbeddingRate(t *testing.T
 	assert.Empty(t, vectorizer.Calls, "a person over the rate is matched without an embedding")
 	require.Len(t, rates.keys, 1)
 	assert.Contains(t, rates.keys[0], runtimetest.Actor().OrganizationID.Prefix())
-}
-
-func TestMatchAgent_SpendsNoEmbeddingRateWithoutAnEmbeddingProvider(t *testing.T) {
-	t.Parallel()
-
-	billing := runtimetest.AgentHolding("Billing assistant", "invoice_list")
-	service := recommendationRuntime(t, &agenttest.StubPermissions{}, billing)
-	rates := &limitedRates{allowed: true}
-	service.rateLimits = rates
-
-	found := match(t, service, "which invoices are past due?", pulid.Nil)
-
-	assert.Equal(t, agentsuggestion.MatchBetterAgent, found.Outcome)
-	assert.Empty(t, rates.keys, "nothing is embedded, so nothing is counted against the rate")
 }
 
 func TestMatchAgent_ReadsAPersonsAgentsOnceWhileTheyType(t *testing.T) {

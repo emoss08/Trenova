@@ -148,6 +148,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		storage:           storage,
 		encryption:        encryption,
 		workflowStarter:   noopWorkflowStarter{},
+		imaging:           unprobedImaging(),
 		converter:         converter,
 		conversionCfg:     &documentconversionconfig.Config{DoclingURL: "http://docling:5001"},
 		support: documentextractionsupport.New(documentextractionsupport.Params{
@@ -161,6 +162,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 			},
 			DocumentControlRepo: controlRepo,
 			DraftRepo:           drafts,
+			SearchProjection:    noopDocumentSearchProjectionService{},
 		}),
 	}
 

@@ -3,9 +3,8 @@ package assistantservice
 import (
 	"context"
 	"testing"
-	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,9 +28,11 @@ func (framingClassifier) CompleteStructured(
 func TestAdmit_FramesTheTurnFromWhatTheClassifierRead(t *testing.T) {
 	t.Parallel()
 
-	guard := &agentguard.Service{ClassifierTimeout: 10 * time.Second}
-	agentguard.SetCompletionForTest(guard, framingClassifier{})
-	svc := &Service{logger: zap.NewNop(), guard: guard}
+	svc := &Service{
+		logger:   zap.NewNop(),
+		guard:    patientGuard(framingClassifier{}),
+		contexts: assistanttest.BareContexts{},
+	}
 
 	decision, runReq := svc.admit(t.Context(), admitRequest())
 

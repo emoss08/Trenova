@@ -68,7 +68,7 @@ func wideRuntime(t *testing.T, extra ...*agenttest.StubQueryTool) (*Service, []s
 	query := &stubQueryRegistry{Tools: registryTools}
 	action := &stubActionRegistry{}
 
-	service := buildRuntime(Params{
+	service := buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
 		QueryTools:  query,
 		ActionTools: action,
@@ -451,8 +451,8 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 	compliance.ToolNames = []string{"worker_list_credentials"}
 	unrelated := runtimetest.ChatAgent("Report builder")
 	unrelated.ToolNames = []string{"report_list"}
-	rewire(service, func(p *Params) { p.Permissions = &agenttest.StubPermissions{} })
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
+	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
 			ByID: map[pulid.ID]*agentdefinition.Definition{
 				compliance.ID: compliance,
@@ -490,8 +490,8 @@ func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
 	compliance.ToolNames = []string{"worker_list_credentials"}
 	unrelated := runtimetest.ChatAgent("Report builder")
 	unrelated.ToolNames = []string{"report_list"}
-	rewire(service, func(p *Params) { p.Permissions = &agenttest.StubPermissions{} })
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
+	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
 			ByID: map[pulid.ID]*agentdefinition.Definition{
 				compliance.ID: compliance,
@@ -535,8 +535,8 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	definition := runtimetest.Definition("customer_list", "location_list")
 	compliance := runtimetest.ChatAgent("Compliance assistant")
 	compliance.ToolNames = []string{"worker_list_credentials"}
-	rewire(service, func(p *Params) { p.Permissions = &agenttest.StubPermissions{} })
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) { p.Permissions = &agenttest.StubPermissions{} })
+	rewire(service, func(p *runtimeParts) {
 		p.Definitions = &runtimetest.ListedDefinitions{
 			ByID: map[pulid.ID]*agentdefinition.Definition{
 				compliance.ID: compliance,
@@ -666,7 +666,7 @@ func TestRun_APromptsToolSectionIsTheSameForEveryQuestion(t *testing.T) {
 		completion := &scriptedCompletion{
 			Turns: []*llmports.ChatCompletionResult{runtimetest.TextTurn("ok")},
 		}
-		rewire(service, func(p *Params) { p.Completion = completion })
+		rewire(service, func(p *runtimeParts) { p.Completion = completion })
 		_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 			Definition: definition,
 			Actor:      runtimetest.Actor(),
@@ -688,7 +688,9 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	service, names := wideRuntime(t)
 	rewire(
 		service,
-		func(p *Params) { p.Permissions = &stubPermissions{Denied: map[string]bool{"shipment:read": true}} },
+		func(p *runtimeParts) {
+			p.Permissions = &stubPermissions{Denied: map[string]bool{"shipment:read": true}}
+		},
 	)
 	// The stub tools all read shipments unless told otherwise; the worker
 	// tools are moved to the worker resource so the denial has something
@@ -761,7 +763,7 @@ func coreRuntime(t *testing.T) (*Service, []string) {
 		describedTool("agent_list_memories", "Recall what the organization has taught its agents."),
 		describedTool("agent_create_memory", "Save a correction for next time."),
 	)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: service.actionTools,
@@ -852,7 +854,7 @@ func TestNewToolSet_AnUnattendedRunHoldsItsEscalationFromTheStart(t *testing.T) 
 		),
 		describedTool("agent_create_wait", "Park this work until something happens."),
 	)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: service.actionTools,
@@ -925,7 +927,7 @@ func weakMatchRuntime(t *testing.T, extra ...agenttoolports.AgentQueryTool) *Ser
 	query := &stubQueryRegistry{Tools: tools}
 	action := &stubActionRegistry{}
 
-	return buildRuntime(Params{
+	return buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
 		QueryTools:  query,
 		ActionTools: action,

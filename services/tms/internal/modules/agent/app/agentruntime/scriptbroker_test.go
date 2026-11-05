@@ -253,11 +253,11 @@ func newScriptHarness(
 	tools := append([]agenttoolports.AgentQueryTool{script}, reads...)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
-	rewire(rt, func(p *Params) { p.Extensions = noExtensions{} })
+	rewire(rt, func(p *runtimeParts) { p.Extensions = noExtensions{} })
 	retune(rt, func(_ *toolaccess.AccessParams, d *tooldispatch.DispatcherParams) {
 		d.CodeMode = codemode.Gate{}
 	})
-	rewire(rt, func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
+	rewire(rt, func(p *runtimeParts) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
 
 	names := make([]string, 0, len(reads)+len(actions))
 	for _, tool := range reads {
@@ -363,7 +363,7 @@ func TestBrokerRefusesAReadTheTurnDoesNotHold(t *testing.T) {
 	held := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
 	unheld := queryTool("worker_get", map[string]any{"name": "Sam"}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{held}, nil, nil)
-	rewire(h.rt, func(p *Params) {
+	rewire(h.rt, func(p *runtimeParts) {
 		p.QueryTools = &stubQueryRegistry{
 			Tools: []agenttoolports.AgentQueryTool{h.script, held, unheld},
 		}
@@ -646,12 +646,12 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	assert.Contains(t, fourth.Content, "at most 3 scripts")
 
 	shipped := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	rewire(shipped.rt, func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{}) })
+	rewire(shipped.rt, func(p *runtimeParts) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{}) })
 	refused := shipped.run(t.Context(), read(1, "shipment_list", nil))
 	assert.True(t, refused.Failed, "a provider ships with scripts off")
 
 	unwired := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	rewire(unwired.rt, func(p *Params) { p.Scripts = nil })
+	rewire(unwired.rt, func(p *runtimeParts) { p.Scripts = nil })
 	assert.True(t, unwired.run(t.Context(), read(1, "shipment_list", nil)).Failed,
 		"without the providers' settings no script runs")
 
@@ -670,7 +670,7 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	tool := queryTool("shipment_list", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{})
-	rewire(h.rt, func(p *Params) { p.Scripts = scripts })
+	rewire(h.rt, func(p *runtimeParts) { p.Scripts = scripts })
 
 	closed := h.rt.OpenTurn(t.Context(), h.req)
 	assert.False(t, closed.tools.Offers("analysis_run"))
@@ -688,7 +688,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
 	scripts := scriptsOn(aiprovider.ScriptSettings{Scripts: true})
-	rewire(h.rt, func(p *Params) { p.Scripts = scripts })
+	rewire(h.rt, func(p *runtimeParts) { p.Scripts = scripts })
 
 	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
 

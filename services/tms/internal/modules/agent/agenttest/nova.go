@@ -27,5 +27,9 @@ func (novaChosen) NovaReady(context.Context, pagination.TenantInfo) (bool, error
 // NovaOnRouter is the harness calling a scripted router itself, as it does on a
 // worker, with a Nova provider chosen.
 func NovaOnRouter(router llmports.CompletionService) *novaharness.Harness {
-	return novaharness.New(novaharness.Params{Router: router, Providers: novaChosen{}})
+	return novaharness.New(novaharness.Params{
+		Dispatcher: router,
+		Router:     router,
+		Providers:  novaChosen{},
+	})
 }

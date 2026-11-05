@@ -56,8 +56,14 @@ func newRuntime(
 	if permissions == nil {
 		permissions = &stubPermissions{}
 	}
+	if query == nil {
+		query = &stubQueryRegistry{}
+	}
+	if action == nil {
+		action = &stubActionRegistry{}
+	}
 
-	return buildRuntime(Params{
+	return buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
 		Completion:  completion,
 		QueryTools:  query,
@@ -744,7 +750,7 @@ func TestRun_PinsTheRecordAProposalWouldChange(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
+	rewire(rt, func(p *runtimeParts) { p.Versions = stubVersions{version: 7} })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("shipment_place_hold"),
@@ -1400,7 +1406,7 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 	replayed.Definition = runtimetest.Definition()
 
 	drive := func(state TurnState) []string {
-		rewire(rt, func(p *Params) { p.Completion = script() })
+		rewire(rt, func(p *runtimeParts) { p.Completion = script() })
 		fx := &dispatchRecorder{localEffects: &localEffects{
 			s:    rt,
 			ctx:  t.Context(),

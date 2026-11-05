@@ -5,12 +5,15 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,6 +58,18 @@ func newEditsFixture(status agent.ProposalStatus) *editsFixture {
 		&assistanttest.StubConversationRepo{Thread: &conversation.Thread{ID: threadID}},
 	)
 	svc.proposalEdits = edits
+	svc.tools = &assistanttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
+		&agenttest.StubActionTool{
+			ToolName: "send_email",
+			Schema: map[string]any{
+				toolschema.KeyType: toolschema.TypeObject,
+				toolschema.KeyProperties: map[string]any{
+					"subject": map[string]any{toolschema.KeyType: toolschema.TypeString},
+					"body":    map[string]any{toolschema.KeyType: toolschema.TypeString},
+				},
+			},
+		},
+	}}
 
 	return &editsFixture{
 		svc:      svc,

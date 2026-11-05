@@ -21,7 +21,7 @@ func renderFolder(
 
 	m := inboundmessagedb.InboundMessages
 
-	return keeltest.Render(t, m.Where(narrow(ctx, req)...))
+	return keeltest.Render(t, m.Where(narrow(t.Context(), req)...))
 }
 
 func TestTheFolderSortsByArrivalOrSoonestDue(t *testing.T) {

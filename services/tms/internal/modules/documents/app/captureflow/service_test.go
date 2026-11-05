@@ -585,7 +585,7 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 		map[int]string{2: "T"},
 	)
 
-	result, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	result, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	items := w.itemsOf(batch.ID)
@@ -611,7 +611,7 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 		assert.NotEmpty(t, page.ThumbnailPath)
 	}
 
-	again, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	again, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	assert.True(t, again.Skipped, "processing a ready batch again does nothing")
 }
@@ -648,7 +648,7 @@ func TestCoverSheetsDoNotAutoFileWhenTheOrganizationSaysNot(t *testing.T) {
 		nil,
 	)
 
-	result, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	result, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	assert.Empty(t, result.AutoFile)
 	require.Len(t, w.itemsOf(batch.ID), 1)
@@ -684,7 +684,7 @@ func TestAnotherTenantsCoverSheetRoutesNothing(t *testing.T) {
 		nil,
 	)
 
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	items := w.itemsOf(batch.ID)
@@ -734,12 +734,12 @@ func TestScanFromARecordFilesItself(t *testing.T) {
 	)
 	assert.Equal(t, capturerequest.RequestCompleted, w.requests[req.ID].Status)
 
-	result, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	result, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	require.Len(t, result.AutoFile, 1)
 
 	item := w.itemsOf(batch.ID)[0]
-	filed, err := s.filing().FileItem(t.Context(), &capturefiling.FileItemInput{
+	_, err = s.filing().FileItem(t.Context(), &capturefiling.FileItemInput{
 		TenantInfo:     w.tenant,
 		ItemID:         item.ID,
 		TargetType:     item.SuggestedType,
@@ -748,6 +748,7 @@ func TestScanFromARecordFilesItself(t *testing.T) {
 		Automatic:      true,
 	})
 	require.NoError(t, err)
+	filed := w.items[item.ID]
 	assert.Equal(t, capture.ItemFiled, filed.Status)
 	require.NotNil(t, filed.DocumentID)
 
@@ -777,7 +778,7 @@ func TestFilingIsCheckedAsThePersonFiling(t *testing.T) {
 		[][]byte{pdfPage(t, 1)},
 		nil,
 	)
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	item := w.itemsOf(batch.ID)[0]
 
@@ -862,7 +863,7 @@ func TestEditItemsSplitsKeepingTheRoute(t *testing.T) {
 		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)},
 		nil,
 	)
-	_, err = s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err = s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	current := w.batches[batch.ID]
@@ -990,7 +991,7 @@ func TestRetentionExpiresAndPurges(t *testing.T) {
 		[][]byte{pdfPage(t, 1)},
 		nil,
 	)
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, w.objects)
 
@@ -1083,7 +1084,7 @@ func TestPagesAreReadAsTheyArrive(t *testing.T) {
 		BatchID: batch.ID, PageCount: 1, ManifestDigest: captureintake.ManifestDigest([]string{hashutils.SHA256BytesHex(data)}),
 	})
 	require.NoError(t, err)
-	_, err = s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err = s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	w.mu.Lock()
@@ -1117,7 +1118,7 @@ func TestPageContentIsTaggedForGood(t *testing.T) {
 	})
 	assert.True(t, errortypes.IsNotFoundError(err), "a page not read yet has no thumbnail")
 
-	_, err = s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err = s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	first, err := s.filing().PageContent(t.Context(), &capturefiling.PageContentRequest{
@@ -1156,7 +1157,7 @@ func TestDiscardingADocumentLeavesTheRestAndIsAudited(t *testing.T) {
 		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)},
 		map[int]string{2: "T"},
 	)
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 	items := w.itemsOf(batch.ID)
 	require.Len(t, items, 2)
@@ -1205,7 +1206,7 @@ func TestABarcodeOnThePagesSuggestsItsShipment(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	result, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	result, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	items := w.itemsOf(batch.ID)

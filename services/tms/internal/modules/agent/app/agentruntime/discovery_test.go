@@ -27,7 +27,7 @@ func wideRun(
 
 	service, names := wideRuntime(t)
 	completion := &scriptedCompletion{Turns: turns}
-	rewire(service, func(p *Params) { p.Completion = completion })
+	rewire(service, func(p *runtimeParts) { p.Completion = completion })
 
 	return service, completion, names
 }
@@ -228,17 +228,6 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	assert.Equal(t, 1, result.ToolCallsUsed)
 }
 
-func TestResolveFind_WithoutACatalogSaysSoRatherThanPanicking(t *testing.T) {
-	t.Parallel()
-
-	service, _ := wideRuntime(t)
-	rewire(service, func(p *Params) { p.Catalog = nil })
-	set := &toolaccess.ToolSet{Loaded: map[string]struct{}{}, Disclosed: true}
-
-	assert.Contains(t, findContent(t, service, set, map[string]any{"need": "tractors"}),
-		"No other tools")
-}
-
 // dependentTool is an action whose arguments come from other tools.
 type dependentTool struct {
 	*agenttest.StubActionTool
@@ -273,7 +262,7 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 		runtimetest.TextTurn("Found one report."),
 	}}
 	service := newRuntime(completion, query, action, nil)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: action,
@@ -328,7 +317,7 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 		actionTool("delete_customer", agent.TierPropose, nil),
 	}}
 	service := newRuntime(&scriptedCompletion{}, query, action, nil)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: action,

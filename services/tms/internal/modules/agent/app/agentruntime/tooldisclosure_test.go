@@ -46,7 +46,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 		runtimetest.TextTurn("Two trailers are due."),
 	)
 	observed := &recordedDisclosures{}
-	rewire(service, func(p *Params) { p.Disclosures = observed })
+	rewire(service, func(p *runtimeParts) { p.Disclosures = observed })
 	threadID := pulid.MustNew("athr_")
 
 	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
@@ -83,7 +83,7 @@ func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 		a.Threshold = &everything
 	})
 	observed := &recordedDisclosures{}
-	rewire(service, func(p *Params) { p.Disclosures = observed })
+	rewire(service, func(p *runtimeParts) { p.Disclosures = observed })
 
 	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(names...),

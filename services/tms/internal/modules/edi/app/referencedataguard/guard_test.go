@@ -12,12 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGuard_CloudDeniesEveryoneWhenNoStewardIsConfigured(t *testing.T) {
+func TestGuard_SharedTenancyDeniesEveryoneWhenNoStewardIsConfigured(t *testing.T) {
 	t.Parallel()
 
-	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
-		Mode: platformconfig.ModeCloud,
-	}, editioninfo.NewStatic("cloud", true))
+	guard, err := referencedataguard.FromPlatform(
+		&platformconfig.Config{},
+		editioninfo.NewStatic("cloud", true),
+	)
 	require.NoError(t, err)
 
 	err = guard.RequireSteward(pulid.MustNew("org_"))
@@ -25,12 +26,11 @@ func TestGuard_CloudDeniesEveryoneWhenNoStewardIsConfigured(t *testing.T) {
 	assert.True(t, errortypes.IsAuthorizationError(err))
 }
 
-func TestGuard_CloudAllowsOnlyListedStewards(t *testing.T) {
+func TestGuard_SharedTenancyAllowsOnlyListedStewards(t *testing.T) {
 	t.Parallel()
 
 	steward := pulid.MustNew("org_")
 	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
-		Mode:                  platformconfig.ModeCloud,
 		ReferenceDataStewards: []string{" " + steward.String() + " "},
 	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)

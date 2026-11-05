@@ -625,7 +625,6 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 	draftRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
 		Return(&documentshipmentdraft.DocumentShipmentDraft{}, nil)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
 			return strings.HasPrefix(options.ID, "document-ai-extraction-"+doc.ID.String()+"-")

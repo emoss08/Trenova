@@ -86,7 +86,7 @@ func cardService(reader *draftReader) (*Service, *assistanttest.StubArtifactRepo
 	return &Service{
 		logger:    zap.NewNop(),
 		artifacts: repo,
-		runtime: agentruntime.New(agentruntime.Params{
+		runtime: assistanttest.Runtime(agentruntime.Params{
 			Logger: zap.NewNop(),
 			QueryTools: &assistanttest.StubQueryRegistry{
 				Tools: []agenttoolports.AgentQueryTool{reader},
