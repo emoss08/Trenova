@@ -181,7 +181,7 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, result.Duplicate)
 	require.False(t, result.Rejected)
-	require.False(t, result.AsyncMDN)
+	require.Empty(t, result.AsyncMDNURL)
 	require.NotEmpty(t, result.MDNBody)
 
 	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, trenova.certificate)
@@ -347,7 +347,7 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 	require.NotEmpty(t, result.MDNBody)
 }
 
-func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
+func TestReceiveAS2MessageAnswersUnknownIdentifiersWithAnUnsignedFailureReceipt(t *testing.T) {
 	t.Parallel()
 
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
@@ -364,13 +364,144 @@ func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 		Secrets:     ediServices().Secrets,
 	})
 
-	_, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:        "UNKNOWN",
-		To:          "TRENOVA-AS2",
-		ContentType: "application/edi-x12",
-		Body:        []byte(as2ReceiverPayload),
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:                  "UNKNOWN",
+		To:                    "TRENOVA-AS2",
+		ContentType:           "application/edi-x12",
+		ReceiptDeliveryOption: "https://elsewhere.example/mdn",
+		Body:                  []byte(as2ReceiverPayload),
 	})
-	require.ErrorIs(t, err, ErrAS2ProfileNotFound)
+
+	require.NoError(t, err)
+	require.True(t, result.Rejected)
+	require.Empty(t, result.AsyncMDNURL)
+
+	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+	require.NoError(t, err)
+	require.False(t, mdn.Signed)
+	require.Equal(t, as2.MDNErrorAuthenticationFailed, mdn.FailureText())
+}
+
+func TestReceiveAS2MessageAnswersKnownAndUnknownPairsAlikeWhenNothingVerifies(t *testing.T) {
+	t.Parallel()
+
+	trenova := newAS2ReceiverIdentity(t, "trenova.example")
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+	stranger := newAS2ReceiverIdentity(t, "stranger.example")
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		EDIPartnerID:   pulid.MustNew("edip_"),
+		Method:         edi.ConnectionMethodAS2,
+		Config: map[string]any{
+			editransport.ConfigKeyLocalAS2ID:                "TRENOVA-AS2",
+			editransport.ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
+			editransport.ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
+			editransport.ConfigKeyLocalCertificate:          trenova.certificatePEM,
+		},
+		EncryptedSecrets: map[string]string{
+			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
+		},
+	}
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.MatchedBy(
+			func(req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest) bool {
+				return req.PartnerAS2ID == "PARTNER-AS2"
+			},
+		)).
+		Return(profile, nil).
+		Once()
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
+		Once()
+	service := New(Params{
+		Metrics:     metricstest.Disabled(),
+		Logger:      zap.NewNop(),
+		ProfileRepo: profileRepo,
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
+	})
+
+	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+		From:                  "PARTNER-AS2",
+		To:                    "TRENOVA-AS2",
+		Payload:               []byte(as2ReceiverPayload),
+		SigningCertificate:    stranger.certificate,
+		SigningKey:            stranger.key,
+		EncryptionCertificate: stranger.certificate,
+		EncryptionAlgorithm:   smime.EncryptionAlgorithmAES256GCM,
+	})
+	require.NoError(t, err)
+
+	failures := make([]string, 0, 2)
+	for _, from := range []string{"PARTNER-AS2", "NOBODY-AS2"} {
+		result, receiveErr := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+			From:                           from,
+			To:                             "TRENOVA-AS2",
+			MessageID:                      built.MessageID,
+			ContentType:                    built.ContentType,
+			TransferEncoding:               built.Headers.Get("Content-Transfer-Encoding"),
+			DispositionNotificationOptions: "signed-receipt-protocol=required, pkcs7-signature",
+			Body:                           built.Body,
+		})
+		require.NoError(t, receiveErr)
+		require.True(t, result.Rejected)
+
+		mdn, parseErr := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+		require.NoError(t, parseErr)
+		require.False(t, mdn.Signed)
+		failures = append(failures, mdn.FailureText())
+	}
+
+	require.Equal(t, as2.MDNErrorDecryptionFailed, failures[0])
+	require.Equal(t, failures[0], failures[1])
+}
+
+func TestAsyncReturnURLStaysWithThePartnersEndpointHost(t *testing.T) {
+	t.Parallel()
+
+	cfg := &editransport.AS2Config{EndpointURL: "https://as2.partner.example:4443/receive"}
+
+	tests := []struct {
+		name      string
+		cfg       *editransport.AS2Config
+		requested string
+		want      string
+	}{
+		{
+			name:      "same host",
+			cfg:       cfg,
+			requested: "https://as2.partner.example/mdn",
+			want:      "https://as2.partner.example/mdn",
+		},
+		{
+			name:      "same host in another case and port",
+			cfg:       cfg,
+			requested: " https://AS2.Partner.Example:9443/mdn ",
+			want:      "https://AS2.Partner.Example:9443/mdn",
+		},
+		{name: "not requested", cfg: cfg},
+		{name: "another host", cfg: cfg, requested: "https://elsewhere.example/mdn"},
+		{name: "a subdomain", cfg: cfg, requested: "https://x.as2.partner.example/mdn"},
+		{name: "no host", cfg: cfg, requested: "mailto:ops@as2.partner.example"},
+		{name: "unparseable", cfg: cfg, requested: "https://%zz/mdn"},
+		{
+			name:      "no endpoint on the profile",
+			cfg:       &editransport.AS2Config{},
+			requested: "https://as2.partner.example/mdn",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tt.want, asyncReturnURL(tt.cfg, tt.requested))
+		})
+	}
 }
 
 func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
@@ -671,5 +802,4 @@ func TestReceiveAS2MessageRoutesASignedMDNToReceiptHandling(t *testing.T) {
 
 	require.Error(t, err)
 	require.True(t, errortypes.IsNotFoundError(err))
-	require.NotErrorIs(t, err, ErrAS2ProfileNotFound)
 }
