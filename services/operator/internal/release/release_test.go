@@ -34,7 +34,7 @@ func setup(t *testing.T) (*action.Configuration, *release.Releaser, *chart.Chart
 		Namespace: "trenova",
 		Logger:    slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
-	ch, err := release.NewSource(release.SourceParams{Path: chartDir}).Load("ignored for a local chart")
+	ch, err := release.NewSource(release.SourceParams{Path: chartDir, Provenance: release.Unverified{}}).Load("ignored for a local chart")
 	require.NoError(t, err)
 	return cfg, r, ch
 }

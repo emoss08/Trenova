@@ -64,9 +64,18 @@ helm.sh/chart: {{ printf "%s-%s" .root.Chart.Name .root.Chart.Version | replace 
 {{- end -}}
 
 {{/* An image reference. Call with (dict "root" $ "image" .Values.x.image). The
-tag defaults to the chart's appVersion; "<tag>@sha256:<digest>" pins a digest. */}}
+tag defaults to the chart's appVersion; "<tag>@sha256:<digest>" pins a digest.
+A published chart carries image-digests.yaml, written by the release workflow:
+the digest of every image at the tag it names, inside the chart's signature. An
+override to another repository or tag finds no entry and is used as given. */}}
 {{- define "trenova.image" -}}
-{{- printf "%s:%s" .image.repository (.image.tag | default .root.Chart.AppVersion) -}}
+{{- $ref := printf "%s:%s" .image.repository (.image.tag | default .root.Chart.AppVersion) -}}
+{{- $digest := get (.root.Files.Get "image-digests.yaml" | fromYaml) $ref -}}
+{{- if $digest -}}
+{{- printf "%s@%s" $ref $digest -}}
+{{- else -}}
+{{- $ref -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "trenova.pullPolicy" -}}

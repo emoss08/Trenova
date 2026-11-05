@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: operator
-          image: {{ printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) }}
+          image: {{ include "operator.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: TRENOVA_OPERATOR_NAMESPACE
@@ -52,6 +52,8 @@ spec:
               value: {{ .Values.chart.ref | quote }}
             - name: TRENOVA_OPERATOR_CHART_PLAIN_HTTP
               value: {{ .Values.chart.plainHTTP | quote }}
+            - name: TRENOVA_OPERATOR_CHART_VERIFY
+              value: {{ .Values.chart.verify | quote }}
             - name: TRENOVA_OPERATOR_VALUES_FILE
               value: /etc/trenova-operator/trenova-values.yaml
             - name: TRENOVA_OPERATOR_POLL_INTERVAL

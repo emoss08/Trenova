@@ -368,10 +368,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # Keyless signing: the chart signature names this workflow at this tag.
+      id-token: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Cosign
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/cosign https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+          echo '424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa  /tmp/cosign' | sha256sum -c -
+          sudo install -m 0755 /tmp/cosign /usr/local/bin/cosign
 
       - name: Install Helm
         run: |
@@ -400,9 +409,63 @@ jobs:
           PY
           grep -n -A4 '^postgres:' deploy/helm/trenova/values.yaml
 
-      - name: Package and push the charts
+      # Every image a chart names, resolved to the digest it has now, inside the
+      # chart and so inside its signature: a tag moved after this release changes
+      # nothing on an instance.
+      - name: Pin the charts' images
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          echo "${GHCR_TOKEN}" | docker login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          for chart in trenova trenova-operator; do
+            yq -o=json "deploy/helm/${chart}/values.yaml" > "${RUNNER_TEMP}/${chart}-values.json"
+            python3 - "$version" "${RUNNER_TEMP}/${chart}-values.json" "deploy/helm/${chart}/image-digests.yaml" <<'PY'
+          import json, re, subprocess, sys
+
+          version, values, out = sys.argv[1:4]
+
+          def images(node):
+              if isinstance(node, dict):
+                  if "repository" in node and "tag" in node:
+                      yield node
+                  for child in node.values():
+                      yield from images(child)
+              elif isinstance(node, list):
+                  for child in node:
+                      yield from images(child)
+
+          pins = {}
+          for image in images(json.load(open(values))):
+              tag = image["tag"] or version
+              if "@" in tag:
+                  continue
+              ref = f'{image["repository"]}:{tag}'
+              digest = subprocess.check_output(
+                  ["docker", "buildx", "imagetools", "inspect", ref, "--format", "{{.Manifest.Digest}}"],
+                  text=True,
+              ).strip()
+              if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                  sys.exit(f"{ref}: no digest ({digest!r})")
+              pins[ref] = digest
+          if not pins:
+              sys.exit("no image to pin")
+          with open(out, "w") as f:
+              for ref, digest in sorted(pins.items()):
+                  f.write(f'"{ref}": "{digest}"\n')
+          PY
+            cat "deploy/helm/${chart}/image-digests.yaml"
+          done
+
+      # The signature travels in the chart's own provenance layer: helm push takes
+      # <archive>.prov from beside the archive, and the operator refuses a chart
+      # without one (services/operator/internal/release/provenance.go, which holds
+      # the same signer pattern).
+      - name: Package, sign and push the charts
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHART_SIGNER: '^https://github\.com/emoss08/[Tt]renova/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
@@ -410,6 +473,11 @@ jobs:
           helm lint deploy/helm/trenova --set domain=trenova.example.com --set storageDomain=storage.trenova.example.com
           helm lint deploy/helm/trenova-operator
           for chart in trenova trenova-operator; do
+            archive="${RUNNER_TEMP}/${chart}-${version}.tgz"
             helm package "deploy/helm/${chart}" --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
-            helm push "${RUNNER_TEMP}/${chart}-${version}.tgz" "oci://${REGISTRY}/emoss08/charts"
+            cosign sign-blob --yes --bundle "${archive}.prov" "${archive}"
+            cosign verify-blob --bundle "${archive}.prov" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp "${CHART_SIGNER}" "${archive}"
+            helm push "${archive}" "oci://${REGISTRY}/emoss08/charts"
           done

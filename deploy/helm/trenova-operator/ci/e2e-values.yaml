@@ -4,6 +4,7 @@ image: { repository: trenova-operator, tag: ci, pullPolicy: Never }
 chart:
   ref: oci://k3d-trenova-registry:5000/charts/trenova
   plainHTTP: true
+  verify: false
 pollInterval: 10s
 reportInterval: 30s
 logLevel: debug

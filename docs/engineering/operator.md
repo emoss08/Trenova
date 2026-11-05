@@ -58,6 +58,33 @@ same bundle means it needs a new one, so it says so, marks itself unhealthy and 
 five minutes. A start that finds a newer bundle than the one its identity came from enrols from
 it, rather than waiting for a 401.
 
+## What it trusts
+
+The operator holds admin rights over the instance's namespace, Secrets included, so what it
+applies is checked twice before Helm sees it.
+
+- **The spec.** It must name the instance the operator's certificate names; any other is
+  reported and never applied.
+- **The chart.** The release workflow signs each chart with Cosign, keyless: the signature names
+  `release.yml` in this repository at a version tag, recorded in Sigstore's log. The bundle travels
+  in the chart's own OCI provenance layer (`helm push` takes `<archive>.prov`), so it cannot be
+  separated from the tag. `internal/release/provenance.go` refuses a chart with no signature, a
+  signature from any other identity, or an archive other than the one signed, then refuses a signed
+  chart whose name or version is not the one asked for, which stops a tag moved to an older signed
+  release. The signer pattern lives there and in `release.yml`, which verifies with it before
+  pushing. Trust comes from Sigstore's public root over TUF (`tuf-repo-cdn.sigstore.dev`), so the
+  operator needs that egress when it pulls a version; a failed check leaves the deployed release
+  running and reports the reason. `helm --verify` does not apply: the layer holds a Sigstore bundle,
+  not a PGP signature. `chart.verify: false` turns the check off for a chart built in the cluster.
+- **The images.** At publish, the workflow resolves every image the chart names, third-party ones
+  included, into `image-digests.yaml` inside the chart and so inside the signature. The chart's image
+  helpers add the digest for a `repository:tag` listed there; an override to another repository or
+  tag finds no entry and is used as given.
+
+The namespace the chart creates enforces the `baseline` Pod Security level, so even a workload the
+operator was tricked into creating cannot reach the node. Label a namespace you create yourself
+(`target.createNamespace: false`) the same way.
+
 ## The loop
 
 Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):

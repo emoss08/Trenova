@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -396,7 +397,7 @@ func ediReader(
 			EDIOverviewService: edis.Overview,
 			EDIInboundService: ediinboundservice.New(ediinboundservice.Params{
 				Logger:          logger,
-				Metrics:         ediservicetest.DisabledMetrics(),
+				Metrics:         metricstest.Disabled(),
 				InboundFileRepo: files,
 				InboundApply:    edis.InboundApply,
 				Outbound:        edis.Outbound,

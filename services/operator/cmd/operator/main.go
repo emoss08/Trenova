@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -36,6 +37,7 @@ type config struct {
 	chartRef        string
 	chartPath       string
 	plainHTTP       bool
+	verifyChart     bool
 	valuesFile      string
 	poll            time.Duration
 	report          time.Duration
@@ -103,9 +105,10 @@ func run(logger *slog.Logger) error {
 		ControlPlane: cp,
 		Credentials:  creds,
 		Charts: release.NewSource(release.SourceParams{
-			Ref:      cfg.chartRef,
-			Path:     cfg.chartPath,
-			Registry: helmCfg.RegistryClient,
+			Ref:        cfg.chartRef,
+			Path:       cfg.chartPath,
+			Registry:   helmCfg.RegistryClient,
+			Provenance: chartProvenance(cfg.verifyChart, logger),
 		}),
 		Releases: release.NewReleaser(release.ReleaserParams{
 			Config:    helmCfg,
@@ -145,6 +148,14 @@ func run(logger *slog.Logger) error {
 		"chart", firstNonEmpty(cfg.chartPath, cfg.chartRef),
 	)
 	return loop.Run(ctx)
+}
+
+func chartProvenance(verify bool, logger *slog.Logger) release.Provenance {
+	if verify {
+		return release.NewSigstore()
+	}
+	logger.Warn("chart signatures are not checked: this operator runs whatever the registry serves")
+	return release.Unverified{}
 }
 
 func healthServer(addr string, loop *reconcile.Loop) *http.Server {
@@ -233,7 +244,10 @@ func load() (config, error) {
 		)
 	}
 	var err error
-	if cfg.plainHTTP, err = boolean("TRENOVA_OPERATOR_CHART_PLAIN_HTTP"); err != nil {
+	if cfg.plainHTTP, err = booleanOr("TRENOVA_OPERATOR_CHART_PLAIN_HTTP", false); err != nil {
+		return config{}, err
+	}
+	if cfg.verifyChart, err = booleanOr("TRENOVA_OPERATOR_CHART_VERIFY", true); err != nil {
 		return config{}, err
 	}
 	if cfg.poll, err = duration("TRENOVA_OPERATOR_POLL_INTERVAL", 15*time.Second); err != nil {
@@ -289,8 +303,8 @@ func duration(key string, def time.Duration) (time.Duration, error) {
 	return d, nil
 }
 
-func boolean(key string) (bool, error) {
-	switch strings.ToLower(env(key, "false")) {
+func booleanOr(key string, def bool) (bool, error) {
+	switch strings.ToLower(env(key, strconv.FormatBool(def))) {
 	case "true", "1", "yes":
 		return true, nil
 	case "false", "0", "no":

@@ -13,6 +13,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -296,4 +297,21 @@ type testWriter struct{ t *testing.T }
 func (w testWriter) Write(p []byte) (int, error) {
 	w.t.Log(string(p))
 	return len(p), nil
+}
+
+func TestRefusesASpecForAnotherInstance(t *testing.T) {
+	w := newWorld(t)
+	spec := w.cp.Spec()
+	spec.InstanceId = uuid.New()
+	w.cp.SetSpec(spec)
+
+	w.loop.Tick(t.Context())
+
+	assert.Zero(t, w.releases.applies)
+	reports := w.cp.Reports()
+	require.NotEmpty(t, reports)
+	last := reports[len(reports)-1]
+	assert.False(t, last.Ready)
+	require.NotNil(t, last.Message)
+	assert.Contains(t, *last.Message, "is for instance")
 }

@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -66,6 +68,11 @@ func (m *Manager) Current() Identity {
 		return *c
 	}
 	return Identity{}
+}
+
+func (m *Manager) InstanceID() uuid.UUID {
+	cur := m.Current()
+	return cur.InstanceID
 }
 
 func (m *Manager) Start(ctx context.Context) error {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"path"
 	"reflect"
 	"strings"
 	"sync"
@@ -29,22 +30,30 @@ const (
 )
 
 type Source struct {
-	ref      string
-	path     string
-	registry *registry.Client
-	mu       sync.Mutex
-	cache    map[string]*chart.Chart
-	order    []string
+	ref        string
+	path       string
+	registry   *registry.Client
+	provenance Provenance
+	mu         sync.Mutex
+	cache      map[string]*chart.Chart
+	order      []string
 }
 
 type SourceParams struct {
-	Ref      string
-	Path     string
-	Registry *registry.Client
+	Ref        string
+	Path       string
+	Registry   *registry.Client
+	Provenance Provenance
 }
 
 func NewSource(p SourceParams) *Source {
-	return &Source{ref: p.Ref, path: p.Path, registry: p.Registry, cache: map[string]*chart.Chart{}}
+	return &Source{
+		ref:        p.Ref,
+		path:       p.Path,
+		registry:   p.Registry,
+		provenance: p.Provenance,
+		cache:      map[string]*chart.Chart{},
+	}
 }
 
 func (s *Source) Load(version string) (*chart.Chart, error) {
@@ -61,13 +70,28 @@ func (s *Source) Load(version string) (*chart.Chart, error) {
 		return ch, nil
 	}
 	ref := strings.TrimPrefix(s.ref, "oci://") + ":" + version
-	res, err := s.registry.Pull(ref, registry.PullOptWithChart(true))
+	required := s.provenance.Required()
+	res, err := s.registry.Pull(
+		ref,
+		registry.PullOptWithChart(true),
+		registry.PullOptWithProv(required),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("pull %s: %w", ref, err)
+	}
+	var signature []byte
+	if required {
+		signature = res.Prov.Data
+	}
+	if err = s.provenance.Verify(res.Chart.Data, signature); err != nil {
+		return nil, fmt.Errorf("refuse %s: %w", ref, err)
 	}
 	ch, err := loader.LoadArchive(bytes.NewReader(res.Chart.Data))
 	if err != nil {
 		return nil, fmt.Errorf("load %s: %w", ref, err)
+	}
+	if err = namesRelease(ch, path.Base(s.ref), version); err != nil {
+		return nil, fmt.Errorf("refuse %s: %w", ref, err)
 	}
 	s.cache[version] = ch
 	s.order = append(s.order, version)
@@ -76,6 +100,13 @@ func (s *Source) Load(version string) (*chart.Chart, error) {
 		s.order = s.order[1:]
 	}
 	return ch, nil
+}
+
+func namesRelease(ch *chart.Chart, name, version string) error {
+	if ch.Metadata == nil || ch.Metadata.Name != name || ch.Metadata.Version != version {
+		return ErrChartIdentity
+	}
+	return nil
 }
 
 type Deployed struct {

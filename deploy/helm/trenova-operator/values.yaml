@@ -34,6 +34,10 @@ chart:
   # A registry served over plain HTTP; only for a registry inside the cluster
   # (the CI install).
   plainHTTP: false
+  # Refuse a chart the release workflow did not sign (a Sigstore bundle in the
+  # chart's provenance layer). Turn off only for a chart built inside the cluster
+  # (the CI install): the operator would then run whatever the registry serves.
+  verify: true
 
 # Values every release of the Trenova chart gets on this cluster, under what
 # the spec decides: the hostname, the size, the lifecycle, the components and

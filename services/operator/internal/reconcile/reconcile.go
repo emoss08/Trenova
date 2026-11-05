@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/uuid"
 	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/emoss08/trenova/operator/internal/controlplane"
@@ -32,6 +33,7 @@ type Credentials interface {
 	Start(ctx context.Context) error
 	RenewIfDue(ctx context.Context) error
 	Recover(ctx context.Context) error
+	InstanceID() uuid.UUID
 }
 
 type Charts interface {
@@ -186,6 +188,13 @@ func (l *Loop) Tick(ctx context.Context) {
 
 func (l *Loop) converge(ctx context.Context) instanceapi.StatusReport {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
+	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
+		return l.notReady(report, fmt.Sprintf(
+			"the spec is for instance %s and this operator is instance %s",
+			l.desired.Spec.InstanceId,
+			own,
+		))
+	}
 	rendered, err := values.Render(&l.desired.Spec, l.base)
 	if err != nil {
 		return l.notReady(report, err.Error())
