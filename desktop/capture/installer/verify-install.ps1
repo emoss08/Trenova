@@ -56,6 +56,13 @@ do {
   $delivered = Select-String -Path (Join-Path $logs 'service.*') -Pattern 'handed a print to its owner' -ErrorAction SilentlyContinue
 } until ($delivered -or (Get-Date) -gt $deadline)
 Check ([bool]$delivered) 'a print through the spooler reaches its owner under LocalService'
+if ($delivered) {
+  # The owner is the signed-in session's account, named with its domain, never a bare name.
+  $handed = ($delivered | Select-Object -Last 1).Line
+  $me = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+  Check ($handed -match "\bsid=$([regex]::Escape($me.User.Value))(\s|$)") "the print is in the inbox of the account that printed it, $($me.User.Value) ($handed)"
+  Check ($handed -match "\baccount=$([regex]::Escape($me.Name))(\s|$)") "the print is attributed to the domain-qualified account $($me.Name) ($handed)"
+}
 if (-not $delivered) {
   Get-PrintJob -PrinterName Trenova -ErrorAction SilentlyContinue | Format-Table Id,UserName,DocumentName,JobStatus -AutoSize
   Get-ChildItem $logs -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 30 }

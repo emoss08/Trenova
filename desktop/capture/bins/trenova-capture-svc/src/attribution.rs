@@ -9,7 +9,10 @@
 //! that copies a name it sees on the queue takes that job's place rather
 //! than adding a second document to someone's intake. The queue names the
 //! user but not the domain; the signed-in sessions supply it, and Windows
-//! turns the account into the SID that names the user's inbox.
+//! turns the account into the SID that names the user's inbox. A print only
+//! ever goes to an account that is signed in: a queue name no session
+//! carries is resolved, and kept only when it is one of those accounts, so a
+//! same-named local account nobody is signed in to never receives it.
 
 use std::collections::VecDeque;
 use std::io;
@@ -50,8 +53,8 @@ pub trait PrintSystem: Send + Sync {
     fn queued_jobs(&self) -> io::Result<Vec<QueuedJob>>;
     /// The accounts signed in to this computer.
     fn signed_in(&self) -> io::Result<Vec<SignedIn>>;
-    /// The SID of `DOMAIN\user`, or of `user` alone when the domain is
-    /// empty.
+    /// The SID of `DOMAIN\user`, or of `user` as Windows resolves a bare
+    /// name when the domain is empty.
     fn sid_of(&self, domain: &str, user: &str) -> io::Result<String>;
 }
 
@@ -197,28 +200,72 @@ impl<S: PrintSystem> Attributor<S> {
     }
 
     /// The account for a queue's user name: the signed-in session with that
-    /// name, or the name alone when nobody by it is signed in.
+    /// name, qualified by its domain. A name no session carries (another form
+    /// of the same account, such as a UPN) is resolved as Windows resolves it
+    /// and kept only when it is a signed-in session's account.
     fn owner(&self, user: &str) -> Result<Owner, Refusal> {
-        let sessions = self.system.signed_in().unwrap_or_else(|err| {
+        let sessions = self.system.signed_in().map_err(|err| {
             tracing::warn!(error = %err, "could not list signed-in sessions");
-            Vec::new()
-        });
-        let mut domains: Vec<&str> = sessions
+            Refusal::Unavailable("The signed-in accounts could not be read.".into())
+        })?;
+        let mut accounts: Vec<&SignedIn> = sessions
             .iter()
-            .filter(|s| s.user.eq_ignore_ascii_case(user))
-            .map(|s| s.domain.as_str())
+            .filter(|s| !s.domain.trim().is_empty() && !s.user.trim().is_empty())
             .collect();
-        domains.sort_unstable_by_key(|d| d.to_ascii_lowercase());
-        domains.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
-        let domain = match domains.as_slice() {
-            [] => "",
-            [domain] => domain,
+        accounts.sort_unstable_by_key(|s| (s.domain.to_lowercase(), s.user.to_lowercase()));
+        accounts.dedup_by(|a, b| {
+            a.domain.eq_ignore_ascii_case(&b.domain) && a.user.eq_ignore_ascii_case(&b.user)
+        });
+        let named: Vec<&SignedIn> = accounts
+            .iter()
+            .copied()
+            .filter(|s| s.user.eq_ignore_ascii_case(user))
+            .collect();
+        let (sid, session) = match named.as_slice() {
+            [session] => (self.lookup(&session.domain, &session.user)?, *session),
+            [] => self.signed_in_as(user, &accounts)?,
             _ => {
                 return Err(refuse(
                     "More than one signed-in account has this user name.",
                 ));
             }
         };
+        Ok(Owner {
+            sid,
+            account: format!("{}\\{}", session.domain, session.user),
+        })
+    }
+
+    /// The signed-in account a queue name no session carries resolves to.
+    fn signed_in_as<'a>(
+        &self,
+        user: &str,
+        accounts: &[&'a SignedIn],
+    ) -> Result<(String, &'a SignedIn), Refusal> {
+        let not_signed_in =
+            || refuse("The account that printed is not signed in to this computer.");
+        if accounts.is_empty() {
+            return Err(not_signed_in());
+        }
+        let sid = self.lookup("", user)?;
+        for session in accounts {
+            if self
+                .lookup(&session.domain, &session.user)
+                .is_ok_and(|theirs| theirs == sid)
+            {
+                return Ok((sid, *session));
+            }
+        }
+        tracing::warn!(
+            user,
+            %sid,
+            "the print queue names an account that is not signed in"
+        );
+        Err(not_signed_in())
+    }
+
+    /// The SID of an account, checked.
+    fn lookup(&self, domain: &str, user: &str) -> Result<String, Refusal> {
         let sid = self.system.sid_of(domain, user).map_err(|err| {
             tracing::warn!(error = %err, user, domain, "could not look up the account");
             refuse("The account that printed could not be found.")
@@ -228,12 +275,7 @@ impl<S: PrintSystem> Attributor<S> {
                 "Windows returned an unexpected SID.".into(),
             ));
         }
-        let account = if domain.is_empty() {
-            user.to_owned()
-        } else {
-            format!("{domain}\\{user}")
-        };
-        Ok(Owner { sid, account })
+        Ok(sid)
     }
 }
 
@@ -247,6 +289,7 @@ mod tests {
     struct Fake {
         jobs: Mutex<Vec<QueuedJob>>,
         sessions: Vec<SignedIn>,
+        sessions_unreadable: bool,
     }
 
     impl PrintSystem for Fake {
@@ -255,14 +298,23 @@ mod tests {
         }
 
         fn signed_in(&self) -> io::Result<Vec<SignedIn>> {
+            if self.sessions_unreadable {
+                return Err(io::Error::from(io::ErrorKind::PermissionDenied));
+            }
             Ok(self.sessions.clone())
         }
 
+        /// CONTOSO\jdoe and a local jdoe on this computer are different
+        /// accounts; a bare `jdoe` resolves to the local one, as Windows
+        /// resolves local accounts first.
         fn sid_of(&self, domain: &str, user: &str) -> io::Result<String> {
             match (domain, user) {
-                ("CONTOSO", "jdoe") => Ok("S-1-5-21-1-2-3-1001".into()),
-                ("", "jdoe") => Ok("S-1-5-21-9-9-9-1001".into()),
-                ("", "asmith" | "ASMITH") => Ok("S-1-5-21-1-2-3-1002".into()),
+                ("CONTOSO", "jdoe") | ("", "jdoe@contoso.com") => Ok("S-1-5-21-1-2-3-1001".into()),
+                ("", "jdoe") | ("WORKSTATION", "jdoe") => Ok("S-1-5-21-9-9-9-1001".into()),
+                ("WORKSTATION", "asmith" | "ASMITH") | ("", "asmith" | "ASMITH") => {
+                    Ok("S-1-5-21-9-9-9-1002".into())
+                }
+                ("AzureAD", "JohnDoe") => Ok("S-1-12-1-11-22-33-44".into()),
                 _ => Err(io::Error::from(io::ErrorKind::NotFound)),
             }
         }
@@ -288,16 +340,21 @@ mod tests {
             Fake {
                 jobs: Mutex::new(jobs),
                 sessions,
+                ..Fake::default()
             },
             quick(),
         )
     }
 
-    fn contoso_jdoe() -> SignedIn {
+    fn signed_in(domain: &str, user: &str) -> SignedIn {
         SignedIn {
-            domain: "CONTOSO".into(),
-            user: "jdoe".into(),
+            domain: domain.into(),
+            user: user.into(),
         }
+    }
+
+    fn contoso_jdoe() -> SignedIn {
+        signed_in("CONTOSO", "jdoe")
     }
 
     #[test]
@@ -307,7 +364,7 @@ mod tests {
                 job(7, "Rate confirmation", "jdoe"),
                 job(8, "Invoice", "asmith"),
             ],
-            vec![contoso_jdoe()],
+            vec![contoso_jdoe(), signed_in("WORKSTATION", "asmith")],
         );
         let owner = attributor
             .attribute("Rate confirmation", Some("jdoe"))
@@ -316,7 +373,71 @@ mod tests {
         assert_eq!(owner.account, "CONTOSO\\jdoe");
 
         let other = attributor.attribute("Invoice", None).expect("attributed");
-        assert_eq!(other.account, "asmith", "nobody signed in: the name alone");
+        assert_eq!(other.sid, "S-1-5-21-9-9-9-1002");
+        assert_eq!(other.account, "WORKSTATION\\asmith");
+    }
+
+    #[test]
+    fn an_entra_account_is_attributed_by_its_session() {
+        let attributor = attributor_over(
+            vec![job(7, "Rate confirmation", "JohnDoe")],
+            vec![signed_in("AzureAD", "JohnDoe")],
+        );
+        let owner = attributor
+            .attribute("Rate confirmation", None)
+            .expect("attributed");
+        assert_eq!(owner.sid, "S-1-12-1-11-22-33-44");
+        assert_eq!(owner.account, "AzureAD\\JohnDoe");
+    }
+
+    #[test]
+    fn another_form_of_a_signed_in_account_is_attributed_to_that_account() {
+        let attributor = attributor_over(
+            vec![job(7, "Rate confirmation", "jdoe@contoso.com")],
+            vec![signed_in("WORKSTATION", "asmith"), contoso_jdoe()],
+        );
+        let owner = attributor
+            .attribute("Rate confirmation", None)
+            .expect("attributed");
+        assert_eq!(owner.sid, "S-1-5-21-1-2-3-1001");
+        assert_eq!(owner.account, "CONTOSO\\jdoe");
+    }
+
+    #[test]
+    fn a_print_goes_only_to_an_account_that_is_signed_in() {
+        let local_namesake = attributor_over(
+            vec![job(7, "BOL", "jdoe")],
+            vec![signed_in("WORKSTATION", "asmith")],
+        );
+        assert!(matches!(
+            local_namesake.attribute("BOL", None),
+            Err(Refusal::NotAttributed(_))
+        ));
+
+        let nobody = attributor_over(vec![job(7, "BOL", "jdoe")], vec![]);
+        assert!(matches!(
+            nobody.attribute("BOL", None),
+            Err(Refusal::NotAttributed(_))
+        ));
+
+        let no_domain = attributor_over(vec![job(7, "BOL", "jdoe")], vec![signed_in("", "jdoe")]);
+        assert!(matches!(
+            no_domain.attribute("BOL", None),
+            Err(Refusal::NotAttributed(_))
+        ));
+
+        let unreadable = Attributor::new(
+            Fake {
+                jobs: Mutex::new(vec![job(7, "BOL", "jdoe")]),
+                sessions: vec![contoso_jdoe()],
+                sessions_unreadable: true,
+            },
+            quick(),
+        );
+        assert!(matches!(
+            unreadable.attribute("BOL", None),
+            Err(Refusal::Unavailable(_))
+        ));
     }
 
     #[test]
@@ -375,10 +496,13 @@ mod tests {
             .attribute(&full_name[..40], Some("CONTOSO\\jdoe"))
             .expect("prefix");
 
-        let lone = attributor_over(vec![job(5, "Microsoft Word - Document1", "jdoe")], vec![]);
+        let lone = attributor_over(
+            vec![job(5, "Microsoft Word - Document1", "jdoe")],
+            vec![contoso_jdoe()],
+        );
         assert_eq!(
             lone.attribute("Document1", None).expect("lone").account,
-            "jdoe"
+            "CONTOSO\\jdoe"
         );
 
         let two = attributor_over(vec![job(5, "A", "jdoe"), job(6, "B", "jdoe")], vec![]);
@@ -391,7 +515,10 @@ mod tests {
     #[test]
     fn a_job_that_reaches_the_queue_late_is_waited_for() {
         let attributor = Arc::new(Attributor::new(
-            Fake::default(),
+            Fake {
+                sessions: vec![signed_in("WORKSTATION", "asmith")],
+                ..Fake::default()
+            },
             Patience {
                 wait: Duration::from_secs(2),
                 poll: Duration::from_millis(5),
@@ -408,7 +535,7 @@ mod tests {
             .push(job(9, "Late", "asmith"));
         assert_eq!(
             handle.join().expect("joins").expect("found").account,
-            "asmith"
+            "WORKSTATION\\asmith"
         );
     }
 

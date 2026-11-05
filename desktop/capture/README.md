@@ -235,7 +235,10 @@ the console instead of as a service, for development. The printer listens on
 Only the print spooler may send a job or read one. The service asks Windows which process owns
 each loopback connection and compares it to the Spooler service's process; every print goes through
 `spoolsv.exe`, and the job's owner comes from its queue, so nothing else could say whose document
-it is. Any other local process, Windows' own device discovery included, may only read what the
+it is. The queue names the user without a domain, so the owner is the signed-in session with that
+name, as `DOMAIN\user`; a name no session carries is kept only when Windows resolves it to one of
+the signed-in accounts, so a print never lands with a same-named account nobody is signed in to.
+Any other local process, Windows' own device discovery included, may only read what the
 printer is. `installer/verify-install.ps1` checks all of this on a real install in CI.
 
 The service keeps its logs in `%ProgramData%\Trenova\Capture\logs\service.<date>.log`, and
