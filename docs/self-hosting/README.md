@@ -543,7 +543,7 @@ vision model that reads each page image. Put the `granite-docling-258M` weights 
 `docling_vlm_models` volume first (the internal network cannot download them), then set
 `documentConversion.doclingUrl: http://docling-gpu:5001` and
 `documentConversion.vlmEndpoint: http://docling-vlm:8000`. Only this profile lets
-docling-serve call another service, and both stay on the internal network.
+docling-serve call another service, and both stay on the internal `documents` network.
 
 ## Malware scanning
 
@@ -611,7 +611,10 @@ The stack is secure by default for a single-operator host: TLS everywhere, secre
 per install, no account with a default or published password, every backing service on an
 internal network, Gotenberg and docling-serve sandboxed, the imaging worker parsing every file
 in a child process under seccomp, landlock and resource limits and reached only over mutual
-TLS, and nothing published except Caddy. Beyond that:
+TLS, and nothing published except Caddy. Each service that parses files sits on a network of
+its own with the TMS processes, away from the databases, Temporal, GTC's dashboard and each
+other. Temporal, Gotenberg and GTC's dashboard take no credentials, so that separation is what
+guards them: don't attach anything else to their networks. Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that

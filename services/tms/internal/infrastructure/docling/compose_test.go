@@ -4,11 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 const PinnedImage = "ghcr.io/docling-project/docling-serve-cpu:v1.36.0" +
@@ -81,5 +83,90 @@ func TestRequiredAPIKeyInterpolationPattern(t *testing.T) {
 	assert.False(
 		t,
 		requiredAPIKeyInterpolation.MatchString("${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}"),
+	)
+}
+
+type selfHostCompose struct {
+	Services map[string]struct {
+		Networks []string `yaml:"networks"`
+	} `yaml:"services"`
+	Networks map[string]struct {
+		Internal bool `yaml:"internal"`
+	} `yaml:"networks"`
+}
+
+func loadSelfHostCompose(t *testing.T) selfHostCompose {
+	t.Helper()
+
+	file := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost", "compose.yml")
+	raw, err := os.ReadFile(file)
+	require.NoError(t, err)
+
+	var compose selfHostCompose
+	require.NoError(t, yaml.Unmarshal(raw, &compose))
+
+	return compose
+}
+
+func TestSelfHostParsersShareANetworkOnlyWithTheTMS(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+	parsers := map[string]string{
+		"gotenberg":   "render",
+		"docling":     "documents",
+		"docling-gpu": "documents",
+		"docling-vlm": "documents",
+		"imaging":     "imaging",
+		"clamav":      "scan",
+	}
+	allowed := map[string][]string{
+		"render":    {"gotenberg", "tms-api", "tms-worker"},
+		"documents": {"docling", "docling-gpu", "docling-vlm", "tms-worker"},
+		"imaging":   {"imaging", "tms-api", "tms-worker"},
+		"scan":      {"clamav", "tms-api", "tms-worker"},
+	}
+
+	for parser, network := range parsers {
+		assert.Contains(t, compose.Services[parser].Networks, network, parser)
+		assert.NotContains(t, compose.Services[parser].Networks, "data", parser)
+		assert.NotContains(t, compose.Services[parser].Networks, "edge", parser)
+	}
+
+	for network, members := range allowed {
+		assert.True(t, compose.Networks[network].Internal, "%s must have no route out", network)
+
+		for name, service := range compose.Services {
+			if slices.Contains(service.Networks, network) {
+				assert.Contains(t, members, name, "%s must not join %s", name, network)
+			}
+		}
+	}
+}
+
+func TestSelfHostUnauthenticatedServicesStayOnTheDataNetwork(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	assert.True(t, compose.Networks["data"].Internal)
+	assert.Equal(t, []string{"data"}, compose.Services["temporal"].Networks)
+	assert.Equal(t, []string{"data"}, compose.Services["gtc"].Networks)
+}
+
+func TestSelfHostTMSProcessesReachEveryServiceTheyCall(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	assert.Subset(
+		t,
+		compose.Services["tms-api"].Networks,
+		[]string{"data", "edge", "egress", "render", "imaging", "scan"},
+	)
+	assert.Subset(
+		t,
+		compose.Services["tms-worker"].Networks,
+		[]string{"data", "egress", "render", "documents", "imaging", "scan"},
 	)
 }
