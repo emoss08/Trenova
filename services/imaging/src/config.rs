@@ -71,6 +71,10 @@ pub struct PoolSettings {
     /// Children, one job each at a time. 0: one per CPU the process may use.
     #[serde(default)]
     pub size: usize,
+    /// Children kept started and unused on top of `size`, ready for a tenant
+    /// with no child of its own. Unset: as many as `size`.
+    #[serde(default)]
+    pub spare_children: Option<usize>,
     #[serde(default = "default_max_jobs")]
     pub max_jobs_per_child: u32,
     #[serde(default = "default_rss", deserialize_with = "bytes::deserialize")]
@@ -101,6 +105,7 @@ impl Default for PoolSettings {
     fn default() -> Self {
         Self {
             size: 0,
+            spare_children: None,
             max_jobs_per_child: default_max_jobs(),
             rss_high_water: default_rss(),
             address_space: default_address_space(),
@@ -284,6 +289,10 @@ impl Config {
         std::thread::available_parallelism().map_or(2, std::num::NonZero::get)
     }
 
+    pub fn spare_children(&self) -> usize {
+        self.pool.spare_children.unwrap_or_else(|| self.pool_size())
+    }
+
     pub fn admission(&self) -> AdmissionConfig {
         self.admission.clone().unwrap_or_else(|| {
             let size = self.pool_size() as u64;
@@ -317,6 +326,7 @@ impl Validate for Config {
             admission.validate("admission", v);
         }
         v.range(self.pool.size, 0..=256, "pool.size");
+        v.range(self.spare_children(), 0..=256, "pool.spare_children");
         v.range(
             self.pool.max_jobs_per_child,
             1..=100_000,

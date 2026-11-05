@@ -78,6 +78,9 @@ mod probes {
 }
 
 fn main() -> ExitCode {
+    if std::env::args().any(|arg| arg == "--slow-start") {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
     let Ok((mut child, policy, _)) = Child::start(1 << 20) else {
         return ExitCode::from(2);
     };

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +28,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const priorityKey = "x-trenova-priority"
+const (
+	priorityKey = "x-trenova-priority"
+	tenantKey   = "x-trenova-tenant"
+)
 
 type Params struct {
 	fx.In
@@ -131,6 +135,14 @@ func withPriority(ctx context.Context, priority kernelports.ImagingPriority) con
 	return metadata.AppendToOutgoingContext(ctx, priorityKey, value)
 }
 
+func withTenant(ctx context.Context) context.Context {
+	tenant, ok := dbscope.TenantFrom(ctx)
+	if !ok || !tenant.Valid() {
+		return ctx
+	}
+	return metadata.AppendToOutgoingContext(ctx, tenantKey, tenant.OrganizationID.String())
+}
+
 func (c *Client) call(
 	ctx context.Context,
 	deadline time.Duration,
@@ -140,7 +152,7 @@ func (c *Client) call(
 	parent := ctx
 	ctx, cancel := context.WithTimeout(ctx, deadline)
 	defer cancel()
-	ctx = withPriority(ctx, priority)
+	ctx = withTenant(withPriority(ctx, priority))
 
 	backoff := c.cfg.GetInitialBackoff()
 	tried := make(map[string]struct{}, c.cfg.GetMaxAttempts())

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -101,6 +102,7 @@ func (s *Service) ReadPages(
 	priority kernelports.ImagingPriority,
 	done func(i int),
 ) error {
+	ctx = dbscope.EnsureTenant(ctx, tenantInfo.DBTenant())
 	var unreadableMu sync.Mutex
 	unreadable := make(map[int]error)
 	_, err := s.imaging.InspectCapture(ctx, &kernelports.ImagingCaptureRequest{

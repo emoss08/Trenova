@@ -109,8 +109,9 @@ compiled to WASM (one module for both hosts, below); if it parses files nobody v
 **`trenova-sandbox`** runs untrusted-input parsing in disposable child processes of the
 service's own binary: framed IPC on the child's stdin socket with inputs as sealed memfds,
 no-new-privs, landlock, stacked seccomp filters, rlimits set between fork and exec, an empty
-environment, recycling by job count, RSS and CPU, deadline kills through a pidfd, and crash
-containment (one crash fails one job). It fails closed. Any service that parses files from
+environment, recycling by job count, RSS and CPU, one tenant per child with warm spares for the
+next tenant, deadline kills through a pidfd, and crash containment (one crash fails one job). It
+fails closed. Any service that parses files from
 outside, and the future code-mode sandbox, is built on it. Children are forked only from the
 pool's own long-lived spawner thread: their death signal fires when the forking *thread* exits,
 and a child forked from tokio's blocking pool was killed ten idle seconds later.

@@ -10,6 +10,14 @@
 //! a high-water mark, or as it nears its CPU limit, so leaks and
 //! fragmentation in the native libraries never accumulate.
 //!
+//! A child serves one tenant for its whole life, so whatever a job does to
+//! its process can reach no other tenant's job. Its first job binds it; only
+//! that tenant's jobs ever run on it again, and the tenant finds it warm. A
+//! job for a tenant with no free child takes a spare, one started ahead of
+//! need that has run nothing, and the least recently used bound child makes
+//! way, replaced off the job's path. A job with no tenant gets a child of its
+//! own, retired when it ends.
+//!
 //! The output of a job flows through a bounded channel, so a child that
 //! produces faster than the caller consumes simply waits: neither side holds
 //! more than a few frames.
@@ -59,6 +67,9 @@ pub struct Limits {
 #[derive(Clone, Debug)]
 pub struct PoolConfig {
     pub size: usize,
+    /// Children kept started and unused on top of `size`, so a job for a
+    /// tenant with no child of its own need not wait for one to start.
+    pub spare_children: usize,
     pub max_jobs_per_child: u32,
     pub rss_high_water_bytes: u64,
     pub limits: Limits,
@@ -88,6 +99,9 @@ pub struct Job {
     pub body: Vec<u8>,
     pub input: Option<SealedInput>,
     pub deadline: Instant,
+    /// Whose data the job holds. `None` runs it on a child that serves
+    /// nothing else.
+    pub tenant: Option<String>,
 }
 
 /// How a job ended when the child finished it.
@@ -137,6 +151,10 @@ enum RetireReason {
     Jobs,
     Rss,
     Cpu,
+    /// It made way for a child that can serve another tenant.
+    Tenant,
+    /// Its job named no tenant, so it may serve no other.
+    Unscoped,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
@@ -166,6 +184,8 @@ struct Worker {
     pidfd: Arc<OwnedFd>,
     channel: Channel,
     jobs: u32,
+    /// The one tenant this child may serve; `None` until its first job.
+    tenant: Option<String>,
 }
 
 impl std::fmt::Debug for Worker {
@@ -177,14 +197,41 @@ impl std::fmt::Debug for Worker {
     }
 }
 
+/// The children not running a job.
+#[derive(Debug, Default)]
+struct Idle {
+    /// Children that have run nothing, free to serve anyone.
+    fresh: Vec<Worker>,
+    /// Children bound to a tenant, the least recently used first.
+    bound: Vec<Worker>,
+}
+
+impl Idle {
+    /// A child that may run a job for `tenant`: the tenant's own, most
+    /// recently used first, or else one that has run nothing. Never a child
+    /// bound to anyone else.
+    fn take(&mut self, tenant: Option<&str>) -> Option<Worker> {
+        let own = tenant.and_then(|tenant| {
+            self.bound
+                .iter()
+                .rposition(|worker| worker.tenant.as_deref() == Some(tenant))
+        });
+        match own {
+            Some(position) => Some(self.bound.remove(position)),
+            None => self.fresh.pop(),
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Inner {
     config: PoolConfig,
     spec: ChildSpec,
     spawner: Spawner,
     slots: Arc<Semaphore>,
-    idle: Mutex<Vec<Worker>>,
+    idle: Mutex<Idle>,
     live: AtomicU64,
+    refilling: AtomicBool,
     closed: AtomicBool,
     metrics: Metrics,
 }
@@ -242,7 +289,8 @@ impl Drop for CancelOnDrop {
 }
 
 impl Pool {
-    /// Starts `config.size` children and waits until each has reported in.
+    /// Starts `config.size` children and the spares, and waits until each has
+    /// reported in.
     /// Fails, starting nothing, if any child cannot start or, when hardening
     /// is required, reports less than the policy.
     pub async fn start(
@@ -296,21 +344,23 @@ impl Pool {
             spec,
             spawner: Spawner::start()?,
             slots: Arc::new(Semaphore::new(size)),
-            idle: Mutex::new(Vec::with_capacity(size)),
+            idle: Mutex::new(Idle::default()),
             live: AtomicU64::new(0),
+            refilling: AtomicBool::new(false),
             closed: AtomicBool::new(false),
             metrics,
         });
 
-        let mut started = Vec::with_capacity(size);
-        for _ in 0..size {
+        let total = target(&inner);
+        let mut started = Vec::with_capacity(total);
+        for _ in 0..total {
             let inner = Arc::clone(&inner);
             started.push(tokio::task::spawn_blocking(move || spawn_worker(&inner)));
         }
         let mut failure = None;
         for handle in started {
             match handle.await {
-                Ok(Ok(worker)) => lock(&inner.idle).push(worker),
+                Ok(Ok(worker)) => lock(&inner.idle).fresh.push(worker),
                 Ok(Err(err)) => failure = failure.or(Some(err)),
                 Err(err) => failure = failure.or(Some(SandboxError::Spawn(err.to_string()))),
             }
@@ -323,8 +373,8 @@ impl Pool {
         Ok(pool)
     }
 
-    /// Runs a job on the next free child. Output frames are sent to
-    /// `outputs` as they arrive; the channel's bound is the backpressure.
+    /// Runs a job on a child that may serve its tenant. Output frames are sent
+    /// to `outputs` as they arrive; the channel's bound is the backpressure.
     /// Dropping the returned future stops the job.
     pub async fn run(&self, job: Job, outputs: mpsc::Sender<Vec<u8>>) -> Result<Outcome, JobError> {
         if self.inner.closed.load(Ordering::Acquire) {
@@ -338,17 +388,14 @@ impl Pool {
             return Err(JobError::DeadlineExceeded);
         }
 
-        let worker = take_idle(&self.inner);
-        let inner = Arc::clone(&self.inner);
-        let worker = if let Some(worker) = worker {
-            worker
-        } else {
-            let spawner = Arc::clone(&inner);
-            tokio::task::spawn_blocking(move || spawn_worker(&spawner))
-                .await
-                .map_err(|err| JobError::Spawn(err.to_string()))?
-                .map_err(|err| JobError::Spawn(err.to_string()))?
+        let started = match take_idle(&self.inner, job.tenant.as_deref()) {
+            Some(worker) => Ok(worker),
+            None => start_for_job(&self.inner).await,
         };
+        maintain(&self.inner, surplus(&self.inner));
+        let mut worker = started?;
+        worker.tenant.clone_from(&job.tenant);
+        let inner = Arc::clone(&self.inner);
 
         let control = Arc::new(Control {
             pidfd: Arc::clone(&worker.pidfd),
@@ -390,8 +437,12 @@ impl Pool {
                 }
             }
             let recycle = Arc::clone(&inner);
-            let _ = tokio::task::spawn_blocking(move || settle(&recycle, worker)).await;
+            let leaving = tokio::task::spawn_blocking(move || settle(&recycle, worker))
+                .await
+                .ok()
+                .flatten();
             drop(permit);
+            maintain(&inner, leaving.into_iter().collect());
             let _ = done_tx.send(result);
         });
 
@@ -420,10 +471,10 @@ impl Pool {
         self.inner.closed.store(true, Ordering::Release);
         let size = u32::try_from(self.inner.config.size).unwrap_or(u32::MAX);
         let all = Arc::clone(&self.inner.slots).acquire_many_owned(size).await;
-        let workers: Vec<Worker> = lock(&self.inner.idle).drain(..).collect();
+        let idle = std::mem::take(&mut *lock(&self.inner.idle));
         let inner = Arc::clone(&self.inner);
         let _ = tokio::task::spawn_blocking(move || {
-            for worker in workers {
+            for worker in idle.fresh.into_iter().chain(idle.bound) {
                 retire(&inner, worker);
             }
         })
@@ -532,12 +583,12 @@ fn reap(worker: &mut Worker) -> String {
     }
 }
 
-/// The next idle child still alive. One that died while it waited, which
-/// nothing in the pool does to it, is reaped and counted, and its slot is
-/// filled by the caller's spawn.
-fn take_idle(inner: &Inner) -> Option<Worker> {
+/// The next idle child still alive that may serve `tenant`. One that died
+/// while it waited, which nothing in the pool does to it, is reaped and
+/// counted, and its slot is filled by the caller's spawn.
+fn take_idle(inner: &Inner, tenant: Option<&str>) -> Option<Worker> {
     loop {
-        let mut worker = lock(&inner.idle).pop()?;
+        let mut worker = lock(&inner.idle).take(tenant)?;
         match worker.process.try_wait() {
             Ok(None) => return Some(worker),
             Ok(Some(status)) => {
@@ -606,40 +657,122 @@ impl Spawner {
     }
 }
 
-/// After a job: keep the worker, retire it, or replace a lost one.
-fn settle(inner: &Inner, worker: Option<Worker>) {
+/// After a job: keep the worker for its tenant, or say why it goes. A lost
+/// one is only counted; `maintain` starts what the pool is short of.
+fn settle(inner: &Inner, worker: Option<Worker>) -> Option<(Worker, RetireReason)> {
     let Some(worker) = worker else {
         inner.live.fetch_sub(1, Ordering::AcqRel);
         inner.metrics.live.dec();
-        replace(inner);
-        return;
+        return None;
     };
     if let Some(reason) = retirement(inner, &worker) {
-        inner
-            .metrics
-            .retired
-            .get_or_create(&RetireLabel { reason })
-            .inc();
-        retire(inner, worker);
-        replace(inner);
-    } else {
-        lock(&inner.idle).push(worker);
+        return Some((worker, reason));
     }
+    lock(&inner.idle).bound.push(worker);
+    None
 }
 
-fn replace(inner: &Inner) {
-    if inner.closed.load(Ordering::Acquire) {
+/// How many children the pool keeps: one for each slot, and the spares.
+fn target(inner: &Inner) -> usize {
+    inner.config.size.max(1) + inner.config.spare_children
+}
+
+fn live(inner: &Inner) -> usize {
+    usize::try_from(inner.live.load(Ordering::Acquire)).unwrap_or(usize::MAX)
+}
+
+fn short_of_children(inner: &Inner) -> bool {
+    !inner.closed.load(Ordering::Acquire) && live(inner) < target(inner)
+}
+
+/// The bound children that must go, the least recently used first: those
+/// running and those bound stay within the slots, so a tenant's warm child
+/// costs what a slot's child does, and the pool stays within its target.
+fn surplus(inner: &Inner) -> Vec<(Worker, RetireReason)> {
+    let slots = inner.config.size.max(1);
+    let running = slots.saturating_sub(inner.slots.available_permits());
+    let over_target = live(inner).saturating_sub(target(inner));
+    let mut idle = lock(&inner.idle);
+    let over_slots = (idle.bound.len() + running).saturating_sub(slots);
+    let count = over_slots.max(over_target).min(idle.bound.len());
+    idle.bound
+        .drain(..count)
+        .map(|worker| (worker, RetireReason::Tenant))
+        .collect()
+}
+
+/// Retires `leaving` and starts what the pool is short of, on a thread of its
+/// own, so neither a job nor its caller waits for a child to stop or start.
+fn maintain(inner: &Arc<Inner>, leaving: Vec<(Worker, RetireReason)>) {
+    if leaving.is_empty() && !short_of_children(inner) {
         return;
     }
-    match spawn_worker(inner) {
-        Ok(worker) => lock(&inner.idle).push(worker),
-        Err(err) => {
-            tracing::error!(error = %err, "could not replace a child; the next job will try again");
+    let inner = Arc::clone(inner);
+    drop(tokio::task::spawn_blocking(move || {
+        for (worker, reason) in leaving {
+            inner
+                .metrics
+                .retired
+                .get_or_create(&RetireLabel { reason })
+                .inc();
+            retire(&inner, worker);
+        }
+        refill(&inner);
+    }));
+}
+
+/// Starts children until the pool has its target, one at a time. A failure
+/// stops it until the next job asks again.
+fn refill(inner: &Inner) {
+    while !inner.refilling.swap(true, Ordering::AcqRel) {
+        let mut failed = false;
+        while short_of_children(inner) {
+            match spawn_worker(inner) {
+                Ok(worker) => keep_fresh(inner, worker),
+                Err(err) => {
+                    tracing::error!(error = %err, "could not replace a child; the next job will try again");
+                    failed = true;
+                    break;
+                }
+            }
+        }
+        inner.refilling.store(false, Ordering::Release);
+        if failed || !short_of_children(inner) {
+            return;
         }
     }
 }
 
+fn keep_fresh(inner: &Inner, worker: Worker) {
+    let mut idle = lock(&inner.idle);
+    if inner.closed.load(Ordering::Acquire) {
+        drop(idle);
+        retire(inner, worker);
+        return;
+    }
+    idle.fresh.push(worker);
+}
+
+/// Starts a child for a job that found none. If the job's caller goes away
+/// meanwhile, the child joins the spares rather than being lost.
+async fn start_for_job(inner: &Arc<Inner>) -> Result<Worker, JobError> {
+    let (ready, started) = oneshot::channel();
+    let spawner = Arc::clone(inner);
+    drop(tokio::task::spawn_blocking(move || {
+        let outcome = spawn_worker(&spawner).map_err(|err| JobError::Spawn(err.to_string()));
+        if let Err(Ok(worker)) = ready.send(outcome) {
+            keep_fresh(&spawner, worker);
+        }
+    }));
+    started
+        .await
+        .unwrap_or_else(|err| Err(JobError::Spawn(err.to_string())))
+}
+
 fn retirement(inner: &Inner, worker: &Worker) -> Option<RetireReason> {
+    if worker.tenant.is_none() {
+        return Some(RetireReason::Unscoped);
+    }
     if worker.jobs >= inner.config.max_jobs_per_child {
         return Some(RetireReason::Jobs);
     }
@@ -778,6 +911,7 @@ fn start_child(inner: &Inner) -> Result<Worker, SandboxError> {
         pidfd,
         channel: Channel::new(ours, inner.config.max_frame_bytes),
         jobs: 0,
+        tenant: None,
     };
     match handshake(inner, &mut worker) {
         Ok(()) => Ok(worker),
