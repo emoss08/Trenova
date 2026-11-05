@@ -88,7 +88,7 @@ jobs:
     name: Format, lint, test
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.96"
@@ -135,7 +135,7 @@ jobs:
     name: WebAssembly modules
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: "1.96"
@@ -147,7 +147,7 @@ jobs:
           key: wasm
       # The pinned binaryen release the build downloads and verifies; keyed on the shared
       # script, which holds the version and checksums.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: services/target/binaryen
           key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
@@ -183,7 +183,7 @@ jobs:
     name: Contracts (buf lint, breaking, generated Go)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-go
@@ -216,7 +216,7 @@ jobs:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@nightly
       - uses: Swatinem/rust-cache@v2
         with:
@@ -277,10 +277,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [check]
     steps:
-      - uses: actions/checkout@v5
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
       - name: Tests against the image's native libraries
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services
           file: deploy/Dockerfile.imaging
@@ -289,7 +289,7 @@ jobs:
           cache-from: type=gha,scope=imaging
           cache-to: type=gha,scope=imaging,mode=max
       - name: Runtime image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services
           file: deploy/Dockerfile.imaging

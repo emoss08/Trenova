@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -49,7 +49,7 @@ jobs:
           cache-key: assay
 
       - name: Restore previous index
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: /home/runner/.cache/assay
           key: assay-index-${{ runner.os }}-${{ github.sha }}
@@ -79,7 +79,7 @@ jobs:
             || echo "::warning::assay index did not complete cleanly; selection falls back to whole packages where records are missing"
 
       - name: Save index
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         if: always()
         with:
           path: /home/runner/.cache/assay

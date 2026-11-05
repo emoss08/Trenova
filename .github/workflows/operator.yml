@@ -53,7 +53,7 @@ jobs:
       run:
         working-directory: services/operator
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Go
         uses: ./.github/actions/setup-go
         with:
@@ -79,7 +79,7 @@ jobs:
     name: Chart
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install Helm and kubeconform
         run: |
           set -euo pipefail
@@ -104,12 +104,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build the operator image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/Dockerfile.operator
@@ -119,7 +119,7 @@ jobs:
           cache-from: type=gha,scope=operator
           cache-to: type=gha,scope=operator,mode=max
       - name: Build the control plane stub image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/Dockerfile.operator
@@ -128,7 +128,7 @@ jobs:
           tags: trenova-controlplane-stub:ci
           cache-from: type=gha,scope=operator
       - name: Build the TMS image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -137,7 +137,7 @@ jobs:
           tags: trenova-tms:ci
           cache-from: type=gha
       - name: Build the trenova-db image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -146,7 +146,7 @@ jobs:
           tags: trenova-tms-db:ci
           cache-from: type=gha
       - name: Build the imaging worker image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./services
           file: ./deploy/Dockerfile.imaging
@@ -155,7 +155,7 @@ jobs:
           tags: trenova-imaging:ci
           cache-from: type=gha,scope=imaging-runtime
       - name: Build the PostgreSQL image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./deploy
           file: ./deploy/Dockerfile.postgres
@@ -163,7 +163,7 @@ jobs:
           tags: trenova-postgres:18-ci
           cache-from: type=gha,scope=trenova-postgres
       - name: Build the client image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/Dockerfile.client

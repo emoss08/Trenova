@@ -56,7 +56,7 @@ jobs:
     name: Lint and validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Helm and kubeconform
         run: |
@@ -134,14 +134,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # Built from this commit: the chart and the images change together.
       - name: Build the TMS image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -150,7 +150,7 @@ jobs:
           tags: trenova-tms:ci
           cache-from: type=gha
       - name: Build the trenova-db image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -159,7 +159,7 @@ jobs:
           tags: trenova-tms-db:ci
           cache-from: type=gha
       - name: Build the imaging worker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./services
           file: ./deploy/Dockerfile.imaging
@@ -168,7 +168,7 @@ jobs:
           tags: trenova-imaging:ci
           cache-from: type=gha,scope=imaging-runtime
       - name: Build the PostgreSQL image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./deploy
           file: ./deploy/Dockerfile.postgres
@@ -176,7 +176,7 @@ jobs:
           tags: trenova-postgres:18-ci
           cache-from: type=gha,scope=trenova-postgres
       - name: Build the client image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./deploy/Dockerfile.client
