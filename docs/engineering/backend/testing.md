@@ -49,6 +49,14 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use
   `imaging/imagingfake`.
 
+## API chains
+
+A flow that crosses resolvers, routes and modules (create, assign, deliver, bill, post) gets an
+API chain: a YAML file in `internal/apichains/testdata/chains/` that runs against the whole API in
+process, GraphQL and REST in one session, with probes for an unauthenticated caller, a caller with
+no permissions and another tenant, compared with a reviewed golden file. A new client operation or
+route on such a flow extends its chain. See [api-chains.md](../api-chains.md).
+
 ## Fuzz tests
 
 - `//go:build fuzz`, in the package under test (`<name>_fuzz_test.go`), one `FuzzX` per
