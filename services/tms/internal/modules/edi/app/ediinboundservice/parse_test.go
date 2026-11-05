@@ -44,6 +44,32 @@ func TestParseAcknowledgments997(t *testing.T) {
 	require.Empty(t, ackErr)
 }
 
+func TestParseInterchangeKeepsEachTransactionsOwnInterchangeControlNumber(t *testing.T) {
+	t.Parallel()
+
+	envelope := func(control, group string) string {
+		return "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
+			"*260107*1200*^*00401*" + control + "*0*P*>~" +
+			"GS*FA*PARTNER*TRENOVA*20260107*1200*" + group + "*X*004010~" +
+			"ST*997*0001~" +
+			"AK1*SM*42~" +
+			"AK9*A*1*1*1~" +
+			"SE*4*0001~" +
+			"GE*1*" + group + "~" +
+			"IEA*1*" + control + "~"
+	}
+
+	interchange, err := parseTestInterchange(
+		t,
+		envelope("000000101", "101")+envelope("000000102", "102"),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, interchange.transactions, 2)
+	require.Equal(t, "000000101", interchange.transactions[0].interchangeControlNumber)
+	require.Equal(t, "000000102", interchange.transactions[1].interchangeControlNumber)
+}
+
 func TestAcknowledgmentResolution_AcceptedWithErrorsKeepsWhatThePartnerNoted(t *testing.T) {
 	t.Parallel()
 

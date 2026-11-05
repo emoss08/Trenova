@@ -35,25 +35,27 @@ type parsedInterchange struct {
 }
 
 type parsedGroup struct {
-	group               *x12.Group
-	functionalGroupID   string
-	controlNumber       string
-	applicationSender   string
-	applicationReceiver string
-	version             string
+	group                    *x12.Group
+	interchangeControlNumber string
+	functionalGroupID        string
+	controlNumber            string
+	applicationSender        string
+	applicationReceiver      string
+	version                  string
 }
 
 type parsedTransaction struct {
-	set                edidocument.TransactionSet
-	controlNumber      string
-	groupControlNumber string
-	functionalGroupID  string
-	segments           []edix12inspect.X12Segment
-	raw                string
-	version            string
-	group              int
-	status             x12.TransactionStatus
-	findings           []x12.Finding
+	set                      edidocument.TransactionSet
+	controlNumber            string
+	interchangeControlNumber string
+	groupControlNumber       string
+	functionalGroupID        string
+	segments                 []edix12inspect.X12Segment
+	raw                      string
+	version                  string
+	group                    int
+	status                   x12.TransactionStatus
+	findings                 []x12.Finding
 }
 
 func (t *parsedTransaction) rejected() bool {
