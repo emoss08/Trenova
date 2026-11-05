@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
@@ -140,6 +142,7 @@ func (v *Validator) ValidateClose(
 
 var (
 	errManualJournalBlockers = errors.New("read manual journal close blockers")
+	errReversalBlockers      = errors.New("read journal reversal close blockers")
 	errJournalSourceBlockers = errors.New("read journal source close blockers")
 )
 
@@ -148,7 +151,7 @@ func (v *Validator) validateAccountingCloseBlockers(
 	entity *fiscalperiod.FiscalPeriod,
 	multiErr *errortypes.MultiError,
 ) {
-	var pendingManualCount, pendingSourceCount int
+	var pendingManualCount, pendingReversalCount, pendingSourceCount int
 	err := dbtx.ReadErr(ctx, v.db, func(ctx context.Context) error {
 		db := v.db.Keel(ctx)
 		mjr := manualjournaldb.Requests
@@ -160,6 +163,20 @@ func (v *Validator) validateAccountingCloseBlockers(
 			return errManualJournalBlockers
 		}
 		pendingManualCount = int(manual)
+
+		jr := journalreversaldb.Reversals
+		reversals, err := jr.Where(
+			jr.ResolvedFiscalPeriodID.Eq(entity.ID),
+			jr.Status.In(
+				journalreversal.StatusRequested,
+				journalreversal.StatusPendingApproval,
+				journalreversal.StatusApproved,
+			),
+		).Count(ctx, db)
+		if err != nil {
+			return errReversalBlockers
+		}
+		pendingReversalCount = int(reversals)
 
 		js := journalsourcedb.Sources
 		sources, err := js.Where(
@@ -174,6 +191,13 @@ func (v *Validator) validateAccountingCloseBlockers(
 		return nil
 	})
 	switch {
+	case errors.Is(err, errReversalBlockers):
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrSystemError,
+			"Failed to validate journal reversal close blockers",
+		)
+		return
 	case errors.Is(err, errJournalSourceBlockers):
 		multiErr.Add(
 			"accounting",
@@ -196,6 +220,14 @@ func (v *Validator) validateAccountingCloseBlockers(
 			errortypes.ErrInvalidOperation,
 			"Cannot close fiscal period while {0} manual journal requests are pending posting or approval",
 			pendingManualCount,
+		)
+	}
+	if pendingReversalCount > 0 {
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrInvalidOperation,
+			"Cannot close fiscal period while {0} journal reversals are pending posting or approval",
+			pendingReversalCount,
 		)
 	}
 	if pendingSourceCount > 0 {
