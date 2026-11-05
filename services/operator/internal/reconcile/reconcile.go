@@ -227,16 +227,7 @@ func (l *Loop) converge(ctx context.Context) instanceapi.StatusReport {
 		v := deployed.AppVersion
 		report.Version = &v
 	}
-	stopped, _ := rendered.Values["stopped"].(bool)
-	hibernated := false
-	if pg, ok := rendered.Values["postgres"].(map[string]any); ok {
-		hibernated, _ = pg["hibernate"].(bool)
-	}
-	comps, err := l.health.Check(ctx, health.CheckParams{
-		HelmRevision: deployed.Revision,
-		Stopped:      stopped,
-		Hibernated:   hibernated,
-	})
+	comps, err := l.health.Check(ctx, healthParams(deployed.Revision, rendered.Values))
 	if err != nil {
 		return l.notReady(report, err.Error())
 	}
@@ -263,6 +254,15 @@ func (l *Loop) converge(ctx context.Context) instanceapi.StatusReport {
 		report.Message = &msg
 	}
 	return report
+}
+
+func healthParams(revision int, vals map[string]any) health.CheckParams {
+	stopped, _ := vals["stopped"].(bool)
+	hibernated := false
+	if pg, ok := vals["postgres"].(map[string]any); ok {
+		hibernated, _ = pg["hibernate"].(bool)
+	}
+	return health.CheckParams{HelmRevision: revision, Stopped: stopped, Hibernated: hibernated}
 }
 
 func (l *Loop) notReady(report instanceapi.StatusReport, msg string) instanceapi.StatusReport {
