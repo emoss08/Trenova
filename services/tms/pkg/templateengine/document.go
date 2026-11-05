@@ -68,7 +68,8 @@ func WrapDocument(req WrapRequest) string {
 	}
 
 	css := req.CSS
-	if templatesanitize.CSS("cssContent", css).HasErrors() {
+	if templatesanitize.CSS("cssContent", css, templatesanitize.RenderedDocumentOptions()).
+		HasErrors() {
 		css = ""
 	}
 

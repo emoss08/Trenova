@@ -222,7 +222,11 @@ func TestDocumentStartersHaveAStylesheet(t *testing.T) {
 		t.Run(string(starter.Kind), func(t *testing.T) {
 			assert.NotEmpty(t, starter.CSS)
 
-			cssDiags := templatesanitize.CSS("cssContent", starter.CSS)
+			cssDiags := templatesanitize.CSS(
+				"cssContent",
+				starter.CSS,
+				templatesanitize.RenderedDocumentOptions(),
+			)
 			assert.False(t, cssDiags.HasErrors(),
 				"%s stylesheet is not acceptable: %s", starter.Kind, cssDiags.Summary())
 		})
