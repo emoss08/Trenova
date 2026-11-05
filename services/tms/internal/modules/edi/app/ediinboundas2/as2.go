@@ -85,7 +85,7 @@ func (s *Service) receiveAS2Message(
 			"AS2-From and AS2-To headers are required",
 		)
 	}
-	if as2.IsMDNContentType(req.ContentType) {
+	if as2.IsMDN(req.ContentType, req.Body) {
 		if err := s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
 			ContentType: req.ContentType,
 			Body:        req.Body,

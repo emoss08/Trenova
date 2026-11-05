@@ -17,6 +17,7 @@ const (
 type ConfigFieldSpec = configspec.Field
 
 const (
+	WebhookTokenField         = "webhookToken"
 	WebhookSecretField        = "webhookSecret"
 	WebhookSigningSecretField = "webhookSigningSecret"
 )
@@ -62,7 +63,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				HelpText:  "Base64 signing secret from the Samsara webhook configuration, used to verify X-Samsara-Signature on inbound events.",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,
@@ -190,7 +191,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				HelpText:  "Svix signing secret from the Resend webhook endpoint.",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,
@@ -224,7 +225,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Placeholder: "outbound",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,

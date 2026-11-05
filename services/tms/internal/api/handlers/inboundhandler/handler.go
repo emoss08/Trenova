@@ -9,7 +9,6 @@ package inboundhandler
 
 import (
 	"errors"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -67,7 +66,7 @@ func WebhookPath(token string) string {
 }
 
 func (h *Handler) receive(c *gin.Context) {
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxInboundBodyBytes))
+	body, err := helpers.ReadBoundedRequestBody(c, maxInboundBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 

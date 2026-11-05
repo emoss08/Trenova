@@ -115,10 +115,6 @@ func (s *Service) refuseSelfApproval(
 	req *invoiceadjustmentports.ApproveInvoiceAdjustmentRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return nil
-	}
-
 	adjustment, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
@@ -126,7 +122,9 @@ func (s *Service) refuseSelfApproval(
 	if err != nil {
 		return err
 	}
-	if !adjustment.ApprovalRequired || adjustment.SubmittedByID != actor.UserID {
+	approverID := actor.UserIDOrNil()
+	if !adjustment.ApprovalRequired ||
+		(approverID.IsNotNil() && adjustment.SubmittedByID != approverID) {
 		return nil
 	}
 
@@ -139,6 +137,13 @@ func (s *Service) refuseSelfApproval(
 	}
 	if !control.RequireSeparateApprover {
 		return nil
+	}
+	if approverID.IsNil() {
+		return errortypes.NewValidationError(
+			"adjustmentId",
+			errortypes.ErrInvalidOperation,
+			"This adjustment needs a signed-in user to approve it",
+		)
 	}
 
 	return errortypes.NewValidationError(

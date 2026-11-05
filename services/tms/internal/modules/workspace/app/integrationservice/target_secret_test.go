@@ -1,6 +1,7 @@
 package integrationservice
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -146,4 +147,74 @@ func TestFuelFeedDropsTheUnusedCredentialWhenTheSFTPTargetChanges(t *testing.T) 
 	require.NoError(t, err)
 	assert.Empty(t, final[integration.ConfigKeyFuelPrivateKey])
 	assert.Equal(t, "sealed-new-password", final[integration.ConfigKeyFuelPassword])
+}
+
+func updateWebhookConfig(
+	t *testing.T,
+	repo *stubIntegrationRepo,
+	token string,
+) *integrationports.ConfigResponse {
+	t.Helper()
+
+	svc := New(Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		Encryption:   testEncryptionService(),
+		AuditService: &stubAuditService{},
+	})
+	resp, err := svc.UpdateConfig(
+		t.Context(),
+		pagination.TenantInfo{},
+		integration.TypeResend,
+		&integrationports.UpdateConfigRequest{
+			Configuration: map[string]string{
+				"apiKey":                      "re_test_key",
+				"baseUrl":                     "https://api.resend.com",
+				integration.WebhookTokenField: token,
+			},
+		},
+		"",
+	)
+	require.NoError(t, err)
+	return resp
+}
+
+func TestUpdateConfigIgnoresAWebhookTokenTheClientChose(t *testing.T) {
+	t.Parallel()
+
+	resp := updateWebhookConfig(
+		t,
+		&stubIntegrationRepo{getByTypeErr: errortypes.NewNotFoundError("integration not found")},
+		"another-tenants-token",
+	)
+
+	token := findConfigField(t, resp.Fields, integration.WebhookTokenField)
+	assert.NotEqual(t, "another-tenants-token", token.Value)
+	assert.True(t, strings.HasPrefix(token.Value, "resend_"))
+}
+
+func TestUpdateConfigKeepsTheStoredWebhookToken(t *testing.T) {
+	t.Parallel()
+
+	stored := &integration.Integration{
+		Type: integration.TypeResend,
+		Configuration: map[string]any{
+			"baseUrl":                     "https://api.resend.com",
+			integration.WebhookTokenField: "resend_stored",
+		},
+	}
+
+	for name, token := range map[string]string{"overwritten": "chosen", "omitted": ""} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resp := updateWebhookConfig(t, &stubIntegrationRepo{getByTypeResult: stored}, token)
+
+			assert.Equal(
+				t,
+				"resend_stored",
+				findConfigField(t, resp.Fields, integration.WebhookTokenField).Value,
+			)
+		})
+	}
 }

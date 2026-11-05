@@ -150,3 +150,49 @@ func TestGuardMemoPosterKeepsTheRaiserFromPostingWhenSeparationIsRequired(t *tes
 		tenantInfo,
 	))
 }
+
+func TestGuardMemoPosterRefusesAnActorWithNoUserWhenSeparationIsRequired(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	controls := tenantportsmock.NewMockInvoiceAdjustmentControlRepository(t)
+	controls.EXPECT().
+		GetByOrgID(mock.Anything, tenantInfo.OrgID).
+		Return(thresholdControl(500, true), nil).
+		Once()
+	svc := &Service{
+		adjustmentCtrlRepo: controls,
+		rec: invoiceaction.NewRecorder(
+			invoiceaction.RecorderParams{Logger: zap.NewNop()},
+		),
+	}
+
+	err := svc.guardMemoPoster(t.Context(), creditMemo(tenantInfo.OrgID, -750), nil, tenantInfo)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "needs a signed-in user to post it")
+}
+
+func TestGuardMemoPosterLetsAnActorWithNoUserPostWhatNeedsNoApproval(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	controls := tenantportsmock.NewMockInvoiceAdjustmentControlRepository(t)
+	controls.EXPECT().
+		GetByOrgID(mock.Anything, tenantInfo.OrgID).
+		Return(thresholdControl(500, true), nil).
+		Once()
+	svc := &Service{
+		adjustmentCtrlRepo: controls,
+		rec: invoiceaction.NewRecorder(
+			invoiceaction.RecorderParams{Logger: zap.NewNop()},
+		),
+	}
+
+	require.NoError(t, svc.guardMemoPoster(
+		t.Context(),
+		creditMemo(tenantInfo.OrgID, -100),
+		nil,
+		tenantInfo,
+	))
+}

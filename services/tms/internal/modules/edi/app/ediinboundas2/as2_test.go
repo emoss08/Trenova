@@ -12,6 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -610,4 +613,47 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 
 func ediServices() *ediservicetest.Services {
 	return ediservicetest.New(ediservicetest.Deps{Logger: zap.NewNop()})
+}
+
+func TestReceiveAS2MessageRoutesASignedMDNToReceiptHandling(t *testing.T) {
+	t.Parallel()
+
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+	mdn, err := as2.BuildMDN(&as2.BuildMDNOptions{
+		From:               "PARTNER-AS2",
+		To:                 "TRENOVA-AS2",
+		OriginalMessageID:  "<unknown@trenova.as2>",
+		ReceivedContentMIC: "q1w2e3r4, sha256",
+		SigningCertificate: partner.certificate,
+		SigningKey:         partner.key,
+	})
+	require.NoError(t, err)
+
+	messages := edimessageportsmock.NewMockEDIMessageRepository(t)
+	messages.EXPECT().
+		GetOutboundMessageByAS2MessageID(mock.Anything, "<unknown@trenova.as2>").
+		Return(nil, errortypes.NewNotFoundError("EDI message not found")).
+		Once()
+	service := &Service{
+		l:           zap.NewNop(),
+		profileRepo: edipartnerportsmock.NewMockEDICommunicationProfileRepository(t),
+		delivery: edidelivery.New(edidelivery.Params{
+			Logger:      zap.NewNop(),
+			MessageRepo: messages,
+			Metrics: &metrics.Registry{
+				EDI: documentmetrics.NewEDI(nil, zap.NewNop(), false),
+			},
+		}),
+	}
+
+	_, err = service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:        "PARTNER-AS2",
+		To:          "TRENOVA-AS2",
+		ContentType: mdn.ContentType,
+		Body:        mdn.Body,
+	})
+
+	require.Error(t, err)
+	require.True(t, errortypes.IsNotFoundError(err))
+	require.NotErrorIs(t, err, ErrAS2ProfileNotFound)
 }

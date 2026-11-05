@@ -212,6 +212,14 @@ func newWebhookToken(prefix string) (string, error) {
 	return prefix + hex.EncodeToString(tokenBytes[:]), nil
 }
 
+func serverWebhookToken(existing map[string]any, prefix string) (string, error) {
+	if token := integration.ReadConfigString(existing, integration.WebhookTokenField); token != "" {
+		return token, nil
+	}
+
+	return newWebhookToken(prefix)
+}
+
 func (s *Service) GetConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -281,9 +289,8 @@ func (s *Service) UpdateConfig(
 	if err != nil {
 		return nil, err
 	}
-	if prefix := webhookTokenPrefix(typ); prefix != "" &&
-		integration.ReadConfigString(finalConfig, "webhookToken") == "" {
-		finalConfig["webhookToken"], err = newWebhookToken(prefix)
+	if prefix := webhookTokenPrefix(typ); prefix != "" {
+		finalConfig[integration.WebhookTokenField], err = serverWebhookToken(existingConfig, prefix)
 		if err != nil {
 			return nil, errortypes.NewBusinessError("failed to generate webhook token").
 				WithInternal(err)

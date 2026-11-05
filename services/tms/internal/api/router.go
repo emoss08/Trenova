@@ -738,7 +738,7 @@ func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 
 func (r *Router) publicGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	public := rg.Group("")
-	public.Use(r.rateLimiter.ByClientIP())
+	public.Use(r.rateLimiter.ByClientIP(), middleware.NewPublicBodyLimit())
 	return public
 }
 
