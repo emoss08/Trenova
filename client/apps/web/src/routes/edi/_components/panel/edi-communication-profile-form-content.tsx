@@ -113,14 +113,19 @@ export function OverviewTab() {
   );
 }
 
-export function TransportTab() {
+export function TransportTab({ profile }: { profile: EDICommunicationProfileRow | null }) {
   const { control } = useFormContext<CommunicationProfileFormValues>();
   const method = useWatch({ control, name: "method" });
   const authMode = useWatch({ control, name: "config.authMode" });
 
   return (
     <div className="flex flex-col gap-6">
-      <TransportProfileFields control={control} method={method} authMode={authMode} />
+      <TransportProfileFields
+        control={control}
+        method={method}
+        authMode={authMode}
+        profile={profile}
+      />
     </div>
   );
 }

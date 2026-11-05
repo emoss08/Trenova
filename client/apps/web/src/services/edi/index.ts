@@ -91,6 +91,11 @@ export class EDIService {
     return safeParse(ediConnectionTestResultSchema, response, "EDIConnectionTestResult");
   }
 
+  public async rotateInboundUrl(profileId: string) {
+    const response = await api.post(`/edi/communication-profiles/${profileId}/rotate-inbound-url/`);
+    return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
+  }
+
   public async pollProfile(profileId: string) {
     const response = await api.post(`/edi/communication-profiles/${profileId}/poll/`);
     return safeParse(ediPollResultSchema, response, "EDIPollResult");

@@ -67,6 +67,7 @@ fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
   secretState {
     key
   }
+  as2InboundPath
   version
   createdAt
   updatedAt
