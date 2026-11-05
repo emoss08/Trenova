@@ -1287,7 +1287,7 @@ func (e *engine) getOrComputePermissions(
 		return result, nil
 	}
 
-	epoch, epochErr := e.cacheRepo.Epoch(ctx, orgID)
+	epoch, epochErr := e.cacheRepo.Epoch(ctx, userID, orgID)
 	if epochErr != nil {
 		e.l.Warn("failed to read the permission epoch, not caching", zap.Error(epochErr))
 	}

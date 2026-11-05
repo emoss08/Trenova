@@ -89,7 +89,7 @@ func (e *engine) agentRolePermissions(
 		return agentRoleOrNil(cached), nil
 	}
 
-	epoch, epochErr := e.cacheRepo.Epoch(ctx, req.OrganizationID)
+	epoch, epochErr := e.cacheRepo.Epoch(ctx, key.UserID, key.OrgID)
 	perms, err := e.computeAgentRolePermissions(ctx, req)
 	if err != nil {
 		return nil, err

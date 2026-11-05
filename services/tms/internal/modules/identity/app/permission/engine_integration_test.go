@@ -65,7 +65,10 @@ func (p *testPermCacheRepo) Get(
 	return &perms, nil
 }
 
-func (p *testPermCacheRepo) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+func (p *testPermCacheRepo) Epoch(
+	ctx context.Context,
+	_, orgID pulid.ID,
+) (int64, error) {
 	key := p.epochKey(orgID)
 	epoch, err := p.client.Get(ctx, key).Int64()
 	if err == nil {

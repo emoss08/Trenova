@@ -59,7 +59,9 @@ func setupTestEngine(
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
-	cacheRepo.On("Epoch", mock.Anything, mock.Anything).Return(testEpoch, nil).Maybe()
+	cacheRepo.On("Epoch", mock.Anything, mock.Anything, mock.Anything).
+		Return(testEpoch, nil).
+		Maybe()
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 

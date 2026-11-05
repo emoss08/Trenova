@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	permissionCachePrefix  = "perms:v5"
-	permissionEpochPrefix  = "perms:epoch"
-	grantFingerprintPrefix = 16
+	permissionCachePrefix     = "perms:v5"
+	permissionEpochPrefix     = "perms:epoch"
+	permissionUserEpochPrefix = "perms:user-epoch"
+	userEpochTTL              = 24 * time.Hour
+	grantFingerprintPrefix    = 16
 )
 
 type PermissionCacheRepositoryParams struct {
@@ -60,6 +62,7 @@ func (r *permissionCacheRepository) Get(
 	pipe := r.client.Pipeline()
 	entryCmd := pipe.HGet(ctx, r.getPermissionKey(key.UserID, key.OrgID), key.Variant)
 	epochCmd := pipe.Get(ctx, r.getEpochKey(key.OrgID))
+	userEpochCmd := pipe.Get(ctx, r.getUserEpochKey(key.UserID, key.OrgID))
 	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		log.Error("failed to get permissions from cache", zap.Error(err))
 		return nil, err
@@ -83,13 +86,19 @@ func (r *permissionCacheRepository) Get(
 		return nil, err
 	}
 
+	userEpoch, err := userEpochCmd.Int64()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		log.Error("failed to read the user's permission epoch", zap.Error(err))
+		return nil, err
+	}
+
 	perms := new(permissionports.CachedPermissions)
 	if err = sonic.Unmarshal(raw, perms); err != nil {
 		log.Error("failed to decode cached permissions", zap.Error(err))
 		return nil, err
 	}
 
-	if perms.Epoch != epoch {
+	if perms.Epoch != epoch+userEpoch {
 		return nil, nil //nolint:nilnil // an entry from an earlier epoch is stale
 	}
 
@@ -134,7 +143,12 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 		zap.String("orgID", orgID.String()),
 	)
 
-	if err := r.client.Del(ctx, r.getPermissionKey(userID, orgID)).Err(); err != nil {
+	userEpochKey := r.getUserEpochKey(userID, orgID)
+	pipe := r.client.TxPipeline()
+	pipe.Incr(ctx, userEpochKey)
+	pipe.Expire(ctx, userEpochKey, userEpochTTL)
+	pipe.Del(ctx, r.getPermissionKey(userID, orgID))
+	if _, err := pipe.Exec(ctx); err != nil {
 		log.Error("failed to delete permissions from cache", zap.Error(err))
 		return err
 	}
@@ -142,7 +156,33 @@ func (r *permissionCacheRepository) Delete(ctx context.Context, userID, orgID pu
 	return nil
 }
 
-func (r *permissionCacheRepository) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+func (r *permissionCacheRepository) Epoch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) (int64, error) {
+	organizationEpoch, err := r.organizationEpoch(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	userEpoch, err := r.client.Get(ctx, r.getUserEpochKey(userID, orgID)).Int64()
+	if err != nil && !errors.Is(err, redis.Nil) {
+		r.l.Error(
+			"failed to read the user's permission epoch",
+			zap.String("orgID", orgID.String()),
+			zap.String("userID", userID.String()),
+			zap.Error(err),
+		)
+		return 0, err
+	}
+
+	return organizationEpoch + userEpoch, nil
+}
+
+func (r *permissionCacheRepository) organizationEpoch(
+	ctx context.Context,
+	orgID pulid.ID,
+) (int64, error) {
 	key := r.getEpochKey(orgID)
 
 	epoch, err := r.client.Get(ctx, key).Int64()
@@ -193,4 +233,8 @@ func (r *permissionCacheRepository) getPermissionKey(userID, orgID pulid.ID) str
 
 func (r *permissionCacheRepository) getEpochKey(orgID pulid.ID) string {
 	return fmt.Sprintf("%s:%s", permissionEpochPrefix, orgID.String())
+}
+
+func (r *permissionCacheRepository) getUserEpochKey(userID, orgID pulid.ID) string {
+	return fmt.Sprintf("%s:%s:%s", permissionUserEpochPrefix, userID.String(), orgID.String())
 }

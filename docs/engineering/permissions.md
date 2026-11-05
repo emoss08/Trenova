@@ -630,7 +630,10 @@ Every change to who can do what calls `permissionports.PermissionChangeNotifier`
 - `OrganizationChanged` advances the organization's permission epoch, so every cached
   permission set computed before the change stops being served at once, and publishes
   `permissions`/`changed` to the tenant;
-- `UserChanged` drops one person's cached set and publishes the event to them alone.
+- `UserChanged` advances that person's own epoch, drops their cached set and publishes the
+  event to them alone. A cached set is served only while the organization and user epochs
+  it was computed under still add up to the current total, so a set computed before the
+  change and written after it is never served, and nobody else's cache is touched.
 
 The browser refetches its permission manifest on the event. The thirty-minute cache TTL
 and the five-minute client poll are only safety nets. Never delete permission keys by

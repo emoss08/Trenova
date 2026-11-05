@@ -40,7 +40,7 @@ type PermissionCacheRepository interface {
 		ttl time.Duration,
 	) error
 	Delete(ctx context.Context, userID, orgID pulid.ID) error
-	Epoch(ctx context.Context, orgID pulid.ID) (int64, error)
+	Epoch(ctx context.Context, userID, orgID pulid.ID) (int64, error)
 	InvalidateOrganization(ctx context.Context, orgID pulid.ID) error
 }
 
