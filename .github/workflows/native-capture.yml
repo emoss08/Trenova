@@ -246,6 +246,10 @@ jobs:
     name: Windows (build, tests, MSI)
     needs: prepare
     runs-on: windows-latest
+    # azure/login signs in to Trusted Signing with this job's OIDC token.
+    permissions:
+      contents: read
+      id-token: write
     env:
       RELEASE: ${{ needs.prepare.outputs.release }}
       VERSION: ${{ needs.prepare.outputs.version }}
