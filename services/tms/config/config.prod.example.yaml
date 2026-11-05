@@ -166,6 +166,16 @@ monitoring:
 
 # HTML-to-PDF rendering sidecar. Must be reachable only from this process:
 # internal network, no published port, never proxied.
+# Temporal must know this process: mutual TLS with a client certificate (below,
+# for a server with its own CA), temporal.apiKey (Temporal Cloud) or a profile.
+# Production refuses to start with none of them.
+temporal:
+  tls:
+    serverName: temporal
+    serverCACertPath: /certs/temporal/ca.pem
+    clientCertPath: /certs/temporal/client.pem
+    clientKeyPath: /certs/temporal/client-key.pem
+
 renderer:
   gotenbergUrl: http://gotenberg:3000
   gotenbergUsername: trenova # the password: TRENOVA_RENDERER_GOTENBERGPASSWORD

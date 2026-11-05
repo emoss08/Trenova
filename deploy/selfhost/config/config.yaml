@@ -245,8 +245,15 @@ logging:
   format: json
   output: stdout
 
+# Mutual TLS with the certificates temporal-certs issues in compose.yml.
 temporal:
   hostPort: temporal:7233
+  tls:
+    enabled: true
+    serverName: temporal
+    serverCACertPath: /certs/temporal/ca.pem
+    clientCertPath: /certs/temporal/client.pem
+    clientKeyPath: /certs/temporal/client-key.pem
   namespace: default
   identity: trenova-tms
   security:

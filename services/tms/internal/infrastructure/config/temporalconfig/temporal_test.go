@@ -120,6 +120,34 @@ func TestTemporalTLSConfig_IsEnabled(t *testing.T) {
 	)
 }
 
+func TestTemporalConfig_ProductionNeedsTheClientToAuthenticate(t *testing.T) {
+	t.Parallel()
+
+	refused := map[string]Config{
+		"nothing":          {HostPort: "temporal:7233"},
+		"server TLS only":  {HostPort: "temporal:7233", TLS: TLSConfig{Enabled: true, ServerCACertPath: "ca.pem"}},
+		"certificate only": {HostPort: "temporal:7233", TLS: TLSConfig{ClientCertPath: "client.pem"}},
+		"blank api key":    {HostPort: "temporal:7233", APIKey: "   "},
+	}
+	for name, cfg := range refused {
+		require.ErrorIs(t, cfg.ValidateProduction(), ErrProductionAuthenticationRequired, name)
+	}
+
+	accepted := map[string]Config{
+		"mutual TLS": {HostPort: "temporal:7233", TLS: TLSConfig{
+			Enabled:          true,
+			ServerCACertPath: "ca.pem",
+			ClientCertPath:   "client.pem",
+			ClientKeyPath:    "client-key.pem",
+		}},
+		"api key": {HostPort: "ns.acct.tmprl.cloud:7233", APIKey: "key"},
+		"profile": {Profile: "cloud"},
+	}
+	for name, cfg := range accepted {
+		require.NoError(t, cfg.ValidateProduction(), name)
+	}
+}
+
 func TestTemporalConfig_GetIdentity(t *testing.T) {
 	t.Parallel()
 

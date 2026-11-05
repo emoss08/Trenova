@@ -1,9 +1,16 @@
 package temporalconfig
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+)
+
+var ErrProductionAuthenticationRequired = errors.New(
+	"production and staging require the Temporal connection to authenticate: set " +
+		"temporal.tls.clientCertPath and temporal.tls.clientKeyPath (mutual TLS), " +
+		"temporal.apiKey, or a temporal.profile",
 )
 
 type Config struct {
@@ -38,6 +45,18 @@ func (c *Config) GetIdentity() string {
 
 func (c *Config) UsesProfile() bool {
 	return strings.TrimSpace(c.Profile) != ""
+}
+
+func (c *Config) ValidateProduction() error {
+	if c.UsesProfile() || strings.TrimSpace(c.APIKey) != "" {
+		return nil
+	}
+	if strings.TrimSpace(c.TLS.ClientCertPath) != "" &&
+		strings.TrimSpace(c.TLS.ClientKeyPath) != "" {
+		return nil
+	}
+
+	return ErrProductionAuthenticationRequired
 }
 
 type TLSConfig struct {

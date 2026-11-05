@@ -67,6 +67,14 @@ trenova
 {{- .Values.imaging.tls.existingClientSecret | default (printf "%s-imaging-client-tls" (include "trenova.fullname" .)) -}}
 {{- end -}}
 
+{{- define "trenova.temporalServerSecret" -}}
+{{- .Values.temporal.tls.existingServerSecret | default (printf "%s-temporal-server-tls" (include "trenova.fullname" .)) -}}
+{{- end -}}
+
+{{- define "trenova.temporalClientSecret" -}}
+{{- .Values.temporal.tls.existingClientSecret | default (printf "%s-temporal-client-tls" (include "trenova.fullname" .)) -}}
+{{- end -}}
+
 {{/* Labels. Call with (dict "root" $ "component" "api"). */}}
 
 {{- define "trenova.selectorLabels" -}}
@@ -236,14 +244,17 @@ role provisioning run as it (database.migrator), and nothing else needs it. */}}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_MIGRATOR_PASSWORD" "secret" (include "trenova.dbSecret" .) "key" "password") }}
 {{- end -}}
 
-{{/* What a TMS container mounts: the rendered config and the imaging client
-certificate. */}}
+{{/* What a TMS container mounts: the rendered config and the imaging and
+Temporal client certificates. */}}
 {{- define "trenova.tmsVolumeMounts" -}}
 - name: config
   mountPath: /app/config
   readOnly: true
 - name: imaging-client-tls
   mountPath: /certs/imaging
+  readOnly: true
+- name: temporal-client-tls
+  mountPath: /certs/temporal
   readOnly: true
 {{ include "trenova.postgresCaMount" . }}
 - name: tmp
@@ -257,6 +268,10 @@ certificate. */}}
 - name: imaging-client-tls
   secret:
     secretName: {{ include "trenova.imagingClientSecret" . }}
+    defaultMode: 0440
+- name: temporal-client-tls
+  secret:
+    secretName: {{ include "trenova.temporalClientSecret" . }}
     defaultMode: 0440
 {{ include "trenova.postgresCaVolume" . }}
 - name: tmp
@@ -309,6 +324,51 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
 then wait for the schema themselves. */}}
 {{- define "trenova.waitForTmsRole" -}}
 {{ include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.appRole "secret" (include "trenova.dbSecret" .) "key" "appPassword" "database" .Values.postgres.database "query" "SELECT 1" "why" "the application role (the release Job provisions it)") }}
+{{- end -}}
+
+{{/* Temporal's server TLS: mutual TLS on the frontend and between its
+services, with the server certificate as the client certificate of Temporal's
+own calls and of its CLI (auto-setup, the probes). The CLI names are given in
+both the current and the older spelling, as the CLI in the image reads one or
+the other. Call with (dict "dir" d "ca" f "cert" f "key" f "serverName" n). */}}
+{{- define "trenova.temporalServerTlsEnv" -}}
+{{- $ca := printf "%s/%s" .dir .ca -}}
+{{- $cert := printf "%s/%s" .dir .cert -}}
+{{- $key := printf "%s/%s" .dir .key -}}
+- name: TEMPORAL_TLS_REQUIRE_CLIENT_AUTH
+  value: "true"
+- name: TEMPORAL_TLS_SERVER_CA_CERT
+  value: {{ $ca }}
+- name: TEMPORAL_TLS_SERVER_CERT
+  value: {{ $cert }}
+- name: TEMPORAL_TLS_SERVER_KEY
+  value: {{ $key }}
+- name: TEMPORAL_TLS_INTERNODE_SERVER_NAME
+  value: {{ .serverName }}
+- name: TEMPORAL_TLS_FRONTEND_CERT
+  value: {{ $cert }}
+- name: TEMPORAL_TLS_FRONTEND_KEY
+  value: {{ $key }}
+- name: TEMPORAL_TLS_CLIENT1_CA_CERT
+  value: {{ $ca }}
+- name: TEMPORAL_TLS_CLIENT2_CA_CERT
+  value: {{ $ca }}
+- name: TEMPORAL_TLS_FRONTEND_SERVER_NAME
+  value: {{ .serverName }}
+- name: TEMPORAL_TLS_SERVER_NAME
+  value: {{ .serverName }}
+- name: TEMPORAL_TLS_SERVER_CA_CERT_PATH
+  value: {{ $ca }}
+- name: TEMPORAL_TLS_CLIENT_CERT_PATH
+  value: {{ $cert }}
+- name: TEMPORAL_TLS_CLIENT_KEY_PATH
+  value: {{ $key }}
+- name: TEMPORAL_TLS_CA
+  value: {{ $ca }}
+- name: TEMPORAL_TLS_CERT
+  value: {{ $cert }}
+- name: TEMPORAL_TLS_KEY
+  value: {{ $key }}
 {{- end -}}
 
 {{- define "trenova.dnsEgress" -}}

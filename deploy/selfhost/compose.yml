@@ -17,8 +17,8 @@
 #              internal, one for each service that parses input nobody vetted
 #              (Gotenberg, docling-serve, the imaging worker, ClamAV), shared
 #              only with the TMS processes that call it. None of them can reach
-#              Temporal, GTC's dashboard, the databases or each other: Temporal
-#              takes no credentials, so the network is its guard.
+#              Temporal, GTC's dashboard, the databases or each other: GTC's
+#              dashboard takes no credentials, so the network is its guard.
 #
 # Image versions come from .env: TRENOVA_VERSION for the TMS and client
 # images, TRENOVA_POSTGRES_VERSION for the database image (published only when
@@ -97,6 +97,7 @@ x-tms-service: &tms-service
   volumes:
     - ./config/config.yaml:/app/config/config.yaml:ro
     - imaging-client-tls:/certs/imaging:ro
+    - temporal-client-tls:/certs/temporal:ro
     - postgres-client-tls:/certs/postgres:ro
   security_opt:
     - "no-new-privileges:true"
@@ -278,11 +279,46 @@ services:
     logging: *logging
     networks: [data]
 
+  # Issues the private CA and the certificates the TMS and Temporal
+  # authenticate each other with, once, like imaging-certs. Temporal's server
+  # certificate also authenticates as a client, because Temporal's services call
+  # each other with it. Reissue with `docker compose run --rm temporal-certs
+  # certs --force --server-dir=/certs/server --client-dir=/certs/client
+  # --ca-dir=/certs/ca --server-name=temporal --server-client-auth
+  # --ca-name="Trenova Temporal CA"`.
+  temporal-certs:
+    image: ghcr.io/emoss08/trenova/imaging:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+    command:
+      - certs
+      - --server-dir=/certs/server
+      - --client-dir=/certs/client
+      - --ca-dir=/certs/ca
+      - --server-name=temporal
+      - --server-client-auth
+      - --ca-name=Trenova Temporal CA
+    user: "65532:65532"
+    volumes:
+      - temporal-server-tls:/certs/server
+      - temporal-client-tls:/certs/client
+      - temporal-ca:/certs/ca
+    read_only: true
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    restart: "no"
+    logging: *logging
+
   temporal:
     # Every AI feature runs here. auto-setup migrates its schema in the temporal
     # and temporal_visibility databases on start, as the role that owns them
     # (db-prepare makes both); the settings the agent runtime needs are in
-    # temporal/dynamicconfig.yaml.
+    # temporal/dynamicconfig.yaml. Its frontend and its services' calls to each
+    # other take only certificates temporal-certs issued: the TMS presents the
+    # client's, Temporal itself (and its CLI, for the health check) the
+    # server's. The CLI names are given in both the current and the older
+    # spelling, as the CLI in the image reads one or the other.
     image: temporalio/auto-setup:1.29.7@sha256:f14912b699cf73015ad5c4fc18d522d4b014db90e794039214dfb7c022c2644f
     environment:
       DB: postgres12
@@ -300,11 +336,32 @@ services:
       SQL_CA: /certs/postgres/ca.pem
       SQL_HOST_NAME: postgres
       DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/dynamic_config.yaml
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_TLS_REQUIRE_CLIENT_AUTH: "true"
+      TEMPORAL_TLS_SERVER_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_SERVER_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_SERVER_KEY: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_INTERNODE_SERVER_NAME: temporal
+      TEMPORAL_TLS_FRONTEND_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_FRONTEND_KEY: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_CLIENT1_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CLIENT2_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_FRONTEND_SERVER_NAME: temporal
+      TEMPORAL_TLS_SERVER_NAME: temporal
+      TEMPORAL_TLS_SERVER_CA_CERT_PATH: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CLIENT_CERT_PATH: /certs/temporal/server.pem
+      TEMPORAL_TLS_CLIENT_KEY_PATH: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_CA: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_KEY: /certs/temporal/server-key.pem
     volumes:
       - ./temporal/dynamicconfig.yaml:/etc/temporal/dynamic_config.yaml:ro
       - postgres-client-tls:/certs/postgres:ro
+      - temporal-server-tls:/certs/temporal:ro
     depends_on:
       db-prepare:
+        condition: service_completed_successfully
+      temporal-certs:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "temporal:7233"]
@@ -572,6 +629,10 @@ services:
     environment: *tms-migrator-environment
     depends_on:
       trenova-db:
+        condition: service_completed_successfully
+      imaging-certs:
+        condition: service_completed_successfully
+      temporal-certs:
         condition: service_completed_successfully
     restart: "no"
     networks: [data]
@@ -866,6 +927,9 @@ volumes:
   imaging-server-tls:
   imaging-client-tls:
   imaging-ca:
+  temporal-server-tls:
+  temporal-client-tls:
+  temporal-ca:
   postgres-server-tls:
   postgres-client-tls:
   postgres-ca:

@@ -54,6 +54,7 @@ itself are yours.
 | `docling` | `ghcr.io/docling-project/docling-serve-cpu` | Reads uploaded files for document extraction (PDFs, scans, photos, Office files, email), locked down and unreachable from outside |
 | `imaging` | `ghcr.io/emoss08/trenova/imaging` | Document thumbnails, page views, capture page inspection, PDF assembly and image normalization; every file is parsed in a hardened child process |
 | `imaging-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues the private CA and the certificates the TMS and the imaging worker authenticate each other with, once |
+| `temporal-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: the same for the TMS and Temporal |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 | `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
 
@@ -375,6 +376,13 @@ Maintenance commands connect as the owner, whose password the API no longer hold
 `encryption rewrap` and `db rls status` now run through `tms-bootstrap` (`--entrypoint trenova`),
 as shown here and under [Rotating the encryption key](#rotating-the-encryption-key).
 
+### Upgrading to a release with mutual TLS for Temporal
+
+Nothing to do but the usual pull and `docker compose up -d`: `temporal-certs` issues the
+certificates on the first start, Temporal then refuses any client without one, and the TMS
+presents its own. If you edited `config/config.yaml`, carry `temporal.tls` over from the new
+version: production refuses to start without a client certificate for Temporal.
+
 ### Upgrading to a release with Temporal and GTC roles
 
 Temporal and GTC no longer sign in as the database owner, a superuser. `.env` needs their
@@ -688,9 +696,10 @@ in a child process under seccomp, landlock and resource limits and reached only 
 TLS, and nothing published except Caddy. PostgreSQL serves a certificate issued for this
 install on first start (`postgres-certs`), and every client verifies it. Each service that
 parses files sits on a network of its own with the TMS processes, away from the databases,
-Temporal, GTC's dashboard and each other. Gotenberg takes a generated password. Temporal and
-GTC's dashboard take no credentials, so that separation is what guards them: don't attach
-anything else to their networks. Beyond that:
+Temporal, GTC's dashboard and each other. Gotenberg takes a generated password, and Temporal
+only certificates `temporal-certs` issued for this install. GTC's dashboard takes no
+credentials, so that separation is what guards it: don't attach anything else to its network.
+Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
@@ -767,7 +776,10 @@ hostname in `DOMAIN`, not by IP address or another alias.
 it starts; on a large database that takes a while. `docker compose logs db-bootstrap` shows
 the tables published to it.
 
-**The assistant or agents never answer.** `docker compose logs temporal tms-worker`. The
+**The assistant or agents never answer.** `docker compose logs temporal tms-worker`, and
+`temporal-certs` must have exited 0. A certificate error means the TMS and Temporal hold
+certificates from different runs: reissue with the command in the `temporal-certs` comment in
+`compose.yml`, then `docker compose up -d --force-recreate temporal tms-api tms-worker`. The
 worker runs every AI job; an AI provider must also be configured under **AI control** (`/admin/agent-control`).
 
 **PDFs fail to render.** `docker compose ps gotenberg` must be healthy. Templates cannot load

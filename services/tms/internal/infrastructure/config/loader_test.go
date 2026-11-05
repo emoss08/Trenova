@@ -1311,6 +1311,7 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, appconfig.EnvProduction, cfg.App.Env)
+	assert.Equal(t, "/certs/temporal/client.pem", cfg.Temporal.TLS.ClientCertPath)
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")

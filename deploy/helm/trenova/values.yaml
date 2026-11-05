@@ -434,6 +434,17 @@ temporal:
   resources:
     requests: { cpu: 250m, memory: 512Mi }
     limits: { memory: 1536Mi }
+  # Mutual TLS on Temporal's frontend and between its services. Empty, the
+  # chart issues a private CA and both certificates once, for validityDays,
+  # and keeps them across upgrades; delete the two Secrets and upgrade to
+  # reissue. Otherwise two Secrets you manage: the server's with tls.crt,
+  # tls.key and ca.crt for the service name <release>-trenova-temporal, its
+  # certificate usable for client authentication too (Temporal's services call
+  # each other with it), and the client's with tls.crt, tls.key and ca.crt.
+  tls:
+    existingServerSecret: ""
+    existingClientSecret: ""
+    validityDays: 3650
 
 # Renders organization-authored HTML to PDF, locked down: JavaScript off, no
 # network, read-only root. Rendering needs the generated gotenbergPassword.

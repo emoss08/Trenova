@@ -225,10 +225,13 @@ jobs:
         run: |
           set -euo pipefail
           before="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          ca_before="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"
           helm upgrade trenova "$CHART" -n trenova -f "$CHART/ci/install-values.yaml" \
             --wait --wait-for-jobs --timeout 15m
           after="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
           test "$before" = "$after" || { echo "::error::the upgrade replaced the encryption key"; exit 1; }
+          ca_after="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"
+          test -n "$ca_before" && test "$ca_before" = "$ca_after" || { echo "::error::the upgrade reissued Temporal's CA"; exit 1; }
           helm test trenova -n trenova --logs --timeout 5m
 
       - name: What the cluster looked like

@@ -250,6 +250,42 @@ func TestSelfHostTemporalAndGTCSignInAsTheirOwnRoles(t *testing.T) {
 	assert.Contains(t, bootstrap.DependsOn, "db-prepare")
 }
 
+func TestSelfHostTemporalTakesOnlyItsOwnCertificates(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	temporal := compose.Services["temporal"]
+	assert.Equal(t, "true", temporal.Env["TEMPORAL_TLS_REQUIRE_CLIENT_AUTH"])
+	assert.Equal(t, "/certs/temporal/ca.pem", temporal.Env["TEMPORAL_TLS_CLIENT1_CA_CERT"])
+	assert.Equal(t, "/certs/temporal/server.pem", temporal.Env["TEMPORAL_TLS_FRONTEND_CERT"])
+	assert.Equal(t, "/certs/temporal/server.pem", temporal.Env["TEMPORAL_TLS_SERVER_CERT"])
+	assert.Contains(t, temporal.DependsOn, "temporal-certs")
+
+	for name, service := range compose.Services {
+		for _, volume := range service.Volumes {
+			switch {
+			case strings.HasPrefix(volume, "temporal-ca:"):
+				assert.Equal(t, "temporal-certs", name)
+			case strings.HasPrefix(volume, "temporal-server-tls:"):
+				assert.Contains(t, []string{"temporal", "temporal-certs"}, name)
+			}
+		}
+	}
+
+	root := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost")
+	raw, err := os.ReadFile(filepath.Join(root, "compose.yml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), "- temporal-client-tls:/certs/temporal:ro")
+	assert.Contains(t, string(raw), "- --server-client-auth")
+
+	config, err := os.ReadFile(filepath.Join(root, "config", "config.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(config), "clientCertPath: /certs/temporal/client.pem")
+	assert.Contains(t, string(config), "clientKeyPath: /certs/temporal/client-key.pem")
+	assert.Contains(t, string(config), "serverCACertPath: /certs/temporal/ca.pem")
+}
+
 func TestSelfHostOwnerPasswordStaysWithTheOneShots(t *testing.T) {
 	t.Parallel()
 

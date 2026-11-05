@@ -41,6 +41,13 @@ enum Command {
         /// A DNS name the worker is reached by; repeat for several.
         #[arg(long = "server-name", default_value = "imaging")]
         server_names: Vec<String>,
+        /// The CA's common name.
+        #[arg(long, default_value = "Trenova imaging CA")]
+        ca_name: String,
+        /// Let the server certificate authenticate as a client too, for a
+        /// service whose nodes call each other with it (Temporal).
+        #[arg(long)]
+        server_client_auth: bool,
         #[arg(long, default_value_t = 5)]
         years: i32,
         /// Replace an existing set.
@@ -65,6 +72,8 @@ fn main() -> ExitCode {
             client_dir,
             ca_dir,
             server_names,
+            ca_name,
+            server_client_auth,
             years,
             force,
         } => trenova_imaging::certs::run(&trenova_imaging::certs::CertsRequest {
@@ -72,6 +81,8 @@ fn main() -> ExitCode {
             client_dir,
             ca_dir,
             server_names,
+            ca_name,
+            server_client_auth,
             years,
             force,
         }),

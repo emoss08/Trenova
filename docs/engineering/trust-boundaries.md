@@ -55,7 +55,8 @@ parameters, so what a person approved is what runs ([proposal-previews.md](propo
 | TMS to imaging worker | mutual TLS ([imaging-worker.md](imaging-worker.md)) |
 | Every client to PostgreSQL | `verify-full` against the install's CA: CloudNativePG's on Kubernetes, `postgres-certs` in Compose. No image carries a key |
 | TMS to Gotenberg | basic auth with a generated password on every route but `/health`, and the network: NetworkPolicies in the chart, a network of its own in Compose |
-| TMS to Temporal, GTC's dashboard | nothing but the network: NetworkPolicies in the chart, separate Docker networks in Compose. Neither takes a credential, so nothing that parses files may share a network with them |
+| TMS to Temporal | mutual TLS against a CA issued per install (the chart's Secrets, `temporal-certs` in Compose), on the frontend and between Temporal's services; production refuses a Temporal connection that presents no client certificate, API key or profile (`temporalconfig.ValidateProduction`) |
+| GTC's dashboard | nothing but the network: NetworkPolicies in the chart, the data network in Compose. It takes no credential, so nothing that parses files may share a network with it |
 
 A scanner driver is native code in the process that loads it, so what it returns crosses no
 boundary; parse it defensively anyway. A printed job comes from whoever printed, so `pwg.rs` checks

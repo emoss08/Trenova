@@ -391,6 +391,7 @@ func validateProductionSecurity(config *Config) error {
 		config.System.ValidateProduction,
 		config.Search.ValidateProduction,
 		config.Renderer.ValidateProduction,
+		config.Temporal.ValidateProduction,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {
