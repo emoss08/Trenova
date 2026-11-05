@@ -8,13 +8,13 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-var _ watchtowerports.WatchtowerProjector = (*NoopWatchtowerProjector)(nil)
+var _ watchtowerports.WatchtowerProjector = NoopWatchtowerProjector{}
 
 type NoopWatchtowerProjector struct{}
 
-func (*NoopWatchtowerProjector) Upsert(context.Context, watchtowerports.WatchtowerItemInput) {}
+func (NoopWatchtowerProjector) Upsert(context.Context, watchtowerports.WatchtowerItemInput) {}
 
-func (*NoopWatchtowerProjector) Resolve(
+func (NoopWatchtowerProjector) Resolve(
 	context.Context,
 	pagination.TenantInfo,
 	watchtower.SourceKind,

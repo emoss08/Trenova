@@ -154,17 +154,3 @@ func TestSubsetLabelsLoader_ReportsAFailedRead(t *testing.T) {
 		[]string{pulid.MustNew("shp_").String()}))
 	require.ErrorContains(t, err, "database is down")
 }
-
-// Without a labeler no record is named, and that is not an error: the
-// records are still listed, by their ids.
-func TestSubsetLabelsLoader_WithoutALabelerNamesNothing(t *testing.T) {
-	t.Parallel()
-
-	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_")}
-	loader := newSubsetLabelsLoader(newSubsetLabels(nil), tenant)
-
-	labels, err := loader.Load(t.Context(), SubsetLabelsKey(permission.ResourceShipment,
-		[]string{pulid.MustNew("shp_").String()}))
-	require.NoError(t, err)
-	assert.Empty(t, labels)
-}

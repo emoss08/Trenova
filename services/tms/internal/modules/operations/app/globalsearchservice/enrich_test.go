@@ -195,9 +195,10 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 	}
 
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		balances: &fakeBalances{},
+		views:    searchViews(),
+		logger:   zaptest.NewLogger(t),
+		config:   indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"customers": page(
 				map[string]any{"id": customerID.String(), "name": "Acme Foods", "code": "ACME"},
@@ -257,9 +258,10 @@ func TestSearchNamesNoShipmentWithoutShipmentAccess(t *testing.T) {
 	reader := &fakeCardReader{}
 
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		balances: &fakeBalances{},
+		views:    searchViews(),
+		logger:   zaptest.NewLogger(t),
+		config:   indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": page(
 				map[string]any{"id": workerID.String(), "first_name": "Leon", "last_name": "Park"},
@@ -349,9 +351,10 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 	}}
 
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		balances: &fakeBalances{},
+		views:    searchViews(),
+		logger:   zaptest.NewLogger(t),
+		config:   indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"documents": page(
 				map[string]any{
@@ -397,9 +400,10 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 
 func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		balances: &fakeBalances{},
+		views:    searchViews(),
+		logger:   zaptest.NewLogger(t),
+		config:   indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"workers": {
 				Documents: []map[string]any{
@@ -443,6 +447,7 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		balances:     &fakeBalances{},
 		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
@@ -470,6 +475,7 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 
 func TestSearchDoesNotBrowseEverythingOnABlankQuery(t *testing.T) {
 	svc := &Service{
+		balances:    &fakeBalances{},
 		views:       searchViews(),
 		logger:      zaptest.NewLogger(t),
 		config:      indexConfig(),

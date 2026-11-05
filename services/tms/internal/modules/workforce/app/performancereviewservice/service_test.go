@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -192,6 +193,7 @@ func newHarness(t *testing.T) *harness {
 		Repo:         repo,
 		WorkerRepo:   workerRepo,
 		AuditService: audit,
+		Realtime:     &mocks.NoopRealtimeService{},
 	})
 	return &harness{
 		svc:      svc,

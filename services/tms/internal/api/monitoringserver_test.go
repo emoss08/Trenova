@@ -228,15 +228,4 @@ func TestMonitoringServer_DatabaseCheckWithoutConnection(t *testing.T) {
 	assert.True(t, strings.Contains(check.Message, "database connection is not configured"))
 }
 
-func TestMonitoringServer_EDICheckWithoutRepositories(t *testing.T) {
-	t.Parallel()
-
-	server, _ := newTestMonitoringServer(t, true, nil)
-
-	check := server.ediCheck(t.Context())
-
-	assert.Equal(t, "unknown", check.Status)
-	assert.Contains(t, check.Message, "EDI monitoring is not configured")
-}
-
 var _ databaseHealth = (*fakeDBConnection)(nil)

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -71,6 +72,7 @@ func TestRecoveryCodeDigestsDependOnThePepper(t *testing.T) {
 	t.Parallel()
 
 	first, err := newService(&Params{
+		AppConfig: &appconfig.Config{},
 		SecurityConfig: &securityconfig.Config{
 			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "0123456789abcdef0123456789abcdef01"},
 		},
@@ -78,6 +80,7 @@ func TestRecoveryCodeDigestsDependOnThePepper(t *testing.T) {
 	})
 	require.NoError(t, err)
 	second, err := newService(&Params{
+		AppConfig: &appconfig.Config{},
 		SecurityConfig: &securityconfig.Config{
 			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "fedcba9876543210fedcba9876543210fe"},
 		},

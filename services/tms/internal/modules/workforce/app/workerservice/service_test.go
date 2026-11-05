@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -72,6 +73,7 @@ func setupTest(t *testing.T) *testDeps {
 
 	svc := &Service{
 		l:                         logger,
+		db:                        dbtest.NopConnection{},
 		repo:                      repo,
 		cacheRepo:                 cacheRepo,
 		validator:                 newTestValidator(),

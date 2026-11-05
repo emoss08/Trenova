@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -58,6 +60,9 @@ func newTestRateLimiter(
 			AppConfig: &cfg.App,
 		}),
 		Logger: zap.NewNop(),
+		Metrics: &metrics.Registry{
+			RateLimit: httpmetrics.NewRateLimit(nil, zap.NewNop(), false),
+		},
 	})
 }
 

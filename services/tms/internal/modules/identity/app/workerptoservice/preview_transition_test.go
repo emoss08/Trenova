@@ -60,7 +60,8 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		Return(&worker.Worker{ID: current.WorkerID, PhoneNumber: "+15555550100"}, nil)
 
 	svc := &Service{
-		l: zap.NewNop(),
+		ledger: untrackedLedger(),
+		l:      zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
@@ -121,7 +122,8 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 
 	current := storedPTO(worker.PTOStatusApproved)
 	svc := &Service{
-		l: zap.NewNop(),
+		ledger: untrackedLedger(),
+		l:      zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				return current, nil

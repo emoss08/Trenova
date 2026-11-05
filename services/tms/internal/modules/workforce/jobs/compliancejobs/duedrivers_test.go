@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -143,7 +144,7 @@ func TestRaiseDueDrivers_SeparateDriversAreSeparateSubjects(t *testing.T) {
 	state.recordDueDriver(credentialOf(second, "CDL", 30), tenantInfo, 30)
 
 	publisher := &recordingPublisher{}
-	activities := &Activities{logger: zap.NewNop(), publisher: publisher}
+	activities := &Activities{watchtower: mocks.NoopWatchtowerProjector{}, logger: zap.NewNop(), publisher: publisher}
 	activities.raiseDueDrivers(t.Context(), state)
 
 	require.Len(t, publisher.events, 2)

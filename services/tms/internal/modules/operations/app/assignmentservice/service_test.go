@@ -162,9 +162,12 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -207,9 +210,12 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -265,9 +271,12 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     holdRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -388,9 +397,12 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		trailerRepo:         trailerRepo,
 		locationRepo:        locationRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -583,9 +595,12 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		dispatchControlRepo: dispatchControlRepo,
 		continuityRepo:      continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -698,9 +713,12 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -770,9 +788,12 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		shipmentRepo: shipmentRepo,
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -814,9 +835,12 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -1046,9 +1070,12 @@ func newAssignToMoveService(
 		holdRepo:     holdRepo,
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -1107,28 +1134,4 @@ func TestAssignToMove_TenderWithdrawFailureDoesNotFailAssignment(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, entity)
 	require.Len(t, guard.moveIDs, 1)
-}
-
-func TestAssignToMove_WithoutTenderGuardIsNoOp(t *testing.T) {
-	t.Parallel()
-
-	moveID := pulid.MustNew("sm_")
-	shipmentID := pulid.MustNew("shp_")
-	tenantInfo := pagination.TenantInfo{
-		OrgID: pulid.MustNew("org_"),
-		BuID:  pulid.MustNew("bu_"),
-	}
-
-	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, nil)
-
-	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
-		TenantInfo:      tenantInfo,
-		ShipmentMoveID:  moveID,
-		PrimaryWorkerID: pulid.MustNew("wrk_"),
-		TractorID:       pulid.MustNew("trac_"),
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, entity)
-	assert.Nil(t, svc.tenderGuard)
 }

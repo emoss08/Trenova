@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -411,6 +412,7 @@ func newHarness(t *testing.T) *harness {
 		TrackingEvents:      h.tracking,
 		Templates:           h.templates,
 		EmailService:        h.email,
+		AuditService:        &mocks.NoopAuditService{},
 		Observers:           []checkcallports.CheckCallObserver{h.observer},
 	})
 	h.svc.now = func() int64 { return testNow }

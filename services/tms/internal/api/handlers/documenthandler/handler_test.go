@@ -566,6 +566,7 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
 				BusinessUnitID: testutil.TestBuID,
@@ -654,8 +655,9 @@ func TestDocumentHandler_Download_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/file.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/file.pdf",
 			}, nil
 		})
 
@@ -687,6 +689,7 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType: "trailer",
 				ID:           req.ID,
 				FileName:     "view.pdf",
 				OriginalName: "view.pdf",
@@ -773,8 +776,9 @@ func TestDocumentHandler_View_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/file.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/file.pdf",
 			}, nil
 		})
 
@@ -806,6 +810,7 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				FileName:           "preview.pdf",
 				OriginalName:       "preview.pdf",
@@ -846,6 +851,7 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 
 func previewDocument(id pulid.ID) *document.Document {
 	return &document.Document{
+		ResourceType:       "trailer",
 		ID:                 id,
 		FileName:           "preview.pdf",
 		OriginalName:       "preview.pdf",
@@ -924,6 +930,7 @@ func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
 				PreviewStoragePath: "",
@@ -1007,6 +1014,7 @@ func pageImageRepo(
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				FileName:       "ratecon.png",
 				OriginalName:   "ratecon.png",
@@ -1572,6 +1580,7 @@ func TestDocumentHandler_Delete_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
 				BusinessUnitID: testutil.TestBuID,
@@ -1643,8 +1652,9 @@ func TestDocumentHandler_Delete_RepoError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/test.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/test.pdf",
 			}, nil
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(errService)
@@ -1676,6 +1686,7 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
+					ResourceType:   "trailer",
 					ID:             id,
 					OrganizationID: testutil.TestOrgID,
 					BusinessUnitID: testutil.TestBuID,
@@ -1927,6 +1938,7 @@ func TestDocumentHandler_Delete_WithPreviewPath(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				OrganizationID:     testutil.TestOrgID,
 				BusinessUnitID:     testutil.TestBuID,
@@ -1969,6 +1981,7 @@ func TestDocumentHandler_Preview_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
 				PreviewStoragePath: "org/trailer/thumb.webp",
@@ -2033,8 +2046,9 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
-					ID:          id,
-					StoragePath: "org/trailer/" + id.String() + ".pdf",
+					ResourceType: "trailer",
+					ID:           id,
+					StoragePath:  "org/trailer/" + id.String() + ".pdf",
 				})
 			}
 			return docs, nil

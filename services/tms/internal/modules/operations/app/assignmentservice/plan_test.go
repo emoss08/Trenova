@@ -121,9 +121,12 @@ func previewAssignmentServiceWith(
 		Once()
 	svc.controlRepo = controlRepo
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+		Hydrator:           ratingtest.NoHydration{},
+		BillingControlRepo: ratingtest.NoBillingControl{},
+		Logger:             zap.NewNop(),
+		RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+		AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 	svc.shipmentValidator = newTestShipmentValidator(t)
 

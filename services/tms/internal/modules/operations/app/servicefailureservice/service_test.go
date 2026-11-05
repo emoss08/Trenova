@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
@@ -246,6 +247,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
+		watchtower:     mocks.NoopWatchtowerProjector{},
 		l:              zap.NewNop(),
 		repo:           repo,
 		reasonCodeRepo: reasonRepo,
@@ -358,6 +360,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	svc := &service{
+		watchtower:     mocks.NoopWatchtowerProjector{},
 		l:              zap.NewNop(),
 		repo:           repo,
 		reasonCodeRepo: reasonRepo,
@@ -437,6 +440,7 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	svc := &service{
+		watchtower:   mocks.NoopWatchtowerProjector{},
 		l:            zap.NewNop(),
 		shipmentRepo: shipmentRepo,
 		dispatchRepo: dispatchRepo,
@@ -509,6 +513,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
+		watchtower:   mocks.NoopWatchtowerProjector{},
 		l:            zap.NewNop(),
 		repo:         repo,
 		auditService: audit,
@@ -562,7 +567,7 @@ func TestTransitionShipmentToDelayedUsesMarker(t *testing.T) {
 	updated := *source
 	updated.Status = shipmentvocab.StatusDelayed
 	marker := &fakeDelayedShipmentMarker{updated: &updated}
-	svc := &service{l: zap.NewNop(), delayedMarker: marker}
+	svc := &service{watchtower: mocks.NoopWatchtowerProjector{}, l: zap.NewNop(), delayedMarker: marker}
 	failure := &servicefailure.ServiceFailure{ID: pulid.MustNew("sf_")}
 
 	svc.transitionShipmentToDelayed(t.Context(), source, nil, failure)
@@ -578,7 +583,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 
 	failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
 	ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
-	svc := &service{l: zap.NewNop(), ediService: ediSvc}
+	svc := &service{watchtower: mocks.NoopWatchtowerProjector{}, l: zap.NewNop(), ediService: ediSvc}
 
 	ediSvc.EXPECT().
 		PreviewServiceFailure214ForLifecycle(mock.Anything, mock.AnythingOfType("*ediports.ServiceFailure214LifecycleRequest")).
@@ -628,7 +633,7 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
 			ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
-			svc := &service{l: zap.NewNop(), ediService: ediSvc}
+			svc := &service{watchtower: mocks.NoopWatchtowerProjector{}, l: zap.NewNop(), ediService: ediSvc}
 			ediSvc.EXPECT().
 				PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
 				Return(tt.result, nil).
@@ -673,6 +678,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 			audit := auditportsmock.NewMockAuditService(t)
 			comments := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 			svc := &service{
+				watchtower:     mocks.NoopWatchtowerProjector{},
 				l:              zap.NewNop(),
 				ediService:     ediSvc,
 				auditService:   audit,

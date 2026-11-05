@@ -14,12 +14,19 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap"
 )
+
+type drainOnlyGateway struct {
+	realtimeports.RealtimeGateway
+}
+
+func (drainOnlyGateway) Drain() {}
 
 func TestNewServer_UsesConfiguredHTTPTimeouts(t *testing.T) {
 	t.Parallel()
@@ -42,6 +49,7 @@ func TestNewServer_UsesConfiguredHTTPTimeouts(t *testing.T) {
 		ServerConfig: &cfg.Server,
 		Logger:       zap.NewNop(),
 		LC:           fxtest.NewLifecycle(t),
+		Realtime:     drainOnlyGateway{},
 	})
 	require.NoError(t, err)
 

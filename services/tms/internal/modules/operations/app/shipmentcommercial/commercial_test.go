@@ -54,7 +54,7 @@ func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
@@ -106,7 +106,7 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
@@ -158,7 +158,7 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 		}, nil).
 		Twice()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
@@ -219,7 +219,7 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
@@ -270,7 +270,7 @@ func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T)
 
 	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialRepo,
@@ -307,7 +307,7 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -356,7 +356,7 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -395,7 +395,7 @@ func TestCalculateTotals_LockedFuelSurchargeIsPreserved(t *testing.T) {
 
 	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -434,7 +434,7 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -496,7 +496,7 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -553,7 +553,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 		Return(nil, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
@@ -603,7 +603,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 		}, nil).
 		Once()
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:          zap.NewNop(),
 		RateEngine:      rateEngine,
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),

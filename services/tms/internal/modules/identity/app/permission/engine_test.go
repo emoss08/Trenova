@@ -78,6 +78,7 @@ func setupTestEngine(
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
 		iamRepo:       noPolicies,
+		agentGrants:   &fakeAgentGrants{},
 		settings:      &stubAccessSettings{},
 		registry:      permissioncatalog.NewRegistry(),
 		routeRegistry: routeaccess.NewRouteRegistry(),

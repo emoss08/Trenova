@@ -343,9 +343,12 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewEngine(t),
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+		Hydrator:           ratingtest.NoHydration{},
+		BillingControlRepo: ratingtest.NoBillingControl{},
+		Logger:             zap.NewNop(),
+		RateEngine:         ratingtest.NewEngine(t),
+		AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
 	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{
@@ -577,9 +580,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+		Hydrator:           ratingtest.NoHydration{},
+		BillingControlRepo: ratingtest.NoBillingControl{},
+		Logger:             zap.NewNop(),
+		RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+		AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
 	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{
@@ -629,9 +635,12 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewEngine(t),
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+		Hydrator:           ratingtest.NoHydration{},
+		BillingControlRepo: ratingtest.NoBillingControl{},
+		Logger:             zap.NewNop(),
+		RateEngine:         ratingtest.NewEngine(t),
+		AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
 	result, err := deps.svc.Locate(t.Context(), &trailerports.LocateTrailerRequest{

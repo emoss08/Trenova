@@ -235,9 +235,11 @@ func newHarness(t *testing.T) *harness {
 		Encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
-		Auditor:   auditor,
-		AppConfig: &appconfig.Config{Name: "Trenova"},
-		Logger:    zap.NewNop(),
+		Auditor:    auditor,
+		AppConfig:  &appconfig.Config{Name: "Trenova"},
+		Logger:     zap.NewNop(),
+		Throttle:   sessiontest.OpenThrottle{},
+		AuthEvents: &recordingAuthEvents{},
 		Accounts: accountguard.New(accountguard.Params{
 			Users:       users,
 			Permissions: held,

@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateengine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -20,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -63,6 +68,35 @@ func (NoHydration) HydrateShipments(
 	*ratequoteports.HydrateShipmentsRequest,
 ) error {
 	return nil
+}
+
+type NoBillingControl struct {
+	tenantports.BillingControlRepository
+}
+
+func (NoBillingControl) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*billingcontrol.BillingControl, error) {
+	return nil, errortypes.NewNotFoundError("Billing control not found")
+}
+
+type NoFuelSurcharge struct {
+	fuelsurchargeports.FuelSurchargeResolver
+}
+
+func (NoFuelSurcharge) ResolveShipmentCharge(
+	context.Context,
+	*fuelsurchargeports.ResolveShipmentChargeRequest,
+) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
+	return nil, nil //nolint:nilnil // nil is the resolver's answer when no program applies
+}
+
+func (NoFuelSurcharge) FuelChargeIDs(
+	context.Context,
+	pagination.TenantInfo,
+) ([]pulid.ID, error) {
+	return nil, nil
 }
 
 type noModeProfile struct {

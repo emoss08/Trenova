@@ -125,7 +125,7 @@ func TestStudioExplain_PassesTheDraftInputsAndShipment(t *testing.T) {
 	assert.Len(t, items, 1)
 }
 
-func TestStudioExplain_RefusesAnEmptySourceAndAMissingAssistant(t *testing.T) {
+func TestStudioExplain_RefusesAnEmptySource(t *testing.T) {
 	t.Parallel()
 
 	studio := &recordingStudio{}
@@ -135,12 +135,6 @@ func TestStudioExplain_RefusesAnEmptySourceAndAMissingAssistant(t *testing.T) {
 	})
 	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), http.StatusBadRequest)
 	assert.Empty(t, studio.explained)
-
-	missing := newStudioFixture(t, authorGrants(), nil)
-	ginCtx = missing.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain", map[string]any{
-		"source": perMileSource,
-	})
-	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), http.StatusBadRequest)
 }
 
 func TestStudioRoutes_NeedTheAssistant(t *testing.T) {

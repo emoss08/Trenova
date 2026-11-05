@@ -134,7 +134,7 @@ func (f *relationFixture) calculator(
 		Hydrator:  hydrator,
 	})
 
-	calculator := New(Params{
+	calculator := newCalculator(t, Params{
 		Logger:     zap.NewNop(),
 		RateEngine: stack.Engine,
 		Hydrator:   hydrator,

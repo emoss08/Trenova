@@ -109,7 +109,7 @@ func TestOnShipmentEvent_WakesTriageOnlyWhenTheShipmentFirstDelivers(t *testing.
 	}
 }
 
-func TestOnShipmentEvent_IgnoresOtherEventsAndAMissingSink(t *testing.T) {
+func TestOnShipmentEvent_IgnoresOtherEvents(t *testing.T) {
 	t.Parallel()
 
 	sink := &recordingSink{}
@@ -117,9 +117,6 @@ func TestOnShipmentEvent_IgnoresOtherEventsAndAMissingSink(t *testing.T) {
 	event.Type = shipmentevent.TypeMoveArrived
 	require.NoError(t, (&Relay{sink: sink}).OnShipmentEvent(t.Context(), event))
 	assert.Empty(t, sink.delivered)
-
-	require.NoError(t, (&Relay{}).OnShipmentEvent(t.Context(),
-		statusEvent(shipmentvocab.StatusInTransit, shipmentvocab.StatusCompleted)))
 }
 
 func TestAfterMoveStatusChange_WakesWhenTheLastMoveDeliversTheShipment(t *testing.T) {

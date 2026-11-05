@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -231,8 +232,10 @@ func setupOrganizationHandler(
 		Storage:        storageClient,
 		SecurityConfig: &cfg.Security,
 		StorageConfig:  &cfg.Storage,
-		Validator:      organizationservice.NewValidator(organizationservice.ValidatorParams{}),
-		AuditService:   &mocks.NoopAuditService{},
+		Validator: organizationservice.NewValidator(
+			organizationservice.ValidatorParams{DB: pgstubtest.NewConnection(t)},
+		),
+		AuditService: &mocks.NoopAuditService{},
 	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{

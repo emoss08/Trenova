@@ -10,11 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -89,11 +91,17 @@ func TestBuildNoticeSendsWithoutAPDFWhenTheDocumentRenderFails(t *testing.T) {
 		Return(nil, errors.New("the renderer is unavailable")).
 		Once()
 
+	organizations := tenantportsmock.NewMockOrganizationRepository(t)
+	organizations.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{Name: "Halstead"}, nil).Maybe()
+
 	svc := &Service{
-		l:              zap.NewNop(),
-		templates:      resolver,
-		contextBuilder: &detentionnoticerender.ContextBuilder{},
-		now:            func() int64 { return 1_767_225_600 },
+		l:         zap.NewNop(),
+		templates: resolver,
+		contextBuilder: detentionnoticerender.NewContextBuilder(
+			detentionnoticerender.ContextBuilderParams{OrgRepo: organizations},
+		),
+		now: func() int64 { return 1_767_225_600 },
 	}
 
 	content, err := svc.BuildNotice(t.Context(), &detentionnoticerender.BuildNoticeParams{
