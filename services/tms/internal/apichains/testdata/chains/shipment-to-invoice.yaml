@@ -1,0 +1,131 @@
+name: shipment-to-invoice
+description: >-
+  A hand-rated truckload shipment is created, assigned, picked up and delivered, moved to billing,
+  approved and posted, and read back as a posted invoice that bills the shipment's freight.
+actor: admin@trenova.app
+fixtures:
+  customer: SELECT id FROM customers WHERE code = 'RNGE' AND organization_id = $1 AND business_unit_id = $2
+  pickup: SELECT id FROM locations WHERE code = 'WH-DAL' AND organization_id = $1 AND business_unit_id = $2
+  delivery: SELECT id FROM locations WHERE code = 'DC-CHI' AND organization_id = $1 AND business_unit_id = $2
+  serviceType: SELECT id FROM service_types WHERE code = 'STD' AND organization_id = $1 AND business_unit_id = $2
+  shipmentType: SELECT id FROM shipment_types WHERE code = 'FTL' AND organization_id = $1 AND business_unit_id = $2
+  driver: SELECT id FROM workers WHERE email = 'carlos.rivera@example.com' AND organization_id = $1 AND business_unit_id = $2
+  tractor: SELECT id FROM tractors WHERE code = 'TRC-001' AND organization_id = $1 AND business_unit_id = $2
+steps:
+  - id: create
+    graphql: CreateShipment
+    vars:
+      input:
+        customerId: ${fixture.customer}
+        serviceTypeId: ${fixture.serviceType}
+        shipmentTypeId: ${fixture.shipmentType}
+        bol: CHAIN-${run.unique}
+        freightChargeAmount: "1500.00"
+        rateOverrideReason: Hand-rated by the shipment-to-invoice chain
+        pieces: 10
+        weight: 20000
+        moves:
+          - sequence: 0
+            loaded: true
+            stops:
+              - locationId: ${fixture.pickup}
+                type: Pickup
+                scheduleType: Open
+                sequence: 0
+                scheduledWindowStart: ${run.now-21600}
+                scheduledWindowEnd: ${run.now-18000}
+              - locationId: ${fixture.delivery}
+                type: Delivery
+                scheduleType: Open
+                sequence: 1
+                scheduledWindowStart: ${run.now-10800}
+                scheduledWindowEnd: ${run.now-7200}
+    export:
+      shipment: data.createShipment.id
+      move: data.createShipment.moves.0.id
+      pickupStop: data.createShipment.moves.0.stops.0.id
+      deliveryStop: data.createShipment.moves.0.stops.1.id
+    expect:
+      data.createShipment.freightChargeAmount: "1500.00"
+      data.createShipment.customerId: ${fixture.customer}
+
+  - id: shipment
+    graphql: ShipmentDetail
+    vars: { id: "${create.shipment}" }
+
+  - id: assign
+    rest: POST /api/v1/shipment-moves/${create.move}/assignment/
+    body:
+      primaryWorkerId: ${fixture.driver}
+      tractorId: ${fixture.tractor}
+    effects:
+      - { read: shipment, path: data.shipment.moves.0.assignment.primaryWorkerId, equals: "${fixture.driver}" }
+      - { read: shipment, path: data.shipment.moves.0.assignment.tractorId, equals: "${fixture.tractor}" }
+
+  - id: arrivePickup
+    rest: POST /api/v1/shipment-moves/${create.move}/stops/${create.pickupStop}/record-actual/
+    body: { action: Arrive, occurredAt: "${run.now-21000}" }
+    effects:
+      - { read: shipment, path: data.shipment.moves.0.status, equals: InTransit }
+
+  - id: departPickup
+    rest: POST /api/v1/shipment-moves/${create.move}/stops/${create.pickupStop}/record-actual/
+    body: { action: Depart, occurredAt: "${run.now-20100}" }
+
+  - id: arriveDelivery
+    rest: POST /api/v1/shipment-moves/${create.move}/stops/${create.deliveryStop}/record-actual/
+    body: { action: Arrive, occurredAt: "${run.now-10200}" }
+
+  - id: departDelivery
+    rest: POST /api/v1/shipment-moves/${create.move}/stops/${create.deliveryStop}/record-actual/
+    body: { action: Depart, occurredAt: "${run.now-9300}" }
+    effects:
+      - { read: shipment, path: data.shipment.moves.0.status, equals: Completed }
+      - { read: shipment, path: data.shipment.status, equals: Completed }
+
+  - id: transfer
+    graphql: BulkTransferShipmentsToBilling
+    vars:
+      input:
+        shipmentIds: ["${create.shipment}"]
+        markCompletedReadyToInvoice: true
+    export:
+      item: data.bulkTransferShipmentsToBilling.results.0.billingQueueItem.id
+    expect:
+      data.bulkTransferShipmentsToBilling.successCount: 1
+      data.bulkTransferShipmentsToBilling.results.0.success: true
+      data.bulkTransferShipmentsToBilling.results.0.markedReadyToInvoice: true
+    effects:
+      - { read: shipment, path: data.shipment.totalChargeAmount, unchanged: true }
+
+  - id: approve
+    graphql: UpdateBillingQueueStatus
+    vars:
+      id: ${transfer.item}
+      input: { status: Approved }
+    expect:
+      data.updateBillingQueueStatus.status: Approved
+      data.updateBillingQueueStatus.shipmentId: ${create.shipment}
+
+  - id: post
+    rest: POST /api/v1/billing-queue/${transfer.item}/post/
+    export:
+      invoice: invoiceId
+    expect:
+      item.status: Posted
+    effects:
+      - { read: shipment, path: data.shipment.status, equals: Invoiced }
+
+  - id: invoice
+    graphql: DeskInvoiceDetail
+    vars: { id: "${post.invoice}" }
+    expect:
+      data.invoice.status: Posted
+      data.invoice.shipmentId: ${create.shipment}
+      data.invoice.customerId: ${fixture.customer}
+      data.invoice.totalAmount: ${create.request.variables.input.freightChargeAmount}
+
+generated:
+  proNumber: ${create.response.data.createShipment.proNumber}
+
+probes: [unauthenticated, no-permission, other-tenant]

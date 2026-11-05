@@ -1,0 +1,3222 @@
+{
+  "chain": "shipment-to-invoice",
+  "probes": [
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "create"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "shipment"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "assign"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "arrivePickup"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "departPickup"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "arriveDelivery"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "departDelivery"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "transfer"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "approve"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "post"
+    },
+    {
+      "code": "authentication-error",
+      "probe": "unauthenticated",
+      "status": 401,
+      "step": "invoice"
+    },
+    {
+      "code": "FORBIDDEN",
+      "probe": "no-permission",
+      "status": 200,
+      "step": "create"
+    },
+    {
+      "code": "FORBIDDEN",
+      "probe": "no-permission",
+      "status": 200,
+      "step": "shipment"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "assign"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "arrivePickup"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "departPickup"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "arriveDelivery"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "departDelivery"
+    },
+    {
+      "code": "FORBIDDEN",
+      "probe": "no-permission",
+      "status": 200,
+      "step": "transfer"
+    },
+    {
+      "code": "FORBIDDEN",
+      "probe": "no-permission",
+      "status": 200,
+      "step": "approve"
+    },
+    {
+      "code": "authorization-error",
+      "probe": "no-permission",
+      "status": 403,
+      "step": "post"
+    },
+    {
+      "code": "FORBIDDEN",
+      "probe": "no-permission",
+      "status": 200,
+      "step": "invoice"
+    },
+    {
+      "code": "INVALID_REFERENCE",
+      "probe": "other-tenant",
+      "status": 200,
+      "step": "create"
+    },
+    {
+      "code": "NOT_FOUND",
+      "probe": "other-tenant",
+      "status": 200,
+      "step": "shipment"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "assign"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "arrivePickup"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "departPickup"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "arriveDelivery"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "departDelivery"
+    },
+    {
+      "probe": "other-tenant",
+      "status": 200,
+      "step": "transfer"
+    },
+    {
+      "code": "NOT_FOUND",
+      "probe": "other-tenant",
+      "status": 200,
+      "step": "approve"
+    },
+    {
+      "code": "resource-not-found",
+      "probe": "other-tenant",
+      "status": 404,
+      "step": "post"
+    },
+    {
+      "code": "NOT_FOUND",
+      "probe": "other-tenant",
+      "status": 200,
+      "step": "invoice"
+    }
+  ],
+  "steps": [
+    {
+      "call": "graphql CreateShipment",
+      "id": "create",
+      "request": {
+        "variables": {
+          "input": {
+            "bol": "CHAIN-<run.unique>",
+            "customerId": "$fixture.customer",
+            "freightChargeAmount": "1500.00",
+            "moves": [
+              {
+                "loaded": true,
+                "sequence": 0,
+                "stops": [
+                  {
+                    "locationId": "$fixture.pickup",
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 0,
+                    "type": "Pickup"
+                  },
+                  {
+                    "locationId": "$fixture.delivery",
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 1,
+                    "type": "Delivery"
+                  }
+                ]
+              }
+            ],
+            "pieces": 10,
+            "rateOverrideReason": "Hand-rated by the shipment-to-invoice chain",
+            "serviceTypeId": "$fixture.serviceType",
+            "shipmentTypeId": "$fixture.shipmentType",
+            "weight": 20000
+          }
+        }
+      },
+      "response": {
+        "data": {
+          "createShipment": {
+            "actualDeliveryDate": null,
+            "actualShipDate": null,
+            "additionalCharges": [],
+            "autoRated": false,
+            "autoRatedAt": null,
+            "billToCustomer": null,
+            "billToCustomerId": null,
+            "billedAt": null,
+            "billingSplitSummary": [
+              {
+                "accessorialAmount": "0.00",
+                "freightAmount": "1500.00",
+                "isPrimary": true,
+                "isSplit": false,
+                "payerCode": "RNGE",
+                "payerId": "$fixture.customer",
+                "payerName": "Range Logistics",
+                "totalAmount": "1500.00"
+              }
+            ],
+            "billingTransferStatus": null,
+            "bol": "CHAIN-<run.unique>",
+            "businessUnitId": "$run.businessUnit",
+            "cancelReason": "",
+            "canceledAt": null,
+            "canceledById": null,
+            "chargeAllocations": [],
+            "commodities": [],
+            "consolidationGroupId": null,
+            "createdAt": "<time>",
+            "customer": {
+              "addressLine1": "1801 California St",
+              "addressLine2": "",
+              "allowConsolidation": true,
+              "businessUnitId": "$run.businessUnit",
+              "city": "Denver",
+              "code": "RNGE",
+              "consolidationPriority": 1,
+              "createdAt": "<time>",
+              "ediPartner": null,
+              "exclusiveConsolidation": false,
+              "externalId": "",
+              "id": "$fixture.customer",
+              "isGeocoded": false,
+              "latitude": null,
+              "longitude": null,
+              "name": "Range Logistics",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "80202",
+              "stateId": "$us_1",
+              "status": "Active",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "customerId": "$fixture.customer",
+            "enteredById": null,
+            "entryMethod": "Manual",
+            "eta": null,
+            "externalReference": null,
+            "formulaTemplate": null,
+            "formulaTemplateId": null,
+            "freightChargeAmount": "1500",
+            "freightLines": [
+              {
+                "amount": "1500",
+                "label": "Freight charge",
+                "quantity": null,
+                "quantityUnit": "",
+                "rate": null,
+                "rateUnit": ""
+              }
+            ],
+            "freightTerms": "Prepaid",
+            "fuelSurchargeLocked": false,
+            "id": "$shp_1",
+            "markedReadyToBillAt": null,
+            "moves": [
+              {
+                "assignment": null,
+                "businessUnitId": "$run.businessUnit",
+                "carrierAssignment": null,
+                "coverageType": "unassigned",
+                "createdAt": "<time>",
+                "distance": 966,
+                "distanceCalculatedAt": "<time>",
+                "distanceDataVersion": null,
+                "distanceMetadata": null,
+                "distanceProvider": null,
+                "distanceRouteSignature": "$fixture.customer|$fixture.pickup>$fixture.delivery",
+                "distanceRoutingType": null,
+                "distanceSource": "Override",
+                "distanceUnits": null,
+                "id": "$sm_1",
+                "loaded": true,
+                "organizationId": "$run.organization",
+                "sequence": 0,
+                "shipmentId": "$shp_1",
+                "status": "New",
+                "stops": [
+                  {
+                    "actualArrival": null,
+                    "actualDeparture": null,
+                    "addressLine": "",
+                    "businessUnitId": "$run.businessUnit",
+                    "countDetentionOverride": null,
+                    "countLateOverride": null,
+                    "createdAt": "<time>",
+                    "handling": "Live",
+                    "id": "$stp_1",
+                    "location": {
+                      "addressLine1": "4500 Singleton Blvd",
+                      "addressLine2": "",
+                      "city": "Dallas",
+                      "code": "WH-DAL",
+                      "id": "$fixture.pickup",
+                      "latitude": 32.7767,
+                      "locationCategoryId": "$lc_1",
+                      "longitude": -96.797,
+                      "name": "Dallas Warehouse",
+                      "postalCode": "75212",
+                      "state": {
+                        "abbreviation": "TX",
+                        "countryIso3": "USA",
+                        "countryName": "United States",
+                        "id": "$us_2",
+                        "name": "Texas"
+                      },
+                      "stateId": "$us_2",
+                      "status": "Active"
+                    },
+                    "locationId": "$fixture.pickup",
+                    "organizationId": "$run.organization",
+                    "pieces": null,
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 0,
+                    "shipmentMoveId": "$sm_1",
+                    "status": "New",
+                    "type": "Pickup",
+                    "updatedAt": "<time>",
+                    "version": 1,
+                    "weight": null
+                  },
+                  {
+                    "actualArrival": null,
+                    "actualDeparture": null,
+                    "addressLine": "",
+                    "businessUnitId": "$run.businessUnit",
+                    "countDetentionOverride": null,
+                    "countLateOverride": null,
+                    "createdAt": "<time>",
+                    "handling": "Live",
+                    "id": "$stp_2",
+                    "location": {
+                      "addressLine1": "3901 S Ashland Ave",
+                      "addressLine2": "",
+                      "city": "Chicago",
+                      "code": "DC-CHI",
+                      "id": "$fixture.delivery",
+                      "latitude": 41.8781,
+                      "locationCategoryId": "$lc_2",
+                      "longitude": -87.6298,
+                      "name": "Chicago Distribution Center",
+                      "postalCode": "60609",
+                      "state": {
+                        "abbreviation": "IL",
+                        "countryIso3": "USA",
+                        "countryName": "United States",
+                        "id": "$us_3",
+                        "name": "Illinois"
+                      },
+                      "stateId": "$us_3",
+                      "status": "Active"
+                    },
+                    "locationId": "$fixture.delivery",
+                    "organizationId": "$run.organization",
+                    "pieces": null,
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 1,
+                    "shipmentMoveId": "$sm_1",
+                    "status": "New",
+                    "type": "Delivery",
+                    "updatedAt": "<time>",
+                    "version": 1,
+                    "weight": null
+                  }
+                ],
+                "updatedAt": "<time>",
+                "version": 1
+              }
+            ],
+            "orderId": "$ord_1",
+            "orderNumber": "O261100001",
+            "orderStatus": "InProgress",
+            "organizationId": "$run.organization",
+            "otherChargeAmount": "0",
+            "owner": null,
+            "ownerId": null,
+            "pieces": 10,
+            "proNumber": "<proNumber>",
+            "profitabilityEstimate": {
+              "breakEvenRpm": "2.435",
+              "costPerMile": "2.435",
+              "deadheadMiles": 0,
+              "estimatedCost": "2352.21",
+              "loadedMiles": 966,
+              "marginPercent": "-56.81",
+              "missingDistance": false,
+              "profit": "-852.21",
+              "shipmentId": "$shp_1",
+              "targetMarginPercent": null,
+              "totalMiles": 966
+            },
+            "rateAgreementId": null,
+            "rateAgreementRuleId": null,
+            "rateLocked": false,
+            "rateOverrideAmount": null,
+            "rateOverrideAt": null,
+            "rateOverrideReason": "Hand-rated by the shipment-to-invoice chain",
+            "rateQuoteId": "$rqt_1",
+            "ratingDetail": {
+              "agreementId": "",
+              "agreementName": "",
+              "awaitingReview": false,
+              "bill": null,
+              "choices": [],
+              "explanation": "",
+              "formulaTemplateId": "",
+              "formulaTemplateName": "",
+              "inputs": {},
+              "rateQuoteId": "$rqt_1",
+              "ratedAt": "<time>",
+              "refusal": "",
+              "reviewApproval": null,
+              "ruleId": "",
+              "ruleLabel": "",
+              "skipped": [],
+              "source": "ManualOverride",
+              "versionNumber": 0
+            },
+            "serviceTypeId": "$fixture.serviceType",
+            "shipmentTypeId": "$fixture.shipmentType",
+            "sourceDocumentId": null,
+            "stage": "Late",
+            "status": "Delayed",
+            "tariffInputs": {},
+            "temperatureMax": null,
+            "temperatureMin": null,
+            "tenderStatus": null,
+            "totalChargeAmount": "1500",
+            "tractorTypeId": null,
+            "trailerTypeId": null,
+            "transferredToBillingAt": null,
+            "updatedAt": "<time>",
+            "version": 1,
+            "weight": 20000
+          }
+        }
+      },
+      "roundTrips": 86,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "create",
+            "resource": "shipment",
+            "resourceId": "$shp_1"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$ord_1"
+              },
+              "entityId": "$ord_1",
+              "eventId": "$evt_1",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ord_1",
+              "resource": "orders",
+              "type": "orders.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$se_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$se_1",
+              "eventId": "$evt_2",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$se_1",
+              "resource": "shipmentEvents",
+              "type": "shipmentEvents.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$shp_1",
+              "eventId": "$evt_3",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$shp_1",
+              "resource": "audited:shipment",
+              "type": "audited:shipment.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$shp_1"
+              },
+              "entityId": "$shp_1",
+              "eventId": "$evt_4",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$shp_1",
+              "resource": "shipments",
+              "type": "shipments.created"
+            }
+          }
+        ],
+        "signals": [
+          {
+            "arg": {},
+            "name": "shipment-eta-refresh",
+            "workflowId": "shipment-eta-refresh-$shp_1"
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "iterations": 0,
+                "organizationId": "$run.organization",
+                "shipmentId": "$shp_1"
+              }
+            ],
+            "id": "shipment-eta-refresh-$shp_1",
+            "queue": "dispatch-queue",
+            "type": "RefreshShipmentEtaWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "graphql ShipmentDetail",
+      "id": "shipment",
+      "request": {
+        "variables": {
+          "id": "$shp_1"
+        }
+      },
+      "response": {
+        "data": {
+          "shipment": {
+            "actualDeliveryDate": null,
+            "actualShipDate": null,
+            "additionalCharges": [],
+            "autoRated": false,
+            "autoRatedAt": null,
+            "billToCustomer": null,
+            "billToCustomerId": null,
+            "billedAt": null,
+            "billingSplitSummary": [],
+            "billingTransferStatus": null,
+            "bol": "CHAIN-<run.unique>",
+            "businessUnitId": "$run.businessUnit",
+            "cancelReason": "",
+            "canceledAt": null,
+            "canceledById": null,
+            "chargeAllocations": [],
+            "commodities": [],
+            "consolidationGroupId": null,
+            "createdAt": "<time>",
+            "customer": {
+              "addressLine1": "1801 California St",
+              "addressLine2": "",
+              "allowConsolidation": true,
+              "businessUnitId": "$run.businessUnit",
+              "city": "Denver",
+              "code": "RNGE",
+              "consolidationPriority": 1,
+              "createdAt": "<time>",
+              "ediPartner": null,
+              "exclusiveConsolidation": false,
+              "externalId": "",
+              "id": "$fixture.customer",
+              "isGeocoded": false,
+              "latitude": null,
+              "longitude": null,
+              "name": "Range Logistics",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "80202",
+              "stateId": "$us_1",
+              "status": "Active",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "customerId": "$fixture.customer",
+            "enteredById": null,
+            "entryMethod": "Manual",
+            "eta": null,
+            "externalReference": null,
+            "formulaTemplate": null,
+            "formulaTemplateId": null,
+            "freightChargeAmount": "1500",
+            "freightLines": [
+              {
+                "amount": "1500",
+                "label": "Freight charge",
+                "quantity": null,
+                "quantityUnit": "",
+                "rate": null,
+                "rateUnit": ""
+              }
+            ],
+            "freightTerms": "Prepaid",
+            "fuelSurchargeLocked": false,
+            "id": "$shp_1",
+            "markedReadyToBillAt": null,
+            "moves": [
+              {
+                "assignment": null,
+                "businessUnitId": "$run.businessUnit",
+                "carrierAssignment": null,
+                "coverageType": "unassigned",
+                "createdAt": "<time>",
+                "distance": 966,
+                "distanceCalculatedAt": null,
+                "distanceDataVersion": null,
+                "distanceMetadata": null,
+                "distanceProvider": null,
+                "distanceRouteSignature": null,
+                "distanceRoutingType": null,
+                "distanceSource": null,
+                "distanceUnits": null,
+                "id": "$sm_1",
+                "loaded": true,
+                "organizationId": "$run.organization",
+                "sequence": 0,
+                "shipmentId": "$shp_1",
+                "status": "New",
+                "stops": [
+                  {
+                    "actualArrival": null,
+                    "actualDeparture": null,
+                    "addressLine": "",
+                    "businessUnitId": "$run.businessUnit",
+                    "countDetentionOverride": null,
+                    "countLateOverride": null,
+                    "createdAt": "<time>",
+                    "handling": "Live",
+                    "id": "$stp_1",
+                    "location": {
+                      "addressLine1": "4500 Singleton Blvd",
+                      "addressLine2": "",
+                      "city": "Dallas",
+                      "code": "WH-DAL",
+                      "id": "$fixture.pickup",
+                      "latitude": 32.7767,
+                      "locationCategoryId": "$lc_1",
+                      "longitude": -96.797,
+                      "name": "Dallas Warehouse",
+                      "postalCode": "75212",
+                      "state": {
+                        "abbreviation": "TX",
+                        "countryIso3": "USA",
+                        "countryName": "United States",
+                        "id": "$us_2",
+                        "name": "Texas"
+                      },
+                      "stateId": "$us_2",
+                      "status": "Active"
+                    },
+                    "locationId": "$fixture.pickup",
+                    "organizationId": "$run.organization",
+                    "pieces": null,
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 0,
+                    "shipmentMoveId": "$sm_1",
+                    "status": "New",
+                    "type": "Pickup",
+                    "updatedAt": "<time>",
+                    "version": 1,
+                    "weight": null
+                  },
+                  {
+                    "actualArrival": null,
+                    "actualDeparture": null,
+                    "addressLine": "",
+                    "businessUnitId": "$run.businessUnit",
+                    "countDetentionOverride": null,
+                    "countLateOverride": null,
+                    "createdAt": "<time>",
+                    "handling": "Live",
+                    "id": "$stp_2",
+                    "location": {
+                      "addressLine1": "3901 S Ashland Ave",
+                      "addressLine2": "",
+                      "city": "Chicago",
+                      "code": "DC-CHI",
+                      "id": "$fixture.delivery",
+                      "latitude": 41.8781,
+                      "locationCategoryId": "$lc_2",
+                      "longitude": -87.6298,
+                      "name": "Chicago Distribution Center",
+                      "postalCode": "60609",
+                      "state": {
+                        "abbreviation": "IL",
+                        "countryIso3": "USA",
+                        "countryName": "United States",
+                        "id": "$us_3",
+                        "name": "Illinois"
+                      },
+                      "stateId": "$us_3",
+                      "status": "Active"
+                    },
+                    "locationId": "$fixture.delivery",
+                    "organizationId": "$run.organization",
+                    "pieces": null,
+                    "scheduleType": "Open",
+                    "scheduledWindowEnd": "<time>",
+                    "scheduledWindowStart": "<time>",
+                    "sequence": 1,
+                    "shipmentMoveId": "$sm_1",
+                    "status": "New",
+                    "type": "Delivery",
+                    "updatedAt": "<time>",
+                    "version": 1,
+                    "weight": null
+                  }
+                ],
+                "updatedAt": "<time>",
+                "version": 1
+              }
+            ],
+            "orderId": "$ord_1",
+            "orderNumber": "O261100001",
+            "orderStatus": "InProgress",
+            "organizationId": "$run.organization",
+            "otherChargeAmount": "0",
+            "owner": null,
+            "ownerId": null,
+            "pieces": 10,
+            "proNumber": "<proNumber>",
+            "profitabilityEstimate": {
+              "breakEvenRpm": "2.435",
+              "costPerMile": "2.435",
+              "deadheadMiles": 0,
+              "estimatedCost": "2352.21",
+              "loadedMiles": 966,
+              "marginPercent": "-56.81",
+              "missingDistance": false,
+              "profit": "-852.21",
+              "shipmentId": "$shp_1",
+              "targetMarginPercent": null,
+              "totalMiles": 966
+            },
+            "rateAgreementId": null,
+            "rateAgreementRuleId": null,
+            "rateLocked": false,
+            "rateOverrideAmount": null,
+            "rateOverrideAt": null,
+            "rateOverrideReason": "Hand-rated by the shipment-to-invoice chain",
+            "rateQuoteId": "$rqt_1",
+            "ratingDetail": {
+              "agreementId": "",
+              "agreementName": "",
+              "awaitingReview": false,
+              "bill": null,
+              "choices": [],
+              "explanation": "",
+              "formulaTemplateId": "",
+              "formulaTemplateName": "",
+              "inputs": {},
+              "rateQuoteId": "$rqt_1",
+              "ratedAt": "<time>",
+              "refusal": "",
+              "reviewApproval": null,
+              "ruleId": "",
+              "ruleLabel": "",
+              "skipped": [],
+              "source": "ManualOverride",
+              "versionNumber": 0
+            },
+            "serviceTypeId": "$fixture.serviceType",
+            "shipmentTypeId": "$fixture.shipmentType",
+            "sourceDocumentId": null,
+            "stage": "Late",
+            "status": "Delayed",
+            "tariffInputs": {},
+            "temperatureMax": null,
+            "temperatureMin": null,
+            "tenderStatus": null,
+            "totalChargeAmount": "1500",
+            "tractorTypeId": null,
+            "trailerTypeId": null,
+            "transferredToBillingAt": null,
+            "updatedAt": "<time>",
+            "version": 1,
+            "weight": 20000
+          }
+        }
+      },
+      "roundTrips": 7,
+      "status": 200,
+      "write": false
+    },
+    {
+      "call": "POST /api/v1/shipment-moves/:moveID/assignment/",
+      "effects": [
+        {
+          "after": "$fixture.driver",
+          "path": "data.shipment.moves.0.assignment.primaryWorkerId",
+          "read": "shipment",
+          "rule": "equals"
+        },
+        {
+          "after": "$fixture.tractor",
+          "path": "data.shipment.moves.0.assignment.tractorId",
+          "read": "shipment",
+          "rule": "equals"
+        }
+      ],
+      "id": "assign",
+      "request": {
+        "body": {
+          "primaryWorkerId": "$fixture.driver",
+          "tractorId": "$fixture.tractor"
+        },
+        "path": "/api/v1/shipment-moves/$sm_1/assignment/"
+      },
+      "response": {
+        "ackStatus": "Pending",
+        "businessUnitId": "$run.businessUnit",
+        "createdAt": "<time>",
+        "id": "$asn_1",
+        "organizationId": "$run.organization",
+        "primaryWorker": {
+          "addressLine1": "918 Mission Trail",
+          "addressLine2": "",
+          "availableForDispatch": true,
+          "businessUnitId": "$run.businessUnit",
+          "canBeAssigned": true,
+          "city": "San Antonio",
+          "createdAt": "<time>",
+          "driverType": "OTR",
+          "email": "carlos.rivera@example.com",
+          "emergencyContactName": "",
+          "emergencyContactPhone": "",
+          "externalId": "",
+          "firstName": "Carlos",
+          "fleetCodeId": null,
+          "gender": "Male",
+          "id": "$fixture.driver",
+          "lastName": "Rivera",
+          "leaveType": "",
+          "managerId": null,
+          "organizationId": "$run.organization",
+          "phoneNumber": "+15550106001",
+          "positionId": null,
+          "postalCode": "78210",
+          "profilePicUrl": "",
+          "stateId": "$us_2",
+          "status": "Active",
+          "type": "Contractor",
+          "updatedAt": "<time>",
+          "userId": null,
+          "version": 0,
+          "wholeName": "Carlos Rivera"
+        },
+        "primaryWorkerId": "$fixture.driver",
+        "shipmentMove": {
+          "businessUnitId": "$run.businessUnit",
+          "coverageType": "driver",
+          "createdAt": "<time>",
+          "distance": 966,
+          "distanceCalculatedAt": null,
+          "distanceDataVersion": "",
+          "distanceProvider": "",
+          "distanceRouteSignature": "",
+          "distanceRoutingType": "",
+          "distanceSource": "",
+          "distanceUnits": "",
+          "id": "$sm_1",
+          "loaded": true,
+          "organizationId": "$run.organization",
+          "sequence": 0,
+          "shipmentId": "$shp_1",
+          "status": "Assigned",
+          "updatedAt": "<time>",
+          "version": 2
+        },
+        "shipmentMoveId": "$sm_1",
+        "status": "New",
+        "tractor": {
+          "businessUnitId": "$run.businessUnit",
+          "code": "TRC-001",
+          "createdAt": "<time>",
+          "equipmentManufacturerId": "$em_1",
+          "equipmentTypeId": "$et_1",
+          "externalId": "",
+          "fleetCodeId": null,
+          "fuelType": "Diesel",
+          "id": "$fixture.tractor",
+          "iftaQualified": true,
+          "inProgressDueAt": null,
+          "inProgressMoveId": null,
+          "inProgressProNumber": "",
+          "lastKnownLocationId": null,
+          "lastKnownLocationLatitude": null,
+          "lastKnownLocationLongitude": null,
+          "lastKnownLocationName": "",
+          "leaseEndDate": null,
+          "leaseReference": "",
+          "lessorName": "",
+          "licensePlateNumber": "IL-TRC-1001",
+          "make": "Freightliner",
+          "model": "Cascadia",
+          "organizationId": "$run.organization",
+          "ownerWorkerId": null,
+          "ownershipType": "CompanyOwned",
+          "primaryWorkerId": "$wrk_1",
+          "registrationExpiry": null,
+          "registrationNumber": "REG-FL-001",
+          "secondaryWorkerId": null,
+          "stateId": "$us_3",
+          "status": "Available",
+          "updatedAt": "<time>",
+          "version": 0,
+          "vin": "",
+          "year": 2023
+        },
+        "tractorId": "$fixture.tractor",
+        "updatedAt": "<time>",
+        "version": 0
+      },
+      "roundTrips": 48,
+      "sideEffects": {
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$se_2",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$se_2",
+              "eventId": "$evt_5",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$se_2",
+              "resource": "shipmentEvents",
+              "type": "shipmentEvents.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "assigned",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$shp_1",
+              "eventId": "$evt_6",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$shp_1",
+              "resource": "shipments",
+              "type": "shipments.assigned"
+            }
+          }
+        ],
+        "signals": [
+          {
+            "arg": {},
+            "name": "shipment-eta-refresh",
+            "workflowId": "shipment-eta-refresh-$shp_1"
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "iterations": 0,
+                "organizationId": "$run.organization",
+                "shipmentId": "$shp_1"
+              }
+            ],
+            "id": "shipment-eta-refresh-$shp_1",
+            "queue": "dispatch-queue",
+            "type": "RefreshShipmentEtaWorkflow"
+          }
+        ]
+      },
+      "status": 201,
+      "write": true
+    },
+    {
+      "call": "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/",
+      "effects": [
+        {
+          "after": "InTransit",
+          "path": "data.shipment.moves.0.status",
+          "read": "shipment",
+          "rule": "equals"
+        }
+      ],
+      "id": "arrivePickup",
+      "request": {
+        "body": {
+          "action": "Arrive",
+          "occurredAt": "<time>"
+        },
+        "path": "/api/v1/shipment-moves/$sm_1/stops/$stp_1/record-actual/"
+      },
+      "response": {
+        "assignment": {
+          "ackStatus": "Pending",
+          "businessUnitId": "$run.businessUnit",
+          "createdAt": "<time>",
+          "id": "$asn_1",
+          "organizationId": "$run.organization",
+          "primaryWorker": {
+            "addressLine1": "918 Mission Trail",
+            "addressLine2": "",
+            "availableForDispatch": true,
+            "businessUnitId": "$run.businessUnit",
+            "canBeAssigned": true,
+            "city": "San Antonio",
+            "createdAt": "<time>",
+            "driverType": "OTR",
+            "email": "carlos.rivera@example.com",
+            "emergencyContactName": "",
+            "emergencyContactPhone": "",
+            "externalId": "",
+            "firstName": "Carlos",
+            "fleetCodeId": null,
+            "gender": "Male",
+            "id": "$fixture.driver",
+            "lastName": "Rivera",
+            "leaveType": "",
+            "managerId": null,
+            "organizationId": "$run.organization",
+            "phoneNumber": "+15550106001",
+            "positionId": null,
+            "postalCode": "78210",
+            "profilePicUrl": "",
+            "stateId": "$us_2",
+            "status": "Active",
+            "type": "Contractor",
+            "updatedAt": "<time>",
+            "userId": null,
+            "version": 0,
+            "wholeName": "Carlos Rivera"
+          },
+          "primaryWorkerId": "$fixture.driver",
+          "shipmentMoveId": "$sm_1",
+          "status": "New",
+          "tractor": {
+            "businessUnitId": "$run.businessUnit",
+            "code": "TRC-001",
+            "createdAt": "<time>",
+            "equipmentManufacturerId": "$em_1",
+            "equipmentTypeId": "$et_1",
+            "externalId": "",
+            "fleetCodeId": null,
+            "fuelType": "Diesel",
+            "id": "$fixture.tractor",
+            "iftaQualified": true,
+            "inProgressDueAt": null,
+            "inProgressMoveId": null,
+            "inProgressProNumber": "",
+            "lastKnownLocationId": null,
+            "lastKnownLocationLatitude": null,
+            "lastKnownLocationLongitude": null,
+            "lastKnownLocationName": "",
+            "leaseEndDate": null,
+            "leaseReference": "",
+            "lessorName": "",
+            "licensePlateNumber": "IL-TRC-1001",
+            "make": "Freightliner",
+            "model": "Cascadia",
+            "organizationId": "$run.organization",
+            "ownerWorkerId": null,
+            "ownershipType": "CompanyOwned",
+            "primaryWorkerId": "$wrk_1",
+            "registrationExpiry": null,
+            "registrationNumber": "REG-FL-001",
+            "secondaryWorkerId": null,
+            "stateId": "$us_3",
+            "status": "Available",
+            "updatedAt": "<time>",
+            "version": 0,
+            "vin": "",
+            "year": 2023
+          },
+          "tractorId": "$fixture.tractor",
+          "updatedAt": "<time>",
+          "version": 0
+        },
+        "businessUnitId": "$run.businessUnit",
+        "coverageType": "driver",
+        "createdAt": "<time>",
+        "distance": 966,
+        "distanceCalculatedAt": null,
+        "distanceDataVersion": "",
+        "distanceProvider": "",
+        "distanceRouteSignature": "",
+        "distanceRoutingType": "",
+        "distanceSource": "",
+        "distanceUnits": "",
+        "id": "$sm_1",
+        "loaded": true,
+        "organizationId": "$run.organization",
+        "sequence": 0,
+        "shipmentId": "$shp_1",
+        "status": "InTransit",
+        "stops": [
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": null,
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_1",
+            "location": {
+              "addressLine1": "4500 Singleton Blvd",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Dallas",
+              "code": "WH-DAL",
+              "createdAt": "<time>",
+              "description": "Central warehouse serving the Dallas-Fort Worth region",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.pickup",
+              "isGeocoded": true,
+              "latitude": 32.7767,
+              "locationCategoryId": "$lc_1",
+              "longitude": -96.797,
+              "name": "Dallas Warehouse",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "75212",
+              "state": {
+                "abbreviation": "TX",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_2",
+                "name": "Texas",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_2",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.pickup",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 0,
+            "shipmentMoveId": "$sm_1",
+            "status": "InTransit",
+            "type": "Pickup",
+            "updatedAt": "<time>",
+            "version": 3,
+            "weight": null
+          },
+          {
+            "actualArrival": null,
+            "actualDeparture": null,
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_2",
+            "location": {
+              "addressLine1": "3901 S Ashland Ave",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Chicago",
+              "code": "DC-CHI",
+              "createdAt": "<time>",
+              "description": "East distribution center for Midwest operations",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.delivery",
+              "isGeocoded": true,
+              "latitude": 41.8781,
+              "locationCategoryId": "$lc_2",
+              "longitude": -87.6298,
+              "name": "Chicago Distribution Center",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "60609",
+              "state": {
+                "abbreviation": "IL",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_3",
+                "name": "Illinois",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_3",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.delivery",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 1,
+            "shipmentMoveId": "$sm_1",
+            "status": "New",
+            "type": "Delivery",
+            "updatedAt": "<time>",
+            "version": 2,
+            "weight": null
+          }
+        ],
+        "updatedAt": "<time>",
+        "version": 3
+      },
+      "roundTrips": 84,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "create",
+            "resource": "agent_run",
+            "resourceId": "$ar_1"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_1"
+              },
+              "entityId": "$wt_1",
+              "eventId": "$evt_7",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_1",
+              "resource": "watchtower",
+              "type": "watchtower.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "system",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$ar_1",
+              "eventId": "$evt_8",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ar_1",
+              "resource": "audited:agent_run",
+              "type": "audited:agent_run.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "system",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$ar_1"
+              },
+              "entityId": "$ar_1",
+              "eventId": "$evt_9",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ar_1",
+              "resource": "agent_run",
+              "type": "agent_run.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_2"
+              },
+              "entityId": "$wt_2",
+              "eventId": "$evt_10",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_2",
+              "resource": "watchtower",
+              "type": "watchtower.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$se_3",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$se_3",
+              "eventId": "$evt_11",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$se_3",
+              "resource": "shipmentEvents",
+              "type": "shipmentEvents.created"
+            }
+          }
+        ],
+        "signals": [
+          {
+            "arg": {},
+            "name": "shipment-eta-refresh",
+            "workflowId": "shipment-eta-refresh-$shp_1"
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "definitionId": "$agdef_1",
+                "eventKind": "detention.occurrence_opened",
+                "metadata": null,
+                "organizationId": "$run.organization",
+                "runId": "$ar_1",
+                "subjectId": "$dto_1",
+                "subjectType": "DetentionOccurrence",
+                "timestamp": "<time>",
+                "trigger": "Event",
+                "userId": null
+              }
+            ],
+            "id": "agent-run-$agdef_1-subject-$dto_1",
+            "queue": "agent-background-queue",
+            "type": "AgentRunWorkflow"
+          },
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "iterations": 0,
+                "organizationId": "$run.organization",
+                "shipmentId": "$shp_1"
+              }
+            ],
+            "id": "shipment-eta-refresh-$shp_1",
+            "queue": "dispatch-queue",
+            "type": "RefreshShipmentEtaWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/",
+      "id": "departPickup",
+      "request": {
+        "body": {
+          "action": "Depart",
+          "occurredAt": "<time>"
+        },
+        "path": "/api/v1/shipment-moves/$sm_1/stops/$stp_1/record-actual/"
+      },
+      "response": {
+        "assignment": {
+          "ackStatus": "Pending",
+          "businessUnitId": "$run.businessUnit",
+          "createdAt": "<time>",
+          "id": "$asn_1",
+          "organizationId": "$run.organization",
+          "primaryWorker": {
+            "addressLine1": "918 Mission Trail",
+            "addressLine2": "",
+            "availableForDispatch": true,
+            "businessUnitId": "$run.businessUnit",
+            "canBeAssigned": true,
+            "city": "San Antonio",
+            "createdAt": "<time>",
+            "driverType": "OTR",
+            "email": "carlos.rivera@example.com",
+            "emergencyContactName": "",
+            "emergencyContactPhone": "",
+            "externalId": "",
+            "firstName": "Carlos",
+            "fleetCodeId": null,
+            "gender": "Male",
+            "id": "$fixture.driver",
+            "lastName": "Rivera",
+            "leaveType": "",
+            "managerId": null,
+            "organizationId": "$run.organization",
+            "phoneNumber": "+15550106001",
+            "positionId": null,
+            "postalCode": "78210",
+            "profilePicUrl": "",
+            "stateId": "$us_2",
+            "status": "Active",
+            "type": "Contractor",
+            "updatedAt": "<time>",
+            "userId": null,
+            "version": 0,
+            "wholeName": "Carlos Rivera"
+          },
+          "primaryWorkerId": "$fixture.driver",
+          "shipmentMoveId": "$sm_1",
+          "status": "New",
+          "tractor": {
+            "businessUnitId": "$run.businessUnit",
+            "code": "TRC-001",
+            "createdAt": "<time>",
+            "equipmentManufacturerId": "$em_1",
+            "equipmentTypeId": "$et_1",
+            "externalId": "",
+            "fleetCodeId": null,
+            "fuelType": "Diesel",
+            "id": "$fixture.tractor",
+            "iftaQualified": true,
+            "inProgressDueAt": null,
+            "inProgressMoveId": null,
+            "inProgressProNumber": "",
+            "lastKnownLocationId": null,
+            "lastKnownLocationLatitude": null,
+            "lastKnownLocationLongitude": null,
+            "lastKnownLocationName": "",
+            "leaseEndDate": null,
+            "leaseReference": "",
+            "lessorName": "",
+            "licensePlateNumber": "IL-TRC-1001",
+            "make": "Freightliner",
+            "model": "Cascadia",
+            "organizationId": "$run.organization",
+            "ownerWorkerId": null,
+            "ownershipType": "CompanyOwned",
+            "primaryWorkerId": "$wrk_1",
+            "registrationExpiry": null,
+            "registrationNumber": "REG-FL-001",
+            "secondaryWorkerId": null,
+            "stateId": "$us_3",
+            "status": "Available",
+            "updatedAt": "<time>",
+            "version": 0,
+            "vin": "",
+            "year": 2023
+          },
+          "tractorId": "$fixture.tractor",
+          "updatedAt": "<time>",
+          "version": 0
+        },
+        "businessUnitId": "$run.businessUnit",
+        "coverageType": "driver",
+        "createdAt": "<time>",
+        "distance": 966,
+        "distanceCalculatedAt": null,
+        "distanceDataVersion": "",
+        "distanceProvider": "",
+        "distanceRouteSignature": "",
+        "distanceRoutingType": "",
+        "distanceSource": "",
+        "distanceUnits": "",
+        "id": "$sm_1",
+        "loaded": true,
+        "organizationId": "$run.organization",
+        "sequence": 0,
+        "shipmentId": "$shp_1",
+        "status": "InTransit",
+        "stops": [
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": "<time>",
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_1",
+            "location": {
+              "addressLine1": "4500 Singleton Blvd",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Dallas",
+              "code": "WH-DAL",
+              "createdAt": "<time>",
+              "description": "Central warehouse serving the Dallas-Fort Worth region",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.pickup",
+              "isGeocoded": true,
+              "latitude": 32.7767,
+              "locationCategoryId": "$lc_1",
+              "longitude": -96.797,
+              "name": "Dallas Warehouse",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "75212",
+              "state": {
+                "abbreviation": "TX",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_2",
+                "name": "Texas",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_2",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.pickup",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 0,
+            "shipmentMoveId": "$sm_1",
+            "status": "Completed",
+            "type": "Pickup",
+            "updatedAt": "<time>",
+            "version": 4,
+            "weight": null
+          },
+          {
+            "actualArrival": null,
+            "actualDeparture": null,
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_2",
+            "location": {
+              "addressLine1": "3901 S Ashland Ave",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Chicago",
+              "code": "DC-CHI",
+              "createdAt": "<time>",
+              "description": "East distribution center for Midwest operations",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.delivery",
+              "isGeocoded": true,
+              "latitude": 41.8781,
+              "locationCategoryId": "$lc_2",
+              "longitude": -87.6298,
+              "name": "Chicago Distribution Center",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "60609",
+              "state": {
+                "abbreviation": "IL",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_3",
+                "name": "Illinois",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_3",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.delivery",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 1,
+            "shipmentMoveId": "$sm_1",
+            "status": "New",
+            "type": "Delivery",
+            "updatedAt": "<time>",
+            "version": 2,
+            "weight": null
+          }
+        ],
+        "updatedAt": "<time>",
+        "version": 3
+      },
+      "roundTrips": 61,
+      "sideEffects": {
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "resolved",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_1"
+              },
+              "entityId": "$wt_1",
+              "eventId": "$evt_12",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_1",
+              "resource": "watchtower",
+              "type": "watchtower.resolved"
+            }
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/",
+      "id": "arriveDelivery",
+      "request": {
+        "body": {
+          "action": "Arrive",
+          "occurredAt": "<time>"
+        },
+        "path": "/api/v1/shipment-moves/$sm_1/stops/$stp_2/record-actual/"
+      },
+      "response": {
+        "assignment": {
+          "ackStatus": "Pending",
+          "businessUnitId": "$run.businessUnit",
+          "createdAt": "<time>",
+          "id": "$asn_1",
+          "organizationId": "$run.organization",
+          "primaryWorker": {
+            "addressLine1": "918 Mission Trail",
+            "addressLine2": "",
+            "availableForDispatch": true,
+            "businessUnitId": "$run.businessUnit",
+            "canBeAssigned": true,
+            "city": "San Antonio",
+            "createdAt": "<time>",
+            "driverType": "OTR",
+            "email": "carlos.rivera@example.com",
+            "emergencyContactName": "",
+            "emergencyContactPhone": "",
+            "externalId": "",
+            "firstName": "Carlos",
+            "fleetCodeId": null,
+            "gender": "Male",
+            "id": "$fixture.driver",
+            "lastName": "Rivera",
+            "leaveType": "",
+            "managerId": null,
+            "organizationId": "$run.organization",
+            "phoneNumber": "+15550106001",
+            "positionId": null,
+            "postalCode": "78210",
+            "profilePicUrl": "",
+            "stateId": "$us_2",
+            "status": "Active",
+            "type": "Contractor",
+            "updatedAt": "<time>",
+            "userId": null,
+            "version": 0,
+            "wholeName": "Carlos Rivera"
+          },
+          "primaryWorkerId": "$fixture.driver",
+          "shipmentMoveId": "$sm_1",
+          "status": "New",
+          "tractor": {
+            "businessUnitId": "$run.businessUnit",
+            "code": "TRC-001",
+            "createdAt": "<time>",
+            "equipmentManufacturerId": "$em_1",
+            "equipmentTypeId": "$et_1",
+            "externalId": "",
+            "fleetCodeId": null,
+            "fuelType": "Diesel",
+            "id": "$fixture.tractor",
+            "iftaQualified": true,
+            "inProgressDueAt": null,
+            "inProgressMoveId": null,
+            "inProgressProNumber": "",
+            "lastKnownLocationId": null,
+            "lastKnownLocationLatitude": null,
+            "lastKnownLocationLongitude": null,
+            "lastKnownLocationName": "",
+            "leaseEndDate": null,
+            "leaseReference": "",
+            "lessorName": "",
+            "licensePlateNumber": "IL-TRC-1001",
+            "make": "Freightliner",
+            "model": "Cascadia",
+            "organizationId": "$run.organization",
+            "ownerWorkerId": null,
+            "ownershipType": "CompanyOwned",
+            "primaryWorkerId": "$wrk_1",
+            "registrationExpiry": null,
+            "registrationNumber": "REG-FL-001",
+            "secondaryWorkerId": null,
+            "stateId": "$us_3",
+            "status": "Available",
+            "updatedAt": "<time>",
+            "version": 0,
+            "vin": "",
+            "year": 2023
+          },
+          "tractorId": "$fixture.tractor",
+          "updatedAt": "<time>",
+          "version": 0
+        },
+        "businessUnitId": "$run.businessUnit",
+        "coverageType": "driver",
+        "createdAt": "<time>",
+        "distance": 966,
+        "distanceCalculatedAt": null,
+        "distanceDataVersion": "",
+        "distanceProvider": "",
+        "distanceRouteSignature": "",
+        "distanceRoutingType": "",
+        "distanceSource": "",
+        "distanceUnits": "",
+        "id": "$sm_1",
+        "loaded": true,
+        "organizationId": "$run.organization",
+        "sequence": 0,
+        "shipmentId": "$shp_1",
+        "status": "InTransit",
+        "stops": [
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": "<time>",
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_1",
+            "location": {
+              "addressLine1": "4500 Singleton Blvd",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Dallas",
+              "code": "WH-DAL",
+              "createdAt": "<time>",
+              "description": "Central warehouse serving the Dallas-Fort Worth region",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.pickup",
+              "isGeocoded": true,
+              "latitude": 32.7767,
+              "locationCategoryId": "$lc_1",
+              "longitude": -96.797,
+              "name": "Dallas Warehouse",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "75212",
+              "state": {
+                "abbreviation": "TX",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_2",
+                "name": "Texas",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_2",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.pickup",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 0,
+            "shipmentMoveId": "$sm_1",
+            "status": "Completed",
+            "type": "Pickup",
+            "updatedAt": "<time>",
+            "version": 4,
+            "weight": null
+          },
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": null,
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_2",
+            "location": {
+              "addressLine1": "3901 S Ashland Ave",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Chicago",
+              "code": "DC-CHI",
+              "createdAt": "<time>",
+              "description": "East distribution center for Midwest operations",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.delivery",
+              "isGeocoded": true,
+              "latitude": 41.8781,
+              "locationCategoryId": "$lc_2",
+              "longitude": -87.6298,
+              "name": "Chicago Distribution Center",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "60609",
+              "state": {
+                "abbreviation": "IL",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_3",
+                "name": "Illinois",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_3",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.delivery",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 1,
+            "shipmentMoveId": "$sm_1",
+            "status": "InTransit",
+            "type": "Delivery",
+            "updatedAt": "<time>",
+            "version": 3,
+            "weight": null
+          }
+        ],
+        "updatedAt": "<time>",
+        "version": 3
+      },
+      "roundTrips": 66,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "create",
+            "resource": "agent_run",
+            "resourceId": "$ar_2"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_3"
+              },
+              "entityId": "$wt_3",
+              "eventId": "$evt_13",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_3",
+              "resource": "watchtower",
+              "type": "watchtower.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "system",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$ar_2",
+              "eventId": "$evt_14",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ar_2",
+              "resource": "audited:agent_run",
+              "type": "audited:agent_run.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "system",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$ar_2"
+              },
+              "entityId": "$ar_2",
+              "eventId": "$evt_15",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ar_2",
+              "resource": "agent_run",
+              "type": "agent_run.created"
+            }
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "definitionId": "$agdef_1",
+                "eventKind": "detention.occurrence_opened",
+                "metadata": null,
+                "organizationId": "$run.organization",
+                "runId": "$ar_2",
+                "subjectId": "$dto_2",
+                "subjectType": "DetentionOccurrence",
+                "timestamp": "<time>",
+                "trigger": "Event",
+                "userId": null
+              }
+            ],
+            "id": "agent-run-$agdef_1-subject-$dto_2",
+            "queue": "agent-background-queue",
+            "type": "AgentRunWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/",
+      "effects": [
+        {
+          "after": "Completed",
+          "path": "data.shipment.moves.0.status",
+          "read": "shipment",
+          "rule": "equals"
+        },
+        {
+          "after": "Completed",
+          "path": "data.shipment.status",
+          "read": "shipment",
+          "rule": "equals"
+        }
+      ],
+      "id": "departDelivery",
+      "request": {
+        "body": {
+          "action": "Depart",
+          "occurredAt": "<time>"
+        },
+        "path": "/api/v1/shipment-moves/$sm_1/stops/$stp_2/record-actual/"
+      },
+      "response": {
+        "assignment": {
+          "ackStatus": "Pending",
+          "businessUnitId": "$run.businessUnit",
+          "createdAt": "<time>",
+          "id": "$asn_1",
+          "organizationId": "$run.organization",
+          "primaryWorker": {
+            "addressLine1": "918 Mission Trail",
+            "addressLine2": "",
+            "availableForDispatch": true,
+            "businessUnitId": "$run.businessUnit",
+            "canBeAssigned": true,
+            "city": "San Antonio",
+            "createdAt": "<time>",
+            "driverType": "OTR",
+            "email": "carlos.rivera@example.com",
+            "emergencyContactName": "",
+            "emergencyContactPhone": "",
+            "externalId": "",
+            "firstName": "Carlos",
+            "fleetCodeId": null,
+            "gender": "Male",
+            "id": "$fixture.driver",
+            "lastName": "Rivera",
+            "leaveType": "",
+            "managerId": null,
+            "organizationId": "$run.organization",
+            "phoneNumber": "+15550106001",
+            "positionId": null,
+            "postalCode": "78210",
+            "profilePicUrl": "",
+            "stateId": "$us_2",
+            "status": "Active",
+            "type": "Contractor",
+            "updatedAt": "<time>",
+            "userId": null,
+            "version": 0,
+            "wholeName": "Carlos Rivera"
+          },
+          "primaryWorkerId": "$fixture.driver",
+          "shipmentMoveId": "$sm_1",
+          "status": "New",
+          "tractor": {
+            "businessUnitId": "$run.businessUnit",
+            "code": "TRC-001",
+            "createdAt": "<time>",
+            "equipmentManufacturerId": "$em_1",
+            "equipmentTypeId": "$et_1",
+            "externalId": "",
+            "fleetCodeId": null,
+            "fuelType": "Diesel",
+            "id": "$fixture.tractor",
+            "iftaQualified": true,
+            "inProgressDueAt": null,
+            "inProgressMoveId": null,
+            "inProgressProNumber": "",
+            "lastKnownLocationId": null,
+            "lastKnownLocationLatitude": null,
+            "lastKnownLocationLongitude": null,
+            "lastKnownLocationName": "",
+            "leaseEndDate": null,
+            "leaseReference": "",
+            "lessorName": "",
+            "licensePlateNumber": "IL-TRC-1001",
+            "make": "Freightliner",
+            "model": "Cascadia",
+            "organizationId": "$run.organization",
+            "ownerWorkerId": null,
+            "ownershipType": "CompanyOwned",
+            "primaryWorkerId": "$wrk_1",
+            "registrationExpiry": null,
+            "registrationNumber": "REG-FL-001",
+            "secondaryWorkerId": null,
+            "stateId": "$us_3",
+            "status": "Available",
+            "updatedAt": "<time>",
+            "version": 0,
+            "vin": "",
+            "year": 2023
+          },
+          "tractorId": "$fixture.tractor",
+          "updatedAt": "<time>",
+          "version": 0
+        },
+        "businessUnitId": "$run.businessUnit",
+        "coverageType": "driver",
+        "createdAt": "<time>",
+        "distance": 966,
+        "distanceCalculatedAt": null,
+        "distanceDataVersion": "",
+        "distanceProvider": "",
+        "distanceRouteSignature": "",
+        "distanceRoutingType": "",
+        "distanceSource": "",
+        "distanceUnits": "",
+        "id": "$sm_1",
+        "loaded": true,
+        "organizationId": "$run.organization",
+        "sequence": 0,
+        "shipmentId": "$shp_1",
+        "status": "Completed",
+        "stops": [
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": "<time>",
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_1",
+            "location": {
+              "addressLine1": "4500 Singleton Blvd",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Dallas",
+              "code": "WH-DAL",
+              "createdAt": "<time>",
+              "description": "Central warehouse serving the Dallas-Fort Worth region",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.pickup",
+              "isGeocoded": true,
+              "latitude": 32.7767,
+              "locationCategoryId": "$lc_1",
+              "longitude": -96.797,
+              "name": "Dallas Warehouse",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "75212",
+              "state": {
+                "abbreviation": "TX",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_2",
+                "name": "Texas",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_2",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.pickup",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 0,
+            "shipmentMoveId": "$sm_1",
+            "status": "Completed",
+            "type": "Pickup",
+            "updatedAt": "<time>",
+            "version": 4,
+            "weight": null
+          },
+          {
+            "actualArrival": "<time>",
+            "actualDeparture": "<time>",
+            "addressLine": "",
+            "businessUnitId": "$run.businessUnit",
+            "countDetentionOverride": null,
+            "countLateOverride": null,
+            "createdAt": "<time>",
+            "handling": "Live",
+            "id": "$stp_2",
+            "location": {
+              "addressLine1": "3901 S Ashland Ave",
+              "addressLine2": "",
+              "businessUnitId": "$run.businessUnit",
+              "city": "Chicago",
+              "code": "DC-CHI",
+              "createdAt": "<time>",
+              "description": "East distribution center for Midwest operations",
+              "geofenceRadiusMeters": null,
+              "geofenceType": "auto",
+              "geofenceVertices": null,
+              "id": "$fixture.delivery",
+              "isGeocoded": true,
+              "latitude": 41.8781,
+              "locationCategoryId": "$lc_2",
+              "longitude": -87.6298,
+              "name": "Chicago Distribution Center",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "60609",
+              "state": {
+                "abbreviation": "IL",
+                "countryIso3": "USA",
+                "countryName": "United States",
+                "createdAt": "<time>",
+                "id": "$us_3",
+                "name": "Illinois",
+                "updatedAt": "<time>"
+              },
+              "stateId": "$us_3",
+              "status": "Active",
+              "timezone": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "locationId": "$fixture.delivery",
+            "organizationId": "$run.organization",
+            "pieces": null,
+            "scheduleType": "Open",
+            "scheduledWindowEnd": "<time>",
+            "scheduledWindowStart": "<time>",
+            "sequence": 1,
+            "shipmentMoveId": "$sm_1",
+            "status": "Completed",
+            "type": "Delivery",
+            "updatedAt": "<time>",
+            "version": 4,
+            "weight": null
+          }
+        ],
+        "updatedAt": "<time>",
+        "version": 4
+      },
+      "roundTrips": 99,
+      "sideEffects": {
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "resolved",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_3"
+              },
+              "entityId": "$wt_3",
+              "eventId": "$evt_16",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_3",
+              "resource": "watchtower",
+              "type": "watchtower.resolved"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$ord_1"
+              },
+              "entityId": "$ord_1",
+              "eventId": "$evt_17",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ord_1",
+              "resource": "orders",
+              "type": "orders.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "resolved",
+              "actorType": "system",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$wt_2"
+              },
+              "entityId": "$wt_2",
+              "eventId": "$evt_18",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$wt_2",
+              "resource": "watchtower",
+              "type": "watchtower.resolved"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$se_4",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$se_4",
+              "eventId": "$evt_19",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$se_4",
+              "resource": "shipmentEvents",
+              "type": "shipmentEvents.created"
+            }
+          }
+        ],
+        "signals": [
+          {
+            "arg": {},
+            "name": "shipment-eta-refresh",
+            "workflowId": "shipment-eta-refresh-$shp_1"
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "iterations": 0,
+                "organizationId": "$run.organization",
+                "shipmentId": "$shp_1"
+              }
+            ],
+            "id": "shipment-eta-refresh-$shp_1",
+            "queue": "dispatch-queue",
+            "type": "RefreshShipmentEtaWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "graphql BulkTransferShipmentsToBilling",
+      "effects": [
+        {
+          "after": "1500",
+          "before": "1500",
+          "path": "data.shipment.totalChargeAmount",
+          "read": "shipment",
+          "rule": "unchanged"
+        }
+      ],
+      "id": "transfer",
+      "request": {
+        "variables": {
+          "input": {
+            "markCompletedReadyToInvoice": true,
+            "shipmentIds": [
+              "$shp_1"
+            ]
+          }
+        }
+      },
+      "response": {
+        "data": {
+          "bulkTransferShipmentsToBilling": {
+            "errorCount": 0,
+            "results": [
+              {
+                "billingQueueItem": {
+                  "id": "$bqi_1",
+                  "number": "INV2611000001",
+                  "status": "ReadyForReview"
+                },
+                "billingQueueItems": [
+                  {
+                    "allocatedTotalAmount": "1500.00",
+                    "billToCustomer": {
+                      "code": "RNGE",
+                      "id": "$fixture.customer",
+                      "name": "Range Logistics"
+                    },
+                    "billToCustomerId": "$fixture.customer",
+                    "id": "$bqi_1",
+                    "number": "INV2611000001",
+                    "status": "ReadyForReview"
+                  }
+                ],
+                "error": null,
+                "failureCode": null,
+                "markedReadyToInvoice": true,
+                "missingRequirements": [],
+                "proNumber": "<proNumber>",
+                "shipmentId": "$shp_1",
+                "success": true,
+                "validationFailures": []
+              }
+            ],
+            "successCount": 1,
+            "totalCount": 1
+          }
+        }
+      },
+      "roundTrips": 35,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "update",
+            "resource": "shipment",
+            "resourceId": "$shp_1"
+          },
+          {
+            "operation": "create",
+            "resource": "billing_queue",
+            "resourceId": "$bqi_1"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$shp_1",
+              "eventId": "$evt_20",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$shp_1",
+              "resource": "audited:shipment",
+              "type": "audited:shipment.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$shp_1"
+              },
+              "entityId": "$shp_1",
+              "eventId": "$evt_21",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$shp_1",
+              "resource": "shipments",
+              "type": "shipments.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$se_5",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$se_5",
+              "eventId": "$evt_22",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$se_5",
+              "resource": "shipmentEvents",
+              "type": "shipmentEvents.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$bqi_1",
+              "eventId": "$evt_23",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "audited:billing_queue",
+              "type": "audited:billing_queue.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$bqi_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$bqi_1",
+              "eventId": "$evt_24",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "billing_queue",
+              "type": "billing_queue.created"
+            }
+          }
+        ],
+        "signals": [
+          {
+            "arg": {},
+            "name": "shipment-eta-refresh",
+            "workflowId": "shipment-eta-refresh-$shp_1"
+          },
+          {
+            "arg": {},
+            "name": "billing-queue-recheck",
+            "workflowId": "billing-queue-recheck-$bqi_1"
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "iterations": 0,
+                "organizationId": "$run.organization",
+                "shipmentId": "$shp_1"
+              }
+            ],
+            "id": "shipment-eta-refresh-$shp_1",
+            "queue": "dispatch-queue",
+            "type": "RefreshShipmentEtaWorkflow"
+          },
+          {
+            "args": [
+              {
+                "businessUnitId": "$run.businessUnit",
+                "itemId": "$bqi_1",
+                "iterations": 0,
+                "organizationId": "$run.organization"
+              }
+            ],
+            "id": "billing-queue-recheck-$bqi_1",
+            "queue": "billing-queue",
+            "type": "BillingQueueRecheckWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "graphql UpdateBillingQueueStatus",
+      "id": "approve",
+      "request": {
+        "variables": {
+          "id": "$bqi_1",
+          "input": {
+            "status": "Approved"
+          }
+        }
+      },
+      "response": {
+        "data": {
+          "updateBillingQueueStatus": {
+            "adjustmentContext": {
+              "memo": null,
+              "rebill": null
+            },
+            "allocatedTotalAmount": "1500.00",
+            "assignedBillerId": null,
+            "billToCustomer": {
+              "code": "RNGE",
+              "id": "$fixture.customer",
+              "name": "Range Logistics"
+            },
+            "billToCustomerId": "$fixture.customer",
+            "billType": "Invoice",
+            "businessUnitId": "$run.businessUnit",
+            "cancelReason": "",
+            "canceledAt": null,
+            "canceledById": null,
+            "correctionGroupId": null,
+            "createdAt": "<time>",
+            "exceptionNotes": "",
+            "exceptionReasonCode": null,
+            "id": "$bqi_1",
+            "isAdjustmentOrigin": false,
+            "number": "INV2611000001",
+            "organizationId": "$run.organization",
+            "rebillStrategy": null,
+            "requiresReplacementReview": false,
+            "rerateVariancePercent": "0",
+            "reviewCompletedAt": "<time>",
+            "reviewNotes": "",
+            "reviewStartedAt": "<time>",
+            "shipmentId": "$shp_1",
+            "sourceCreditMemoInvoiceId": null,
+            "sourceInvoiceAdjustmentId": null,
+            "sourceInvoiceId": null,
+            "status": "Approved",
+            "updatedAt": "<time>",
+            "version": 1
+          }
+        }
+      },
+      "roundTrips": 35,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "create",
+            "resource": "invoice",
+            "resourceId": "$inv_1"
+          },
+          {
+            "operation": "update",
+            "resource": "billing_queue",
+            "resourceId": "$bqi_1"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$inv_1",
+              "eventId": "$evt_25",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$inv_1",
+              "resource": "audited:invoice",
+              "type": "audited:invoice.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "created",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$inv_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$inv_1",
+              "eventId": "$evt_26",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$inv_1",
+              "resource": "invoice",
+              "type": "invoice.created"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$bqi_1",
+              "eventId": "$evt_27",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "audited:billing_queue",
+              "type": "audited:billing_queue.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$bqi_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$bqi_1",
+              "eventId": "$evt_28",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "billing_queue",
+              "type": "billing_queue.updated"
+            }
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "POST /api/v1/billing-queue/:itemID/post/",
+      "effects": [
+        {
+          "after": "Invoiced",
+          "path": "data.shipment.status",
+          "read": "shipment",
+          "rule": "equals"
+        }
+      ],
+      "id": "post",
+      "request": {
+        "path": "/api/v1/billing-queue/$bqi_1/post/"
+      },
+      "response": {
+        "invoiceId": "$inv_1",
+        "invoiceNumber": "INV2611000001",
+        "item": {
+          "adjustmentContext": {},
+          "agentReads": [],
+          "agentReviewedAt": null,
+          "agentSummary": "",
+          "agentVerdict": null,
+          "allocatedTotalAmount": "1500",
+          "allocatedTotalAmountMinor": 150000,
+          "assignedBillerId": null,
+          "billToCustomer": {
+            "addressLine1": "1801 California St",
+            "addressLine2": "",
+            "allowConsolidation": true,
+            "brokerVettingEnabled": false,
+            "businessUnitId": "$run.businessUnit",
+            "checkCallIntervalHours": null,
+            "city": "Denver",
+            "code": "RNGE",
+            "consolidationPriority": 1,
+            "createdAt": "<time>",
+            "dotNumber": "",
+            "etaRiskThresholdMinutes": null,
+            "exclusiveConsolidation": false,
+            "externalId": "",
+            "id": "$fixture.customer",
+            "isGeocoded": false,
+            "latitude": null,
+            "longitude": null,
+            "mcNumber": "",
+            "name": "Range Logistics",
+            "organizationId": "$run.organization",
+            "placeId": "",
+            "postalCode": "80202",
+            "stateId": "$us_1",
+            "status": "Active",
+            "statusUpdatePreference": "None",
+            "statusUpdateRecipients": "",
+            "updatedAt": "<time>",
+            "version": 0
+          },
+          "billToCustomerId": "$fixture.customer",
+          "billType": "Invoice",
+          "businessUnitId": "$run.businessUnit",
+          "cancelReason": "",
+          "canceledAt": null,
+          "canceledById": null,
+          "checkedAt": null,
+          "correctionGroupId": null,
+          "createdAt": "<time>",
+          "exceptionNotes": "",
+          "exceptionReasonCode": null,
+          "heldAt": null,
+          "heldById": null,
+          "holdReasonCode": null,
+          "id": "$bqi_1",
+          "invoiceDate": null,
+          "invoiceId": null,
+          "invoiceMemo": "",
+          "isAdjustmentOrigin": false,
+          "lane": "Closed",
+          "number": "INV2611000001",
+          "orderId": "$ord_1",
+          "organizationId": "$run.organization",
+          "packetDocumentIds": [],
+          "packetPageRotations": [],
+          "packetPicked": false,
+          "paymentTerm": "",
+          "poNumber": "",
+          "rebillStrategy": "",
+          "requiresReplacementReview": false,
+          "rerateVariancePercent": "0",
+          "reviewCompletedAt": "<time>",
+          "reviewNotes": "",
+          "reviewStartedAt": "<time>",
+          "shipment": {
+            "actualDeliveryDate": "<time>",
+            "actualShipDate": "<time>",
+            "autoRated": false,
+            "autoRatedAt": null,
+            "billToCustomerId": null,
+            "billedAt": "<time>",
+            "billingTransferStatus": "Posted",
+            "bol": "CHAIN-<run.unique>",
+            "businessUnitId": "$run.businessUnit",
+            "cancelReason": "",
+            "canceledAt": null,
+            "canceledById": null,
+            "consolidationGroupId": null,
+            "createdAt": "<time>",
+            "customer": {
+              "addressLine1": "1801 California St",
+              "addressLine2": "",
+              "allowConsolidation": true,
+              "brokerVettingEnabled": false,
+              "businessUnitId": "$run.businessUnit",
+              "checkCallIntervalHours": null,
+              "city": "Denver",
+              "code": "RNGE",
+              "consolidationPriority": 1,
+              "createdAt": "<time>",
+              "dotNumber": "",
+              "etaRiskThresholdMinutes": null,
+              "exclusiveConsolidation": false,
+              "externalId": "",
+              "id": "$fixture.customer",
+              "isGeocoded": false,
+              "latitude": null,
+              "longitude": null,
+              "mcNumber": "",
+              "name": "Range Logistics",
+              "organizationId": "$run.organization",
+              "placeId": "",
+              "postalCode": "80202",
+              "stateId": "$us_1",
+              "status": "Active",
+              "statusUpdatePreference": "None",
+              "statusUpdateRecipients": "",
+              "updatedAt": "<time>",
+              "version": 0
+            },
+            "customerId": "$fixture.customer",
+            "enteredById": null,
+            "entryMethod": "Manual",
+            "envelopeHeightFeet": null,
+            "envelopeLengthFeet": null,
+            "envelopeOverallHeightFeet": null,
+            "envelopeWidthFeet": null,
+            "externalReference": "",
+            "formulaTemplateId": null,
+            "freightChargeAmount": "1500",
+            "freightLines": [
+              {
+                "amount": "1500",
+                "label": "Freight charge"
+              }
+            ],
+            "freightTerms": "Prepaid",
+            "fuelSurchargeLocked": false,
+            "id": "$shp_1",
+            "markedReadyToBillAt": "<time>",
+            "orderId": "$ord_1",
+            "organizationId": "$run.organization",
+            "otherChargeAmount": "0",
+            "ownerId": null,
+            "pieces": 10,
+            "proNumber": "<proNumber>",
+            "rateAgreementId": null,
+            "rateAgreementRuleId": null,
+            "rateLocked": true,
+            "rateOverrideAmount": null,
+            "rateOverrideAt": null,
+            "rateOverrideById": null,
+            "rateOverrideReason": "Hand-rated by the shipment-to-invoice chain",
+            "rateQuoteId": "$rqt_1",
+            "ratingDetail": {
+              "ratedAt": "<time>",
+              "source": "ManualOverride"
+            },
+            "serviceTypeId": "$fixture.serviceType",
+            "shipmentTypeId": "$fixture.shipmentType",
+            "stageRank": 5,
+            "status": "Invoiced",
+            "tariffInputs": {},
+            "temperatureMax": null,
+            "temperatureMin": null,
+            "tenderStatus": null,
+            "totalChargeAmount": "1500",
+            "tractorTypeId": null,
+            "trailerTypeId": null,
+            "transferredToBillingAt": "<time>",
+            "updatedAt": "<time>",
+            "version": 8,
+            "weight": 20000
+          },
+          "shipmentId": "$shp_1",
+          "sourceCreditMemoInvoiceId": null,
+          "sourceInvoiceAdjustmentId": null,
+          "sourceInvoiceId": null,
+          "status": "Posted",
+          "statusBeforeHold": null,
+          "updatedAt": "<time>",
+          "version": 2
+        },
+        "recipients": [
+          "billing@rangelogistics.example.com",
+          "dock@rangelogistics.example.com"
+        ],
+        "sentTo": "billing@rangelogistics.example.com"
+      },
+      "roundTrips": 65,
+      "sideEffects": {
+        "audit": [
+          {
+            "operation": "update",
+            "resource": "invoice",
+            "resourceId": "$inv_1"
+          },
+          {
+            "operation": "update",
+            "resource": "billing_queue",
+            "resourceId": "$bqi_1"
+          }
+        ],
+        "realtime": [
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$ord_1"
+              },
+              "entityId": "$ord_1",
+              "eventId": "$evt_29",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$ord_1",
+              "resource": "orders",
+              "type": "orders.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$inv_1",
+              "eventId": "$evt_30",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$inv_1",
+              "resource": "audited:invoice",
+              "type": "audited:invoice.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$inv_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$inv_1",
+              "eventId": "$evt_31",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$inv_1",
+              "resource": "invoice",
+              "type": "invoice.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entityId": "$bqi_1",
+              "eventId": "$evt_32",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "audited:billing_queue",
+              "type": "audited:billing_queue.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$bqi_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$bqi_1",
+              "eventId": "$evt_33",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "billing_queue",
+              "type": "billing_queue.updated"
+            }
+          },
+          {
+            "event": "resource.invalidation",
+            "payload": {
+              "action": "updated",
+              "actorId": "$run.user",
+              "actorType": "session_user",
+              "actorUserId": "$run.user",
+              "businessUnitId": "$run.businessUnit",
+              "entity": {
+                "id": "$bqi_1",
+                "shipmentId": "$shp_1"
+              },
+              "entityId": "$bqi_1",
+              "eventId": "$evt_34",
+              "occurredAt": "<time>",
+              "organizationId": "$run.organization",
+              "recordId": "$bqi_1",
+              "resource": "billing_queue",
+              "type": "billing_queue.updated"
+            }
+          }
+        ],
+        "workflows": [
+          {
+            "args": [
+              {
+                "apiKeyId": null,
+                "baseUrl": "",
+                "businessUnitId": "$run.businessUnit",
+                "invoiceId": "$inv_1",
+                "metadata": null,
+                "organizationId": "$run.organization",
+                "principalId": "$run.user",
+                "principalType": "session_user",
+                "timestamp": "<time>",
+                "userId": "$run.user"
+              }
+            ],
+            "id": "invoice-pdf-generate-$inv_1-$wf_1",
+            "queue": "billing-queue",
+            "type": "GenerateInvoicePDFWorkflow"
+          }
+        ]
+      },
+      "status": 200,
+      "write": true
+    },
+    {
+      "call": "graphql DeskInvoiceDetail",
+      "id": "invoice",
+      "request": {
+        "variables": {
+          "id": "$inv_1"
+        }
+      },
+      "response": {
+        "data": {
+          "invoice": {
+            "appliedAmount": "0",
+            "billToCity": "Denver",
+            "billToCode": "RNGE",
+            "billToName": "Range Logistics",
+            "billToState": "CO",
+            "billType": "Invoice",
+            "currencyCode": "USD",
+            "customerId": "$fixture.customer",
+            "disputeStatus": "None",
+            "dueDate": "<time>",
+            "ediSendStatus": "NotSent",
+            "id": "$inv_1",
+            "invoiceDate": "<time>",
+            "isAdjustmentArtifact": false,
+            "lastEdiError": "",
+            "lastSendError": "",
+            "lines": [
+              {
+                "accessorialChargeId": "",
+                "amount": "1500",
+                "chargeCode": "",
+                "description": "Freight charge",
+                "id": "$invl_1",
+                "lineNumber": 1,
+                "quantity": "1",
+                "shipmentProNumber": "<proNumber>",
+                "type": "Freight",
+                "unitPrice": "1500"
+              }
+            ],
+            "memo": "",
+            "number": "INV2611000001",
+            "openBalance": "1500",
+            "orderId": "$ord_1",
+            "orderNumber": "O261100001",
+            "otherAmount": "0",
+            "paymentTerm": "Net30",
+            "pdfDocumentId": "",
+            "postedAt": "<time>",
+            "remittanceInstructions": "",
+            "scope": "Shipment",
+            "sendStatus": "NotSent",
+            "sentAt": null,
+            "serviceDate": "<time>",
+            "settlementStatus": "Unpaid",
+            "shipmentBol": "CHAIN-<run.unique>",
+            "shipmentCount": 1,
+            "shipmentId": "$shp_1",
+            "shipmentProNumber": "<proNumber>",
+            "status": "Posted",
+            "subtotalAmount": "1500",
+            "supersededByInvoiceId": "",
+            "supersedesInvoiceId": "",
+            "totalAmount": "1500",
+            "voidReason": "",
+            "voidedAt": null
+          }
+        }
+      },
+      "roundTrips": 1,
+      "status": 200,
+      "write": false
+    }
+  ]
+}
