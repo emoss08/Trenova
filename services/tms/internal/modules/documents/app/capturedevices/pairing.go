@@ -32,6 +32,7 @@ const (
 	pairingVerifyPath    = "/capture/pair"
 	userCodeGroupSize    = 4
 	maxMachineNameLength = 255
+	maxWindowsUserLength = 255
 )
 
 // PairingErrorCode is one of the RFC 8628 §3.5 token endpoint answers.
@@ -86,7 +87,7 @@ func (s *Service) StartPairing(
 	ctx context.Context,
 	req *StartPairingRequest,
 ) (*PairingGrant, error) {
-	if err := validateMachine(req.MachineName, req.AgentVersion, req.Architecture); err != nil {
+	if err := validateMachine(req); err != nil {
 		return nil, err
 	}
 
@@ -140,18 +141,27 @@ func (s *Service) StartPairing(
 	return nil, err
 }
 
-func validateMachine(machineName, agentVersion string, arch capture.Architecture) error {
+func validateMachine(req *StartPairingRequest) error {
 	multiErr := errortypes.NewMultiError()
-	name := strings.TrimSpace(machineName)
+	name := strings.TrimSpace(req.MachineName)
 	if name == "" {
 		multiErr.Add("machineName", errortypes.ErrRequired, "Machine name is required")
 	} else if len(name) > maxMachineNameLength {
 		multiErr.Add("machineName", errortypes.ErrInvalid, "Machine name is too long")
 	}
-	if strings.TrimSpace(agentVersion) == "" {
-		multiErr.Add("agentVersion", errortypes.ErrRequired, "Agent version is required")
+	if len(strings.TrimSpace(req.WindowsUser)) > maxWindowsUserLength {
+		multiErr.Add("windowsUser", errortypes.ErrInvalid, "Windows user is too long")
 	}
-	if !arch.IsValid() {
+	agentVersion := strings.TrimSpace(req.AgentVersion)
+	if agentVersion == "" {
+		multiErr.Add("agentVersion", errortypes.ErrRequired, "Agent version is required")
+	} else if len(agentVersion) > maxAgentVersionLength {
+		multiErr.Add("agentVersion", errortypes.ErrInvalid, "Agent version is too long")
+	}
+	if len(strings.TrimSpace(req.OSVersion)) > maxOSVersionLength {
+		multiErr.Add("osVersion", errortypes.ErrInvalid, "OS version is too long")
+	}
+	if !req.Architecture.IsValid() {
 		multiErr.Add("architecture", errortypes.ErrInvalid, "Architecture must be x64")
 	}
 	if multiErr.HasErrors() {
