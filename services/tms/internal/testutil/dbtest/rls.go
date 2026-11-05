@@ -27,6 +27,25 @@ const rlsTestScopeKeyID = "ktest"
 func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connection {
 	t.Helper()
 
+	lifecycle := fxtest.NewLifecycle(t)
+	conn, err := postgres.NewConnection(postgres.ConnectionParams{
+		Lifecycle:       lifecycle,
+		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
+		DatabaseConfig:  RLSDatabaseConfig(t, admin, dsn),
+		ReportingConfig: &reportingconfig.Config{},
+		Logger:          zaptest.NewLogger(t),
+		Observers:       shapetest.Observers(t),
+	})
+	require.NoError(t, err)
+	lifecycle.RequireStart()
+	t.Cleanup(lifecycle.RequireStop)
+
+	return conn
+}
+
+func RLSDatabaseConfig(t *testing.T, admin *keel.DB, dsn string) *databaseconfig.Config {
+	t.Helper()
+
 	ctx := t.Context()
 	suffix := strings.ToLower(pulid.MustNew("r").String())
 	appRole := "rls_app_" + suffix
@@ -69,20 +88,7 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 	_, err = postgres.ProvisionRLS(ctx, admin, database)
 	require.NoError(t, err)
 
-	lifecycle := fxtest.NewLifecycle(t)
-	conn, err := postgres.NewConnection(postgres.ConnectionParams{
-		Lifecycle:       lifecycle,
-		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
-		DatabaseConfig:  database,
-		ReportingConfig: &reportingconfig.Config{},
-		Logger:          zaptest.NewLogger(t),
-		Observers:       shapetest.Observers(t),
-	})
-	require.NoError(t, err)
-	lifecycle.RequireStart()
-	t.Cleanup(lifecycle.RequireStop)
-
-	return conn
+	return database
 }
 
 func randomBytes(t *testing.T, size int) []byte {
