@@ -18,15 +18,15 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@tanstack/eslint-plugin-query": "^5.102.8",
-    "eslint-plugin-better-tailwindcss": "^4.7.0",
-    "oxfmt": "^0.74.0",
-    "oxlint": "^1.82.0",
-    "oxlint-tsgolint": "^7.0.2001",
-    "turbo": "^2.10.12"
+    "@tanstack/eslint-plugin-query": "^5.105.3",
+    "eslint-plugin-better-tailwindcss": "^4.10.0",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.91.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "turbo": "^2.11.10"
   },
   "engines": {
     "node": "^26"
   },
-  "packageManager": "pnpm@12.3.4"
+  "packageManager": "pnpm@12.16.1"
 }
