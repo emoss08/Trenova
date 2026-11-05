@@ -5,5 +5,4 @@
 **/*.local
 **/tmp
 legacy
-goroutines.txt
 services/tms/config/config.yaml
