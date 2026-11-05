@@ -68,6 +68,7 @@ type EDICommunicationProfileRepository interface {
 		ctx context.Context,
 		req GetActiveAS2ProfileForInboundURLRequest,
 	) (*edi.EDICommunicationProfile, error)
+	RotateAS2InboundToken(ctx context.Context, req RotateAS2InboundTokenRequest) error
 	ListProfiles(
 		ctx context.Context,
 		req *ListEDICommunicationProfilesRequest,

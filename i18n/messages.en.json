@@ -15429,6 +15429,15 @@
       "go/other"
     ]
   },
+  "AS2 MDN did not arrive at an address of the partner the message was sent to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "AS2 MDN does not reference an original message": {
     "sites": 1,
     "scope": [
@@ -46960,7 +46969,7 @@
     ]
   },
   "Cancel": {
-    "sites": 320,
+    "sites": 321,
     "scope": [
       "go",
       "ts"
@@ -65155,7 +65164,7 @@
     ]
   },
   "Copied": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -65255,7 +65264,7 @@
     ]
   },
   "Copy": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -89133,6 +89142,15 @@
   },
   "EDI communication profile is required": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "EDI communication profile not found": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -117698,6 +117716,15 @@
       "go/other"
     ]
   },
+  "Give this URL to the partner. It is the only address that accepts their AS2 messages for this profile.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Give this home screen a name": {
     "sites": 1,
     "scope": [
@@ -126863,6 +126890,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Inbound URL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Inbound and outbound EDI messages that failed or are held": {
@@ -179660,6 +179696,15 @@
       "go/other"
     ]
   },
+  "Only AS2 communication profiles have an inbound URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Only Active guides are matched when a move is tendered.": {
     "sites": 1,
     "scope": [
@@ -221755,11 +221800,12 @@
     ]
   },
   "Require a separate approver": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/carrier-settlement-control",
       "routes/invoice-adjustment-control",
       "routes/settlement-control"
     ]
@@ -222181,7 +222227,7 @@
       "routes/worker-credential-type"
     ]
   },
-  "Required when MDN mode is asynchronous.": {
+  "Required when MDN mode is asynchronous. Enter this profile's inbound URL so the partner's receipt reaches it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -227569,21 +227615,23 @@
     ]
   },
   "Rotate": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/edi"
     ]
   },
   "Rotate URL": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/edi"
     ]
   },
   "Rotate all": {
@@ -227647,6 +227695,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Rotate the inbound URL?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Rotate the webhook URL?": {
@@ -232166,6 +232223,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Save this AS2 profile to get the inbound URL to give the partner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Save this as a template": {
@@ -267605,6 +267671,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The current URL stops working immediately. The partner's messages are refused until they send to the new one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "The current assignment ends the day before the new one starts. Balances carry across unchanged.": {
@@ -319892,6 +319967,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Whoever submits a carrier settlement cannot also approve it. Turn this off if one person runs carrier pay.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier-settlement-control"
     ]
   },
   "Whoever submits a settlement cannot also approve it. Turn this off if one person runs payroll. Auto-approving clean settlements is not affected.": {

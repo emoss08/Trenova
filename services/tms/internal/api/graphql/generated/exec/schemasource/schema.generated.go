@@ -10077,6 +10077,8 @@ type CarrierSettlementControl {
   autoGenerateBatches: Boolean!
   "When on, approving a carrier settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
+  "When on, whoever submits a carrier settlement cannot also approve it."
+  requireSeparateApprover: Boolean!
   "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
   varianceToleranceMinor: Int!
   "When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically."
@@ -10241,6 +10243,7 @@ input UpdateCarrierSettlementControlInput {
   payDelayDays: Int!
   autoGenerateBatches: Boolean!
   autoPostOnApprove: Boolean!
+  requireSeparateApprover: Boolean!
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!
@@ -16499,6 +16502,11 @@ type EdiCommunicationProfile @kind(resource: "edi") {
   """
   config: JSON!
   secretState: [EdiCommunicationProfileSecretState!]
+  """
+  The path a partner posts AS2 messages to for this profile, on the origin the
+  API is served from. Set only on an AS2 profile.
+  """
+  as2InboundPath: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -20196,7 +20204,7 @@ extend type Mutation {
   statement being fetched a second time. Rows that already became purchases are
   left alone.
   """
-  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult! @authorizes(resource: "fuel_purchase_import")
   discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
 }
 `, BuiltIn: false},
@@ -22108,23 +22116,23 @@ extend type Mutation {
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   "Creates a mailbox and returns its webhook token, once."
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials!
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   "Changes a mailbox's settings. Changing its provider clears the signing secret and the API key."
   updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
   "Replaces the webhook token. The old URL stops working at once."
-  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
   setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
   "Settles several messages, or a whole folder, at once."
-  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult!
+  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Puts settled messages back in the queue."
-  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Assigns messages to a person, or unassigns them when ownerId is null."
-  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult!
+  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Takes messages out of the queue until a time or an event."
-  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult!
+  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Brings a snoozed message back now."
   wakeInboundMessage(id: ID!): InboundMessage!
   "Parks a message until the sender replies on its thread, or until a time."
@@ -22490,7 +22498,7 @@ extend type Mutation {
   "Files an attachment on a shipment, whole or split into page ranges."
   fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
   "Files every readable attachment of each message on its matched shipment."
-  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult! @authorizes(resource: "inbound_message")
   unfileInboundAttachment(attachmentId: ID!): InboundMessage!
   "Adds a shortage, overage or damage exception to the matched shipment."
   logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
@@ -25135,7 +25143,7 @@ extend type Mutation {
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
   assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
-  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
+  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment! @authorizes(resource: "pto_policy")
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
 }
@@ -34157,7 +34165,7 @@ extend type Query {
 extend type Mutation {
   recordWorkerEmploymentEvent(
     input: RecordWorkerEmploymentEventInput!
-  ): RecordWorkerEmploymentEventPayload!
+  ): RecordWorkerEmploymentEventPayload! @authorizes(resource: "worker_employment_event")
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
 }
 `, BuiltIn: false},
@@ -35117,7 +35125,7 @@ extend type Mutation {
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   deleteWorkerSafetyEvent(id: ID!): Boolean!
-  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
+  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload! @authorizes(resource: "worker_disciplinary_action")
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
   deleteWorkerRecognition(id: ID!): Boolean!

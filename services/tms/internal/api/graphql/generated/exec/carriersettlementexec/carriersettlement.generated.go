@@ -1690,6 +1690,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "requireSeparateApprover",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
+					return obj.RequireSeparateApprover, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "varianceToleranceMinor",
 				NonNull:  true,
 				ChildErr: errNoChild4,
@@ -3703,7 +3713,7 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "varianceToleranceMinor", "autoMatchInboundInvoices", "autoAcceptWithinTolerance", "holdUntilInvoiceMatched", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
+	fieldsInOrder := [...]string{"version", "payTrigger", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "autoGenerateBatches", "autoPostOnApprove", "requireSeparateApprover", "varianceToleranceMinor", "autoMatchInboundInvoices", "autoAcceptWithinTolerance", "holdUntilInvoiceMatched", "defaultApAccountId", "defaultPurchasedTransportationAccountId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3759,6 +3769,13 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 				return it, err
 			}
 			it.AutoPostOnApprove = data
+		case "requireSeparateApprover":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requireSeparateApprover"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequireSeparateApprover = data
 		case "varianceToleranceMinor":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("varianceToleranceMinor"))
 			data, err := unmarshalNInt2int(ctx, ec, v)

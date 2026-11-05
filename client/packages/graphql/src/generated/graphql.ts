@@ -8858,6 +8858,7 @@ export type UpdateCarrierSettlementControlInput = {
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
   periodEndDayOfWeek: number;
+  requireSeparateApprover: boolean;
   varianceToleranceMinor: number;
   version: number;
 };
@@ -12617,7 +12618,7 @@ export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount?: num
 export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, holdUntilInvoiceMatched: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
+export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, requireSeparateApprover: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, holdUntilInvoiceMatched: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
 
 export type CurrentCarrierSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -14333,7 +14334,7 @@ export type EdiPartnerTableQueryVariables = Exact<{
 
 export type EdiPartnerTableQuery = { ediPartners: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiPartnerRowFieldsFragment': EdiPartnerRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, config: unknown, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
+export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, config: unknown, as2InboundPath: string | null, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
 
 export type EdiCommunicationProfileTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -18015,7 +18016,7 @@ export type ExportTableViewMutationVariables = Exact<{
 }>;
 
 
-export type ExportTableViewMutation = { exportTableView: { definitionId: string, skippedColumns: Array<string>, run: { id: string, status: string } | null } };
+export type ExportTableViewMutation = { exportTableView: { definitionId: string, skippedColumns: Array<string>, run: { id: string } | null } };
 
 export type ScheduleTableViewMutationVariables = Exact<{
   input: ScheduleTableViewInput;
@@ -19390,7 +19391,7 @@ export type HandOffWatchtowerItemMutationVariables = Exact<{
 }>;
 
 
-export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string, status: AgentRunStatus } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
+export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
 
 export type WatchtowerItemDetailQueryVariables = Exact<{
   id: string | number;
@@ -20243,7 +20244,7 @@ export type IssueDisciplinaryActionMutationVariables = Exact<{
 }>;
 
 
-export type IssueDisciplinaryActionMutation = { issueDisciplinaryAction: { action: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } }, employmentEvent: { id: string, kind: WorkerEmploymentEventKind, effectiveAt: number } | null } };
+export type IssueDisciplinaryActionMutation = { issueDisciplinaryAction: { action: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } }, employmentEvent: { id: string } | null } };
 
 export type RescindDisciplinaryActionMutationVariables = Exact<{
   input: RescindDisciplinaryActionInput;

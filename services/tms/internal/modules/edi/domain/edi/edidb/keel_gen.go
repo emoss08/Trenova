@@ -47,7 +47,7 @@ var eDICommunicationProfilesTable = schema.Table{
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-		{Name: "as2_inbound_token", Quoted: `"as2_inbound_token"`, Field: "AS2InboundToken", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `AS2 Inbound Token`},
+		{Name: "as2_inbound_token", Quoted: `"as2_inbound_token"`, Field: "AS2InboundToken", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `AS 2 Inbound Token`},
 	},
 	Relations: []schema.Relation{
 		{Name: "Connection", Alias: "c", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Connection`, JSON: `connection`},

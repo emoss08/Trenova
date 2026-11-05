@@ -1113,8 +1113,6 @@
   "Role name": "角色名称",
   "Role not found": "找不到角色",
   "Roles & permissions": "角色与权限",
-  "Rotate": "轮换",
-  "Rotate URL": "轮换 URL",
   "Rotate secret": "轮换密钥",
   "Rotate the webhook URL?": "轮换 Webhook URL？",
   "Route behavior": "路线行为",

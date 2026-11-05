@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1113 writes: 662 GraphQL mutations and 451 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1114 writes: 662 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 668 |
+| Exempt | 669 |
 | — Security | 85 |
-| — Configuration | 245 |
+| — Configuration | 246 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
 | — Agent administration | 104 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1113 |
+| Total | 1114 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -196,7 +196,7 @@ The writes no tool performs yet, and what the tool would do.
 | driversettlement | 34 | 29 | 5 | 0 |
 | edi | 9 | 6 | 3 | 0 |
 | edilading | 13 | 1 | 11 | 1 |
-| edisetup | 17 | 5 | 12 | 0 |
+| edisetup | 18 | 5 | 13 | 0 |
 | editransfer | 9 | 7 | 2 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |

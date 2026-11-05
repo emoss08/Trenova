@@ -327,6 +327,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ),
 			},
 			{
+				Name:     "as2InboundPath",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edi.EDICommunicationProfile)
+					return obj.AS2InboundPath, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild1,
