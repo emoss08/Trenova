@@ -1,6 +1,7 @@
 package dispatchquerytools
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -359,6 +360,7 @@ func (t *planDispatchTool) Query(
 		FleetCodeIDs: fleetCodeIDs,
 		MoveIDs:      moveIDs,
 		Apply:        false,
+		Trigger:      agent.RunTriggerChat,
 	})
 	if err != nil {
 		return nil, err

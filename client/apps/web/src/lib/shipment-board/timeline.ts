@@ -1,6 +1,8 @@
 import type { CapacityUnit } from "@/lib/graphql/shipment-board";
 import { resolveCoverage, type Coverage } from "@/lib/shipment-board/coverage";
 import { ACTIVE_STAGES, isActiveStage, type ActiveStage } from "@/lib/shipment-board/stage";
+import { packLane, type PackedLane } from "@/lib/timeline/lanes";
+import { dayBoundaries } from "@/lib/timeline/time-scale";
 import { getStartOfDay } from "@trenova/shared/lib/date";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 
@@ -15,8 +17,6 @@ export const RANGE_DAYS: Record<TimelineRange, number> = { day: 1, "3d": 3, week
 const HOUR = 3_600;
 const DAY = 86_400;
 
-/** Free time shorter than this between two loads is not worth a label. */
-export const MIN_LABELED_GAP_SECONDS = 150 * 60;
 /**
  * A driver's duty window under the 14-hour rule. A load picking up later than
  * this from now starts after a reset, so today's remaining drive time says
@@ -25,20 +25,6 @@ export const MIN_LABELED_GAP_SECONDS = 150 * 60;
 export const DUTY_WINDOW_SECONDS = 14 * HOUR;
 
 /* ------------------------------------------------------------------ days */
-
-/**
- * The start of each day in the range in `timezone`, plus the end of the last
- * day. Each boundary is found from that day's noon, so a day that gains or
- * loses an hour to daylight saving still starts at its own midnight.
- */
-export function dayBoundaries(firstDayStart: number, days: number, timezone: string): number[] {
-  const boundaries: number[] = [];
-  for (let i = 0; i <= days; i++) {
-    const noon = firstDayStart + i * DAY + 12 * HOUR;
-    boundaries.push(getStartOfDay(new Date(noon * 1000), timezone));
-  }
-  return boundaries;
-}
 
 /** "2026-11-03" for the day `unix` falls on in `timezone`. */
 export function isoDay(unix: number, timezone: string): string {
@@ -231,65 +217,6 @@ export function groupLoadsByStage(loads: readonly TimelineLoad[]): TimelineStage
 
 /* ------------------------------------------------------------------ lanes */
 
-export type PlacedLoad = { load: TimelineLoad; row: number };
-export type PackedLane = { placed: PlacedLoad[]; rows: number; conflicts: Set<string> };
-
-/**
- * Lays one lane's loads into as few rows as keep them apart, earliest first,
- * and marks every load whose time overlaps another load in the lane: a driver
- * booked twice at once. A carrier runs many trucks and the pool holds loads
- * nobody has yet, so their lanes pack without `flagOverlaps`.
- */
-export function packLane(
-  loads: readonly TimelineLoad[],
-  { flagOverlaps = true }: { flagOverlaps?: boolean } = {},
-): PackedLane {
-  const sorted = [...loads].sort((a, b) => a.start - b.start || a.end - b.end);
-  const rowEnds: number[] = [];
-  const placed: PlacedLoad[] = [];
-  for (const load of sorted) {
-    let row = rowEnds.findIndex((end) => end <= load.start);
-    if (row === -1) {
-      row = rowEnds.length;
-      rowEnds.push(load.end);
-    } else {
-      rowEnds[row] = load.end;
-    }
-    placed.push({ load, row });
-  }
-  const conflicts = new Set<string>();
-  for (let i = 0; flagOverlaps && i < sorted.length; i++) {
-    for (let j = i + 1; j < sorted.length && sorted[j].start < sorted[i].end; j++) {
-      conflicts.add(sorted[i].id);
-      conflicts.add(sorted[j].id);
-    }
-  }
-  return { placed, rows: Math.max(1, rowEnds.length), conflicts };
-}
-
-export type LaneGap = { start: number; end: number; open: boolean };
-
-/**
- * A lane's free time from `from` (no earlier than now) to `to`: each stretch
- * of at least MIN_LABELED_GAP_SECONDS between its loads, and the open time
- * after its last one (`open`). A lane with no loads is free the whole way.
- */
-export function laneGaps(loads: readonly TimelineLoad[], from: number, to: number): LaneGap[] {
-  const spans = loads
-    .filter((load) => load.end > from && load.start < to)
-    .map((load) => [load.start, load.end] as const)
-    .sort((a, b) => a[0] - b[0]);
-  const gaps: LaneGap[] = [];
-  let cursor = from;
-  for (const [start, end] of spans) {
-    if (start - cursor >= MIN_LABELED_GAP_SECONDS)
-      gaps.push({ start: cursor, end: start, open: false });
-    cursor = Math.max(cursor, end);
-  }
-  if (to - cursor >= MIN_LABELED_GAP_SECONDS) gaps.push({ start: cursor, end: to, open: true });
-  return gaps;
-}
-
 export type DriverLane = {
   id: string;
   name: string;
@@ -299,7 +226,7 @@ export type DriverLane = {
   /** From the capacity strip when it knows the driver; otherwise read per lane. */
   driveRemainingMs: number | null;
   loads: TimelineLoad[];
-  packed: PackedLane;
+  packed: PackedLane<TimelineLoad>;
 };
 
 export type CarrierLane = {
@@ -308,13 +235,13 @@ export type CarrierLane = {
   initials: string;
   detail: string | null;
   loads: TimelineLoad[];
-  packed: PackedLane;
+  packed: PackedLane<TimelineLoad>;
 };
 
 export type CoverageLanes = {
   /** Uncovered and tendered loads: work still to place. */
   pool: TimelineLoad[];
-  poolPacked: PackedLane;
+  poolPacked: PackedLane<TimelineLoad>;
   drivers: DriverLane[];
   carriers: CarrierLane[];
 };

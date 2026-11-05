@@ -252,6 +252,7 @@ export const dispatchControlSchema = z
     businessUnitId: optionalStringSchema,
 
     enableAutoAssignment: z.boolean(),
+    autoProposeCoverage: z.boolean(),
     autoAssignmentStrategy: autoAssignmentStrategySchema,
     scoringWeights: scoringWeightsSchema.optional(),
     autoAssignConfidenceThreshold: z.coerce

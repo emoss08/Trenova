@@ -16,7 +16,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "horizon-plan-sweep",
-			Description:   "Re-plan the dispatch horizon for organizations running horizon planning",
+			Description:   "Re-plan coverage for organizations that plan on a schedule",
 			Spec:          schedule.Cron("50 * * * *"),
 			Workflow:      HorizonPlanSweepWorkflow,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),

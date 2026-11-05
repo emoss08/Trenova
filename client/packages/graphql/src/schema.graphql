@@ -13788,6 +13788,7 @@ type DispatchBoardMove {
   destinationWindowEnd: Timestamp
   destinationWindowStart: Timestamp!
   distance: Float
+  failedProposal: DispatchMoveFailedProposal
   hasActiveHold: Boolean!
   hasHazmat: Boolean!
   isCovered: Boolean!
@@ -13807,6 +13808,12 @@ type DispatchBoardMove {
   originStopId: ID
   originWindowEnd: Timestamp
   originWindowStart: Timestamp!
+  """
+  The coverage the dispatch agent proposed for this move and is waiting on a decision.
+  Present on dispatchBoard and dispatchMove for a caller who may see agent proposals;
+  absent everywhere else, and when nothing is waiting.
+  """
+  pendingProposal: DispatchMoveProposal
   previousMoveTrailerId: ID
   proNumber: String!
   requiredTractorTypeId: ID
@@ -13827,10 +13834,14 @@ The metrics strip at the top of the console: the numbers a dispatcher is measure
 """
 type DispatchBoardSummary {
   assignedToday: Int!
+  """
+  Uncovered moves whose window is open or opens within four hours: the board's Due now group.
+  """
   atRiskMoves: Int!
   availableDrivers: Int!
   averageDeadheadMiles: Float!
   coveredMoves: Int!
+  """Uncovered moves whose window closed unvisited: the board's Late group."""
   lateMoves: Int!
   uncoveredMoves: Int!
   unseatedDrivers: Int!
@@ -13966,6 +13977,47 @@ input DispatchMoveCandidatesInput {
   moveId: ID!
 }
 
+"""
+A coverage proposal someone approved whose assignment was refused. It stays on its move
+until the move changes or a newer proposal replaces it, so the board says why the move is
+still uncovered instead of showing it as never proposed.
+"""
+type DispatchMoveFailedProposal {
+  failedAt: Timestamp!
+  id: ID!
+  """
+  Why the assignment was refused, worded for the dispatcher, with the stop it is about.
+  """
+  reason: String!
+  workerId: ID!
+  workerName: String!
+}
+
+"""
+A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
+would put on it, how sure it is and why. Decide it with decideAgentProposals.
+"""
+type DispatchMoveProposal {
+  """The agent's confidence, from 0 to 1."""
+  confidence: Float!
+  createdAt: Timestamp!
+  """
+  When the proposal stops being decidable; absent when it does not expire.
+  """
+  expiresAt: Timestamp
+  id: ID!
+  rationale: String!
+  """
+  The move changed after the proposal was planned, so approving it would be refused.
+  The next plan replaces it.
+  """
+  stale: Boolean!
+  tractorId: ID!
+  trailerId: ID
+  workerId: ID!
+  workerName: String!
+}
+
 type DispatchPlan {
   assignments: [DispatchPlannedAssignment!]!
   autonomyTier: String!
@@ -13987,11 +14039,6 @@ type DispatchPlan {
 }
 
 input DispatchPlanInput {
-  """
-  Commit the plan immediately where the organization's autonomy tier allows it. When
-  false the plan is only proposed, whatever the tier.
-  """
-  apply: Boolean
   fleetCodeIds: [ID!]
   moveIds: [ID!]
   windowEnd: Timestamp
@@ -25963,6 +26010,11 @@ type Query {
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
+  """
+  One move as the board draws it, whatever window it falls in, so a selection that points
+  outside the window on screen still opens. Carries its pending proposal like the board.
+  """
+  dispatchMove(moveId: ID!): DispatchBoardMove!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   distanceOverride(id: ID!): DistanceOverride
   distanceOverrides(input: DataTableConnectionInput!): DistanceOverrideConnection!

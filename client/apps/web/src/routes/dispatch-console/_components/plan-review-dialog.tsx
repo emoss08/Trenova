@@ -4,10 +4,8 @@ import type {
   DispatchPlannedAssignment,
   DispatchUncoveredMove,
 } from "@/lib/graphql/dispatch-console";
-import type { DispatchAssignMoveInput } from "@trenova/graphql/generated/graphql";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -22,53 +20,25 @@ import { AlertTriangleIcon, SearchXIcon } from "@trenova/shared/components/icons
 import { useMemo, useState } from "react";
 import { formatMiles, scoreTone, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 
-function assignable(assignment: DispatchPlannedAssignment): boolean {
-  return Boolean(assignment.tractorId) && !assignment.score.blocked;
-}
-
-function assignableMoveIds(plan: DispatchPlan): ReadonlySet<string> {
-  return new Set(plan.assignments.filter(assignable).map((assignment) => assignment.moveId));
-}
-
-function PlannedAssignmentRow({
-  assignment,
-  checked,
-  onCheckedChange,
-}: {
-  assignment: DispatchPlannedAssignment;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) {
+function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssignment }) {
   const t = useT();
 
   const verdict = verdictMeta(assignment.score.verdict);
-  const canAssign = assignable(assignment);
 
   return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-start gap-2 border-b px-3 py-2 transition-colors last:border-b-0",
-        checked ? "bg-brand/[4%]" : "hover:bg-muted/50",
-        !canAssign && "cursor-not-allowed opacity-60",
-      )}
-    >
-      <Checkbox
-        className="mt-0.5"
-        checked={checked}
-        disabled={!canAssign}
-        onCheckedChange={(value) => onCheckedChange(value === true)}
-        aria-label={t("Include {0} → {1}", assignment.proNumber, assignment.workerName)}
-      />
+    <div className="flex items-start gap-2 border-b px-3 py-2 last:border-b-0">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{assignment.proNumber}</span>
-          <span className="text-muted-foreground text-xs">→</span>
+          <span className="text-muted-foreground text-xs" aria-hidden>
+            →
+          </span>
           <span className="truncate text-xs">{assignment.workerName}</span>
           <span
             className={cn(
-              "ml-auto shrink-0 text-xs font-semibold tabular-nums",
+              "ml-auto shrink-0 font-mono text-xs tabular-nums",
               scoreTone(assignment.score.score),
             )}
           >
@@ -79,19 +49,22 @@ function PlannedAssignmentRow({
           </Badge>
         </div>
         <span className="text-muted-foreground text-2xs">
-          {assignment.rationale}
-          {assignment.score.deadheadMiles != null &&
-            ` ${t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}`}
-          {` ${t("· {0}% confidence", Math.round(assignment.confidence * 100))}`}
+          {assignment.score.deadheadMiles != null
+            ? t(
+                "{0} · {1} empty · {2}% confidence",
+                assignment.rationale,
+                formatMiles(assignment.score.deadheadMiles),
+                Math.round(assignment.confidence * 100),
+              )
+            : t(
+                "{0} · {1}% confidence",
+                assignment.rationale,
+                Math.round(assignment.confidence * 100),
+              )}
         </span>
-        {!assignment.tractorId && (
-          <span className="text-2xs text-danger-foreground">
-            {t("No tractor available for this driver — cannot be applied.")}
-          </span>
-        )}
         {assignment.score.blocked && <FindingList findings={assignment.score.findings} limit={2} />}
       </div>
-    </label>
+    </div>
   );
 }
 
@@ -169,73 +142,22 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
 }
 
 /**
- * The optimizer's plan is a proposal, never a fait accompli: every pairing is reviewed,
- * individually deselectable, and applied through the same bulk-assign path a manual
- * assignment uses.
+ * A shadow plan: what Nova would have proposed while the organization watches it without
+ * letting it act. Nothing was written, so nothing here writes; it is kept for review rather
+ * than reduced to a toast, so the dispatcher can judge the pairings before trusting them.
  */
-export function PlanReviewDialog({
-  plan,
-  onClose,
-  onApply,
-  isAssigning,
-}: {
-  plan: DispatchPlan;
-  onClose: () => void;
-  onApply: (input: DispatchAssignMoveInput[]) => void;
-  isAssigning: boolean;
-}) {
+export function PlanReviewDialog({ plan, onClose }: { plan: DispatchPlan; onClose: () => void }) {
   const t = useT();
 
-  const [checkedMoveIds, setCheckedMoveIds] = useState(() => assignableMoveIds(plan));
-  const [prevPlan, setPrevPlan] = useState(plan);
-  if (prevPlan !== plan) {
-    setPrevPlan(plan);
-    setCheckedMoveIds(assignableMoveIds(plan));
-  }
-
-  const selected = useMemo(
-    () => plan.assignments.filter((assignment) => checkedMoveIds.has(assignment.moveId)),
-    [plan, checkedMoveIds],
-  );
-
   const uncoveredGroups = useMemo(() => groupUncovered(plan.uncovered), [plan]);
-
-  if (plan.shadowMode) return null;
-  if (plan.assignments.length === 0 && plan.uncovered.length === 0) return null;
-
-  const nothingToApply = !plan.assignments.some(assignable);
-
-  const toggle = (moveId: string, checked: boolean) => {
-    setCheckedMoveIds((previous) => {
-      const next = new Set(previous);
-      if (checked) {
-        next.add(moveId);
-      } else {
-        next.delete(moveId);
-      }
-      return next;
-    });
-  };
-
-  const apply = () => {
-    onApply(
-      selected.map((assignment) => ({
-        moveId: assignment.moveId,
-        primaryWorkerId: assignment.workerId,
-        tractorId: assignment.tractorId as string,
-        trailerId: assignment.trailerId ?? undefined,
-        reassign: false,
-      })),
-    );
-  };
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent size="lg" className="flex max-h-[80vh] flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5">
-            <AssistMark className="text-brand size-4" aria-hidden />
-            {t("Auto-assign proposal")}
+            <NovaBadge size="md" />
+            {t("What Nova would have proposed")}
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5">
             <span className="text-foreground font-medium tabular-nums">
@@ -248,7 +170,7 @@ export function PlanReviewDialog({
               </>
             )}
             <span aria-hidden>·</span>
-            <span>{t("Nothing is written until you apply.")}</span>
+            <span>{t("Shadow mode is on, so nothing was proposed or assigned.")}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -258,19 +180,16 @@ export function PlanReviewDialog({
               <SearchXIcon className="text-muted-foreground size-5" aria-hidden />
               <span className="text-xs font-medium">{t("No pairings to propose")}</span>
               <span className="text-muted-foreground max-w-sm text-xs leading-snug">
-                {t(
-                  "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.",
-                )}
+                {plan.uncovered.length > 0
+                  ? t(
+                      "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.",
+                    )
+                  : t("No uncovered moves in this window.")}
               </span>
             </div>
           ) : (
             plan.assignments.map((assignment) => (
-              <PlannedAssignmentRow
-                key={assignment.moveId}
-                assignment={assignment}
-                checked={checkedMoveIds.has(assignment.moveId)}
-                onCheckedChange={(checked) => toggle(assignment.moveId, checked)}
-              />
+              <PlannedAssignmentRow key={assignment.moveId} assignment={assignment} />
             ))
           )}
           {uncoveredGroups.length > 0 && (
@@ -289,18 +208,7 @@ export function PlanReviewDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {nothingToApply ? t("Close") : t("Discard plan")}
-          </Button>
-          {!nothingToApply && (
-            <Button
-              disabled={selected.length === 0 || isAssigning}
-              onClick={apply}
-              isLoading={isAssigning}
-            >
-              {t("Assign {0, plural, one {# move} other {# moves}}", selected.length)}
-            </Button>
-          )}
+          <Button onClick={onClose}>{t("Close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

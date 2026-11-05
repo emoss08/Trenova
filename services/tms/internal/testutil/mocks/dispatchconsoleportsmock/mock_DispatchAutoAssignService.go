@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -102,6 +103,74 @@ func (_c *MockDispatchAutoAssignService_Plan_Call) Return(dispatchPlan *dispatch
 }
 
 func (_c *MockDispatchAutoAssignService_Plan_Call) RunAndReturn(run func(ctx context.Context, req *dispatchconsoleports.DispatchPlanRequest) (*dispatchconsoleports.DispatchPlan, error)) *MockDispatchAutoAssignService_Plan_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CoverageProposals provides a mock function for the type MockDispatchAutoAssignService
+func (_mock *MockDispatchAutoAssignService) CoverageProposals(ctx context.Context, req *dispatchconsoleports.CoverageProposalsRequest) (map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CoverageProposals")
+	}
+
+	var r0 map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchconsoleports.CoverageProposalsRequest) (map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchconsoleports.CoverageProposalsRequest) map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *dispatchconsoleports.CoverageProposalsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDispatchAutoAssignService_CoverageProposals_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CoverageProposals'
+type MockDispatchAutoAssignService_CoverageProposals_Call struct {
+	*mock.Call
+}
+
+// CoverageProposals is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *dispatchconsoleports.CoverageProposalsRequest
+func (_e *MockDispatchAutoAssignService_Expecter) CoverageProposals(ctx any, req any) *MockDispatchAutoAssignService_CoverageProposals_Call {
+	return &MockDispatchAutoAssignService_CoverageProposals_Call{Call: _e.mock.On("CoverageProposals", ctx, req)}
+}
+
+func (_c *MockDispatchAutoAssignService_CoverageProposals_Call) Run(run func(ctx context.Context, req *dispatchconsoleports.CoverageProposalsRequest)) *MockDispatchAutoAssignService_CoverageProposals_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *dispatchconsoleports.CoverageProposalsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*dispatchconsoleports.CoverageProposalsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDispatchAutoAssignService_CoverageProposals_Call) Return(proposals map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals, err error) *MockDispatchAutoAssignService_CoverageProposals_Call {
+	_c.Call.Return(proposals, err)
+	return _c
+}
+
+func (_c *MockDispatchAutoAssignService_CoverageProposals_Call) RunAndReturn(run func(ctx context.Context, req *dispatchconsoleports.CoverageProposalsRequest) (map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals, error)) *MockDispatchAutoAssignService_CoverageProposals_Call {
 	_c.Call.Return(run)
 	return _c
 }

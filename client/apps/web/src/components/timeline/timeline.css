@@ -1,5 +1,5 @@
-/* The timeline's load bar: one compact pill. `--tone` is the stage's colour
-   token. The tint and the driven fill mix in oklab, which carries the tone's
+/* A timeline bar: one compact pill. `--tone` is the colour token its page
+   tints it in. The tint and the driven fill mix in oklab, which carries the tone's
    hue straight across instead of swinging it through the card's. */
 .tl-bar {
   position: absolute;
@@ -18,8 +18,8 @@
   outline: 2px solid var(--foreground);
   outline-offset: 1px;
 }
-.tl-bar[data-uncovered="true"] {
-  border: 1.5px dashed var(--warning);
+.tl-bar[data-open="true"] {
+  border: 1.5px dashed var(--tone);
   background: transparent;
 }
 .tl-bar[data-conflict="true"] {

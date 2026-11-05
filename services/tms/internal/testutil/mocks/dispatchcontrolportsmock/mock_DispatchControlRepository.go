@@ -319,12 +319,12 @@ func (_c *MockDispatchControlRepository_Update_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
-// ListHorizonPlanningTenants provides a mock function for the type MockDispatchControlRepository
-func (_mock *MockDispatchControlRepository) ListHorizonPlanningTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
+// ListCoveragePlanningTenants provides a mock function for the type MockDispatchControlRepository
+func (_mock *MockDispatchControlRepository) ListCoveragePlanningTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListHorizonPlanningTenants")
+		panic("no return value specified for ListCoveragePlanningTenants")
 	}
 
 	var r0 []pagination.TenantInfo
@@ -347,18 +347,18 @@ func (_mock *MockDispatchControlRepository) ListHorizonPlanningTenants(ctx conte
 	return r0, r1
 }
 
-// MockDispatchControlRepository_ListHorizonPlanningTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListHorizonPlanningTenants'
-type MockDispatchControlRepository_ListHorizonPlanningTenants_Call struct {
+// MockDispatchControlRepository_ListCoveragePlanningTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCoveragePlanningTenants'
+type MockDispatchControlRepository_ListCoveragePlanningTenants_Call struct {
 	*mock.Call
 }
 
-// ListHorizonPlanningTenants is a helper method to define mock.On call
+// ListCoveragePlanningTenants is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockDispatchControlRepository_Expecter) ListHorizonPlanningTenants(ctx any) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
-	return &MockDispatchControlRepository_ListHorizonPlanningTenants_Call{Call: _e.mock.On("ListHorizonPlanningTenants", ctx)}
+func (_e *MockDispatchControlRepository_Expecter) ListCoveragePlanningTenants(ctx any) *MockDispatchControlRepository_ListCoveragePlanningTenants_Call {
+	return &MockDispatchControlRepository_ListCoveragePlanningTenants_Call{Call: _e.mock.On("ListCoveragePlanningTenants", ctx)}
 }
 
-func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) Run(run func(ctx context.Context)) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+func (_c *MockDispatchControlRepository_ListCoveragePlanningTenants_Call) Run(run func(ctx context.Context)) *MockDispatchControlRepository_ListCoveragePlanningTenants_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -371,12 +371,12 @@ func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) Run(run
 	return _c
 }
 
-func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+func (_c *MockDispatchControlRepository_ListCoveragePlanningTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDispatchControlRepository_ListCoveragePlanningTenants_Call {
 	_c.Call.Return(tenantInfos, err)
 	return _c
 }
 
-func (_c *MockDispatchControlRepository_ListHorizonPlanningTenants_Call) RunAndReturn(run func(ctx context.Context) ([]pagination.TenantInfo, error)) *MockDispatchControlRepository_ListHorizonPlanningTenants_Call {
+func (_c *MockDispatchControlRepository_ListCoveragePlanningTenants_Call) RunAndReturn(run func(ctx context.Context) ([]pagination.TenantInfo, error)) *MockDispatchControlRepository_ListCoveragePlanningTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }

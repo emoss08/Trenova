@@ -3,8 +3,8 @@ import type { TimelineLoad } from "@/lib/shipment-board/timeline";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import type { ReactNode } from "react";
-import { formatTimelineTime } from "./timeline-format";
-import type { TimelineScale } from "./timeline-scale";
+import { formatTimelineTime } from "@/components/timeline/timeline-format";
+import type { TimelineScale } from "@/components/timeline/timeline-scale";
 
 const TIMELINE_CARD_WIDTH = 288;
 

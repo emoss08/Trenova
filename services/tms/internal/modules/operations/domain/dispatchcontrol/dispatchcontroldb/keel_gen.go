@@ -27,6 +27,7 @@ var dispatchControlsTable = schema.Table{
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "enable_auto_assignment", Quoted: `"enable_auto_assignment"`, Field: "EnableAutoAssignment", Kind: schema.KindBool, Flags: 0, Label: `Enable Auto Assignment`, JSON: `enableAutoAssignment`},
+		{Name: "auto_propose_coverage", Quoted: `"auto_propose_coverage"`, Field: "AutoProposeCoverage", Kind: schema.KindBool, Flags: 0, Label: `Auto Propose Coverage`, Doc: `AutoProposeCoverage keeps a proposed driver waiting on every uncovered move: the planner runs again when loads are created or uncovered, and every hour, and each run supersedes the last. Nothing is assigned until a person approves it, unless the dispatch agent is trusted to act on its own.`, JSON: `autoProposeCoverage`},
 		{Name: "auto_assignment_strategy", Quoted: `"auto_assignment_strategy"`, Field: "AutoAssignmentStrategy", Kind: schema.KindString, Flags: 0, Label: `Auto Assignment Strategy`, JSON: `autoAssignmentStrategy`, Enum: enumAutoAssignmentStrategy[:]},
 		{Name: "enforce_worker_assign", Quoted: `"enforce_worker_assign"`, Field: "EnforceWorkerAssign", Kind: schema.KindBool, Flags: 0, Label: `Enforce Worker Assign`, JSON: `enforceWorkerAssign`},
 		{Name: "enforce_trailer_continuity", Quoted: `"enforce_trailer_continuity"`, Field: "EnforceTrailerContinuity", Kind: schema.KindBool, Flags: 0, Label: `Enforce Trailer Continuity`, JSON: `enforceTrailerContinuity`},
@@ -78,14 +79,14 @@ var dispatchControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 52},
 	Returning:    nil,
-	Version:      49,
+	Version:      50,
 	AutoID:       0,
-	AutoCreate:   50,
-	AutoUpdate:   51,
+	AutoCreate:   51,
+	AutoUpdate:   52,
 	IDPrefix:     "dc_",
 	New:          newDispatchControl,
 	NewN:         newNDispatchControl,
@@ -104,6 +105,7 @@ type DispatchControlsTable struct {
 	BusinessUnitID                       keelkinds.PulidIDCol
 	OrganizationID                       keelkinds.PulidIDCol
 	EnableAutoAssignment                 keel.BoolCol
+	AutoProposeCoverage                  keel.BoolCol
 	AutoAssignmentStrategy               AutoAssignmentStrategyCol
 	EnforceWorkerAssign                  keel.BoolCol
 	EnforceTrailerContinuity             keel.BoolCol
@@ -161,54 +163,55 @@ var DispatchControls = &DispatchControlsTable{
 	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 1}}},
 	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 2}}},
 	EnableAutoAssignment:                 keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 3}},
-	AutoAssignmentStrategy:               AutoAssignmentStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 4}}},
-	EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 5}},
-	EnforceTrailerContinuity:             keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 6}},
-	EnforceHOSCompliance:                 keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 7}},
-	EnforceWorkerPTARestrictions:         keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 8}},
-	EnforceWorkerTractorFleetContinuity:  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 9}},
-	EnforceDriverQualificationCompliance: keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 10}},
-	EnforceMedicalCertCompliance:         keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 11}},
-	EnforceHazmatCompliance:              keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 12}},
-	EnforceDrugAndAlcoholCompliance:      keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 13}},
-	EnableAutoStopActuals:                keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 14}},
-	ScoringWeights:                       keel.JSONBCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 15}},
-	AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 16}}},
-	AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 17}},
-	AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 18}},
-	PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 19}}},
-	HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 20}},
-	HorizonSearchIterations:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 21}},
-	CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 22}},
-	EnableCheckCallMonitoring:            keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 23}},
-	CheckCallIntervalHours:               keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 24}},
-	EnableEtaAlerts:                      keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 25}},
-	EtaRiskThresholdMinutes:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 26}},
-	EtaDwellMinutes:                      keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 27}},
-	ExceptionDueInfoMinutes:              keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 28}},
-	ExceptionDueWarningMinutes:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 29}},
-	ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 30}},
-	ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 31}},
-	ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 32}},
-	ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 33}}},
-	ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 34}}},
-	ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 35}},
-	ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 36}},
-	TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 37}},
-	TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 38}}},
-	TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 39}},
-	TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 40}},
-	TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 41}}},
-	TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 42}}},
-	TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 43}},
-	TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 44}},
-	ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 45}}},
-	RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 46}}},
-	ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 47}},
-	ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 48}},
-	Version:                              keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 49}},
-	CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 50}},
-	UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 51}},
+	AutoProposeCoverage:                  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 4}},
+	AutoAssignmentStrategy:               AutoAssignmentStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 5}}},
+	EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 6}},
+	EnforceTrailerContinuity:             keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 7}},
+	EnforceHOSCompliance:                 keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 8}},
+	EnforceWorkerPTARestrictions:         keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 9}},
+	EnforceWorkerTractorFleetContinuity:  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 10}},
+	EnforceDriverQualificationCompliance: keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 11}},
+	EnforceMedicalCertCompliance:         keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 12}},
+	EnforceHazmatCompliance:              keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 13}},
+	EnforceDrugAndAlcoholCompliance:      keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 14}},
+	EnableAutoStopActuals:                keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 15}},
+	ScoringWeights:                       keel.JSONBCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 16}},
+	AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 17}}},
+	AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 18}},
+	AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 19}},
+	PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 20}}},
+	HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 21}},
+	HorizonSearchIterations:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 22}},
+	CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 23}},
+	EnableCheckCallMonitoring:            keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 24}},
+	CheckCallIntervalHours:               keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 25}},
+	EnableEtaAlerts:                      keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 26}},
+	EtaRiskThresholdMinutes:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 27}},
+	EtaDwellMinutes:                      keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 28}},
+	ExceptionDueInfoMinutes:              keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 29}},
+	ExceptionDueWarningMinutes:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 30}},
+	ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 31}},
+	ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 32}},
+	ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 33}},
+	ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 34}}},
+	ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 35}}},
+	ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 36}},
+	ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 37}},
+	TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 38}},
+	TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 39}}},
+	TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 40}},
+	TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 41}},
+	TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 42}}},
+	TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 43}}},
+	TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 44}},
+	TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 45}},
+	ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 46}}},
+	RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 47}}},
+	ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 48}},
+	ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 49}},
+	Version:                              keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 50}},
+	CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 51}},
+	UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 52}},
 }
 
 // BuildDispatchControls builds the table of dispatch_controls for ref. Generated relation and alias methods call it.
@@ -219,54 +222,55 @@ func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		EnableAutoAssignment:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
-		AutoAssignmentStrategy:               AutoAssignmentStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
-		EnforceTrailerContinuity:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
-		EnforceHOSCompliance:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		EnforceWorkerPTARestrictions:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
-		EnforceWorkerTractorFleetContinuity:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		EnforceDriverQualificationCompliance: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		EnforceMedicalCertCompliance:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
-		EnforceHazmatCompliance:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		EnforceDrugAndAlcoholCompliance:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
-		EnableAutoStopActuals:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
-		ScoringWeights:                       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 16}}},
-		AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 17}},
-		AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: r, Index: 18}},
-		PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: r, Index: 20}},
-		HorizonSearchIterations:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
-		CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 22}},
-		EnableCheckCallMonitoring:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 23}},
-		CheckCallIntervalHours:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 24}},
-		EnableEtaAlerts:                      keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
-		EtaRiskThresholdMinutes:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 26}},
-		EtaDwellMinutes:                      keel.Int16Col{Col: keel.Col{Ref: r, Index: 27}},
-		ExceptionDueInfoMinutes:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 28}},
-		ExceptionDueWarningMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 29}},
-		ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 30}},
-		ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 31}},
-		ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 32}},
-		ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
-		ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 35}},
-		ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 36}},
-		TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 37}},
-		TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 38}}},
-		TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 39}},
-		TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 40}},
-		TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
-		TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 42}}},
-		TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 43}},
-		TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 44}},
-		ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
-		ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: r, Index: 47}},
-		ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
-		Version:                              keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
-		CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
-		UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
+		AutoProposeCoverage:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
+		AutoAssignmentStrategy:               AutoAssignmentStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
+		EnforceTrailerContinuity:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
+		EnforceHOSCompliance:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
+		EnforceWorkerPTARestrictions:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
+		EnforceWorkerTractorFleetContinuity:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
+		EnforceDriverQualificationCompliance: keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
+		EnforceMedicalCertCompliance:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
+		EnforceHazmatCompliance:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
+		EnforceDrugAndAlcoholCompliance:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
+		EnableAutoStopActuals:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
+		ScoringWeights:                       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
+		AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 17}}},
+		AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 18}},
+		AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: r, Index: 19}},
+		PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
+		HorizonSearchIterations:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 22}},
+		CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 23}},
+		EnableCheckCallMonitoring:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
+		CheckCallIntervalHours:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 25}},
+		EnableEtaAlerts:                      keel.BoolCol{Col: keel.Col{Ref: r, Index: 26}},
+		EtaRiskThresholdMinutes:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 27}},
+		EtaDwellMinutes:                      keel.Int16Col{Col: keel.Col{Ref: r, Index: 28}},
+		ExceptionDueInfoMinutes:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 29}},
+		ExceptionDueWarningMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 30}},
+		ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 31}},
+		ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 32}},
+		ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 33}},
+		ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 36}},
+		ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 37}},
+		TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 38}},
+		TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 39}}},
+		TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 40}},
+		TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 41}},
+		TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 43}}},
+		TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 44}},
+		TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 45}},
+		ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
+		ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: r, Index: 48}},
+		ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		Version:                              keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
+		CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
+		UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
 	}
 }
 
@@ -660,100 +664,102 @@ func ptrDispatchControl(p unsafe.Pointer, c int32) any {
 	case 3:
 		return &r.EnableAutoAssignment
 	case 4:
-		return (*string)(unsafe.Pointer(&r.AutoAssignmentStrategy))
+		return &r.AutoProposeCoverage
 	case 5:
-		return &r.EnforceWorkerAssign
+		return (*string)(unsafe.Pointer(&r.AutoAssignmentStrategy))
 	case 6:
-		return &r.EnforceTrailerContinuity
+		return &r.EnforceWorkerAssign
 	case 7:
-		return &r.EnforceHOSCompliance
+		return &r.EnforceTrailerContinuity
 	case 8:
-		return &r.EnforceWorkerPTARestrictions
+		return &r.EnforceHOSCompliance
 	case 9:
-		return &r.EnforceWorkerTractorFleetContinuity
+		return &r.EnforceWorkerPTARestrictions
 	case 10:
-		return &r.EnforceDriverQualificationCompliance
+		return &r.EnforceWorkerTractorFleetContinuity
 	case 11:
-		return &r.EnforceMedicalCertCompliance
+		return &r.EnforceDriverQualificationCompliance
 	case 12:
-		return &r.EnforceHazmatCompliance
+		return &r.EnforceMedicalCertCompliance
 	case 13:
-		return &r.EnforceDrugAndAlcoholCompliance
+		return &r.EnforceHazmatCompliance
 	case 14:
-		return &r.EnableAutoStopActuals
+		return &r.EnforceDrugAndAlcoholCompliance
 	case 15:
-		return &r.ScoringWeights
+		return &r.EnableAutoStopActuals
 	case 16:
-		return &r.AutoAssignConfidenceThreshold
+		return &r.ScoringWeights
 	case 17:
-		return &r.AutoAssignMaxDeadheadMiles
+		return &r.AutoAssignConfidenceThreshold
 	case 18:
-		return &r.AutoAssignPlanningHorizonHours
+		return &r.AutoAssignMaxDeadheadMiles
 	case 19:
-		return (*string)(unsafe.Pointer(&r.PlanningMode))
+		return &r.AutoAssignPlanningHorizonHours
 	case 20:
-		return &r.HorizonMaxMovesPerDriver
+		return (*string)(unsafe.Pointer(&r.PlanningMode))
 	case 21:
-		return &r.HorizonSearchIterations
+		return &r.HorizonMaxMovesPerDriver
 	case 22:
-		return &r.CoverageRiskWindowHours
+		return &r.HorizonSearchIterations
 	case 23:
-		return &r.EnableCheckCallMonitoring
+		return &r.CoverageRiskWindowHours
 	case 24:
-		return &r.CheckCallIntervalHours
+		return &r.EnableCheckCallMonitoring
 	case 25:
-		return &r.EnableEtaAlerts
+		return &r.CheckCallIntervalHours
 	case 26:
-		return &r.EtaRiskThresholdMinutes
+		return &r.EnableEtaAlerts
 	case 27:
-		return &r.EtaDwellMinutes
+		return &r.EtaRiskThresholdMinutes
 	case 28:
-		return &r.ExceptionDueInfoMinutes
+		return &r.EtaDwellMinutes
 	case 29:
-		return &r.ExceptionDueWarningMinutes
+		return &r.ExceptionDueInfoMinutes
 	case 30:
-		return &r.ExceptionDueCriticalMinutes
+		return &r.ExceptionDueWarningMinutes
 	case 31:
-		return &r.ExceptionEscalationMinutes
+		return &r.ExceptionDueCriticalMinutes
 	case 32:
-		return &r.ExceptionMaxEscalations
+		return &r.ExceptionEscalationMinutes
 	case 33:
-		return (*string)(unsafe.Pointer(&r.ExceptionDefaultAssigneeID))
+		return &r.ExceptionMaxEscalations
 	case 34:
-		return (*string)(unsafe.Pointer(&r.ExceptionEscalationContactID))
+		return (*string)(unsafe.Pointer(&r.ExceptionDefaultAssigneeID))
 	case 35:
-		return &r.ExceptionMissedStopGraceMinutes
+		return (*string)(unsafe.Pointer(&r.ExceptionEscalationContactID))
 	case 36:
-		return &r.ExceptionPODGraceHours
+		return &r.ExceptionMissedStopGraceMinutes
 	case 37:
-		return &r.TenderCounterOffersEnabled
+		return &r.ExceptionPODGraceHours
 	case 38:
-		return &r.TenderCounterMarginFloorPercent
+		return &r.TenderCounterOffersEnabled
 	case 39:
-		return &r.TenderAutoAcceptCounters
+		return &r.TenderCounterMarginFloorPercent
 	case 40:
-		return &r.TenderCounterDecisionMinutes
+		return &r.TenderAutoAcceptCounters
 	case 41:
-		return (*string)(unsafe.Pointer(&r.TenderExhaustedAction))
+		return &r.TenderCounterDecisionMinutes
 	case 42:
-		return &r.TenderEscalationRateIncreasePercent
+		return (*string)(unsafe.Pointer(&r.TenderExhaustedAction))
 	case 43:
-		return &r.TenderEscalationOfferTTLMinutes
+		return &r.TenderEscalationRateIncreasePercent
 	case 44:
-		return &r.TenderMaxEscalations
+		return &r.TenderEscalationOfferTTLMinutes
 	case 45:
-		return (*string)(unsafe.Pointer(&r.ComplianceEnforcementLevel))
+		return &r.TenderMaxEscalations
 	case 46:
-		return (*string)(unsafe.Pointer(&r.RecordServiceFailures))
+		return (*string)(unsafe.Pointer(&r.ComplianceEnforcementLevel))
 	case 47:
-		return &r.ServiceFailureTarget
+		return (*string)(unsafe.Pointer(&r.RecordServiceFailures))
 	case 48:
-		return (**int64)(unsafe.Pointer(&r.ServiceFailureGracePeriod))
+		return &r.ServiceFailureTarget
 	case 49:
-		return &r.Version
+		return (**int64)(unsafe.Pointer(&r.ServiceFailureGracePeriod))
 	case 50:
-		return &r.CreatedAt
+		return &r.Version
 	case 51:
+		return &r.CreatedAt
+	case 52:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -771,121 +777,123 @@ func valueDispatchControl(p unsafe.Pointer, c int32) any {
 	case 3:
 		return r.EnableAutoAssignment
 	case 4:
-		return string(r.AutoAssignmentStrategy)
+		return r.AutoProposeCoverage
 	case 5:
-		return r.EnforceWorkerAssign
+		return string(r.AutoAssignmentStrategy)
 	case 6:
-		return r.EnforceTrailerContinuity
+		return r.EnforceWorkerAssign
 	case 7:
-		return r.EnforceHOSCompliance
+		return r.EnforceTrailerContinuity
 	case 8:
-		return r.EnforceWorkerPTARestrictions
+		return r.EnforceHOSCompliance
 	case 9:
-		return r.EnforceWorkerTractorFleetContinuity
+		return r.EnforceWorkerPTARestrictions
 	case 10:
-		return r.EnforceDriverQualificationCompliance
+		return r.EnforceWorkerTractorFleetContinuity
 	case 11:
-		return r.EnforceMedicalCertCompliance
+		return r.EnforceDriverQualificationCompliance
 	case 12:
-		return r.EnforceHazmatCompliance
+		return r.EnforceMedicalCertCompliance
 	case 13:
-		return r.EnforceDrugAndAlcoholCompliance
+		return r.EnforceHazmatCompliance
 	case 14:
-		return r.EnableAutoStopActuals
+		return r.EnforceDrugAndAlcoholCompliance
 	case 15:
+		return r.EnableAutoStopActuals
+	case 16:
 		if r.ScoringWeights == nil {
 			return keel.EmptyJSONObject
 		}
 		return r.ScoringWeights
-	case 16:
-		return r.AutoAssignConfidenceThreshold
 	case 17:
+		return r.AutoAssignConfidenceThreshold
+	case 18:
 		if r.AutoAssignMaxDeadheadMiles == nil {
 			return nil
 		}
 		return *r.AutoAssignMaxDeadheadMiles
-	case 18:
-		return r.AutoAssignPlanningHorizonHours
 	case 19:
-		return string(r.PlanningMode)
+		return r.AutoAssignPlanningHorizonHours
 	case 20:
-		return r.HorizonMaxMovesPerDriver
+		return string(r.PlanningMode)
 	case 21:
+		return r.HorizonMaxMovesPerDriver
+	case 22:
 		if r.HorizonSearchIterations == nil {
 			return nil
 		}
 		return *r.HorizonSearchIterations
-	case 22:
-		return r.CoverageRiskWindowHours
 	case 23:
-		return r.EnableCheckCallMonitoring
+		return r.CoverageRiskWindowHours
 	case 24:
-		return r.CheckCallIntervalHours
+		return r.EnableCheckCallMonitoring
 	case 25:
-		return r.EnableEtaAlerts
+		return r.CheckCallIntervalHours
 	case 26:
-		return r.EtaRiskThresholdMinutes
+		return r.EnableEtaAlerts
 	case 27:
-		return r.EtaDwellMinutes
+		return r.EtaRiskThresholdMinutes
 	case 28:
-		return r.ExceptionDueInfoMinutes
+		return r.EtaDwellMinutes
 	case 29:
-		return r.ExceptionDueWarningMinutes
+		return r.ExceptionDueInfoMinutes
 	case 30:
-		return r.ExceptionDueCriticalMinutes
+		return r.ExceptionDueWarningMinutes
 	case 31:
-		return r.ExceptionEscalationMinutes
+		return r.ExceptionDueCriticalMinutes
 	case 32:
-		return r.ExceptionMaxEscalations
+		return r.ExceptionEscalationMinutes
 	case 33:
+		return r.ExceptionMaxEscalations
+	case 34:
 		if r.ExceptionDefaultAssigneeID == "" {
 			return nil
 		}
 		return string(r.ExceptionDefaultAssigneeID)
-	case 34:
+	case 35:
 		if r.ExceptionEscalationContactID == "" {
 			return nil
 		}
 		return string(r.ExceptionEscalationContactID)
-	case 35:
-		return r.ExceptionMissedStopGraceMinutes
 	case 36:
-		return r.ExceptionPODGraceHours
+		return r.ExceptionMissedStopGraceMinutes
 	case 37:
-		return r.TenderCounterOffersEnabled
+		return r.ExceptionPODGraceHours
 	case 38:
-		return r.TenderCounterMarginFloorPercent
+		return r.TenderCounterOffersEnabled
 	case 39:
-		return r.TenderAutoAcceptCounters
+		return r.TenderCounterMarginFloorPercent
 	case 40:
-		return r.TenderCounterDecisionMinutes
+		return r.TenderAutoAcceptCounters
 	case 41:
-		return string(r.TenderExhaustedAction)
+		return r.TenderCounterDecisionMinutes
 	case 42:
-		return r.TenderEscalationRateIncreasePercent
+		return string(r.TenderExhaustedAction)
 	case 43:
-		return r.TenderEscalationOfferTTLMinutes
+		return r.TenderEscalationRateIncreasePercent
 	case 44:
-		return r.TenderMaxEscalations
+		return r.TenderEscalationOfferTTLMinutes
 	case 45:
-		return string(r.ComplianceEnforcementLevel)
+		return r.TenderMaxEscalations
 	case 46:
-		return string(r.RecordServiceFailures)
+		return string(r.ComplianceEnforcementLevel)
 	case 47:
+		return string(r.RecordServiceFailures)
+	case 48:
 		if r.ServiceFailureTarget == nil {
 			return nil
 		}
 		return *r.ServiceFailureTarget
-	case 48:
+	case 49:
 		if r.ServiceFailureGracePeriod == nil {
 			return nil
 		}
 		return int64(*r.ServiceFailureGracePeriod)
-	case 49:
-		return r.Version
 	case 50:
-		return r.CreatedAt
+		return r.Version
 	case 51:
+		return r.CreatedAt
+	case 52:
 		return r.UpdatedAt
 	}
 	return nil

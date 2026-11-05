@@ -12,7 +12,7 @@ import {
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { isRegisteredLeaf, normalizeFieldPath, type FieldRegistry } from "@/lib/form-errors";
+import { normalizeFieldPath, serverErrorTarget, type FieldRegistry } from "@/lib/form-errors";
 
 // Only the field registry and the error setter are needed, so the parameter asks for
 // exactly those. Taking the whole UseFormReturn would drag in handleSubmit, whose
@@ -41,11 +41,13 @@ type MutationErrorOptions<T extends FieldValues> = {
 // overwrote would leave the field showing the last message while both accessors reported
 // the first.
 //
-// Anything that is not a registered leaf goes to the form root: a non-leaf path like
+// Anything nothing on the form shows goes to the form root: a non-leaf path like
 // `lines[0]`, the empty field the server emits for a whole-object failure, or a field the
 // form simply does not have such as `status`. Those must never be dropped and must never
 // be set on a path no input renders, because either way the user is left with a form that
-// refuses to submit and gives no reason.
+// refuses to submit and gives no reason. A path an error surface shows (a move card
+// showing its stops' errors while their fields are unmounted) is set where the surface
+// shows it; serverErrorTarget says where, and when that is safe.
 function applyFieldErrors<T extends FieldValues>(
   form: MutationFormTarget<T>,
   fieldErrors: ValidationError[],
@@ -56,9 +58,9 @@ function applyFieldErrors<T extends FieldValues>(
   const rootMessages = new Set<string>();
 
   for (const fieldError of fieldErrors) {
-    const path = normalizeFieldPath(fieldError.field);
+    const path = serverErrorTarget(form.control, normalizeFieldPath(fieldError.field));
 
-    if (!isRegisteredLeaf(form.control, path)) {
+    if (path === null) {
       rootMessages.add(fieldError.message);
       continue;
     }

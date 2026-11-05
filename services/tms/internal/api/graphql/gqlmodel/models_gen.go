@@ -4585,13 +4585,20 @@ type DispatchBoardMove struct {
 	AssignedCarrierName    string                      `json:"assignedCarrierName"`
 	CarrierTotalCost       *float64                    `json:"carrierTotalCost,omitempty"`
 	LiveTender             *DispatchBoardTenderSummary `json:"liveTender,omitempty"`
+	// The coverage the dispatch agent proposed for this move and is waiting on a decision.
+	// Present on dispatchBoard and dispatchMove for a caller who may see agent proposals;
+	// absent everywhere else, and when nothing is waiting.
+	PendingProposal *DispatchMoveProposal       `json:"pendingProposal,omitempty"`
+	FailedProposal  *DispatchMoveFailedProposal `json:"failedProposal,omitempty"`
 }
 
 // The metrics strip at the top of the console: the numbers a dispatcher is measured on.
 type DispatchBoardSummary struct {
-	UncoveredMoves       int     `json:"uncoveredMoves"`
-	CoveredMoves         int     `json:"coveredMoves"`
-	LateMoves            int     `json:"lateMoves"`
+	UncoveredMoves int `json:"uncoveredMoves"`
+	CoveredMoves   int `json:"coveredMoves"`
+	// Uncovered moves whose window closed unvisited: the board's Late group.
+	LateMoves int `json:"lateMoves"`
+	// Uncovered moves whose window is open or opens within four hours: the board's Due now group.
 	AtRiskMoves          int     `json:"atRiskMoves"`
 	UnseatedDrivers      int     `json:"unseatedDrivers"`
 	AvailableDrivers     int     `json:"availableDrivers"`
@@ -4719,6 +4726,37 @@ type DispatchMoveCandidatesInput struct {
 	IncludeBlocked *bool    `json:"includeBlocked,omitempty"`
 }
 
+// A coverage proposal someone approved whose assignment was refused. It stays on its move
+// until the move changes or a newer proposal replaces it, so the board says why the move is
+// still uncovered instead of showing it as never proposed.
+type DispatchMoveFailedProposal struct {
+	ID         string `json:"id"`
+	WorkerID   string `json:"workerId"`
+	WorkerName string `json:"workerName"`
+	// Why the assignment was refused, worded for the dispatcher, with the stop it is about.
+	Reason   string `json:"reason"`
+	FailedAt int    `json:"failedAt"`
+}
+
+// A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
+// would put on it, how sure it is and why. Decide it with decideAgentProposals.
+type DispatchMoveProposal struct {
+	ID         string  `json:"id"`
+	WorkerID   string  `json:"workerId"`
+	WorkerName string  `json:"workerName"`
+	TractorID  string  `json:"tractorId"`
+	TrailerID  *string `json:"trailerId,omitempty"`
+	// The agent's confidence, from 0 to 1.
+	Confidence float64 `json:"confidence"`
+	Rationale  string  `json:"rationale"`
+	CreatedAt  int     `json:"createdAt"`
+	// When the proposal stops being decidable; absent when it does not expire.
+	ExpiresAt *int `json:"expiresAt,omitempty"`
+	// The move changed after the proposal was planned, so approving it would be refused.
+	// The next plan replaces it.
+	Stale bool `json:"stale"`
+}
+
 type DispatchPlan struct {
 	RunID       *string                      `json:"runId,omitempty"`
 	Assignments []*DispatchPlannedAssignment `json:"assignments"`
@@ -4740,9 +4778,6 @@ type DispatchPlanInput struct {
 	WindowEnd    *int     `json:"windowEnd,omitempty"`
 	FleetCodeIds []string `json:"fleetCodeIds,omitempty"`
 	MoveIds      []string `json:"moveIds,omitempty"`
-	// Commit the plan immediately where the organization's autonomy tier allows it. When
-	// false the plan is only proposed, whatever the tier.
-	Apply *bool `json:"apply,omitempty"`
 }
 
 // One move-to-driver pairing the optimizer chose, carrying the same explainable score a

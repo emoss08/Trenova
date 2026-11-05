@@ -106,6 +106,10 @@ type BoardMove struct {
 	AssignedCarrierID   pulid.ID `json:"assignedCarrierId"`
 	AssignedCarrierName string   `json:"assignedCarrierName"`
 	CarrierTotalCost    *float64 `json:"carrierTotalCost"`
+
+	// MoveVersion is the move's row version, which a proposal to cover it is
+	// pinned to: a change approved after the move moved on is refused.
+	MoveVersion int64 `json:"moveVersion"`
 }
 
 type BoardDriver struct {
@@ -184,8 +188,9 @@ type WorkerAcceptanceStats struct {
 }
 
 // BoardSummary counts the moves in the board's window. LateMoves and
-// AtRiskMoves are coverage alarms: uncovered moves whose pickup window has
-// opened, and uncovered moves whose pickup opens within UrgencyNowSeconds.
+// AtRiskMoves are coverage alarms read by each move's urgency: uncovered moves
+// whose window has closed unvisited, and uncovered moves whose window is open
+// or opens within UrgencyNowSeconds. An open window is never late.
 // OverdueMoves, DueNowMoves and DueTodayMoves count every move, covered or
 // not, by its next stop the way each move's urgency reads it: the pickup until
 // it is picked up, then the delivery.

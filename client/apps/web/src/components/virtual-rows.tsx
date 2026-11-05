@@ -19,7 +19,8 @@ export type VirtualRow = {
   render: () => ReactNode;
   /**
    * A heading that stays pinned to the top while the rows under it scroll,
-   * until the next sticky row takes its place.
+   * until the next sticky row takes its place. While rows scroll under it, its
+   * wrapper carries `data-stuck`, which `group-data-stuck/vrow:` classes read.
    */
   sticky?: boolean;
 };
@@ -195,12 +196,20 @@ export function VirtualRows({
     <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
       {items.map((item) => {
         const pinned = rows[item.index].sticky === true && item.index === activeSticky.current;
+        // Stuck: pinned with rows scrolling under it, not merely sitting at the top of the
+        // list. A heading reads it (group-data-stuck/vrow:) to draw its rule only then.
+        const stuck = pinned && (virtualizer.scrollOffset ?? 0) > item.start;
         return (
           <div
             key={item.key}
             data-index={item.index}
+            data-stuck={stuck ? "" : undefined}
             ref={measureRow}
-            className={cn(pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0", rowClassName)}
+            className={cn(
+              "group/vrow",
+              pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0",
+              rowClassName,
+            )}
             style={pinned ? undefined : { transform: `translateY(${item.start}px)` }}
           >
             {rows[item.index].render()}

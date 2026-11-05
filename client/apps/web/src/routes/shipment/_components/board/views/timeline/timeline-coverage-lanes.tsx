@@ -1,14 +1,33 @@
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { STAGE_META } from "@/lib/shipment-board/stage";
+import { type BarDragHandle } from "@/components/timeline/timeline-bar-frame";
+import {
+  TimelineCanvas,
+  TimelineGroupRow,
+  TimelineRow,
+  type TimelineScrollMemory,
+  type TimelineSheetItem,
+} from "@/components/timeline/timeline-canvas";
+import {
+  TimelineConflictFlag,
+  TimelineLaneBars,
+  TimelineLaneGaps,
+  TimelineLaneLabel,
+} from "@/components/timeline/timeline-lane-parts";
+import {
+  BAR_HEIGHT,
+  GROUP_HEIGHT,
+  laneHeight,
+  type TimelineScale,
+} from "@/components/timeline/timeline-scale";
 import {
   buildCoverageLanes,
-  laneGaps,
-  type PackedLane,
   type CarrierLane,
   type DriverLane,
   type TimelineLoad,
 } from "@/lib/shipment-board/timeline";
+import type { PackedLane } from "@/lib/timeline/lanes";
 import {
   DndContext,
   DragOverlay,
@@ -25,34 +44,15 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
-import { useNow } from "@trenova/shared/hooks/use-now";
+import { formatClockDurationMs } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
 import { IdentityAvatar } from "../../identity-avatar";
 import { useBoardActions } from "../../use-board-actions";
 import { LOW_HOS_MS, useDriverHos } from "../../use-driver-hos";
 import { TimelineAssignDialog, type PendingAssignment } from "./timeline-assign-dialog";
-import { TimelineBar, type BarDragHandle } from "./timeline-bar";
-import {
-  TimelineCanvas,
-  TimelineGroupRow,
-  TimelineRow,
-  type TimelineScrollMemory,
-  type TimelineSheetItem,
-} from "./timeline-canvas";
-import { formatTimelineTime } from "./timeline-format";
-import {
-  BAR_HEIGHT,
-  GROUP_HEIGHT,
-  LANE_PAD,
-  LANE_ROW_STEP,
-  laneHeight,
-  type TimelineScale,
-} from "./timeline-scale";
+import { TimelineBar } from "./timeline-bar";
 
-/** Free-time labels need this much room to be read. */
-const MIN_GAP_LABEL_PX = 64;
 /** Drive time below this reads as out. */
 const OUT_OF_HOS_MS = 3_600_000;
 
@@ -151,7 +151,7 @@ export function TimelineCoverageLanes({
                 aria-hidden
                 className="border-warning size-5.5 shrink-0 rounded-full border-[1.5px] border-dashed"
               />
-              <LaneLabelText
+              <TimelineLaneLabel
                 title={t("Uncovered")}
                 meta={t("{0} open · {1} tendered", open.length, lanes.pool.length - open.length)}
               />
@@ -258,29 +258,7 @@ export function TimelineCoverageLanes({
   );
 }
 
-function LaneLabelText({
-  title,
-  meta,
-  flag,
-}: {
-  title: string;
-  meta: ReactNode;
-  flag?: ReactNode;
-}) {
-  return (
-    <span className="flex min-w-0 flex-1 flex-col leading-tight">
-      <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
-        <span className="truncate">{title}</span>
-        {flag}
-      </span>
-      <span className="text-muted-foreground flex min-w-0 gap-1 text-xs whitespace-nowrap">
-        {meta}
-      </span>
-    </span>
-  );
-}
-
-/** A lane's bars, packed into rows; each caption may use the room up to the next bar in its row. */
+/** A lane's loads at their packed rows; uncovered loads in the pool can be picked up. */
 function LaneBars({
   packed,
   scale,
@@ -288,52 +266,33 @@ function LaneBars({
   selectedId,
   onSelect,
 }: {
-  packed: PackedLane;
+  packed: PackedLane<TimelineLoad>;
   scale: TimelineScale;
   draggable: boolean;
 } & LaneSelection) {
-  const { placed, conflicts } = packed;
-  // Where the next bar in the same row starts, found in one pass per row: the
-  // pool lane can hold hundreds of loads.
-  const nextLeft = new Map<string, number>();
-  const byRow = new Map<number, PackedLane["placed"]>();
-  for (const entry of placed) {
-    const row = byRow.get(entry.row);
-    if (row) row.push(entry);
-    else byRow.set(entry.row, [entry]);
-  }
-  for (const row of byRow.values()) {
-    row.sort((a, b) => a.load.start - b.load.start);
-    // Walking back, `after` is the first start later than the bar in hand.
-    let after: number | null = null;
-    for (let i = row.length - 1; i >= 0; i--) {
-      const start = row[i].load.start;
-      if (i < row.length - 1 && row[i + 1].load.start > start) after = row[i + 1].load.start;
-      if (after !== null) nextLeft.set(row[i].load.id, scale.x(Math.max(after, scale.start)));
-    }
-  }
   return (
-    <>
-      {placed.map(({ load, row }) => {
-        const next = nextLeft.get(load.id);
+    <TimelineLaneBars
+      packed={packed}
+      scale={scale}
+      renderBar={(load, place) => {
         const props = {
           load,
           scale,
-          top: LANE_PAD + row * LANE_ROW_STEP,
+          top: place.top,
           height: BAR_HEIGHT,
           caption: "lane" as const,
-          nextLeft: next,
-          conflict: conflicts.has(load.id),
+          nextLeft: place.nextLeft,
+          conflict: place.conflict,
           selected: load.id === selectedId,
           onSelect,
         };
         return draggable && load.coverage.kind === "uncovered" ? (
-          <DraggableBar key={load.id} {...props} />
+          <DraggableBar {...props} />
         ) : (
-          <TimelineBar key={load.id} {...props} />
+          <TimelineBar {...props} />
         );
-      })}
-    </>
+      }}
+    />
   );
 }
 
@@ -356,7 +315,7 @@ function LaneRow({
   onSelect,
 }: {
   scale: TimelineScale;
-  packed: PackedLane;
+  packed: PackedLane<TimelineLoad>;
   label: ReactNode;
   draggable?: boolean;
 } & LaneSelection) {
@@ -395,10 +354,8 @@ function DriverLaneRow({
   });
   const readHos = useDriverHos(lane.driveRemainingMs == null ? lane.id : null);
   const remaining = lane.driveRemainingMs ?? readHos;
-  const now = useNow("minute");
   const { rows, conflicts } = lane.packed;
   const height = laneHeight(rows);
-  const gapFrom = Math.max(scale.start, now);
 
   return (
     <TimelineRow
@@ -415,16 +372,9 @@ function DriverLaneRow({
             shape="circle"
             className="size-5.5 text-2xs"
           />
-          <LaneLabelText
+          <TimelineLaneLabel
             title={lane.name}
-            flag={
-              conflicts.size > 0 ? (
-                <span
-                  title={t("Double-booked")}
-                  className="bg-danger size-1.5 shrink-0 rounded-full"
-                />
-              ) : null
-            }
+            flag={conflicts.size > 0 ? <TimelineConflictFlag /> : null}
             meta={
               <>
                 <span className="truncate">{lane.tractorCode ?? t("No tractor")}</span>
@@ -453,29 +403,7 @@ function DriverLaneRow({
       }
       lane={
         <>
-          {laneGaps(lane.loads, gapFrom, scale.end).map((gap) => {
-            const left = scale.x(gap.start);
-            const width = scale.x(gap.end) - left;
-            if (width < MIN_GAP_LABEL_PX) return null;
-            const text =
-              lane.loads.length === 0
-                ? t("Nothing booked")
-                : gap.open
-                  ? t("Free from {0}", formatTimelineTime(gap.start, scale))
-                  : t("Free {0}", formatMinutesSpan((gap.end - gap.start) / 60));
-            return (
-              <span
-                key={gap.start}
-                aria-hidden
-                className="tl-gap pointer-events-none absolute flex -translate-y-1/2 items-center justify-center"
-                style={{ left, width: Math.min(width, 360), top: LANE_PAD + BAR_HEIGHT / 2 }}
-              >
-                <span className="bg-card text-muted-foreground relative px-1.5 font-mono text-2xs whitespace-nowrap">
-                  {text}
-                </span>
-              </span>
-            );
-          })}
+          <TimelineLaneGaps items={lane.loads} scale={scale} />
           <LaneBars
             packed={lane.packed}
             scale={scale}
@@ -513,7 +441,7 @@ function CarrierLaneRow({
             shape="square"
             className="size-5.5 text-2xs"
           />
-          <LaneLabelText
+          <TimelineLaneLabel
             title={lane.name}
             meta={
               <>

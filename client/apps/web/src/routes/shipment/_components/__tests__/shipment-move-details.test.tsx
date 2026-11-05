@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import { FormProvider, useForm } from "react-hook-form";
+import userEvent from "@testing-library/user-event";
+import { FormProvider, type FieldErrors, type Resolver, useForm } from "react-hook-form";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ShipmentMoveDetails from "../move/shipment-move-details";
 
@@ -12,12 +13,23 @@ const { getUIPolicy, moveCardProps } = vi.hoisted(() => ({
 vi.mock("@/services/shipment", () => ({ shipmentService: { getUIPolicy } }));
 
 // MoveCard pulls in assignment mutations, location lookups and a split dialog,
-// none of which this test is about. Stubbing it isolates the one decision the
-// parent owns: which removal permission it hands down.
+// none of which this test is about. Stubbing it isolates the decisions the
+// parent owns: which removal permission it hands down, and whether a failed save
+// focuses a move's problem. The stub draws a move with a problem the way the card
+// marks one.
 vi.mock("../move/move-card", () => ({
   MoveCard: (props: { allowPersistedMoveRemoval: boolean }) => {
     moveCardProps.push(props);
-    return <div data-testid="move-card" />;
+    return (
+      <div data-testid="move-card" data-move-card="" data-invalid="true">
+        <button type="button" data-move-problem="">
+          Move problems
+        </button>
+        <button type="button" data-stop-problem="">
+          Stop problems
+        </button>
+      </div>
+    );
   },
 }));
 
@@ -82,8 +94,9 @@ function policy({
   };
 }
 
-function TestForm() {
+function TestForm({ resolver }: { resolver?: Resolver<any> }) {
   const form = useForm({
+    resolver,
     defaultValues: {
       // A persisted shipment: removal permission only matters once there are
       // saved moves whose stop history a delete would detach.
@@ -97,7 +110,11 @@ function TestForm() {
       client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })}
     >
       <FormProvider {...form}>
-        <ShipmentMoveDetails />
+        <form onSubmit={form.handleSubmit(() => undefined)}>
+          <ShipmentMoveDetails />
+          <button type="submit">Save</button>
+          <output>{form.formState.submitCount}</output>
+        </form>
       </FormProvider>
     </QueryClientProvider>
   );
@@ -151,5 +168,53 @@ describe("ShipmentMoveDetails removal permission", () => {
 
     const permission = await renderAndReadPermission();
     await waitFor(() => expect(permission()).toBe(false));
+  });
+});
+
+// A save that fails the way the schema fails it: the errors the resolver returns, nothing saved.
+function failingWith(errors: FieldErrors): Resolver<any> {
+  return async () => ({ values: {}, errors });
+}
+
+const stopLocationRequired = {
+  moves: [
+    { stops: [undefined, { locationId: { type: "too_small", message: "Location is required" } }] },
+  ],
+} as unknown as FieldErrors;
+
+describe("ShipmentMoveDetails after a failed save", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getUIPolicy.mockResolvedValue(policy({ allowMoveRemovals: true }));
+  });
+
+  // A stop's fields are drawn only in the move editor, so the form has nothing of its
+  // own to focus; without this the save does nothing visible.
+  it("focuses the stop's problem when the moves hold the only problems", async () => {
+    render(<TestForm resolver={failingWith(stopLocationRequired)} />);
+    await screen.findByTestId("move-card");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Stop problems" })).toHaveFocus(),
+    );
+  });
+
+  it("leaves focus to the form when a field above the moves has a problem too", async () => {
+    render(
+      <TestForm
+        resolver={failingWith({
+          ...stopLocationRequired,
+          bol: { type: "too_small", message: "BOL is required" },
+        } as FieldErrors)}
+      />,
+    );
+    await screen.findByTestId("move-card");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("1", { selector: "output" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stop problems" })).not.toHaveFocus();
   });
 });

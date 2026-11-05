@@ -88,6 +88,11 @@ type DispatchControl struct {
 	BusinessUnitID                       pulid.ID                   `json:"businessUnitId"                       keel:"business_unit_id,pk,tenant"`
 	OrganizationID                       pulid.ID                   `json:"organizationId"                       keel:"organization_id,pk,tenant"`
 	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 keel:"enable_auto_assignment"`
+	// AutoProposeCoverage keeps a proposed driver waiting on every uncovered move:
+	// the planner runs again when loads are created or uncovered, and every hour,
+	// and each run supersedes the last. Nothing is assigned until a person
+	// approves it, unless the dispatch agent is trusted to act on its own.
+	AutoProposeCoverage                  bool                       `json:"autoProposeCoverage"                  keel:"auto_propose_coverage"`
 	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               keel:"auto_assignment_strategy"`
 	EnforceWorkerAssign                  bool                       `json:"enforceWorkerAssign"                  keel:"enforce_worker_assign"`
 	EnforceTrailerContinuity             bool                       `json:"enforceTrailerContinuity"             keel:"enforce_trailer_continuity"`
@@ -446,6 +451,11 @@ func (dc *DispatchControl) NormalizeAutoAssignmentSettings() {
 
 	if dc.ScoringWeights == nil {
 		dc.ScoringWeights = ScoringWeights{}
+	}
+	// Proposing coverage is planning, which assignment that is turned off
+	// does not do.
+	if !dc.EnableAutoAssignment {
+		dc.AutoProposeCoverage = false
 	}
 	if dc.AutoAssignConfidenceThreshold.IsZero() {
 		dc.AutoAssignConfidenceThreshold = defaultAutoAssignConfidenceThreshold

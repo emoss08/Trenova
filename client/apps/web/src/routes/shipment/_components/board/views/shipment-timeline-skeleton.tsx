@@ -7,14 +7,19 @@ import {
   TimelineGroupRow,
   TimelineRow,
   type TimelineSheetItem,
-} from "./timeline/timeline-canvas";
+} from "@/components/timeline/timeline-canvas";
 import {
   BAR_HEIGHT,
   GROUP_HEIGHT,
   LANE_PAD,
   ROW_HEIGHT,
   type TimelineScale,
-} from "./timeline/timeline-scale";
+} from "@/components/timeline/timeline-scale";
+import {
+  SKELETON_LABEL_WIDTHS,
+  TimelineBarSkeleton,
+  TimelineLaneLabelSkeleton,
+} from "@/components/timeline/timeline-skeleton-parts";
 import { useTimelineRange } from "./timeline/use-timeline-range";
 
 /**
@@ -30,9 +35,6 @@ const FIRST_LOAD_SHAPE: Record<TimelineRowMode, TimelineSkeletonShape> = {
 };
 /** The skeleton never draws more rows than a tall screen shows. */
 const MAX_ROWS = 22;
-
-/** Hours a placeholder bar runs, per range, so it reads at the scale of a real load. */
-const BAR_HOURS = { day: [3, 9], "3d": [8, 30], week: [16, 56] } as const;
 
 /**
  * The timeline while it loads: the real toolbar's shapes, the real axis for
@@ -124,17 +126,21 @@ export function ShipmentTimelineBodySkeleton({
               scale={scale}
               height={ROW_HEIGHT}
               label={<ShipmentLabelSkeleton index={i} />}
-              lane={<BarSkeleton scale={scale} index={i} top={(ROW_HEIGHT - BAR_HEIGHT) / 2} />}
+              lane={
+                <TimelineBarSkeleton scale={scale} index={i} top={(ROW_HEIGHT - BAR_HEIGHT) / 2} />
+              }
             />
           ) : (
             <TimelineRow
               scale={scale}
               height={ROW_HEIGHT}
-              label={<LaneLabelSkeleton index={i} />}
+              label={<TimelineLaneLabelSkeleton index={i} />}
               lane={
                 <>
-                  <BarSkeleton scale={scale} index={i} top={LANE_PAD} />
-                  {i % 3 === 1 ? <BarSkeleton scale={scale} index={i + 7} top={LANE_PAD} /> : null}
+                  <TimelineBarSkeleton scale={scale} index={i} top={LANE_PAD} />
+                  {i % 3 === 1 ? (
+                    <TimelineBarSkeleton scale={scale} index={i + 7} top={LANE_PAD} />
+                  ) : null}
                 </>
               }
             />
@@ -166,45 +172,17 @@ function capRows(shape: TimelineSkeletonShape): number[] {
     .filter((rows) => rows > 0);
 }
 
-const LABEL_WIDTHS = ["w-32", "w-28", "w-36", "w-24", "w-30"] as const;
-
 /** A shipment row's label: the lane, then the PRO and customer, then who has it. */
 function ShipmentLabelSkeleton({ index }: { index: number }) {
   return (
     <>
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <Skeleton className={cn("h-3", LABEL_WIDTHS[index % LABEL_WIDTHS.length])} />
+        <Skeleton
+          className={cn("h-3", SKELETON_LABEL_WIDTHS[index % SKELETON_LABEL_WIDTHS.length])}
+        />
         <Skeleton className="h-2.5 w-24" />
       </span>
       <Skeleton className="size-5.5 shrink-0 rounded-full" />
     </>
-  );
-}
-
-/** A lane's label: the avatar, then the name and its tractor and drive time. */
-function LaneLabelSkeleton({ index }: { index: number }) {
-  return (
-    <>
-      <Skeleton className="size-5.5 shrink-0 rounded-full" />
-      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <Skeleton className={cn("h-3", LABEL_WIDTHS[(index + 2) % LABEL_WIDTHS.length])} />
-        <Skeleton className="h-2.5 w-20" />
-      </span>
-    </>
-  );
-}
-
-/**
- * A placeholder bar at a load's scale for the range: a few hours on a day, a
- * day or two on a week. Its place is fixed by its row, so the sheet holds still.
- */
-function BarSkeleton({ scale, index, top }: { scale: TimelineScale; index: number; top: number }) {
-  const [minHours, maxHours] = BAR_HOURS[scale.range];
-  const hours = minHours + ((index * 7) % (maxHours - minHours + 1));
-  const width = Math.min(scale.x(scale.start + hours * 3_600), scale.width * 0.6);
-  const left = (((index * 37) % 64) / 100) * (scale.width - width) + scale.width * 0.04;
-
-  return (
-    <Skeleton className="absolute rounded-[5px]" style={{ left, width, top, height: BAR_HEIGHT }} />
   );
 }

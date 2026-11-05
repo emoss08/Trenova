@@ -9,6 +9,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -174,7 +176,7 @@ func (r *MutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WindowStart: int64(gqlscalar.IntValue(input.WindowStart)),
 		WindowEnd:   int64(gqlscalar.IntValue(input.WindowEnd)),
-		Apply:       input.Apply != nil && *input.Apply,
+		Trigger:     agent.RunTriggerManual,
 	}
 
 	if req.FleetCodeIDs, err = gqlid.ParseIDs(input.FleetCodeIds); err != nil {
@@ -232,7 +234,15 @@ func (r *QueryResolver) DispatchBoard(ctx context.Context, input gqlmodel.Dispat
 		return nil, err
 	}
 
-	return mapDispatchBoard(board), nil
+	mapped := mapDispatchBoard(board)
+	if mapped == nil {
+		return nil, nil
+	}
+	if err = r.attachCoverageProposals(ctx, authCtx, board.Moves, mapped.Moves); err != nil {
+		return nil, err
+	}
+
+	return mapped, nil
 }
 
 func (r *QueryResolver) DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error) {
@@ -401,4 +411,37 @@ func (r *QueryResolver) DispatchCarrierAssignmentPreview(ctx context.Context, in
 	}
 
 	return dispatchCarrierEligibilityToModel(result), nil
+}
+
+func (r *QueryResolver) DispatchMove(ctx context.Context, moveID string) (*gqlmodel.DispatchBoardMove, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.Parse(moveID)
+	if err != nil {
+		return nil, err
+	}
+
+	move, err := r.DispatchConsoleService.GetMove(ctx, resolvercore.TenantInfo(authCtx), id)
+	if err != nil {
+		return nil, err
+	}
+
+	mapped := mapDispatchBoardMove(move)
+	if err = r.attachCoverageProposals(
+		ctx,
+		authCtx,
+		[]*dispatchconsoleservice.BoardMove{move},
+		[]*gqlmodel.DispatchBoardMove{mapped},
+	); err != nil {
+		return nil, err
+	}
+
+	return mapped, nil
 }

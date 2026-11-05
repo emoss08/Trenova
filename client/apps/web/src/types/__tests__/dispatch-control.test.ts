@@ -3,6 +3,7 @@ import { dispatchControlSchema } from "../dispatch-control";
 
 const BASE = {
   enableAutoAssignment: false,
+  autoProposeCoverage: false,
   autoAssignmentStrategy: "Proximity",
   enforceWorkerAssign: true,
   enforceTrailerContinuity: true,

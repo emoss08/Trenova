@@ -14,6 +14,7 @@ import (
 
 type DispatchPlannedAssignment struct {
 	MoveID         pulid.ID                                 `json:"moveId"`
+	MoveVersion    int64                                    `json:"moveVersion"`
 	ProNumber      string                                   `json:"proNumber"`
 	WorkerID       pulid.ID                                 `json:"workerId"`
 	WorkerName     string                                   `json:"workerName"`
@@ -73,10 +74,72 @@ type DispatchPlanRequest struct {
 	FleetCodeIDs []pulid.ID
 	MoveIDs      []pulid.ID
 	Apply        bool
+	// Trigger is why the plan ran: a person asking for it from the console
+	// (Manual), the board changing (Event) or the hourly catch-up (Scheduled).
+	// It is recorded on the run.
+	Trigger agent.RunTrigger
+}
+
+// CoverageRefreshRequester asks for an organization's coverage to be planned
+// again soon. Requests close together collapse into one plan.
+type CoverageRefreshRequester interface {
+	RequestRefresh(ctx context.Context, tenantInfo pagination.TenantInfo)
+}
+
+// CoverageMove is a move on the board as the board read it: the version tells a
+// proposal planned against an older move from one still current.
+type CoverageMove struct {
+	MoveID      pulid.ID
+	MoveVersion int64
+}
+
+type CoverageProposalsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Moves      []CoverageMove
+}
+
+// PendingCoverage is the coverage proposal waiting on a move: who the agent
+// would put on it and why. Stale is true when the move changed after it was
+// planned, so approving it would be refused.
+type PendingCoverage struct {
+	ProposalID pulid.ID
+	MoveID     pulid.ID
+	WorkerID   pulid.ID
+	WorkerName string
+	TractorID  pulid.ID
+	TrailerID  pulid.ID
+	Confidence decimal.Decimal
+	Rationale  string
+	CreatedAt  int64
+	ExpiresAt  int64
+	Stale      bool
+}
+
+// FailedCoverage is a coverage proposal someone approved whose assignment was
+// refused, kept on its move while the move is as it was when it failed, so the
+// board says why the move is still uncovered instead of forgetting the approval.
+type FailedCoverage struct {
+	ProposalID pulid.ID
+	MoveID     pulid.ID
+	WorkerID   pulid.ID
+	WorkerName string
+	Reason     string
+	FailedAt   int64
+}
+
+// MoveCoverageProposals is what the agent has on one move: the proposal waiting
+// on it, and the last approval of one that failed, when either exists.
+type MoveCoverageProposals struct {
+	Pending *PendingCoverage
+	Failed  *FailedCoverage
 }
 
 type DispatchAutoAssignService interface {
 	Plan(ctx context.Context, req *DispatchPlanRequest) (*DispatchPlan, error)
+	CoverageProposals(
+		ctx context.Context,
+		req *CoverageProposalsRequest,
+	) (map[pulid.ID]*MoveCoverageProposals, error)
 }
 
 type DispatchConsoleService interface {
@@ -88,6 +151,11 @@ type DispatchConsoleService interface {
 		ctx context.Context,
 		req *dispatchconsoleservice.GetBoardRequest,
 	) ([]*dispatchconsoleservice.BoardMove, error)
+	GetMove(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveID pulid.ID,
+	) (*dispatchconsoleservice.BoardMove, error)
 	GetMoveCandidates(
 		ctx context.Context,
 		req *dispatchconsoleservice.MoveCandidatesRequest,

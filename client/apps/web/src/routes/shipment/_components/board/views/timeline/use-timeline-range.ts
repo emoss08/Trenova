@@ -1,14 +1,26 @@
+import {
+  createTimelineScale,
+  LABEL_WIDTH,
+  type TimelineZoom,
+} from "@/components/timeline/timeline-scale";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import {
-  dayBoundaries,
   dayStartOfIso,
   RANGE_DAYS,
   rangeFirstDay,
+  type TimelineRange,
 } from "@/lib/shipment-board/timeline";
+import { dayBoundaries } from "@/lib/timeline/time-scale";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { useState, useSyncExternalStore } from "react";
 import { useShipmentBoardUrl } from "../../url-state";
-import { createTimelineScale, LABEL_WIDTH } from "./timeline-scale";
+
+/** How closely each range is drawn: a week is too long to label every gridline's hour. */
+const RANGE_ZOOM: Record<TimelineRange, TimelineZoom> = {
+  day: { pxPerHour: 64, tickHours: 2, hourLabels: true },
+  "3d": { pxPerHour: 24, tickHours: 6, hourLabels: true },
+  week: { pxPerHour: 10, tickHours: 12, hourLabels: false },
+};
 
 /**
  * The width of the element `ref` is attached to, kept current as the window
@@ -42,8 +54,8 @@ export function useTimelineRange() {
   const anchor = (tlday ? dayStartOfIso(tlday, timezone) : null) ?? today;
   const days = RANGE_DAYS[range];
   const scale = createTimelineScale(
-    range,
     dayBoundaries(rangeFirstDay(range, anchor, timezone), days, timezone),
+    RANGE_ZOOM[range],
     Math.max(0, sheetWidth - LABEL_WIDTH),
   );
   return { timezone, range, mode, qf, today, days, scale, setUrl, sheetRef };

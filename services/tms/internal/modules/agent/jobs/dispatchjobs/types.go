@@ -32,3 +32,12 @@ type HorizonPlanSweepResult struct {
 	ChainedMoves   int                  `json:"chainedMoves"`
 	TenantOutcomes []*TenantHorizonPlan `json:"tenantOutcomes,omitempty"`
 }
+
+// CoverageRefreshResult is what one debounced coverage refresh did.
+type CoverageRefreshResult struct {
+	Skipped        bool   `json:"skipped,omitempty"`
+	RunID          string `json:"runId,omitempty"`
+	MovesProposed  int    `json:"movesProposed"`
+	MovesUncovered int    `json:"movesUncovered"`
+	MovesAtRisk    int    `json:"movesAtRisk"`
+}

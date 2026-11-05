@@ -217,6 +217,26 @@ func (s *Service) GetBoardMoves(ctx context.Context, req *GetBoardRequest) ([]*B
 	return s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now), nil
 }
 
+// GetMove reads one move as the board draws it, whatever window it falls in:
+// a selection the console holds may point outside the window it shows.
+func (s *Service) GetMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) (*BoardMove, error) {
+	move, err := s.loadMove(ctx, tenantInfo, moveID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.decorateBoardMoves(
+		ctx,
+		tenantInfo,
+		[]*dispatchboardports.BoardMove{move},
+		timeutils.NowUnix(),
+	)[0], nil
+}
+
 func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
 	scope, err := s.resolveBoardScope(ctx, req)
 	if err != nil {

@@ -21,6 +21,7 @@ import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Stop, StopActualAction, StopEta } from "@trenova/shared/types/shipment";
 import { Fragment } from "react";
+import { type MoveProblem, problemText } from "./move-problems";
 import { StopEtaLine } from "./stop-eta";
 
 /** Where a stop stands, which its marker draws. */
@@ -149,7 +150,7 @@ function StopRow({
   order,
   phase,
   railBelow,
-  errorMessages,
+  problems,
   eta,
   checkCallAction,
   onCheckCall,
@@ -161,11 +162,13 @@ function StopRow({
   phase: StopPhase;
   /** The rail leaving this stop for the next, or null for the last stop. */
   railBelow: LegPhase | null;
-  errorMessages: string[];
+  /** What keeps this stop from saving, each on the field it belongs to. */
+  problems: readonly MoveProblem[];
   eta?: StopEta;
   checkCallAction: StopActualAction | null;
   onCheckCall: () => void;
-  onEdit: () => void;
+  /** Opens the move editor at this stop, on the field named, or on its location. */
+  onEdit: (path?: string) => void;
 }) {
   const t = useT();
   const place = useStopPlace(stop);
@@ -193,7 +196,7 @@ function StopRow({
       <div className="flex min-w-0 flex-col gap-0.5 pb-2">
         <button
           type="button"
-          onClick={onEdit}
+          onClick={() => onEdit()}
           className={cn(
             "ui-focus-ring min-w-0 self-start truncate rounded-sm text-left text-sm font-medium hover:underline",
             canceled && "text-foreground-muted line-through",
@@ -206,27 +209,25 @@ function StopRow({
         <span className="text-foreground-muted truncate text-xs">
           {place.city ? t("{0} · {1}", typeLabel, place.city) : typeLabel}
         </span>
-        {errorMessages.length > 0 ? (
+        {problems.length > 0 ? (
           <Tooltip>
             <TooltipTrigger
               render={
                 <button
                   type="button"
-                  onClick={onEdit}
+                  data-stop-problem=""
+                  onClick={() => onEdit(problems[0]?.path)}
                   className="text-danger ui-focus-ring flex items-center gap-1 self-start rounded-sm text-xs"
                 />
               }
             >
               <AlertTriangleIcon className="size-3" />
-              {t(
-                "{0, plural, one {# problem to fix} other {# problems to fix}}",
-                errorMessages.length,
-              )}
+              {t("{0, plural, one {# problem to fix} other {# problems to fix}}", problems.length)}
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
               <ul className="space-y-1 text-xs">
-                {errorMessages.map((message) => (
-                  <li key={message}>{message}</li>
+                {problems.map((problem) => (
+                  <li key={`${problem.path}:${problem.message}`}>{problemText(problem, t)}</li>
                 ))}
               </ul>
             </TooltipContent>
@@ -238,7 +239,7 @@ function StopRow({
         )}
       </div>
       <div className="pt-0.5">
-        {checkCallAction && !canceled && errorMessages.length === 0 ? (
+        {checkCallAction && !canceled && problems.length === 0 ? (
           <Button type="button" size="xxs" variant="outline" onClick={onCheckCall}>
             {checkCallAction === "Arrive" ? t("Arrive") : t("Depart")}
           </Button>
@@ -298,11 +299,12 @@ function LegRow({ phase, distance }: { phase: LegPhase; distance: string | null 
  * where the truck is, still to come, canceled, or with something to fix), its place, type and
  * city, and, while it is open, its projected arrival and the check call it waits on. Between
  * stops the rail fills in as they are completed, with a truck on it while the load is on its way.
- * A stop's name opens the move for editing.
+ * A stop's name opens the move for editing at that stop, and a stop's problems open it at the
+ * first field to fix.
  */
 export function MoveStops({
   stops,
-  stopErrors,
+  problems,
   etas,
   distance,
   canRecordActuals,
@@ -310,17 +312,21 @@ export function MoveStops({
   onEdit,
 }: {
   stops: readonly Stop[];
-  /** Each stop's error messages, by its place in the move. */
-  stopErrors: readonly string[][];
+  /** The move's problems; each stop draws its own. */
+  problems: readonly MoveProblem[];
   etas: ReadonlyMap<string, StopEta>;
   /** The move's distance, shown on the leg of a two-stop move. */
   distance: string | null;
   /** Whether check calls may be recorded on this move now. */
   canRecordActuals: boolean;
   onCheckCall: (stop: Stop, action: StopActualAction) => void;
-  onEdit: () => void;
+  /** Opens the move editor at a stop, on the field named, or on the stop's location. */
+  onEdit: (stopIndex: number, path?: string) => void;
 }) {
-  const phases = stops.map((stop, index) => stopPhase(stop, (stopErrors[index] ?? []).length > 0));
+  const stopProblems = stops.map((_, index) =>
+    problems.filter((problem) => problem.stopIndex === index),
+  );
+  const phases = stops.map((stop, index) => stopPhase(stop, stopProblems[index].length > 0));
   const singleLeg = stops.length === 2;
 
   return (
@@ -342,11 +348,11 @@ export function MoveStops({
                 order={index}
                 phase={phases[index]}
                 railBelow={leg}
-                errorMessages={stopErrors[index] ?? []}
+                problems={stopProblems[index]}
                 eta={stop.id ? etas.get(stop.id) : undefined}
                 checkCallAction={action}
                 onCheckCall={() => action && onCheckCall(stop, action)}
-                onEdit={onEdit}
+                onEdit={(path) => onEdit(index, path)}
               />
               {leg && <LegRow phase={leg} distance={singleLeg ? distance : null} />}
             </Fragment>

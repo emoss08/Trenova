@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,6 +34,10 @@ const (
 	evidenceTypeDeadhead = "vehicle_position"
 
 	promptVersion = "dispatch-auto-assign-v1"
+
+	// assignMoveTool is the write each coverage proposal asks for, and the
+	// tool a move carries at most one pending proposal of.
+	assignMoveTool = "dispatch_assign_move"
 
 	maxPlanMoves = 400
 )
@@ -48,6 +54,7 @@ type Params struct {
 	CandidateService    *dispatchcandidateservice.Service
 	AgentRunService     agentruntimeports.AgentRunService
 	Executor            *proposalexecutor.Service
+	WorkerRepo          workerports.WorkerRepository
 }
 
 type Service struct {
@@ -60,6 +67,7 @@ type Service struct {
 	candidates          *dispatchcandidateservice.Service
 	runService          agentruntimeports.AgentRunService
 	executor            *proposalexecutor.Service
+	workerRepo          workerports.WorkerRepository
 }
 
 func New(p Params) *Service {
@@ -73,6 +81,7 @@ func New(p Params) *Service {
 		candidates:          p.CandidateService,
 		runService:          p.AgentRunService,
 		executor:            p.Executor,
+		workerRepo:          p.WorkerRepo,
 	}
 }
 
@@ -376,7 +385,7 @@ func (s *Service) recordPlan(
 			"Dispatch auto-assign proposed coverage for %d move(s)",
 			len(plan.Assignments),
 		),
-		Trigger:    agent.RunTriggerScheduled,
+		Trigger:    triggerOf(req),
 		TenantInfo: req.TenantInfo,
 	}, actorFor(req))
 	if err != nil {
@@ -395,24 +404,54 @@ func (s *Service) recordPlan(
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			RunID:          run.ID,
-			ToolName:       "dispatch_assign_move",
+			ToolName:       assignMoveTool,
 			ToolParams:     toolParams,
 			Confidence:     planned.Confidence,
 			Rationale:      planned.Rationale,
 			Evidence:       evidenceFor(planned.Score, moveStubFor(planned)),
 			AutonomyTier:   policy.Tier,
 			Status:         agent.ProposalStatusPending,
+			// The move the proposal covers, as it was when planned: the board
+			// reads a move's pending proposal by it, a newer plan supersedes it
+			// by it, and the executor refuses it once the move has moved on.
+			TargetResource: string(permission.ResourceShipmentMove),
+			TargetID:       planned.MoveID,
+			TargetVersion:  planned.MoveVersion,
 		}
 		proposal.EgressClass = s.egressOf(proposal)
-		proposal, createErr := s.proposalRepo.Create(ctx, proposal)
-		if createErr != nil {
-			return nil, createErr
-		}
-		planned.ProposalID = proposal.ID
 		proposals = append(proposals, proposal)
 	}
 
-	return proposals, nil
+	// One move carries one pending coverage proposal, the newest: a plan run
+	// again supersedes what an earlier plan proposed for the same moves rather
+	// than leaving both decidable in Decisions.
+	recorded, err := s.proposalRepo.ReplacePendingForTargets(
+		ctx,
+		&agentproposalports.ReplaceTargetedProposalsRequest{
+			TenantInfo:     req.TenantInfo,
+			ToolName:       assignMoveTool,
+			TargetResource: string(permission.ResourceShipmentMove),
+			Proposals:      proposals,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for i, planned := range plan.Assignments {
+		planned.ProposalID = recorded[i].ID
+	}
+
+	return recorded, nil
+}
+
+// triggerOf says why a plan ran for its run record. A request that names
+// none came from a person in the console.
+func triggerOf(req *dispatchconsoleports.DispatchPlanRequest) agent.RunTrigger {
+	if req.Trigger.IsValid() {
+		return req.Trigger
+	}
+
+	return agent.RunTriggerManual
 }
 
 func (s *Service) egressOf(proposal *agent.AgentProposal) agent.EgressClass {

@@ -14,6 +14,7 @@ const control = {
   organizationId: "org_01",
   businessUnitId: "bu_01",
   enableAutoAssignment: false,
+  autoProposeCoverage: false,
   autoAssignmentStrategy: "Proximity",
   scoringWeights: {},
   enforceHosCompliance: false,

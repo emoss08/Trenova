@@ -31,6 +31,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "DispatchCommitment", Implementors: []string{"DispatchCommitment"}},
 		{Name: "DispatchDriverMoveMatch", Implementors: []string{"DispatchDriverMoveMatch"}},
 		{Name: "DispatchFinding", Implementors: []string{"DispatchFinding"}},
+		{Name: "DispatchMoveFailedProposal", Implementors: []string{"DispatchMoveFailedProposal"}},
+		{Name: "DispatchMoveProposal", Implementors: []string{"DispatchMoveProposal"}},
 		{Name: "DispatchPlan", Implementors: []string{"DispatchPlan"}},
 		{Name: "DispatchPlannedAssignment", Implementors: []string{"DispatchPlannedAssignment"}},
 		{Name: "DispatchScoreFactor", Implementors: []string{"DispatchScoreFactor"}},
@@ -1140,6 +1142,26 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalODispatchBoardTenderSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardTenderSummary),
 			},
+			{
+				Name:      "pendingProposal",
+				HasChild:  true,
+				ChildType: "DispatchMoveProposal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchBoardMove)
+					return obj.PendingProposal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODispatchMoveProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveProposal),
+			},
+			{
+				Name:      "failedProposal",
+				HasChild:  true,
+				ChildType: "DispatchMoveFailedProposal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchBoardMove)
+					return obj.FailedProposal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODispatchMoveFailedProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveFailedProposal),
+			},
 		}},
 		{Object: "DispatchBoardSummary", Fields: []*gqlexec.Field{
 			{
@@ -1774,6 +1796,158 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 		}},
+		{Object: "DispatchMoveFailedProposal", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveFailedProposal)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "workerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveFailedProposal)
+					return obj.WorkerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "workerName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveFailedProposal)
+					return obj.WorkerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveFailedProposal)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "failedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveFailedProposal)
+					return obj.FailedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
+		{Object: "DispatchMoveProposal", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "workerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.WorkerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "workerName",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.WorkerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "tractorId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.TractorID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "trailerId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.TrailerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "confidence",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.Confidence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "rationale",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.Rationale, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "createdAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "expiresAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.ExpiresAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "stale",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMoveProposal)
+					return obj.Stale, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "DispatchPlan", Fields: []*gqlexec.Field{
 			{
 				Name:     "runId",
@@ -2328,6 +2502,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDispatchBoard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoard),
 			},
 			{
+				Name:       "dispatchMove",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DispatchBoardMove",
+				Args:       field_Query_dispatchMove_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchMove(ctx, fc.Args["moveId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchBoardMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchBoardMove),
+			},
+			{
 				Name:       "dispatchMoveCandidates",
 				NonNull:    true,
 				IsResolver: true,
@@ -2412,6 +2600,7 @@ type MutationResolver interface {
 
 type QueryResolver interface {
 	DispatchBoard(ctx context.Context, input gqlmodel.DispatchBoardInput) (*gqlmodel.DispatchBoard, error)
+	DispatchMove(ctx context.Context, moveID string) (*gqlmodel.DispatchBoardMove, error)
 	DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error)
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
 	DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error)
@@ -2512,6 +2701,19 @@ func field_Query_dispatchBoard_args(ctx context.Context, ec *gqlexec.Exec, rawAr
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_dispatchMove_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "moveId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["moveId"] = arg0
 	return args, nil
 }
 
@@ -3070,7 +3272,7 @@ func unmarshalInputDispatchPlanInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"windowStart", "windowEnd", "fleetCodeIds", "moveIds", "apply"}
+	fieldsInOrder := [...]string{"windowStart", "windowEnd", "fleetCodeIds", "moveIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3105,13 +3307,6 @@ func unmarshalInputDispatchPlanInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.MoveIds = data
-		case "apply":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apply"))
-			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.Apply = data
 		}
 	}
 	return it, nil
@@ -3588,6 +3783,20 @@ func marshalODispatchBoardTenderSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DispatchBoardTenderSummary", v)
+}
+
+func marshalODispatchMoveFailedProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveFailedProposal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchMoveFailedProposal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchMoveFailedProposal", v)
+}
+
+func marshalODispatchMoveProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveProposal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchMoveProposal) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchMoveProposal", v)
 }
 
 func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {

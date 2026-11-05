@@ -131,6 +131,17 @@ function AutoAssignmentForm() {
           </FormControl>
           {enableAutoAssignment && (
             <>
+              <FormControl className="min-h-[3em] pl-10">
+                <SwitchField
+                  control={control}
+                  name="autoProposeCoverage"
+                  label={t("Keep coverage proposed")}
+                  description={t(
+                    "Plans again when loads are created or left without a driver, and every hour, so each uncovered move has a proposed driver waiting in the dispatch console and in Decisions. Nothing is assigned until someone approves it, unless the dispatch agent is trusted to act on its own.",
+                  )}
+                  position="left"
+                />
+              </FormControl>
               <FormControl className="min-h-[3em] max-w-[400px] pl-10">
                 <SelectField
                   control={control}

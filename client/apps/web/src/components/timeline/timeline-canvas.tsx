@@ -15,6 +15,7 @@ import {
   NIGHT_BANDS,
   type TimelineScale,
 } from "./timeline-scale";
+import "./timeline.css";
 
 const HOUR = 3_600;
 /** How far left of now the sheet opens, so the hours just gone stay in view. */
@@ -36,9 +37,10 @@ export type TimelineSheetItem = {
 };
 
 /**
- * Where the sheet was scrolled across, kept by the timeline so switching
- * between shipments and drivers & carriers stays at the same hours. It holds
- * one range: a new range opens on now again.
+ * Where the sheet was scrolled across, kept by a page that swaps one sheet for
+ * another (the shipments board's shipments and its drivers & carriers), so the
+ * switch stays at the same hours. It holds one range: a new range opens on now
+ * again.
  */
 export type TimelineScrollMemory = {
   recall: (rangeStart: number) => number | null;
@@ -291,7 +293,6 @@ function TimelineAxis({
   ticks: number[];
 }) {
   const t = useT();
-  const showHours = scale.range !== "week";
 
   return (
     <div
@@ -319,7 +320,7 @@ function TimelineAxis({
             </span>
           );
         })}
-        {showHours
+        {scale.hourLabels
           ? ticks.map((tick) => (
               <span
                 key={tick}

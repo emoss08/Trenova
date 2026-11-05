@@ -4,6 +4,7 @@ import { CheckboxField } from "@/components/fields/checkbox-field";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   moveStatusChoices,
   stopHandlingChoices,
@@ -25,14 +27,65 @@ import {
 } from "@/lib/choices";
 import type { Shipment, StopScheduleType, StopStatus } from "@trenova/shared/types/shipment";
 import {
+  AlertTriangleIcon,
   CalendarIcon,
   MarkerPin01Icon,
   PlusIcon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useRef, useState } from "react";
+import {
+  type FieldPath,
+  useFieldArray,
+  useFormContext,
+  useFormState,
+  useWatch,
+} from "react-hook-form";
+import { type MoveProblem, moveProblems, problemText } from "./move/move-problems";
 
-type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
+export type MoveDialogState =
+  | { open: false }
+  | {
+      open: true;
+      moveIndex: number;
+      isNew: boolean;
+      /** The form path of the field to open on, such as a stop's location or a field to fix. */
+      focus?: string;
+    };
+
+// The fields the editor draws, each showing its own error. A problem on any other field (or on
+// the move or a stop as a whole) is said in a list, since no field is there to show it.
+const MOVE_FIELDS_DRAWN = new Set(["status", "distance", "loaded"]);
+const STOP_FIELDS_DRAWN = new Set([
+  "locationId",
+  "type",
+  "pieces",
+  "weight",
+  "scheduleType",
+  "handling",
+  "scheduledWindowStart",
+  "scheduledWindowEnd",
+  "actualArrival",
+  "actualDeparture",
+]);
+
+/** The problems no field of the editor shows, said in a list of their own. */
+function UndrawnProblems({ problems }: { problems: readonly MoveProblem[] }) {
+  const t = useT();
+  if (problems.length === 0) return null;
+  return (
+    <Alert variant="destructive" size="sm">
+      <AlertTriangleIcon />
+      <AlertDescription>
+        <ul className="space-y-0.5">
+          {problems.map((problem) => (
+            <li key={`${problem.path}:${problem.message}`}>{problemText(problem, t)}</li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+}
 
 const stopStatusBadgeVariant: Record<StopStatus, "info" | "success" | "danger"> = {
   New: "info",
@@ -41,6 +94,11 @@ const stopStatusBadgeVariant: Record<StopStatus, "info" | "success" | "danger"> 
   Canceled: "danger",
 };
 
+/**
+ * Edits one move and its stops. It opens on the field it is asked to (a stop's location, or the
+ * first field to fix), and it closes only once the move has nothing left to fix, taking the
+ * person to the first problem when it does.
+ */
 export function MoveEditDialog({
   state,
   onClose,
@@ -50,13 +108,70 @@ export function MoveEditDialog({
   onClose: () => void;
   onCancel: () => void;
 }) {
-  const t = useT();
-
-  const { control } = useFormContext<Shipment>();
-
   if (!state.open) return null;
 
-  const { moveIndex, isNew } = state;
+  return (
+    <MoveEditor
+      moveIndex={state.moveIndex}
+      isNew={state.isNew}
+      focus={state.focus}
+      onClose={onClose}
+      onCancel={onCancel}
+    />
+  );
+}
+
+function MoveEditor({
+  moveIndex,
+  isNew,
+  focus,
+  onClose,
+  onCancel,
+}: {
+  moveIndex: number;
+  isNew: boolean;
+  focus: string | undefined;
+  onClose: () => void;
+  onCancel: () => void;
+}) {
+  const t = useT();
+
+  const { control, setFocus, trigger, getFieldState } = useFormContext<Shipment>();
+  const { errors } = useFormState({ control, name: `moves.${moveIndex}` });
+  const problems = moveProblems(moveIndex, errors.moves?.[moveIndex]);
+  const undrawnMoveProblems = problems.filter(
+    (problem) => problem.stopIndex === null && !MOVE_FIELDS_DRAWN.has(problem.field),
+  );
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [checking, setChecking] = useState(false);
+
+  // Brings the field at a path into view and focus. The stop (or the move's own fields) it is on
+  // takes focus first, so a problem on a field the editor does not draw still lands where it is
+  // said; the field then takes focus from it when it can.
+  function reveal(path: string): HTMLElement | null {
+    const stopIndex = /^moves\.\d+\.stops\.(\d+)/.exec(path)?.[1];
+    const region = contentRef.current?.querySelector<HTMLElement>(
+      stopIndex === undefined ? "[data-move-fields]" : `[data-stop-index="${stopIndex}"]`,
+    );
+    region?.focus();
+    setFocus(path as FieldPath<Shipment>);
+    const active = document.activeElement;
+    return active instanceof HTMLElement && contentRef.current?.contains(active) ? active : null;
+  }
+
+  async function handleSave() {
+    setChecking(true);
+    try {
+      if (await trigger(`moves.${moveIndex}`)) {
+        onClose();
+        return;
+      }
+    } finally {
+      setChecking(false);
+    }
+    const first = moveProblems(moveIndex, getFieldState(`moves.${moveIndex}`).error)[0];
+    if (first) reveal(first.path);
+  }
 
   return (
     <Dialog
@@ -65,7 +180,11 @@ export function MoveEditDialog({
         if (!open) onCancel();
       }}
     >
-      <DialogContent size="lg" className="gap-0 overflow-hidden p-0">
+      <DialogContent
+        size="lg"
+        className="gap-0 overflow-hidden p-0"
+        initialFocus={focus ? () => reveal(focus) ?? true : undefined}
+      >
         <DialogHeader className="border-border border-b px-4 py-3">
           <DialogTitle>{isNew ? t("Add move") : t("Edit move {0}", moveIndex + 1)}</DialogTitle>
           <DialogDescription>
@@ -75,52 +194,55 @@ export function MoveEditDialog({
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[65vh]">
-          <div className="space-y-4 p-4">
-            <FormGroup cols={3} dense>
-              <FormControl>
-                <SelectField
-                  control={control}
-                  name={`moves.${moveIndex}.status`}
-                  rules={{ required: true }}
-                  label={t("Status")}
-                  description={t(
-                    "Tracks where this move is in its lifecycle, from new through completion",
-                  )}
-                  isReadOnly
-                  options={moveStatusChoices}
-                />
-              </FormControl>
-              <FormControl>
-                <NumberField
-                  control={control}
-                  name={`moves.${moveIndex}.distance`}
-                  label={t("Distance (mi)")}
-                  description={t(
-                    "Total miles for this leg, used for rate calculations and driver pay",
-                  )}
-                  placeholder="0"
-                />
-              </FormControl>
-              <FormControl>
-                <CheckboxField
-                  control={control}
-                  name={`moves.${moveIndex}.loaded`}
-                  label={t("Loaded")}
-                  description={t(
-                    "Indicates whether this move is carrying freight or is an empty repositioning leg",
-                  )}
-                />
-              </FormControl>
-            </FormGroup>
+          <div ref={contentRef} className="space-y-4 p-4">
+            <UndrawnProblems problems={undrawnMoveProblems} />
+            <div data-move-fields="" tabIndex={-1} className="outline-none">
+              <FormGroup cols={3} dense>
+                <FormControl>
+                  <SelectField
+                    control={control}
+                    name={`moves.${moveIndex}.status`}
+                    rules={{ required: true }}
+                    label={t("Status")}
+                    description={t(
+                      "Tracks where this move is in its lifecycle, from new through completion",
+                    )}
+                    isReadOnly
+                    options={moveStatusChoices}
+                  />
+                </FormControl>
+                <FormControl>
+                  <NumberField
+                    control={control}
+                    name={`moves.${moveIndex}.distance`}
+                    label={t("Distance (mi)")}
+                    description={t(
+                      "Total miles for this leg, used for rate calculations and driver pay",
+                    )}
+                    placeholder="0"
+                  />
+                </FormControl>
+                <FormControl>
+                  <CheckboxField
+                    control={control}
+                    name={`moves.${moveIndex}.loaded`}
+                    label={t("Loaded")}
+                    description={t(
+                      "Indicates whether this move is carrying freight or is an empty repositioning leg",
+                    )}
+                  />
+                </FormControl>
+              </FormGroup>
+            </div>
 
-            <StopsList moveIndex={moveIndex} />
+            <StopsList moveIndex={moveIndex} problems={problems} />
           </div>
         </ScrollArea>
         <DialogFooter className="m-0">
           <Button type="button" variant="outline" onClick={onCancel}>
             {t("Cancel")}
           </Button>
-          <Button type="button" onClick={onClose}>
+          <Button type="button" isLoading={checking} onClick={() => void handleSave()}>
             {isNew ? t("Add move") : t("Save changes")}
           </Button>
         </DialogFooter>
@@ -129,7 +251,13 @@ export function MoveEditDialog({
   );
 }
 
-function StopsList({ moveIndex }: { moveIndex: number }) {
+function StopsList({
+  moveIndex,
+  problems,
+}: {
+  moveIndex: number;
+  problems: readonly MoveProblem[];
+}) {
   const t = useT();
 
   const { control } = useFormContext<Shipment>();
@@ -170,6 +298,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
             moveIndex={moveIndex}
             stopIndex={stopIndex}
             totalStops={fields.length}
+            problems={problems.filter((problem) => problem.stopIndex === stopIndex)}
             onRemove={() => remove(stopIndex)}
           />
         ))}
@@ -196,11 +325,14 @@ function StopCard({
   moveIndex,
   stopIndex,
   totalStops,
+  problems,
   onRemove,
 }: {
   moveIndex: number;
   stopIndex: number;
   totalStops: number;
+  /** What keeps this stop from saving. */
+  problems: readonly MoveProblem[];
   onRemove: () => void;
 }) {
   const t = useT();
@@ -226,24 +358,29 @@ function StopCard({
   const startLabel =
     scheduleType === "Appointment"
       ? hasWindowEnd
-        ? "Appt. Window Start"
-        : "Appt. Time"
+        ? t("Appt. window start")
+        : t("Appt. time")
       : hasWindowEnd
-        ? "Scheduled Start"
-        : "Scheduled Time";
-  const endLabel = scheduleType === "Appointment" ? "Appt. Window End" : "Scheduled End";
+        ? t("Scheduled start")
+        : t("Scheduled time");
+  const endLabel = scheduleType === "Appointment" ? t("Appt. window end") : t("Scheduled end");
   const startPlaceholder =
     scheduleType === "Appointment"
       ? hasWindowEnd
-        ? "Start time"
-        : "Appointment time"
+        ? t("Start time")
+        : t("Appointment time")
       : hasWindowEnd
-        ? "Start time"
-        : "Scheduled time";
-  const endPlaceholder = "End time (optional)";
+        ? t("Start time")
+        : t("Scheduled time");
+  const endPlaceholder = t("End time (optional)");
+  const undrawn = problems.filter((problem) => !STOP_FIELDS_DRAWN.has(problem.field));
 
   return (
-    <div className="rounded-md border">
+    <div
+      data-stop-index={stopIndex}
+      tabIndex={-1}
+      className={cn("rounded-md border outline-none", problems.length > 0 && "border-danger")}
+    >
       <div className="flex items-center justify-between border-b px-3 py-1.5">
         <div className="flex items-center gap-2">
           <MarkerPin01Icon className="text-muted-foreground size-3" />
@@ -254,6 +391,12 @@ function StopCard({
           <Badge variant={stopStatusBadgeVariant[status]} className="text-2xs h-5">
             {statusLabel}
           </Badge>
+          {problems.length > 0 && (
+            <span className="text-danger text-2xs flex items-center gap-1 font-medium">
+              <AlertTriangleIcon aria-hidden className="size-3" />
+              {t("{0, plural, one {# problem to fix} other {# problems to fix}}", problems.length)}
+            </span>
+          )}
         </div>
         <Button type="button" variant="ghost" size="icon" className="size-6" onClick={onRemove}>
           <XCloseIcon className="text-muted-foreground size-3" />
@@ -261,6 +404,7 @@ function StopCard({
       </div>
 
       <div className="space-y-3 p-3">
+        <UndrawnProblems problems={undrawn} />
         <FormGroup cols={2} dense>
           <FormControl>
             <LocationAutocompleteField

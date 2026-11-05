@@ -4,6 +4,7 @@ import {
   getDispatchCarrierAssignmentPreviewGraphQL,
   getDispatchDriverMovesGraphQL,
   getDispatchMoveCandidatesGraphQL,
+  getDispatchMoveGraphQL,
 } from "@/lib/graphql/dispatch-console";
 import { getLiveTenderByMoveGraphQL, getTendersByShipmentGraphQL } from "@/lib/graphql/tender";
 import type {
@@ -38,6 +39,12 @@ export const dispatchConsoleQueries = {
   board: (input: DispatchBoardInput) => ({
     queryKey: [DISPATCH_BOARD_KEY, input] as const,
     queryFn: ({ signal }: { signal?: AbortSignal }) => getDispatchBoardGraphQL(input, { signal }),
+  }),
+  // Under the board's prefix, so realtime and every write that refreshes the board refresh
+  // a selected move that sits outside its window too.
+  move: (moveId: string) => ({
+    queryKey: [DISPATCH_BOARD_KEY, "move", moveId] as const,
+    queryFn: ({ signal }: { signal?: AbortSignal }) => getDispatchMoveGraphQL(moveId, { signal }),
   }),
   moveCandidates: (input: DispatchMoveCandidatesInput) => ({
     queryKey: [DISPATCH_MOVE_CANDIDATES_KEY, input] as const,

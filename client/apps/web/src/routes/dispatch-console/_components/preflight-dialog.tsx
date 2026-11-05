@@ -29,12 +29,8 @@ import {
   XOctagonIcon,
 } from "@trenova/shared/components/icons";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
-import {
-  formatMiles,
-  formatMinutesToPickup,
-  hosStrategyMeta,
-  verdictMeta,
-} from "./dispatch-vocabulary";
+import { ErrorState } from "@trenova/shared/components/errors/error-state";
+import { formatMiles, hosStrategyMeta, pickupState, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { ScoreBreakdown } from "./score-breakdown";
 
@@ -142,14 +138,14 @@ export function PreflightDialog({
     tractorId: string;
     trailerId?: string;
     reassign: boolean;
-  }) => void;
+  }) => Promise<void>;
   isAssigning: boolean;
 }) {
   const t = useT();
   const nowSeconds = useNow("minute");
 
   const { move, driver } = target;
-  const { data, isLoading } = useQuery(
+  const { data, isLoading, isError, error, refetch } = useQuery(
     dispatchConsoleQueries.assignmentPreview({
       moveId: move.moveId,
       workerId: driver.workerId,
@@ -160,9 +156,10 @@ export function PreflightDialog({
   const banner = data ? (VERDICT_BANNER[data.score.verdict] ?? VERDICT_BANNER.unknown) : null;
   const lead = data ? verdictLead(data) : null;
   const tractorId = data?.tractorId ?? driver.tractorId;
-  const canAssign = Boolean(tractorId) && !isLoading;
-
-  const minutesToPickup = Math.round((move.originWindowStart - nowSeconds) / 60);
+  // Nothing commits on a pairing the dispatcher has not seen checked: confirm waits for
+  // the preview, and stays off when it could not be read.
+  const canAssign = Boolean(tractorId) && Boolean(data);
+  const pickup = pickupState(move, nowSeconds, formatUnixTime);
   const slack = data?.score.minutesOfSlack ?? 0;
   const listedFindings =
     data?.score.findings.filter(
@@ -183,6 +180,12 @@ export function PreflightDialog({
               ) : (
                 <span className="text-danger-foreground">{t("No tractor assigned")}</span>
               )}
+              {move.isCovered && move.assignedWorkerName ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{t("replaces {0}", move.assignedWorkerName)}</span>
+                </>
+              ) : null}
               {data?.trailerId ? (
                 <>
                   <span aria-hidden>·</span>
@@ -202,16 +205,18 @@ export function PreflightDialog({
                   <span className="shrink-0">· {formatMiles(move.distance)}</span>
                 ) : null}
               </span>
-              {move.originWindowStart > 0 && (
-                <span
-                  className={cn(
-                    "shrink-0 font-medium tabular-nums",
-                    minutesToPickup < 0 ? "text-danger-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {t("pickup {0}", formatMinutesToPickup(minutesToPickup))}
-                </span>
-              )}
+              <span
+                className={cn(
+                  "shrink-0 font-medium tabular-nums",
+                  pickup.tone === "danger"
+                    ? "text-danger-foreground"
+                    : pickup.tone === "warning"
+                      ? "text-warning-foreground"
+                      : "text-muted-foreground",
+                )}
+              >
+                {pickup.headline}
+              </span>
             </div>
 
             <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
@@ -243,7 +248,17 @@ export function PreflightDialog({
           </div>
         </DialogHeader>
 
-        {isLoading || !data ? (
+        {isError ? (
+          <ErrorState
+            error={error}
+            layout="compact"
+            title={t("Couldn't check this pairing")}
+            description={t(
+              "The pre-flight did not load, so nothing can be assigned from here yet. The pairing may still be fine.",
+            )}
+            onRetry={() => void refetch()}
+          />
+        ) : isLoading || !data ? (
           <div className="flex flex-col gap-2 px-5 py-4">
             <Skeleton className="h-12 rounded-md" />
             <Skeleton className="h-14 rounded-md" />
@@ -275,7 +290,7 @@ export function PreflightDialog({
                 />
                 <Stat
                   value={formatMinutesSpan(slack)}
-                  label={slack < 0 ? "Late" : "Margin"}
+                  label={slack < 0 ? t("Late") : t("Margin")}
                   tone={slack < 0 ? "late" : undefined}
                 />
               </div>
@@ -307,7 +322,7 @@ export function PreflightDialog({
             disabled={!canAssign || isAssigning || Boolean(data?.requiresOverride)}
             isLoading={isAssigning}
             onClick={() =>
-              onConfirm({
+              void onConfirm({
                 moveId: move.moveId,
                 workerId: driver.workerId,
                 tractorId: tractorId ?? "",

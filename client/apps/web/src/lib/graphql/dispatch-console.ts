@@ -1,12 +1,15 @@
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   DispatchAssignMovesDocument,
   DispatchAssignMoveToCarrierDocument,
   DispatchAssignmentPreviewDocument,
   DispatchBoardDocument,
+  DispatchBoardMoveFieldsFragmentDoc,
   DispatchCancelCarrierAssignmentDocument,
   DispatchCarrierAssignmentPreviewDocument,
   DispatchDriverMovesDocument,
   DispatchMoveCandidatesDocument,
+  DispatchMoveDocument,
   DispatchPlanAutoAssignDocument,
   DispatchUnassignMovesDocument,
   type DispatchAssignMoveInput,
@@ -16,6 +19,7 @@ import {
   type DispatchAssignmentPreviewInput,
   type DispatchAssignmentPreviewQuery,
   type DispatchBoardInput,
+  type DispatchBoardMoveFieldsFragment,
   type DispatchBoardQuery,
   type DispatchCarrierAssignmentPreviewInput,
   type DispatchCarrierAssignmentPreviewQuery,
@@ -28,8 +32,11 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
-export type DispatchBoard = DispatchBoardQuery["dispatchBoard"];
-export type DispatchBoardMove = DispatchBoard["moves"][number];
+export type DispatchBoardMove = DispatchBoardMoveFieldsFragment;
+export type DispatchMoveProposal = NonNullable<DispatchBoardMove["pendingProposal"]>;
+export type DispatchBoard = Omit<DispatchBoardQuery["dispatchBoard"], "moves"> & {
+  moves: DispatchBoardMove[];
+};
 export type DispatchBoardDriver = DispatchBoard["drivers"][number];
 export type DispatchBoardSummary = DispatchBoard["summary"];
 export type DispatchCommitment = DispatchBoardDriver["commitments"][number];
@@ -38,7 +45,10 @@ export type DispatchFinding = DispatchBoardDriver["findings"][number];
 export type DispatchCandidate = DispatchMoveCandidatesQuery["dispatchMoveCandidates"][number];
 export type DispatchScoreFactor = DispatchCandidate["factors"][number];
 export type DispatchAssignmentPreview = DispatchAssignmentPreviewQuery["dispatchAssignmentPreview"];
-export type DispatchDriverMoveMatch = DispatchDriverMovesQuery["dispatchDriverMoves"][number];
+export type DispatchDriverMoveMatch = Omit<
+  DispatchDriverMovesQuery["dispatchDriverMoves"][number],
+  "move"
+> & { move: DispatchBoardMove };
 export type DispatchBulkAssignResult = DispatchAssignMovesMutation["dispatchAssignMoves"];
 export type DispatchCarrierEligibility =
   DispatchCarrierAssignmentPreviewQuery["dispatchCarrierAssignmentPreview"];
@@ -58,7 +68,22 @@ export async function getDispatchBoardGraphQL(
     variables: { input },
     signal: options?.signal,
   });
-  return data.dispatchBoard;
+  const board = data.dispatchBoard;
+  return { ...board, moves: [...getFragmentData(DispatchBoardMoveFieldsFragmentDoc, board.moves)] };
+}
+
+/** One move as the board draws it, whatever window it falls in. */
+export async function getDispatchMoveGraphQL(
+  moveId: string,
+  options?: { signal?: AbortSignal },
+): Promise<DispatchBoardMove> {
+  const data = await requestGraphQL({
+    document: DispatchMoveDocument,
+    operationName: "DispatchMove",
+    variables: { moveId },
+    signal: options?.signal,
+  });
+  return getFragmentData(DispatchBoardMoveFieldsFragmentDoc, data.dispatchMove);
 }
 
 export async function getDispatchMoveCandidatesGraphQL(
@@ -84,7 +109,10 @@ export async function getDispatchDriverMovesGraphQL(
     variables: { input },
     signal: options?.signal,
   });
-  return data.dispatchDriverMoves;
+  return data.dispatchDriverMoves.map((match) => ({
+    ...match,
+    move: getFragmentData(DispatchBoardMoveFieldsFragmentDoc, match.move),
+  }));
 }
 
 export async function getDispatchAssignmentPreviewGraphQL(

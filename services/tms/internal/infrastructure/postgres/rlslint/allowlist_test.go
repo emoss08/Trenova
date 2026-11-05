@@ -104,7 +104,7 @@ var allowed = map[string]string{
 	"internal/modules/billing/adapters/postgres/factoringrepository/tenants.go:invoiceStateRepository.ListSweepTenants":                                         "list organizations with factored invoices or open notices of assignment to sweep",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/facts.go:factRepository.ListNotifyingTenants":                                     "list organizations whose customers receive status emails",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/notification.go:notificationRepository.ListTenantsWithDue":                        "list organizations with customer status emails due",
-	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListHorizonPlanningTenants":                          "list organizations with horizon planning on",
+	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListCoveragePlanningTenants":                          "list organizations that plan coverage on a schedule",
 	"internal/modules/documents/adapters/postgres/documentcontentrepository/content.go:repository.ListPendingExtractionTenants":                                 "list organizations with documents awaiting extraction",
 	"internal/modules/documents/adapters/postgres/documentrepository/document.go:repository.ListPendingPreviewReconciliationTenants":                            "list organizations with document previews to reconcile",
 	"internal/modules/documents/adapters/postgres/documentuploadrepository/session.go:repository.ListReconciliationTenants":                                     "list organizations with uploads to reconcile",

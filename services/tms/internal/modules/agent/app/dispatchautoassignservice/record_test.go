@@ -34,17 +34,21 @@ func (inlineRuns) StartInline(
 type createdProposals struct {
 	agentproposalports.AgentProposalRepository
 
-	created []*agent.AgentProposal
+	created  []*agent.AgentProposal
+	replaces []*agentproposalports.ReplaceTargetedProposalsRequest
 }
 
-func (r *createdProposals) Create(
+func (r *createdProposals) ReplacePendingForTargets(
 	_ context.Context,
-	entity *agent.AgentProposal,
-) (*agent.AgentProposal, error) {
-	entity.ID = pulid.MustNew("ap_")
-	r.created = append(r.created, entity)
+	req *agentproposalports.ReplaceTargetedProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	r.replaces = append(r.replaces, req)
+	for _, entity := range req.Proposals {
+		entity.ID = pulid.MustNew("ap_")
+		r.created = append(r.created, entity)
+	}
 
-	return entity, nil
+	return req.Proposals, nil
 }
 
 func recordingService(
@@ -71,10 +75,11 @@ func onePlannedMove() *dispatchconsoleports.DispatchPlan {
 
 	return &dispatchconsoleports.DispatchPlan{
 		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{{
-			MoveID:    pulid.MustNew("smv_"),
-			WorkerID:  candidate.WorkerID,
-			TractorID: candidate.TractorID,
-			Score:     candidate,
+			MoveID:      pulid.MustNew("smv_"),
+			MoveVersion: 7,
+			WorkerID:    candidate.WorkerID,
+			TractorID:   candidate.TractorID,
+			Score:       candidate,
 		}},
 	}
 }
@@ -125,4 +130,61 @@ func TestRecordPlan_AnUnregisteredAssignToolLeavesTheProposalForReview(t *testin
 	require.Len(t, proposals.created, 1)
 	assert.Empty(t, proposals.created[0].EgressClass)
 	assert.True(t, proposals.created[0].ApprovalNeedsReview(), "an unknown class fails closed")
+}
+
+/*
+A coverage proposal pins the move it covers, as it was when planned: the board reads a
+move's proposal by it, the next plan replaces it by it, and the executor refuses it once
+the move has moved on.
+*/
+func TestRecordPlan_PinsEachProposalToTheMoveAndItsVersion(t *testing.T) {
+	t.Parallel()
+
+	svc, proposals := recordingService(t)
+	plan := onePlannedMove()
+
+	recorded, err := svc.recordPlan(
+		t.Context(),
+		planRequest(),
+		Policy{Tier: agent.TierActWithApproval},
+		plan,
+	)
+	require.NoError(t, err)
+	require.Len(t, recorded, 1)
+
+	proposal := proposals.created[0]
+	assert.Equal(t, "shipment_move", proposal.TargetResource)
+	assert.Equal(t, plan.Assignments[0].MoveID, proposal.TargetID)
+	assert.Equal(t, int64(7), proposal.TargetVersion)
+	assert.Equal(t, recorded[0].ID, plan.Assignments[0].ProposalID)
+}
+
+func TestRecordPlan_ReplacesWhatAnEarlierPlanProposedForTheSameMoves(t *testing.T) {
+	t.Parallel()
+
+	svc, proposals := recordingService(t)
+
+	_, err := svc.recordPlan(t.Context(), planRequest(), Policy{Tier: agent.TierActWithApproval},
+		onePlannedMove())
+	require.NoError(t, err)
+
+	require.Len(t, proposals.replaces, 1)
+	assert.Equal(t, "dispatch_assign_move", proposals.replaces[0].ToolName)
+	assert.Equal(t, "shipment_move", proposals.replaces[0].TargetResource)
+}
+
+func TestTriggerOf_RecordsWhoAskedForThePlan(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, agent.RunTriggerManual, triggerOf(&dispatchconsoleports.DispatchPlanRequest{}))
+	assert.Equal(
+		t,
+		agent.RunTriggerScheduled,
+		triggerOf(&dispatchconsoleports.DispatchPlanRequest{Trigger: agent.RunTriggerScheduled}),
+	)
+	assert.Equal(
+		t,
+		agent.RunTriggerChat,
+		triggerOf(&dispatchconsoleports.DispatchPlanRequest{Trigger: agent.RunTriggerChat}),
+	)
 }

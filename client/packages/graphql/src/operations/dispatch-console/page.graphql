@@ -1,3 +1,97 @@
+fragment DispatchBoardMoveFields on DispatchBoardMove {
+  moveId
+  shipmentId
+  proNumber
+  bol
+  moveStatus
+  shipmentStatus
+  sequence
+  moveCount
+  loaded
+  distance
+  revenue
+  customerId
+  customerName
+  serviceTypeId
+  serviceTypeCode
+  requiredTractorTypeId
+  requiredTrailerTypeId
+  temperatureMin
+  temperatureMax
+  hasHazmat
+  hasActiveHold
+  urgency
+  minutesToPickup
+  isCovered
+  originStopId
+  originLocationId
+  originName
+  originCity
+  originState
+  originLatitude
+  originLongitude
+  originWindowStart
+  originWindowEnd
+  originActualArrival
+  destinationStopId
+  destinationLocationId
+  destinationName
+  destinationCity
+  destinationState
+  destinationLatitude
+  destinationLongitude
+  destinationWindowStart
+  destinationWindowEnd
+  assignmentId
+  assignedWorkerId
+  assignedWorkerName
+  assignedTractorId
+  assignedTractorCode
+  assignedTrailerId
+  assignedTrailerCode
+  assignmentAckStatus
+  previousMoveTrailerId
+  coverageType
+  carrierAssignmentId
+  assignedCarrierId
+  assignedCarrierName
+  carrierTotalCost
+  liveTender {
+    id
+    status
+    mode
+    currentRank
+    offerCount
+    currentCarrierName
+    currentOfferExpiresAt
+  }
+  pendingProposal {
+    id
+    workerId
+    workerName
+    tractorId
+    trailerId
+    confidence
+    rationale
+    createdAt
+    expiresAt
+    stale
+  }
+  failedProposal {
+    id
+    workerId
+    workerName
+    reason
+    failedAt
+  }
+}
+
+query DispatchMove($moveId: ID!) {
+  dispatchMove(moveId: $moveId) {
+    ...DispatchBoardMoveFields
+  }
+}
+
 query DispatchBoard($input: DispatchBoardInput!) {
   dispatchBoard(input: $input) {
     windowStart
@@ -15,72 +109,7 @@ query DispatchBoard($input: DispatchBoardInput!) {
       utilizationPercent
     }
     moves {
-      moveId
-      shipmentId
-      proNumber
-      bol
-      moveStatus
-      shipmentStatus
-      sequence
-      moveCount
-      loaded
-      distance
-      revenue
-      customerId
-      customerName
-      serviceTypeId
-      serviceTypeCode
-      requiredTractorTypeId
-      requiredTrailerTypeId
-      temperatureMin
-      temperatureMax
-      hasHazmat
-      hasActiveHold
-      urgency
-      minutesToPickup
-      isCovered
-      originStopId
-      originLocationId
-      originName
-      originCity
-      originState
-      originLatitude
-      originLongitude
-      originWindowStart
-      originWindowEnd
-      originActualArrival
-      destinationStopId
-      destinationLocationId
-      destinationName
-      destinationCity
-      destinationState
-      destinationLatitude
-      destinationLongitude
-      destinationWindowStart
-      destinationWindowEnd
-      assignmentId
-      assignedWorkerId
-      assignedWorkerName
-      assignedTractorId
-      assignedTractorCode
-      assignedTrailerId
-      assignedTrailerCode
-      assignmentAckStatus
-      previousMoveTrailerId
-      coverageType
-      carrierAssignmentId
-      assignedCarrierId
-      assignedCarrierName
-      carrierTotalCost
-      liveTender {
-        id
-        status
-        mode
-        currentRank
-        offerCount
-        currentCarrierName
-        currentOfferExpiresAt
-      }
+      ...DispatchBoardMoveFields
     }
     drivers {
       workerId
@@ -189,63 +218,7 @@ query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
 query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
   dispatchDriverMoves(input: $input) {
     move {
-      moveId
-      shipmentId
-      proNumber
-      bol
-      moveStatus
-      shipmentStatus
-      sequence
-      moveCount
-      loaded
-      distance
-      revenue
-      customerId
-      customerName
-      serviceTypeId
-      serviceTypeCode
-      requiredTractorTypeId
-      requiredTrailerTypeId
-      temperatureMin
-      temperatureMax
-      hasHazmat
-      hasActiveHold
-      urgency
-      minutesToPickup
-      isCovered
-      originStopId
-      originLocationId
-      originName
-      originCity
-      originState
-      originLatitude
-      originLongitude
-      originWindowStart
-      originWindowEnd
-      originActualArrival
-      destinationStopId
-      destinationLocationId
-      destinationName
-      destinationCity
-      destinationState
-      destinationLatitude
-      destinationLongitude
-      destinationWindowStart
-      destinationWindowEnd
-      assignmentId
-      assignedWorkerId
-      assignedWorkerName
-      assignedTractorId
-      assignedTractorCode
-      assignedTrailerId
-      assignedTrailerCode
-      assignmentAckStatus
-      previousMoveTrailerId
-      coverageType
-      carrierAssignmentId
-      assignedCarrierId
-      assignedCarrierName
-      carrierTotalCost
+      ...DispatchBoardMoveFields
     }
     score {
       workerId

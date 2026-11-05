@@ -28,15 +28,16 @@ func plannedAssignmentFor(
 	confidence := confidenceFor(p.Score)
 
 	planned := &dispatchconsoleports.DispatchPlannedAssignment{
-		MoveID:     p.Move.MoveID,
-		ProNumber:  p.Move.ProNumber,
-		WorkerID:   p.Score.WorkerID,
-		WorkerName: p.Score.WorkerName,
-		TractorID:  p.Score.TractorID,
-		TrailerID:  p.Score.TrailerID,
-		Score:      p.Score,
-		Confidence: confidence,
-		Rationale:  rationaleFor(p.Score, p.Move),
+		MoveID:      p.Move.MoveID,
+		MoveVersion: p.Move.MoveVersion,
+		ProNumber:   p.Move.ProNumber,
+		WorkerID:    p.Score.WorkerID,
+		WorkerName:  p.Score.WorkerName,
+		TractorID:   p.Score.TractorID,
+		TrailerID:   p.Score.TrailerID,
+		Score:       p.Score,
+		Confidence:  confidence,
+		Rationale:   rationaleFor(p.Score, p.Move),
 	}
 
 	planned.AutoExecutable = p.Tier == agent.TierAutoExecute &&
@@ -99,7 +100,21 @@ func rationaleFor(
 		return ""
 	}
 
+	// The factors lead, because a line that is cut short (a queue row) should still say
+	// why; who and which move close it, for a reader that sees the proposal on its own.
 	var rationale strings.Builder
+	for i, factor := range score.Factors {
+		if i >= 3 {
+			break
+		}
+		if i > 0 {
+			rationale.WriteString("; ")
+		}
+		rationale.WriteString(factor.Detail)
+	}
+	if rationale.Len() > 0 {
+		rationale.WriteString(". ")
+	}
 	fmt.Fprintf(
 		&rationale,
 		"%s scores %d of 100 for move %s",
@@ -107,14 +122,6 @@ func rationaleFor(
 		score.Score,
 		move.ProNumber,
 	)
-
-	for i, factor := range score.Factors {
-		if i >= 3 {
-			break
-		}
-		rationale.WriteString("; ")
-		rationale.WriteString(factor.Detail)
-	}
 
 	if warnings := score.Warnings(); warnings > 0 {
 		fmt.Fprintf(&rationale, " (%d advisory finding(s) to review)", warnings)

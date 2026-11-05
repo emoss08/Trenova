@@ -1,14 +1,19 @@
 package dispatchconsoleresolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/pkg/authctx"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -33,6 +38,96 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 		WindowStart: int(board.WindowStart),
 		WindowEnd:   int(board.WindowEnd),
 		GeneratedAt: int(board.GeneratedAt),
+	}
+}
+
+func (r *QueryResolver) attachCoverageProposals(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	moves []*dispatchconsoleservice.BoardMove,
+	mapped []*gqlmodel.DispatchBoardMove,
+) error {
+	if len(moves) == 0 ||
+		!r.HasPermission(ctx, authCtx, permission.ResourceAgentProposal, permission.OpRead) {
+		return nil
+	}
+
+	targets := make([]dispatchconsoleports.CoverageMove, 0, len(moves))
+	for _, move := range moves {
+		if move == nil || move.BoardMove == nil || move.IsCovered {
+			continue
+		}
+		targets = append(targets, dispatchconsoleports.CoverageMove{
+			MoveID:      move.MoveID,
+			MoveVersion: move.MoveVersion,
+		})
+	}
+	if len(targets) == 0 {
+		return nil
+	}
+
+	proposals, err := r.DispatchAutoAssignService.CoverageProposals(
+		ctx,
+		&dispatchconsoleports.CoverageProposalsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Moves:      targets,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for i, move := range moves {
+		if move == nil || move.BoardMove == nil {
+			continue
+		}
+		coverage, ok := proposals[move.MoveID]
+		if !ok {
+			continue
+		}
+		if coverage.Pending != nil {
+			mapped[i].PendingProposal = mapDispatchMoveProposal(coverage.Pending)
+		}
+		if coverage.Failed != nil {
+			mapped[i].FailedProposal = mapDispatchMoveFailedProposal(coverage.Failed)
+		}
+	}
+
+	return nil
+}
+
+func mapDispatchMoveProposal(
+	coverage *dispatchconsoleports.PendingCoverage,
+) *gqlmodel.DispatchMoveProposal {
+	var expiresAt *int
+	if coverage.ExpiresAt > 0 {
+		value := int(coverage.ExpiresAt)
+		expiresAt = &value
+	}
+
+	return &gqlmodel.DispatchMoveProposal{
+		ID:         coverage.ProposalID.String(),
+		WorkerID:   coverage.WorkerID.String(),
+		WorkerName: coverage.WorkerName,
+		TractorID:  coverage.TractorID.String(),
+		TrailerID:  gqlid.IDPtr(coverage.TrailerID),
+		Confidence: coverage.Confidence.InexactFloat64(),
+		Rationale:  coverage.Rationale,
+		CreatedAt:  int(coverage.CreatedAt),
+		ExpiresAt:  expiresAt,
+		Stale:      coverage.Stale,
+	}
+}
+
+func mapDispatchMoveFailedProposal(
+	failed *dispatchconsoleports.FailedCoverage,
+) *gqlmodel.DispatchMoveFailedProposal {
+	return &gqlmodel.DispatchMoveFailedProposal{
+		ID:         failed.ProposalID.String(),
+		WorkerID:   failed.WorkerID.String(),
+		WorkerName: failed.WorkerName,
+		Reason:     failed.Reason,
+		FailedAt:   int(failed.FailedAt),
 	}
 }
 

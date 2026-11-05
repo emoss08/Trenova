@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ShipmentTender } from "@/lib/graphql/tender";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { TenderOfferStatusBadge, TenderStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -16,8 +17,8 @@ import {
   type BounceTenderPayload,
 } from "@trenova/shared/types/tender";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDownIcon, ChevronRightIcon } from "@trenova/shared/components/icons";
-import { useCallback, useState } from "react";
+import { ChevronDownIcon } from "@trenova/shared/components/icons";
+import { useCallback, useId, useState } from "react";
 import { TenderBounceDialog } from "./tender-bounce-dialog";
 import { formatOfferRate } from "./tender-vocabulary";
 
@@ -54,6 +55,7 @@ function TenderHistoryRow({
 
   const [expanded, setExpanded] = useState(false);
   const [bouncing, setBouncing] = useState(false);
+  const offersId = useId();
   const offers = [...(tender.offers ?? [])].sort((a, b) => a.rank - b.rank);
   const accepted = acceptedOffer(tender);
   const acceptedCarrier = accepted?.carrier?.name ?? null;
@@ -78,12 +80,15 @@ function TenderHistoryRow({
         className="flex items-center gap-1.5 p-2 text-left"
         onClick={() => setExpanded((value) => !value)}
         aria-expanded={expanded}
+        aria-controls={offersId}
       >
-        {expanded ? (
-          <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
-        ) : (
-          <ChevronRightIcon className="text-muted-foreground size-3 shrink-0" aria-hidden />
-        )}
+        <ChevronDownIcon
+          className={cn(
+            "text-muted-foreground size-3 shrink-0 transition-transform duration-280 ease-settle motion-reduce:transition-none",
+            !expanded && "-rotate-90",
+          )}
+          aria-hidden
+        />
         <Badge
           variant="neutral"
           appearance="outline"
@@ -148,68 +153,79 @@ function TenderHistoryRow({
         </span>
       )}
 
-      {expanded && (
-        <div className="flex flex-col gap-1 border-t p-2">
-          {offers.map((offer) => (
-            <div
-              key={offer.id}
-              className="bg-muted/30 flex flex-col gap-0.5 rounded-md border px-2 py-1"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <Badge
-                    variant="neutral"
-                    appearance="outline"
-                    className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
-                  >
-                    #{offer.rank}
-                  </Badge>
-                  <span className="truncate text-xs">
-                    {offer.carrier?.name ?? t("Unknown carrier")}
-                  </span>
+      {/* The offers open and close by height, as the inspector's other lists do; folded,
+          they are inert so they take no focus. */}
+      <div
+        id={offersId}
+        inert={!expanded}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-280 ease-settle motion-reduce:transition-none",
+          expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-1 border-t p-2">
+            {offers.map((offer) => (
+              <div
+                key={offer.id}
+                className="bg-muted/30 flex flex-col gap-0.5 rounded-md border px-2 py-1"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <Badge
+                      variant="neutral"
+                      appearance="outline"
+                      className="h-4 shrink-0 rounded-md px-1 text-3xs tabular-nums"
+                    >
+                      #{offer.rank}
+                    </Badge>
+                    <span className="truncate text-xs">
+                      {offer.carrier?.name ?? t("Unknown carrier")}
+                    </span>
+                  </div>
+                  <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-3xs" />
                 </div>
-                <TenderOfferStatusBadge status={offer.status} className="shrink-0 text-3xs" />
-              </div>
-              <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-2xs">
-                <span className="tabular-nums">
-                  {formatOfferRate(offer.rate, offer.rateMethod)}
-                </span>
-                <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
-                {offer.sentAt != null && (
-                  <span>{t("· sent {0}", formatUnixDateTime(offer.sentAt))}</span>
+                <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-2xs">
+                  <span className="tabular-nums">
+                    {formatOfferRate(offer.rate, offer.rateMethod)}
+                  </span>
+                  <span>· {TENDER_CHANNEL_LABEL[offer.channel]}</span>
+                  {offer.sentAt != null && (
+                    <span>{t("· sent {0}", formatUnixDateTime(offer.sentAt))}</span>
+                  )}
+                  {offer.respondedAt != null && (
+                    <span>{t("· responded {0}", formatUnixDateTime(offer.respondedAt))}</span>
+                  )}
+                  {offer.respondedAt != null && offer.responseSource && (
+                    <span title={t("How the carrier's response reached us")}>
+                      · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
+                    </span>
+                  )}
+                </div>
+                {offer.counterRate && (
+                  <span className="text-muted-foreground text-2xs tabular-nums">
+                    {t("Countered at {0}", formatOfferRate(offer.counterRate, offer.rateMethod))}
+                  </span>
                 )}
-                {offer.respondedAt != null && (
-                  <span>{t("· responded {0}", formatUnixDateTime(offer.respondedAt))}</span>
-                )}
-                {offer.respondedAt != null && offer.responseSource && (
-                  <span title={t("How the carrier's response reached us")}>
-                    · {TENDER_RESPONSE_SOURCE_LABEL[offer.responseSource]}
+                {(offer.status === "Declined" || offer.status === "CounterRejected") &&
+                  offer.declineReason && (
+                    <span className="text-muted-foreground text-2xs italic">
+                      “{offer.declineReason}”
+                    </span>
+                  )}
+                {offer.status === "Revoked" && offer.revokeReason && (
+                  <span className="text-muted-foreground text-2xs">
+                    {t("Backed out: “{0}”", offer.revokeReason)}
                   </span>
                 )}
               </div>
-              {offer.counterRate && (
-                <span className="text-muted-foreground text-2xs tabular-nums">
-                  {t("Countered at {0}", formatOfferRate(offer.counterRate, offer.rateMethod))}
-                </span>
-              )}
-              {(offer.status === "Declined" || offer.status === "CounterRejected") &&
-                offer.declineReason && (
-                  <span className="text-muted-foreground text-2xs italic">
-                    “{offer.declineReason}”
-                  </span>
-                )}
-              {offer.status === "Revoked" && offer.revokeReason && (
-                <span className="text-muted-foreground text-2xs">
-                  {t("Backed out: “{0}”", offer.revokeReason)}
-                </span>
-              )}
-            </div>
-          ))}
-          {offers.length === 0 && (
-            <p className="text-muted-foreground py-1 text-center text-2xs">{t("No offers.")}</p>
-          )}
+            ))}
+            {offers.length === 0 && (
+              <p className="text-muted-foreground py-1 text-center text-2xs">{t("No offers.")}</p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -235,6 +251,9 @@ export function TenderHistory({
     state.hasPermission(Resource.Tender, Operation.Update),
   );
   const bounce = onBounceTender && canUpdateTender ? onBounceTender : null;
+  const open = useDispatchConsoleStore((state) => state.tendersOpen);
+  const setOpen = useDispatchConsoleStore((state) => state.setTendersOpen);
+  const bodyId = useId();
 
   const { data, isLoading } = useQuery({
     ...dispatchConsoleQueries.shipmentTenders(shipmentId),
@@ -247,20 +266,65 @@ export function TenderHistory({
   }
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <span className="text-muted-foreground text-xs">{t("Tenders")}</span>
-      {isLoading ? (
-        <Skeleton className="h-12 rounded-md" />
-      ) : (
-        tenders.map((tender) => (
-          <TenderHistoryRow
-            key={tender.id}
-            tender={tender}
-            isTendering={isTendering}
-            onBounceTender={bounce}
+    <section
+      className={cn("bg-card border-border overflow-hidden rounded-md border", className)}
+      aria-label={t("Tenders")}
+    >
+      <header
+        className={cn(
+          "flex h-8.5 items-center gap-1.5 border-b pr-3 pl-1.5 text-xs font-semibold transition-[border-color] duration-280 ease-settle motion-reduce:transition-none",
+          open ? "border-border" : "border-transparent",
+        )}
+      >
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          aria-label={open ? t("Hide the tenders") : t("Show the tenders")}
+          title={open ? t("Hide the tenders") : t("Show the tenders")}
+          onClick={() => setOpen(!open)}
+        >
+          <ChevronDownIcon
+            className={cn(
+              "text-muted-foreground size-3.5 transition-transform duration-280 ease-settle motion-reduce:transition-none",
+              !open && "-rotate-90",
+            )}
+            aria-hidden
           />
-        ))
-      )}
-    </div>
+        </Button>
+        {t("Tenders")}
+        {isLoading ? null : (
+          <span className="text-muted-foreground ml-auto text-2xs font-normal tabular-nums">
+            {tenders.length}
+          </span>
+        )}
+      </header>
+      <div
+        id={bodyId}
+        inert={!open}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-280 ease-settle motion-reduce:transition-none",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-1.5 p-1.5">
+            {isLoading ? (
+              <Skeleton className="h-12 rounded-md" />
+            ) : (
+              tenders.map((tender) => (
+                <TenderHistoryRow
+                  key={tender.id}
+                  tender={tender}
+                  isTendering={isTendering}
+                  onBounceTender={bounce}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

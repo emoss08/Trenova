@@ -6513,12 +6513,13 @@
     ]
   },
   "A driver": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/dispatch-console",
       "routes/scheduling"
     ]
   },
@@ -18985,7 +18986,7 @@
     ]
   },
   "Actual arrival": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -19022,7 +19023,7 @@
     ]
   },
   "Actual departure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -20286,6 +20287,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Add files to the message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Add filter": {
@@ -21745,7 +21755,7 @@
     ]
   },
   "Address": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -31409,6 +31419,15 @@
       "routes/detention-policy"
     ]
   },
+  "Appointment time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Appointment window": {
     "sites": 1,
     "scope": [
@@ -31501,15 +31520,6 @@
       "go/other"
     ]
   },
-  "Approval box": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Approval celebration": {
     "sites": 2,
     "scope": [
@@ -31529,6 +31539,15 @@
       "routes/org-structure"
     ]
   },
+  "Approval failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Approval failed: {0}": {
     "sites": 1,
     "scope": [
@@ -31536,6 +31555,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Approval for {0} taken back; the proposal waits on you again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Approval immediately adds a reimbursement line to the driver's open settlement (an off-cycle draft is created if none exists).": {
@@ -31665,7 +31693,7 @@
     ]
   },
   "Approve": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -31681,6 +31709,7 @@
       "routes/capture",
       "routes/carrier-settlement",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/driver-settlement",
       "routes/edi",
       "routes/formula-library",
@@ -31712,6 +31741,15 @@
     ],
     "areas": [
       "routes/driver-expense"
+    ]
+  },
+  "Approve Nova's proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Approve PTO request": {
@@ -32139,7 +32177,16 @@
       "routes/formula-template"
     ]
   },
-  "Approve the change the approval box shows; Enter alone never approves": {
+  "Approve the change waiting in the conversation, while the message box is empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Approve the driver Nova proposed for the open move, once its dry run has loaded": {
     "sites": 1,
     "scope": [
       "ts"
@@ -32438,6 +32485,15 @@
       "routes/agent-control"
     ]
   },
+  "Approved at {0}, but it wasn't assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Approved automatically · it posts to {0} with the next billing run": {
     "sites": 1,
     "scope": [
@@ -32582,6 +32638,15 @@
       "apps/web/components"
     ]
   },
+  "Approved {0} at {1}, but it wasn't assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Approved {0} by {1} · waiting to be posted": {
     "sites": 2,
     "scope": [
@@ -32616,6 +32681,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Approved {0}; not assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Approved {1} for {0}; it goes through when the undo window ends": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Approved · invoice not posted": {
@@ -32698,6 +32781,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Approved; not assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Approver ID": {
@@ -32861,6 +32953,33 @@
     ]
   },
   "Appt {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Appt. time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Appt. window end": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Appt. window start": {
     "sites": 1,
     "scope": [
       "ts"
@@ -34074,6 +34193,15 @@
       "go/other"
     ]
   },
+  "Ask a starter question": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Ask about anything you can see": {
     "sites": 1,
     "scope": [
@@ -34349,6 +34477,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Ask one of the agent's starter questions outright": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Ask only for documents the invoice is missing": {
@@ -35232,7 +35369,7 @@
     ]
   },
   "Assign driver": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -35304,6 +35441,15 @@
     "areas": [
       "routes/dispatch-console",
       "routes/shipment"
+    ]
+  },
+  "Assign opens a pre-flight; nothing is written until you confirm it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Assign pay profile": {
@@ -35501,15 +35647,6 @@
       "go/other"
     ]
   },
-  "Assign {0, plural, one {# move} other {# moves}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Assign {0}": {
     "sites": 1,
     "scope": [
@@ -35520,11 +35657,12 @@
     ]
   },
   "Assign {0} to {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -35725,15 +35863,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Assigned today": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Assigned tractor": {
@@ -35968,15 +36097,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Assignments created since midnight.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Assistant": {
@@ -36863,7 +36983,7 @@
     ]
   },
   "At risk": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -36875,7 +36995,6 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/desk",
-      "routes/dispatch-console",
       "routes/home",
       "routes/shipment-tracking-public",
       "routes/worker"
@@ -37074,12 +37193,13 @@
     ]
   },
   "Attach files": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -38207,33 +38327,6 @@
       "routes/worker"
     ]
   },
-  "Auto-assign": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Auto-assign failed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Auto-assign proposal": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Auto-attach new pay to open drafts": {
     "sites": 1,
     "scope": [
@@ -38961,7 +39054,7 @@
       "routes/shipment"
     ]
   },
-  "Available drivers holding no work — click to filter the capacity rail to them.": {
+  "Available drivers holding no work.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -39041,15 +39134,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Available {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Available: {{table}}, {{operation}}, {{record_id}}, {{new.field}}, {{old.field}}, {{changed_fields}}": {
@@ -39766,7 +39850,7 @@
     ]
   },
   "Back out": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -41591,7 +41675,7 @@
       "apps/web/lib"
     ]
   },
-  "Best fit ({0})": {
+  "Best fit in this window": {
     "sites": 1,
     "scope": [
       "ts"
@@ -44005,7 +44089,7 @@
     ]
   },
   "Blocked": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -44201,14 +44285,13 @@
     ]
   },
   "Board": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk",
-      "routes/dispatch-console"
+      "routes/desk"
     ]
   },
   "Board density": {
@@ -46930,6 +47013,15 @@
       "routes/desk"
     ]
   },
+  "Can be undone: Undo puts {0} back to uncovered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Can hand work to": {
     "sites": 1,
     "scope": [
@@ -47030,6 +47122,15 @@
       "routes/desk"
     ]
   },
+  "Can't be dispatched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Can't be undone": {
     "sites": 2,
     "scope": [
@@ -47037,6 +47138,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Can't dispatch until the hold is released": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Can't reach Trenova": {
@@ -47068,7 +47178,7 @@
     ]
   },
   "Cancel": {
-    "sites": 321,
+    "sites": 323,
     "scope": [
       "go",
       "ts"
@@ -48580,12 +48690,11 @@
     ]
   },
   "Capacity": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -51274,15 +51383,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Center view": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Centimeters": {
@@ -53991,6 +54091,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Checking hours of service": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Checking invoice email configuration.": {
@@ -57608,7 +57717,7 @@
     ]
   },
   "Clear filters": {
-    "sites": 14,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -57618,7 +57727,6 @@
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
       "routes/detention-desk",
-      "routes/dispatch-console",
       "routes/home",
       "routes/insights",
       "routes/my-team",
@@ -58284,7 +58392,7 @@
     ]
   },
   "Close": {
-    "sites": 67,
+    "sites": 68,
     "scope": [
       "go",
       "ts"
@@ -58322,12 +58430,13 @@
     ]
   },
   "Close (Esc)": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/dispatch-console"
     ]
   },
   "Close a Billed order once nothing more will be billed on it. Closing is final: a Closed order takes no more shipments or charges.": {
@@ -58511,6 +58620,15 @@
       "routes/shipment"
     ]
   },
+  "Close inspector": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Close order": {
     "sites": 1,
     "scope": [
@@ -58637,6 +58755,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Close the open pre-flight or decline, then the inspector": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Close the panel and open it again. If it keeps failing, the user may have been removed.": {
@@ -59010,6 +59137,15 @@
     "areas": [
       "routes/desk",
       "routes/invoice"
+    ]
+  },
+  "Closed {0} ago": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Closes its billing queue item as posted": {
@@ -65124,11 +65260,12 @@
     ]
   },
   "Conversation": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "routes/agent-control",
       "routes/desk"
@@ -66802,6 +66939,15 @@
       "routes/worker"
     ]
   },
+  "Could not cancel the tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Could not certify the summary": {
     "sites": 1,
     "scope": [
@@ -67154,6 +67300,15 @@
       "apps/web/lib"
     ]
   },
+  "Could not record the backout": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Could not record the certification": {
     "sites": 1,
     "scope": [
@@ -67179,6 +67334,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Could not record the response": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Could not reject template": {
@@ -67381,6 +67545,15 @@
       "apps/dash/_components"
     ]
   },
+  "Could not send the spot tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Could not shop this lane": {
     "sites": 1,
     "scope": [
@@ -67424,6 +67597,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Could not start the waterfall": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Could not submit review": {
@@ -67606,6 +67788,15 @@
       "apps/web/components"
     ]
   },
+  "Couldn't check this pairing": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Couldn't connect": {
     "sites": 1,
     "scope": [
@@ -67633,6 +67824,15 @@
       "apps/web/components"
     ]
   },
+  "Couldn't decline the proposal for {0}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Couldn't find a tool for it": {
     "sites": 1,
     "scope": [
@@ -67640,6 +67840,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Couldn't find work for this driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Couldn't load a preview. The record may have moved, or you may not have access to it.": {
@@ -67750,6 +67959,24 @@
       "apps/web/components"
     ]
   },
+  "Couldn't open this move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Couldn't propose coverage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Couldn't pull USDOT {0}": {
     "sites": 1,
     "scope": [
@@ -67766,6 +67993,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Couldn't rank drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Couldn't reach the web": {
@@ -67811,6 +68047,24 @@
     ],
     "areas": [
       "packages/shared/hooks"
+    ]
+  },
+  "Couldn't take the approval back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Couldn't undo: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Couldn't withdraw a proposal": {
@@ -68461,15 +68715,6 @@
       "routes/org-structure"
     ]
   },
-  "Cover move": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Cover open moves against available capacity without opening a shipment": {
     "sites": 1,
     "scope": [
@@ -68692,13 +68937,50 @@
     ]
   },
   "Covered": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/dispatch-console"
+    ]
+  },
+  "Covered by carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Covered by carrier · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Covered by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Covered by {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Covered moves": {
@@ -68708,6 +68990,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Covered moves that slipped: late, a missed stop, no check call, or out of carriers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Covering": {
@@ -71916,7 +72207,7 @@
     ]
   },
   "Customer": {
-    "sites": 97,
+    "sites": 99,
     "scope": [
       "go",
       "ts"
@@ -71940,6 +72231,7 @@
       "routes/desk",
       "routes/detention-intelligence",
       "routes/detention-policy",
+      "routes/dispatch-console",
       "routes/distance-override",
       "routes/edi",
       "routes/factoring",
@@ -72792,6 +73084,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "Customer: all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Customers": {
@@ -75318,12 +75619,12 @@
     ]
   },
   "Decide later": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/components"
     ]
   },
   "Decide the case before closing it": {
@@ -75523,6 +75824,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "Deciding proposals needs permission to update agent proposals.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Deciding {0} together": {
@@ -75830,16 +76140,36 @@
     ]
   },
   "Decline": {
-    "sites": 7,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/components",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/tender-offer-public",
       "template/tender.offer.email"
+    ]
+  },
+  "Decline Nova's proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Decline failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Decline load": {
@@ -75858,6 +76188,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Decline proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Decline reason": {
@@ -75888,11 +76227,12 @@
     ]
   },
   "Decline this change?": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -75924,20 +76264,22 @@
     ]
   },
   "Decline {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Decline {0} changes?": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
-    ]
-  },
-  "Decline {0} changes?": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -75963,6 +76305,15 @@
       "packages/shared/lib",
       "routes/agent-control",
       "routes/desk",
+      "routes/dispatch-console"
+    ]
+  },
+  "Declined Nova's driver for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/dispatch-console"
     ]
   },
@@ -78626,7 +78977,7 @@
     ]
   },
   "Delivery": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -78640,6 +78991,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/factoring",
       "routes/factoring-submission",
@@ -78738,6 +79090,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Delivery closed {0} ago": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Delivery date": {
@@ -78870,6 +79231,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Delivery open · closes in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Delivery opens in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Delivery opens {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Delivery options": {
@@ -79971,7 +80359,7 @@
     ]
   },
   "Desk": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -82220,15 +82608,6 @@
       "routes/billing-queue"
     ]
   },
-  "Discard plan": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Discard remittance": {
     "sites": 1,
     "scope": [
@@ -82749,6 +83128,15 @@
       "apps/dash/_components"
     ]
   },
+  "Dispatch console": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Dispatch control": {
     "sites": 1,
     "scope": [
@@ -82783,6 +83171,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Dispatch exceptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Dispatch figures": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Dispatch has an update for you. Open Dash for the details.": {
@@ -82837,6 +83243,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Dispatch queue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Dispatch refused the carrier's counter-offer.": {
@@ -83373,7 +83788,7 @@
     ]
   },
   "Distance": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -83383,13 +83798,14 @@
       "apps/web/types",
       "packages/shared/lib",
       "routes/admin",
+      "routes/dispatch-console",
       "routes/distance-override",
       "routes/shipment",
       "routes/worker"
     ]
   },
   "Distance (mi)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -83586,6 +84002,15 @@
     "areas": [
       "apps/web/types",
       "go/other"
+    ]
+  },
+  "Distance not set · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Distance override": {
@@ -85441,12 +85866,12 @@
     ]
   },
   "Double-booked": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Double-click to rename": {
@@ -86105,6 +86530,15 @@
       "routes/shipment"
     ]
   },
+  "Drag a move onto a driver to check the pairing before it's assigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Drag a page here to keep it out of every document": {
     "sites": 1,
     "scope": [
@@ -86554,7 +86988,7 @@
     ]
   },
   "Drive left": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -86601,11 +87035,12 @@
     ]
   },
   "Drive time left today": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -86646,7 +87081,7 @@
     ]
   },
   "Driver": {
-    "sites": 52,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -86659,6 +87094,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/driver-expense",
       "routes/driver-pay-event",
       "routes/driver-settlement",
@@ -86873,6 +87309,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Driver asked for a day near home": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Driver assigned": {
@@ -87497,6 +87942,15 @@
       "routes/desk"
     ]
   },
+  "Driver {0} {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Driver-at-dock checks that arriving equipment belongs to the assigned carrier": {
     "sites": 1,
     "scope": [
@@ -87561,13 +88015,14 @@
     ]
   },
   "Drivers": {
-    "sites": 10,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/fleet-safety",
       "routes/org-structure",
       "routes/pay-profile",
@@ -87671,6 +88126,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Drivers for this move": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Drivers keep their own phone, address, and emergency contact current.": {
@@ -87797,15 +88261,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Drivers · {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Drives the expiry warnings and the worker's compliance grade.": {
@@ -88221,8 +88676,26 @@
       "routes/desk"
     ]
   },
+  "Dry run: checking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Dry run: would go through as shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Due": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -88232,6 +88705,7 @@
       "routes/ar-open-items",
       "routes/customer-payments",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/factoring",
       "routes/worker",
       "routes/worker-checklist-template",
@@ -88384,13 +88858,14 @@
     ]
   },
   "Due now": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "Due offset cannot be negative": {
@@ -88523,7 +88998,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -88533,6 +89008,7 @@
       "routes/carrier-tracking-public",
       "routes/collections",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/ifta-return",
       "routes/shipment-tracking-public"
     ]
@@ -93854,7 +94330,7 @@
     ]
   },
   "Empty miles": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -94481,6 +94957,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "End time (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "End time is invalid": {
@@ -98980,6 +99465,24 @@
       "routes/settlement-workspace"
     ]
   },
+  "Every driver on duty was checked against this move and none can take it now. Show the ineligible ones to see why.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Every driver:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Every element of a segment as text": {
     "sites": 2,
     "scope": [
@@ -99432,6 +99935,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Every move in this window is covered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Every movement between your organization and this factor that reached the ledger: advances, reserve releases, chargebacks and their reversals.": {
@@ -100904,7 +101416,7 @@
     ]
   },
   "Exception": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -100918,7 +101430,8 @@
       "routes/agent-control",
       "routes/bank-receipt",
       "routes/billing-queue",
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "Exception Reason": {
@@ -101135,7 +101648,7 @@
     ]
   },
   "Exceptions": {
-    "sites": 14,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -101146,9 +101659,19 @@
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
+      "routes/dispatch-console",
       "routes/reconciliation-summary",
       "routes/settlement-batch",
       "routes/shipment"
+    ]
+  },
+  "Exceptions didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Exchange Rate": {
@@ -110071,15 +110594,6 @@
       "apps/web/components"
     ]
   },
-  "Filter drivers by availability": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Filter field is invalid": {
     "sites": 1,
     "scope": [
@@ -110547,6 +111061,15 @@
       "apps/web/components"
     ]
   },
+  "Find a conversation, an artifact or something an agent said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Find a customer": {
     "sites": 3,
     "scope": [
@@ -110782,15 +111305,6 @@
       "routes/admin"
     ]
   },
-  "Find work": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Finding eligible shipments": {
     "sites": 1,
     "scope": [
@@ -110825,6 +111339,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Finding work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Findings": {
@@ -111727,6 +112250,15 @@
       "go/other"
     ]
   },
+  "Fix it on the shipment, then assign a driver below or propose coverage again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Fix spelling and grammar": {
     "sites": 1,
     "scope": [
@@ -112216,7 +112748,7 @@
     ]
   },
   "Fleet": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -112227,6 +112759,7 @@
       "packages/shared/types",
       "routes/carrier-sourcing",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/fleet-safety",
       "routes/worker"
     ]
@@ -112406,6 +112939,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Fleet: all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Fleet: {0}": {
@@ -112623,6 +113165,15 @@
       "routes/settings"
     ]
   },
+  "Fold the list of conversations away, or bring it back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Fold the module's pages away beside the rail, or bring them back": {
     "sites": 1,
     "scope": [
@@ -112633,6 +113184,15 @@
     ]
   },
   "Fold the sidebar": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Fold the workspace": {
     "sites": 1,
     "scope": [
       "ts"
@@ -113981,7 +114541,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Free minutes granted cannot be negative": {
@@ -113991,6 +114551,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Free now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Free time": {
@@ -114098,11 +114667,12 @@
     ]
   },
   "Free time is labeled; a red outline is an overlap": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -114158,8 +114728,8 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console",
-      "routes/shipment"
+      "apps/web/components",
+      "routes/dispatch-console"
     ]
   },
   "Free-form internal notes. Not shared with the carrier.": {
@@ -116075,15 +116645,6 @@
       "routes/escrow-account"
     ]
   },
-  "Further out": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Future mail from {0} goes straight to Ignored.": {
     "sites": 1,
     "scope": [
@@ -117806,6 +118367,15 @@
       "go/other"
     ]
   },
+  "Give the workspace's width back to the conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Give this URL to the partner. It is the only address that accepts their AS2 messages for this profile.": {
     "sites": 1,
     "scope": [
@@ -117953,6 +118523,15 @@
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config"
+    ]
+  },
+  "Go to Today and start a new conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "apps/web/config"
     ]
   },
@@ -120038,7 +120617,7 @@
     ]
   },
   "Hazmat": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -121144,6 +121723,24 @@
       "routes/desk"
     ]
   },
+  "Hide the drivers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Hide the rail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Hide the script": {
     "sites": 1,
     "scope": [
@@ -121151,6 +121748,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Hide the tenders": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Hide the waiting messages": {
@@ -121826,6 +122432,15 @@
       "routes/billing-queue"
     ]
   },
+  "Holding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Holding account credited for the unapplied portion of customer payments until it is applied to invoices. Required to record customer payments.": {
     "sites": 1,
     "scope": [
@@ -122333,6 +122948,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Hours left": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Hours of Service": {
@@ -126494,7 +127118,7 @@
     ]
   },
   "In transit": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -126502,6 +127126,7 @@
       "apps/dash/_components",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/dispatch-console",
       "routes/home",
       "routes/inbox",
       "routes/shipment"
@@ -127454,15 +128079,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Include {0} → {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Included on a posted carrier settlement.": {
@@ -133046,6 +133662,15 @@
       "routes/inbox"
     ]
   },
+  "It isn't on the board in this window, and reading it on its own failed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "It leaves here": {
     "sites": 2,
     "scope": [
@@ -134724,6 +135349,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Jump to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Junior role is required": {
     "sites": 1,
     "scope": [
@@ -135103,6 +135737,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Keep coverage proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Keep customers, locations and commodities.": {
@@ -136430,14 +137073,24 @@
     ]
   },
   "Keyboard shortcuts": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Keyboard shortcuts (?)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Keyboard shortcuts ({0})": {
@@ -138256,7 +138909,7 @@
     ]
   },
   "Late": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -138321,6 +138974,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Late at pickup": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Late by": {
@@ -138555,12 +139217,13 @@
     ]
   },
   "Later": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -139936,6 +140599,15 @@
       "routes/order"
     ]
   },
+  "Leg {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Leg {0}/{1}": {
     "sites": 1,
     "scope": [
@@ -140011,6 +140683,15 @@
   },
   "Legal on current clocks": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Legal on current clocks.": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -142471,7 +143152,7 @@
     ]
   },
   "Live": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -142483,6 +143164,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/detention-policy",
+      "routes/dispatch-console",
       "routes/edi"
     ]
   },
@@ -142578,7 +143260,7 @@
     ]
   },
   "Live or drop": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -143224,7 +143906,7 @@
     ]
   },
   "Loaded": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -143924,6 +144606,15 @@
       "routes/inbox"
     ]
   },
+  "Loading move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Loading notifications": {
     "sites": 1,
     "scope": [
@@ -144040,6 +144731,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Loading preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Loading price history": {
@@ -145029,11 +145729,12 @@
     ]
   },
   "Loading the timeline": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -145522,7 +146223,7 @@
     ]
   },
   "Location": {
-    "sites": 21,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -145534,6 +146235,7 @@
       "go/other",
       "routes/admin",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/location",
       "routes/rate-zone",
       "routes/reports",
@@ -145737,6 +146439,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Location unknown": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Location with this code already exists in your organization": {
@@ -149039,7 +149750,7 @@
     ]
   },
   "Margin": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -149049,6 +149760,7 @@
       "go/other",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/home",
       "routes/shipment"
     ]
@@ -155279,11 +155991,12 @@
     ]
   },
   "More actions": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/formula-library",
       "routes/formula-template"
@@ -155324,6 +156037,15 @@
     "areas": [
       "routes/billing-queue",
       "routes/org-structure"
+    ]
+  },
+  "More in the Watchtower": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "More kinds": {
@@ -155590,12 +156312,13 @@
     ]
   },
   "Move": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-monitoring",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -155862,6 +156585,15 @@
       "go/other"
     ]
   },
+  "Move or driver": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Move ready freight into billing for organizations that transfer automatically": {
     "sites": 1,
     "scope": [
@@ -155970,6 +156702,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Move the window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Move tile": {
@@ -156138,12 +156879,13 @@
     ]
   },
   "Move {0}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/shipment"
     ]
@@ -156266,12 +157008,14 @@
     ]
   },
   "Moves": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/dispatch-console"
     ]
   },
   "Moves drafts into the approval queue.": {
@@ -156301,7 +157045,16 @@
       "routes/home"
     ]
   },
-  "Moves in the window with no driver — click to show every urgency bucket.": {
+  "Moves in the window with no driver. Shows every group.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Moves that need a decision": {
     "sites": 1,
     "scope": [
       "ts"
@@ -156353,6 +157106,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Moves where Nova picked a driver and is waiting on a decision.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Moving": {
@@ -158335,8 +159097,8 @@
       "apps/web/lib"
     ]
   },
-  "Needs a driver now": {
-    "sites": 1,
+  "Needs a driver": {
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -158474,7 +159236,7 @@
     ]
   },
   "Needs attention": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -158489,6 +159251,7 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/fleet-safety",
       "routes/ifta-tax-rate",
@@ -158507,7 +159270,7 @@
     ]
   },
   "Needs coverage": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -158515,7 +159278,6 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/desk",
-      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -159443,16 +160205,17 @@
     ]
   },
   "New conversation": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config",
       "routes/desk"
     ]
   },
-  "New conversation ⌘N": {
+  "New conversation ({0})": {
     "sites": 1,
     "scope": [
       "ts"
@@ -160529,15 +161292,6 @@
       "packages/shared/lib"
     ]
   },
-  "Next 4 hours": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Next 7 days": {
     "sites": 1,
     "scope": [
@@ -160590,6 +161344,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Next and previous move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Next attempt": {
@@ -160834,6 +161597,15 @@
       "routes/worker"
     ]
   },
+  "Next move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Next open period": {
     "sites": 1,
     "scope": [
@@ -160997,11 +161769,12 @@
     ]
   },
   "Next step": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/inbox"
     ]
   },
@@ -161169,6 +161942,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Next: {0} to {1}, {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Night movement only": {
@@ -161933,15 +162715,6 @@
       "routes/shipment"
     ]
   },
-  "No active, assignable drivers match the current filters.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "No activity recorded": {
     "sites": 1,
     "scope": [
@@ -162242,7 +163015,7 @@
     ]
   },
   "No appointment": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -162323,6 +163096,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No assignable driver matches the filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No attachments or links": {
@@ -163324,6 +164106,15 @@
       "routes/worker"
     ]
   },
+  "No covered move is running late, missed a stop, gone without a check call or run out of carriers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No credential types are marked required for this driver type.": {
     "sites": 1,
     "scope": [
@@ -163914,6 +164705,24 @@
       "routes/desk"
     ]
   },
+  "No driver is available for dispatch in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "No driver on duty can take this move on the clocks and equipment they have now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No driver or carrier yet": {
     "sites": 3,
     "scope": [
@@ -163987,7 +164796,16 @@
       "routes/settlement-workspace"
     ]
   },
-  "No drivers match this view.": {
+  "No drivers match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "No drivers on the board": {
     "sites": 1,
     "scope": [
       "ts"
@@ -164069,7 +164887,7 @@
       "go/other"
     ]
   },
-  "No eligible driver for this move. {0}": {
+  "No eligible driver": {
     "sites": 1,
     "scope": [
       "ts"
@@ -164622,6 +165440,15 @@
       "routes/fleet-code"
     ]
   },
+  "No fleet or tractor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No floor": {
     "sites": 1,
     "scope": [
@@ -164907,6 +165734,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "No hours feed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No hours reported": {
     "sites": 1,
     "scope": [
@@ -164944,7 +165780,7 @@
     ]
   },
   "No hours-of-service feed for this driver; judged on schedule alone.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -165992,6 +166828,15 @@
       "go/other"
     ]
   },
+  "No moves match the search": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No moves planned yet": {
     "sites": 1,
     "scope": [
@@ -166255,6 +167100,15 @@
       "routes/invoice"
     ]
   },
+  "No open exceptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No open invoice on the factor's schedules": {
     "sites": 1,
     "scope": [
@@ -166264,7 +167118,7 @@
       "apps/web/lib"
     ]
   },
-  "No open moves suit this driver right now.": {
+  "No open move in this window suits this driver.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -167019,6 +167873,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No proposal yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No provider": {
@@ -169214,7 +170077,7 @@
     ]
   },
   "No tractor": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -169225,15 +170088,6 @@
     ]
   },
   "No tractor assigned": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "No tractor available for this driver — cannot be applied.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -169332,7 +170186,16 @@
       "routes/admin"
     ]
   },
-  "No uncovered moves in the current window.": {
+  "No uncovered moves in this window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "No uncovered moves in this window.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -169557,6 +170420,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "No work yet": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No worker has a tracked balance yet.": {
@@ -169925,6 +170797,15 @@
       "routes/my-team"
     ]
   },
+  "Nobody matches the search or the availability shown. Clear them to see every driver.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nobody new was asked. An admin can change limits in AI Control.": {
     "sites": 1,
     "scope": [
@@ -170013,6 +170894,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Nobody yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nobody yet: no role is granted it": {
@@ -171494,7 +172384,7 @@
     ]
   },
   "Not now": {
-    "sites": 8,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -172041,14 +172931,15 @@
     ]
   },
   "Not set": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "Not set (UTC)": {
@@ -172226,6 +173117,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Not updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Not used": {
@@ -172915,7 +173815,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "Nothing booked with this factor yet. Funding recorded on a schedule appears here.": {
@@ -172943,6 +173843,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Nothing can be assigned until the pairing is checked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nothing can run until a provider is connected.": {
@@ -173478,6 +174387,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing here needs a driver. Show covered moves to see who holds each one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nothing here yet": {
     "sites": 3,
     "scope": [
@@ -173496,15 +174414,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Nothing here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Nothing holding the bill": {
@@ -173640,6 +174549,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Nothing in this window matches. Clear the search to see every move.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nothing in {0}": {
@@ -173845,7 +174763,7 @@
       "routes/intake"
     ]
   },
-  "Nothing is written until you apply.": {
+  "Nothing is written until you confirm": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174581,15 +175499,6 @@
       "routes/desk"
     ]
   },
-  "Nothing selected": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Nothing sent is waiting for an acknowledgment": {
     "sites": 1,
     "scope": [
@@ -174789,6 +175698,15 @@
       "routes/org-structure"
     ]
   },
+  "Nothing to cover in this window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nothing to do": {
     "sites": 1,
     "scope": [
@@ -174888,15 +175806,6 @@
       "routes/desk"
     ]
   },
-  "Nothing to plan": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Nothing to recommend": {
     "sites": 1,
     "scope": [
@@ -174958,6 +175867,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing to undo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nothing to update": {
@@ -175800,7 +176718,7 @@
     ]
   },
   "Nova": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -175808,6 +176726,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/detention-intelligence",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/onboarding"
     ]
@@ -176316,6 +177235,24 @@
       "routes/agent-control"
     ]
   },
+  "Nova picked a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Nova proposes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nova read it": {
     "sites": 1,
     "scope": [
@@ -176620,6 +177557,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nova's pick": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Nova's proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nova's reading of this document couldn't be loaded.": {
@@ -177877,13 +178832,14 @@
     ]
   },
   "Offline": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/dispatch-console"
     ]
   },
   "Offline · synced {0}": {
@@ -178194,6 +179150,15 @@
       "packages/shared/components"
     ]
   },
+  "On a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "On a one-axis table of bands, the band a value falls in (its `min`, `max` and `value`), or `none`.": {
     "sites": 2,
     "scope": [
@@ -178399,7 +179364,7 @@
     ]
   },
   "On hold": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -179094,6 +180059,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Once approved, this change can't be undone. Undo and the undo window don't apply to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Once it is delivered": {
@@ -183191,6 +184165,15 @@
       "routes/home"
     ]
   },
+  "Open capacity first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Open card": {
     "sites": 1,
     "scope": [
@@ -183395,7 +184378,7 @@
     ]
   },
   "Open drivers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -183720,6 +184703,15 @@
       "routes/customer"
     ]
   },
+  "Open it to rank drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Open item totals": {
     "sites": 1,
     "scope": [
@@ -183895,15 +184887,6 @@
       "apps/web/config"
     ]
   },
-  "Open or close the note that turns the change down and tells the agent why": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Open order": {
     "sites": 1,
     "scope": [
@@ -184041,7 +185024,7 @@
     ]
   },
   "Open shipment": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -184049,6 +185032,7 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/inbox",
       "routes/invoice",
@@ -184102,6 +185086,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Open that ranked driver's pre-flight; Enter assigns once it has loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Open the Desk": {
@@ -184502,6 +185495,15 @@
       "apps/web/components"
     ]
   },
+  "Open the reason box to decline the proposal for the open move": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Open the record": {
     "sites": 1,
     "scope": [
@@ -184600,6 +185602,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Open the workspace beside the conversation, or browse what it holds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Open the {0} developer portal": {
@@ -184817,6 +185828,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Open · closes in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Open · {0, plural, one {# minute after grace} other {# minutes after grace}}": {
@@ -185213,6 +186233,15 @@
       "apps/web/components"
     ]
   },
+  "Opens in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Opens the courses you choose for {0, plural, one {# selected worker} other {# selected workers}}. Anyone who already has a course open keeps the assignment they have.": {
     "sites": 1,
     "scope": [
@@ -185247,6 +186276,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Opens {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Operating authority": {
@@ -186537,6 +187575,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Ordered by the next decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Ordered by {0}; the columns show hours": {
@@ -188213,6 +189260,15 @@
       "apps/web/components"
     ]
   },
+  "Outside this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Outstanding": {
     "sites": 8,
     "scope": [
@@ -188528,6 +189584,15 @@
     ],
     "areas": [
       "routes/late-charges"
+    ]
+  },
+  "Overdue {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Overlaps {0}, {1} to {2}.": {
@@ -189014,7 +190079,7 @@
     ]
   },
   "Owner": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -189023,6 +190088,7 @@
       "apps/web/lib",
       "go/other",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/order",
       "routes/shipment",
       "routes/worker-checklist-template"
@@ -195878,6 +196944,15 @@
       "apps/web/components"
     ]
   },
+  "Permanent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Permanently Closed": {
     "sites": 2,
     "scope": [
@@ -196577,6 +197652,15 @@
       "routes/org-structure"
     ]
   },
+  "Pick a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Pick a file or a sample to open it": {
     "sites": 1,
     "scope": [
@@ -196972,6 +198056,15 @@
       "routes/worker"
     ]
   },
+  "Pick another driver below to reassign it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Pick at least one day for quiet hours": {
     "sites": 1,
     "scope": [
@@ -197123,6 +198216,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Pick up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Pick up {0} · deliver {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Pick what is covered": {
@@ -197334,26 +198445,8 @@
       "routes/desk"
     ]
   },
-  "Picks up later today": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Picks up tomorrow": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Pickup": {
-    "sites": 23,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -197367,6 +198460,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/shipment",
       "routes/tender-offer-public"
@@ -197543,6 +198637,15 @@
       "routes/shipment"
     ]
   },
+  "Pickup margin": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Pickup or Delivery.": {
     "sites": 1,
     "scope": [
@@ -197570,15 +198673,6 @@
       "routes/desk"
     ]
   },
-  "Pickup unscheduled": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Pickup window": {
     "sites": 1,
     "scope": [
@@ -197588,16 +198682,7 @@
       "routes/desk"
     ]
   },
-  "Pickup window already open": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Pickup window already open, still uncovered — click to focus the Late lane.": {
+  "Pickup window closed · was {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -197607,12 +198692,11 @@
     ]
   },
   "Pickup {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -197727,7 +198811,7 @@
     ]
   },
   "Pieces": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -198252,6 +199336,15 @@
       "go/other"
     ]
   },
+  "Plan an organization's uncovered moves again after its board changed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Plan dispatch": {
     "sites": 1,
     "scope": [
@@ -198450,6 +199543,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Plans again when loads are created or left without a driver, and every hour, so each uncovered move has a proposed driver waiting in the dispatch console and in Decisions. Nothing is assigned until someone approves it, unless the dispatch agent is trusted to act on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Plans cannot be actioned while all agents are paused. Turn off \"Pause all agents\" on the AI Control overview, then decide again": {
@@ -200764,6 +201866,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Pre-flight for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Pre-selected when someone starts a review.": {
     "sites": 1,
     "scope": [
@@ -201181,7 +202292,7 @@
       "routes/inbox"
     ]
   },
-  "Press <kbd/> to approve": {
+  "Press <kbd/> to approve while the message box is empty": {
     "sites": 1,
     "scope": [
       "ts"
@@ -204008,6 +205119,15 @@
       "routes/agent-control"
     ]
   },
+  "Proposals waiting": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Proposals · about {0}": {
     "sites": 1,
     "scope": [
@@ -204179,6 +205299,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Propose coverage": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Propose crediting, rebilling, reversing or writing off posted invoices. Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to submit a saved draft as it stands. Each executes at once or waits for approval as the organization's adjustment policy says. It creates credit memos and replacement invoices, so a person always decides.": {
@@ -205834,13 +206963,13 @@
       "apps/web/components"
     ]
   },
-  "Put the waiting decisions off and bring back the message box": {
+  "Put the previous driver back on {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "routes/dispatch-console"
     ]
   },
   "Put them back": {
@@ -206537,21 +207666,23 @@
     ]
   },
   "Queue": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "Queue a follow-up": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/config"
     ]
   },
   "Queue a test message from {0}.": {
@@ -207638,15 +208769,6 @@
       "routes/detention-intelligence"
     ]
   },
-  "Rank drivers": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Rank drivers for move": {
     "sites": 1,
     "scope": [
@@ -207777,6 +208899,15 @@
       "routes/routing-guide"
     ]
   },
+  "Ranked {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Ranking carriers by margin needs access to margins": {
     "sites": 1,
     "scope": [
@@ -207784,6 +208915,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Ranking drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Rate": {
@@ -209643,7 +210783,7 @@
       "routes/agent-control"
     ]
   },
-  "Re-plan the dispatch horizon for organizations running horizon planning": {
+  "Re-plan coverage for organizations that plan on a schedule": {
     "sites": 2,
     "scope": [
       "go"
@@ -211646,7 +212786,7 @@
     ]
   },
   "Reason": {
-    "sites": 72,
+    "sites": 73,
     "scope": [
       "go",
       "ts"
@@ -212147,7 +213287,7 @@
     ]
   },
   "Reassign driver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -212163,6 +213303,15 @@
     "areas": [
       "apps/web/components",
       "routes/shipment"
+    ]
+  },
+  "Reassign {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Reassigned {0}": {
@@ -213594,6 +214743,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Reconnecting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Reconstructed": {
@@ -215756,7 +216914,7 @@
     ]
   },
   "Reefer {0}–{1}°F": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -220241,6 +221399,24 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Replaces {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Replaces {0} · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Replacing a carrier already on the move, or overriding the new carrier's insurance warning, is a proposal a person decides; any other assignment runs once a person approves it.": {
@@ -225926,7 +227102,7 @@
     ]
   },
   "Review": {
-    "sites": 25,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -226499,6 +227675,15 @@
     "areas": [
       "apps/web/config",
       "routes/review-template"
+    ]
+  },
+  "Review the change": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Review the draft": {
@@ -233832,11 +235017,12 @@
     ]
   },
   "Say why. The agent sees it, and so does whoever looks after the agent.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -234391,7 +235577,7 @@
     ]
   },
   "Schedule type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -234537,6 +235723,15 @@
       "go/other"
     ]
   },
+  "Scheduled end": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Scheduled for": {
     "sites": 1,
     "scope": [
@@ -234643,6 +235838,24 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Scheduled start": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Scheduled time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Scheduled window end": {
@@ -234944,15 +236157,6 @@
       "go/other"
     ]
   },
-  "Score {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Score {0}%": {
     "sites": 2,
     "scope": [
@@ -235167,6 +236371,15 @@
       "routes/inbox"
     ]
   },
+  "Search ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search JSON...": {
     "sites": 1,
     "scope": [
@@ -235204,11 +236417,12 @@
     ]
   },
   "Search PRO, customer or city": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -235504,12 +236718,13 @@
     ]
   },
   "Search conversations": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config",
       "routes/desk"
     ]
   },
@@ -235894,6 +237109,24 @@
       "apps/web/components"
     ]
   },
+  "Search moves": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Search moves by PRO, customer or city": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Search must be at most 200 characters": {
     "sites": 1,
     "scope": [
@@ -236137,6 +237370,15 @@
       "routes/desk"
     ]
   },
+  "Search the board by PRO, customer or city": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Search the detention desk": {
     "sites": 1,
     "scope": [
@@ -236336,15 +237578,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Search ⌘K": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Search, or ask: “Acme over $5k delivered this week”": {
@@ -237506,16 +238739,7 @@
       "routes/customer"
     ]
   },
-  "Select a move to rank drivers for it, or a driver to find them work.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Select a move to see how it can be covered.": {
+  "Select a move to open it and assign this driver from its pre-flight": {
     "sites": 1,
     "scope": [
       "ts"
@@ -240698,6 +241922,15 @@
       "routes/desk"
     ]
   },
+  "Send the message after the reply under way finishes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Send the notice": {
     "sites": 1,
     "scope": [
@@ -241941,14 +243174,15 @@
     ]
   },
   "Sequence": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/admin"
+      "routes/admin",
+      "routes/shipment"
     ]
   },
   "Sequence Configuration": {
@@ -244611,13 +245845,14 @@
       "routes/agent-control"
     ]
   },
-  "Shadow mode: nothing was assigned": {
-    "sites": 1,
+  "Shadow mode is on, so nothing was proposed or assigned.": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/dispatch-console",
+      "routes/shipment"
     ]
   },
   "Shadow this version from the version actions to run it beside the active one on live messages before activating it.": {
@@ -244720,15 +245955,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Share of available drivers currently holding work; average empty miles across covered moves with a live position.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Share of each tool's calls that failed. Click a cell to see real examples.": {
@@ -246534,6 +247760,15 @@
       "routes/billing-queue"
     ]
   },
+  "Shipment on hold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Shipment ownership transfer requires a user actor": {
     "sites": 1,
     "scope": [
@@ -247453,7 +248688,7 @@
     ]
   },
   "Show all": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -247461,6 +248696,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -247654,7 +248890,7 @@
     ]
   },
   "Show fewer": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -247662,6 +248898,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/detention-intelligence",
+      "routes/dispatch-console",
       "routes/scheduling"
     ]
   },
@@ -247711,16 +248948,7 @@
     ]
   },
   "Show ineligible": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Show ineligible drivers to see why.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -247938,6 +249166,15 @@
       "routes/desk"
     ]
   },
+  "Show the drivers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Show the first {0}": {
     "sites": 1,
     "scope": [
@@ -247983,6 +249220,15 @@
       "routes/inbox"
     ]
   },
+  "Show the previous or next window; T jumps back to today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Show the problems": {
     "sites": 1,
     "scope": [
@@ -248019,6 +249265,15 @@
       "routes/desk"
     ]
   },
+  "Show the tenders": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Show the waiting messages": {
     "sites": 1,
     "scope": [
@@ -248047,6 +249302,15 @@
     ]
   },
   "Show this keyboard shortcuts dialog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Show this list from anywhere in the Desk outside a text box": {
     "sites": 1,
     "scope": [
       "ts"
@@ -248283,12 +249547,13 @@
     ]
   },
   "Showing {0} only": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/dispatch-console"
     ]
   },
   "Shown": {
@@ -249477,7 +250742,7 @@
     ]
   },
   "Since {0}": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -249485,6 +250750,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/my-team",
       "routes/time-attendance"
@@ -251063,6 +252329,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Soonest due first, from the Watchtower": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Sort": {
@@ -253638,6 +254913,15 @@
       "apps/web/lib"
     ]
   },
+  "Start time": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Start time is required": {
     "sites": 1,
     "scope": [
@@ -254590,7 +255874,7 @@
     ]
   },
   "Status": {
-    "sites": 333,
+    "sites": 335,
     "scope": [
       "go",
       "ts"
@@ -255462,7 +256746,7 @@
     ]
   },
   "Stop": {
-    "sites": 19,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -255795,6 +257079,15 @@
       "go/other"
     ]
   },
+  "Stop the agent's reply from the message box, even with text in it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Stop the live carrier tracking link on a move from working, so nobody can post check calls through it. Use it when the link reached the wrong person, the carrier changed, or the person asks for it to end; issue a new one with dispatch_share_tracking_link if the carrier should keep posting.": {
     "sites": 1,
     "scope": [
@@ -255805,6 +257098,16 @@
     ]
   },
   "Stop the reply": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config"
+    ]
+  },
+  "Stop the reply (Esc)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -255850,7 +257153,7 @@
     ]
   },
   "Stop type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -255954,13 +257257,14 @@
     ]
   },
   "Stop {0} · {1}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-tracking-public",
       "routes/rate-confirmation-public",
+      "routes/shipment",
       "routes/shipment-tracking-public"
     ]
   },
@@ -256102,7 +257406,7 @@
     ]
   },
   "Stops": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -259422,6 +260726,24 @@
       "go/other"
     ]
   },
+  "Take back the approval for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Take back the last assignment or approval, putting back any driver it replaced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Take care of “{0}” for {1}.": {
     "sites": 1,
     "scope": [
@@ -260791,15 +262113,6 @@
       "routes/agent-control"
     ]
   },
-  "Tell the agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/config"
-    ]
-  },
   "Tell the person their reply is ready": {
     "sites": 1,
     "scope": [
@@ -261301,7 +262614,7 @@
     ]
   },
   "Tender": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -261309,6 +262622,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/inbox",
       "routes/shipment"
@@ -261618,7 +262932,7 @@
     ]
   },
   "Tender to carriers": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -261795,7 +263109,7 @@
     ]
   },
   "Tenders": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -265670,6 +266984,15 @@
       "go/other"
     ]
   },
+  "The board didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The board, the lanes, and the carriers that run them": {
     "sites": 1,
     "scope": [
@@ -269371,6 +270694,15 @@
       "routes/fleet-safety"
     ]
   },
+  "The drivers didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The drop that counts as a regression is at least 0.01": {
     "sites": 1,
     "scope": [
@@ -269405,6 +270737,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The dry run didn't load, and this change can't be approved without it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The dry run didn't load; approving now is recorded as not reviewed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The dry run stopped before it finished.": {
@@ -274028,6 +275378,15 @@
       "go/other"
     ]
   },
+  "The matches didn't load. Open moves may still suit this driver.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The matching cell: its `value`, its `minimum` charge (`Money?`) and its `deficit` flag, or `none`.": {
     "sites": 2,
     "scope": [
@@ -274761,6 +276120,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The move changed since this was proposed, so approving it would be refused. Decline it or pick a driver below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The move changed since this was proposed; the next plan replaces it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The move is covered by a different carrier than the one that accepted the tender": {
@@ -276894,6 +278271,15 @@
       "routes/journal-reversal"
     ]
   },
+  "The pre-flight did not load, so nothing can be assigned from here yet. The pairing may still be fine.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The preview and runs are refused until they are removed or your access changes.": {
     "sites": 1,
     "scope": [
@@ -276955,6 +278341,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The previous driver is back on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The price is copied onto the enrollment, so repricing the plan next year cannot restate what they were charged this year.": {
@@ -277637,6 +279032,15 @@
     ]
   },
   "The rank-1 carrier has been offered the move.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The ranking didn't load. Drivers may still fit this move.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -280302,6 +281706,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The server refused it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The server sent something this version of the page can't read. Reload to pick up the latest version. If it keeps happening, contact support with the reference below.": {
@@ -284736,6 +286149,15 @@
       "go/other"
     ]
   },
+  "There are no moves in this window. Try the next window or a longer one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "There are no rules named {0}": {
     "sites": 2,
     "scope": [
@@ -287724,7 +289146,7 @@
     ]
   },
   "This driver has no tractor assigned; assign one before dispatching.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -289155,6 +290577,33 @@
       "routes/inbox"
     ]
   },
+  "This isn't an empty board: moves in this window may still need drivers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "This isn't an empty list: covered moves may still be slipping. The Watchtower has them too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "This isn't an empty roster: drivers may still be free for work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "This isn't known before rating: a constant or default is computed from literals and other constants": {
     "sites": 2,
     "scope": [
@@ -290319,6 +291768,15 @@
     ]
   },
   "This pairing cannot run as planned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "This pairing trips a rule your organization enforces.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -293963,7 +295421,7 @@
     ]
   },
   "Time off": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -294862,8 +296320,17 @@
       "routes/customer-statement"
     ]
   },
+  "To {0}, {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Today": {
-    "sites": 36,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -295240,13 +296707,12 @@
     ]
   },
   "Tomorrow": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "routes/dispatch-console",
       "routes/my-team"
     ]
   },
@@ -299821,7 +301287,7 @@
     ]
   },
   "Try again": {
-    "sites": 75,
+    "sites": 76,
     "scope": [
       "ts"
     ],
@@ -299839,6 +301305,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/detention-intelligence",
+      "routes/dispatch-console",
       "routes/formula-template",
       "routes/inbox",
       "routes/intake",
@@ -301528,6 +302995,15 @@
       "go/other"
     ]
   },
+  "Unassign {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Unassigned": {
     "sites": 16,
     "scope": [
@@ -301735,13 +303211,12 @@
     ]
   },
   "Uncovered": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -301765,7 +303240,16 @@
       "routes/shipment"
     ]
   },
-  "Uncovered with a pickup inside 4 hours — click to focus the Next 4 Hours lane.": {
+  "Uncovered, and the window closed without an arrival. Shows only the Late group.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Uncovered, with the window open or opening within 4 hours. Shows only the Due now group.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -301992,12 +303476,13 @@
     ]
   },
   "Undo": {
-    "sites": 26,
+    "sites": 29,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/config",
       "apps/web/hooks",
       "routes/agent-control",
       "routes/billing-queue",
@@ -302081,6 +303566,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Undo: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Undoing...": {
@@ -306658,15 +308152,6 @@
       "apps/web/lib"
     ]
   },
-  "Utilization": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "VAN": {
     "sites": 1,
     "scope": [
@@ -308095,7 +309580,7 @@
     ]
   },
   "View": {
-    "sites": 128,
+    "sites": 129,
     "scope": [
       "go",
       "ts"
@@ -308106,6 +309591,7 @@
       "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -311553,6 +313039,15 @@
       "apps/web/lib"
     ]
   },
+  "Walk the queue in the order it is drawn, opening each move in the inspector": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "Walks a list in order.": {
     "sites": 2,
     "scope": [
@@ -313121,7 +314616,7 @@
     ]
   },
   "Weight (lbs)": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -313443,6 +314938,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "What Nova would have proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "What Trenova read this document as": {
@@ -316200,6 +317704,15 @@
       "apps/web/components"
     ]
   },
+  "What's wrong with it, or what to do instead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "When": {
     "sites": 11,
     "scope": [
@@ -316662,6 +318175,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "When free": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "When hired": {
@@ -320233,6 +321755,15 @@
       "apps/dash/_components"
     ]
   },
+  "Why decline? Nova and whoever looks after it will see this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Why delivery gave up": {
     "sites": 1,
     "scope": [
@@ -321589,6 +323120,15 @@
       "routes/agent-control"
     ]
   },
+  "Within 24 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Within 2h": {
     "sites": 1,
     "scope": [
@@ -321596,6 +323136,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Within 48 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Within free time": {
@@ -321736,12 +323285,14 @@
     ]
   },
   "Work": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/dispatch-console"
     ]
   },
   "Work Order Number": {
@@ -322691,12 +324242,11 @@
     ]
   },
   "Working": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control",
       "routes/desk",
       "routes/dispatch-console",
@@ -322848,7 +324398,7 @@
     ]
   },
   "Workspace": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -323732,6 +325282,15 @@
     "areas": [
       "apps/web/components",
       "routes/agent-control"
+    ]
+  },
+  "Writing a reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Writing instructions": {
@@ -326664,6 +328223,15 @@
       "packages/shared/components"
     ]
   },
+  "Your organization enforces this rule as a block, so this pairing can't be assigned.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Your organization has no DOT number": {
     "sites": 1,
     "scope": [
@@ -328954,15 +330522,6 @@
       "routes/worker"
     ]
   },
-  "across the fleet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "across {0} entries": {
     "sites": 1,
     "scope": [
@@ -329309,6 +330868,15 @@
       "routes/desk"
     ]
   },
+  "approve proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "approved v{0}": {
     "sites": 2,
     "scope": [
@@ -329480,6 +331048,15 @@
       "go/other"
     ]
   },
+  "available and holding no work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "average dwell": {
     "sites": 1,
     "scope": [
@@ -329534,6 +331111,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "away for the window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "bank receipt": {
@@ -329834,13 +331420,13 @@
       "go/other"
     ]
   },
-  "can't be undone": {
+  "can't take work until cleared": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/dispatch-console"
     ]
   },
   "cannot grant '{0}' operation on '{1}' that you don't have": {
@@ -330175,6 +331761,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "covered, off plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "covers every fuel price": {
@@ -330727,15 +332322,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "due now": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "due {0}": {
@@ -333755,6 +335341,15 @@
       "go/other"
     ]
   },
+  "further out, or no appointment yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "gallon": {
     "sites": 2,
     "scope": [
@@ -333920,6 +335515,15 @@
       "apps/dash/_components"
     ]
   },
+  "hours not updated lately": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "hundredweight": {
     "sites": 2,
     "scope": [
@@ -334028,14 +335632,13 @@
     ]
   },
   "in {0}": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
-      "routes/dispatch-console",
       "routes/recurring-shipment",
       "routes/shipment-tracking-public"
     ]
@@ -334302,6 +335905,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "judged on schedule alone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "just now": {
@@ -335149,6 +336761,15 @@
       "routes/agent-control"
     ]
   },
+  "next and previous": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "next stop later today": {
     "sites": 1,
     "scope": [
@@ -335183,6 +336804,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "no appointment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "no change": {
@@ -335311,6 +336941,15 @@
       "routes/agent-control"
     ]
   },
+  "none in this window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "none open": {
     "sites": 1,
     "scope": [
@@ -335372,6 +337011,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "not updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "not used yet": {
@@ -335700,6 +337348,24 @@
       "routes/agent-control"
     ]
   },
+  "on a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "on a load that ends soon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "on a sample load": {
     "sites": 2,
     "scope": [
@@ -335793,7 +337459,7 @@
     ]
   },
   "on {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -335873,6 +337539,15 @@
     ],
     "areas": [
       "routes/ar-open-items"
+    ]
+  },
+  "open or opens within 4 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "opened at": {
@@ -336195,15 +337870,6 @@
       "go/other"
     ]
   },
-  "past the pickup window": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "pay advances": {
     "sites": 1,
     "scope": [
@@ -336368,7 +338034,16 @@
       "routes/agent-control"
     ]
   },
-  "pickup inside 4 hours": {
+  "pick a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "pickup window closed, no arrival": {
     "sites": 1,
     "scope": [
       "ts"
@@ -336378,14 +338053,13 @@
     ]
   },
   "pickup {0}": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/lib",
-      "routes/dispatch-console"
+      "apps/web/lib"
     ]
   },
   "piece": {
@@ -336709,6 +338383,15 @@
       "routes/agent-control"
     ]
   },
+  "ready for a load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "reason code": {
     "sites": 1,
     "scope": [
@@ -336830,6 +338513,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "replaces {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "replies@example.com": {
@@ -338541,11 +340233,12 @@
     ]
   },
   "to {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment",
       "routes/worker"
     ]
@@ -339270,6 +340963,15 @@
       "routes/desk"
     ]
   },
+  "was due {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "weather alerts": {
     "sites": 1,
     "scope": [
@@ -339452,6 +341154,60 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "window closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "window open or opens within 4 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "window opens in 24 to 48 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "window opens in 4 to 24 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "window {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "window {0}–{1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "within tolerance": {
@@ -339733,6 +341489,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "{0, plural, =0 {Nova found no driver to propose} one {Nova proposed a driver for # move} other {Nova proposed drivers for # moves}}; {1, plural, =0 {every move has one} one {# has no eligible driver} other {# have no eligible driver}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# API key expires} other {# API keys expire}} within {1, plural, one {# day} other {# days}}": {
     "sites": 1,
     "scope": [
@@ -339995,6 +341760,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# assignment undone} other {# assignments undone}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# attachment} other {# attachments}}": {
     "sites": 2,
     "scope": [
@@ -340096,7 +341870,7 @@
       "routes/agent-control"
     ]
   },
-  "{0, plural, one {# candidate} other {# candidates}}": {
+  "{0, plural, one {# carrier offered} other {# carriers offered}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -340990,6 +342764,15 @@
       "routes/recurring-earning"
     ]
   },
+  "{0, plural, one {# eligible} other {# eligible}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# empty — fine for a draft} other {# empty — fine for a draft}}": {
     "sites": 1,
     "scope": [
@@ -341805,7 +343588,7 @@
     ]
   },
   "{0, plural, one {# load} other {# loads}}": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -342078,6 +343861,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# more driver} other {# more drivers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# more field} other {# more fields}}": {
     "sites": 1,
     "scope": [
@@ -342224,6 +344016,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0, plural, one {# move assigned} other {# moves assigned}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {# move} other {# moves}}": {
     "sites": 4,
     "scope": [
@@ -342242,15 +344043,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0, plural, one {# move} other {# moves}} · drag onto a driver": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0, plural, one {# move} other {# moves}} · {1}": {
@@ -342527,15 +344319,6 @@
       "routes/desk",
       "routes/inbox",
       "routes/intake"
-    ]
-  },
-  "{0, plural, one {# pairing would have been proposed.} other {# pairings would have been proposed.}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0, plural, one {# pairing} other {# pairings}}": {
@@ -342827,7 +344610,7 @@
     ]
   },
   "{0, plural, one {# problem to fix} other {# problems to fix}}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -345735,6 +347518,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0, plural, one {Put the driver back on # move} other {Put the drivers back on # moves}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {Quality score, last # run} other {Quality score, last # runs}}": {
     "sites": 1,
     "scope": [
@@ -346095,6 +347887,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {The driver is back on # move} other {The drivers are back on # moves}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}": {
     "sites": 1,
     "scope": [
@@ -346346,6 +348147,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Undo # assignment} other {Undo # assignments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0, plural, one {Unfiled pages are deleted in # day} other {Unfiled pages are deleted in # days}}, on {1}.": {
@@ -348294,6 +350104,15 @@
       "routes/inbox"
     ]
   },
+  "{0} assigned to {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} at delivery": {
     "sites": 1,
     "scope": [
@@ -348392,15 +350211,6 @@
     ],
     "areas": [
       "routes/auth"
-    ]
-  },
-  "{0} avg deadhead": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0} awaiting acceptance": {
@@ -349164,6 +350974,15 @@
       "packages/shared/lib",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "{0} changed since Nova proposed this. Check the proposal again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} changes": {
@@ -350015,6 +351834,15 @@
       "apps/dash/routes"
     ]
   },
+  "{0} drive · {1} shift": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} driver-ready": {
     "sites": 1,
     "scope": [
@@ -350105,6 +351933,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} empty · {1} drive left · {2} late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "{0} empty · {1} drive left · {2} margin": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} enabled": {
@@ -351105,6 +352951,15 @@
       "apps/web/rules",
       "edi/lading",
       "rules/tariff"
+    ]
+  },
+  "{0} has no pickup appointment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} has no proposed match to confirm; choose a record for it instead": {
@@ -353821,6 +355676,15 @@
       "routes/shipment"
     ]
   },
+  "{0} is uncovered again": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} is under review; ask for changes or reject it before replacing its draft": {
     "sites": 1,
     "scope": [
@@ -354630,14 +356494,13 @@
     ]
   },
   "{0} late": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
-      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -354694,11 +356557,12 @@
     ]
   },
   "{0} left": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -354709,6 +356573,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} left in the cycle": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} left to assign": {
@@ -356238,7 +358111,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 36,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -356251,7 +358124,6 @@
       "routes/billing-queue",
       "routes/desk",
       "routes/detention-desk",
-      "routes/dispatch-console",
       "routes/edi",
       "routes/inbox",
       "routes/intake",
@@ -356785,6 +358657,15 @@
     ]
   },
   "{0} of {1} went through · {2} didn't": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} of {1} were declined": {
     "sites": 1,
     "scope": [
       "ts"
@@ -357453,6 +359334,15 @@
       "go/other"
     ]
   },
+  "{0} picks up {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} pinned": {
     "sites": 1,
     "scope": [
@@ -357696,6 +359586,15 @@
     "areas": [
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "{0} reassigned to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} received and not yet applied to an invoice.": {
@@ -359210,7 +361109,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -359219,6 +361118,7 @@
       "routes/billing-queue",
       "routes/customer-statement",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/edi",
       "routes/factoring-company",
       "routes/shipment",
@@ -359767,6 +361667,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} was not assigned: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} was not connected": {
@@ -360391,6 +362300,15 @@
       "routes/desk"
     ]
   },
+  "{0} · also in Decisions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} · avg {1}": {
     "sites": 1,
     "scope": [
@@ -360944,6 +362862,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0} · {1} empty · {2}% confidence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} · {1} h": {
     "sites": 1,
     "scope": [
@@ -361123,6 +363050,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "{0} · {1}% confidence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} · {1}% drug · {2}% alcohol · {3}": {
@@ -361823,7 +363759,7 @@
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "apps/web/components"
     ]
   },
   "{0}, {1}, {2} and {3, plural, one {# other value} other {# other values}}": {
@@ -361855,6 +363791,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0}. Rest must start by {1}.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0}. {1} is \"{2}\"; did you mean {1}?": {
@@ -362730,12 +364675,13 @@
     ]
   },
   "{0}–{1}°F": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "{1} more {0, plural, one {shipment} other {shipments}} matched than one run transfers. Run Transfer all again for the rest.": {
@@ -363101,6 +365047,33 @@
       "routes/worker"
     ]
   },
+  "· last good read {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "· last update {0}, {1} ago": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "· last update {0}. Moves others cover won't show until it's back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "· last {0}": {
     "sites": 1,
     "scope": [
@@ -363120,6 +365093,15 @@
     ]
   },
   "· margin {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "· moves others cover won't show until it's back.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -363252,6 +365234,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "· updated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· vs {0}": {
@@ -363408,15 +365399,6 @@
       "routes/benefits"
     ]
   },
-  "· {0} drive left": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "· {0} driving": {
     "sites": 1,
     "scope": [
@@ -363433,15 +365415,6 @@
     ],
     "areas": [
       "routes/benefits"
-    ]
-  },
-  "· {0} empty": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "· {0} flagged": {
@@ -363580,15 +365553,6 @@
       "routes/random-testing"
     ]
   },
-  "· {0}% confidence": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "· {0}% of it is benefits": {
     "sites": 1,
     "scope": [
@@ -363623,24 +365587,6 @@
     ],
     "areas": [
       "routes/time-attendance"
-    ]
-  },
-  "· {0}m late": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "· {0}m margin": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "· {0}mi": {
@@ -363913,24 +365859,6 @@
       "routes/desk"
     ]
   },
-  "⌘ Enter": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "⌘J": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "⌘K": {
     "sites": 2,
     "scope": [
@@ -363939,24 +365867,6 @@
     "areas": [
       "apps/web/components",
       "routes/settings"
-    ]
-  },
-  "⌘N": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "⌘U": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   }
 }

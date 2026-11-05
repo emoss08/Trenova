@@ -335,10 +335,12 @@ func TestRationaleFor_LeadsWithTheDrivingFactors(t *testing.T) {
 
 	rationale := rationaleFor(candidate, &dispatchboardports.BoardMove{ProNumber: "PRO-42"})
 
-	assert.Contains(t, rationale, "Ada Reed")
-	assert.Contains(t, rationale, "PRO-42")
-	assert.Contains(t, rationale, "12 empty miles to the pickup")
-	assert.Contains(t, rationale, "1 advisory finding(s) to review")
+	assert.Equal(
+		t,
+		"12 empty miles to the pickup; 3.0 hours of margin to the appointment. "+
+			"Ada Reed scores 88 of 100 for move PRO-42 (1 advisory finding(s) to review)",
+		rationale,
+	)
 }
 
 func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {

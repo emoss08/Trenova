@@ -1,12 +1,21 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { URGENCY_ORDER } from "./dispatch-vocabulary";
 import {
-  BAR_HEIGHT_PX,
-  RAIL_WIDTH_PX,
-  ROW_PADDING_PX,
-  TIMELINE_HEADER_HEIGHT_PX,
-  TIMELINE_ROW_HEIGHT_PX,
-} from "./timeline-metrics";
+  TimelineCanvas,
+  TimelineGroupRow,
+  TimelineRow,
+  type TimelineSheetItem,
+} from "@/components/timeline/timeline-canvas";
+import {
+  GROUP_HEIGHT,
+  LANE_PAD,
+  ROW_HEIGHT,
+  type TimelineScale,
+} from "@/components/timeline/timeline-scale";
+import {
+  TimelineBarSkeleton,
+  TimelineLaneLabelSkeleton,
+} from "@/components/timeline/timeline-skeleton-parts";
 
 /**
  * Every pane of the console is code-split, so these stand in twice: as the Suspense
@@ -15,190 +24,153 @@ import {
  * never shifts between "loading the code" and "loading the data".
  */
 
-const CAPACITY_ROW_COUNT = 8;
-const KANBAN_CARD_COUNTS = [4, 3, 3, 2, 2] as const;
-const TIMELINE_ROW_COUNT = 9;
-// Deterministic so the bars do not reshuffle between renders of the same skeleton.
-const TIMELINE_BARS: readonly { left: string; width: string }[][] = [
-  [
-    { left: "4%", width: "18%" },
-    { left: "34%", width: "26%" },
-  ],
-  [{ left: "12%", width: "30%" }],
-  [
-    { left: "6%", width: "14%" },
-    { left: "48%", width: "22%" },
-  ],
-  [{ left: "22%", width: "38%" }],
-  [
-    { left: "2%", width: "22%" },
-    { left: "56%", width: "18%" },
-  ],
-];
+/** The timeline's skeleton: the pool lane, then this many driver lanes. */
+const TIMELINE_DRIVER_ROWS = 10;
 
-export function CapacityRailRowsSkeleton() {
+/** The queue's columns, shared by its rows, its heading and this skeleton. */
+export const QUEUE_GRID_CLASS = "grid grid-cols-[10.5rem_minmax(0,1fr)_minmax(0,18.75rem)] gap-3.5";
+
+/** The queue as it will be drawn: two group headings over two-line rows. */
+export function MoveQueueRowsSkeleton() {
   return (
-    <div className="flex flex-col">
-      {Array.from({ length: CAPACITY_ROW_COUNT }, (_, index) => (
-        <div
-          key={index}
-          className="grid grid-cols-[12px_minmax(0,1fr)] gap-x-1.5 border-b px-2 py-2 last:border-b-0"
-        >
-          <span />
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <Skeleton className="size-6 shrink-0 rounded-full" />
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex items-center justify-between gap-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-2.5 w-10" />
-                </div>
-                <Skeleton className="h-2.5 w-36" />
+    <div className="flex min-h-0 flex-col overflow-hidden" aria-hidden>
+      {QUEUE_SKELETON_GROUPS.map((rows, group) => (
+        <div key={group} className="flex flex-col">
+          <div className="bg-background flex h-7 items-center gap-2 px-3.5">
+            <Skeleton className="size-1.5 rounded-full" />
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-2.5 w-40" />
+            <Skeleton className="ml-auto h-2.5 w-4" />
+          </div>
+          {Array.from({ length: rows }, (_, row) => (
+            <div key={row} className={`${QUEUE_GRID_CLASS} mx-1.5 items-center px-2 py-2`}>
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-2.5 w-24" />
+                <Skeleton className="h-2 w-20" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-2.5 w-3/5" />
+                <Skeleton className="h-2 w-2/5" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Skeleton className="h-2.5 w-4/5" />
+                <Skeleton className="h-2 w-3/5" />
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: 3 }, (_, clock) => (
-                <div key={clock} className="flex flex-1 items-center gap-1.5">
-                  <Skeleton className="size-6 shrink-0 rounded-full" />
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <Skeleton className="h-2 w-8" />
-                    <Skeleton className="h-2.5 w-9" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export function CapacityRailSkeleton() {
-  return (
-    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-2.5 w-12" />
-      </header>
-
-      <div className="flex items-center gap-1.5 border-b p-2">
-        <Skeleton className="h-7 min-w-0 flex-1 rounded-md" />
-        <Skeleton className="h-7 w-16 shrink-0 rounded-md" />
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <CapacityRailRowsSkeleton />
-      </div>
-    </section>
-  );
-}
-
-export function CoverageKanbanSkeleton() {
-  return (
-    <div className="flex h-full min-h-0 gap-2 overflow-hidden pb-3">
-      {URGENCY_ORDER.map((bucket, index) => (
-        <div
-          key={bucket}
-          className="bg-muted/30 flex min-h-60 w-64 max-w-md shrink-0 grow flex-col rounded-md border"
-        >
-          <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
-            <Skeleton className="size-1.5 rounded-full" />
-            <Skeleton className="h-2.5 w-20" />
-            <Skeleton className="ml-auto h-2.5 w-4" />
-          </header>
-          <div className="flex min-h-0 flex-col gap-1.5 overflow-hidden p-1.5">
-            {Array.from({ length: KANBAN_CARD_COUNTS[index] ?? 2 }, (_, card) => (
-              <Skeleton key={card} className="h-27 shrink-0 rounded-md" />
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export function DispatchTimelineSkeleton() {
-  return (
-    <div className="relative h-full overflow-hidden">
-      <div
-        className="border-border bg-muted flex border-b"
-        style={{ height: TIMELINE_HEADER_HEIGHT_PX }}
-      >
-        <div
-          className="border-border flex shrink-0 items-center border-r px-2.5"
-          style={{ width: RAIL_WIDTH_PX }}
-        >
-          <Skeleton className="h-2.5 w-20" />
-        </div>
-        <div className="flex flex-1 items-center gap-10 px-2">
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-2.5 w-14" />
           ))}
         </div>
-      </div>
-
-      {Array.from({ length: TIMELINE_ROW_COUNT }, (_, index) => (
-        <div
-          key={index}
-          className="border-border/70 flex border-b"
-          style={{ height: TIMELINE_ROW_HEIGHT_PX }}
-        >
-          <div
-            className="border-border flex shrink-0 items-center gap-1.5 border-r px-2"
-            style={{ width: RAIL_WIDTH_PX }}
-          >
-            <Skeleton className="size-6 shrink-0 rounded-full" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <Skeleton className="h-2.5 w-24" />
-              <Skeleton className="h-2 w-16" />
-            </div>
-          </div>
-          <div className="relative flex-1">
-            {(TIMELINE_BARS[index % TIMELINE_BARS.length] ?? []).map((bar) => (
-              <Skeleton
-                key={bar.left}
-                className="absolute rounded-md"
-                style={{
-                  left: bar.left,
-                  width: bar.width,
-                  height: BAR_HEIGHT_PX,
-                  top:
-                    ROW_PADDING_PX / 2 +
-                    (TIMELINE_ROW_HEIGHT_PX - ROW_PADDING_PX - BAR_HEIGHT_PX) / 2,
-                }}
-              />
-            ))}
-          </div>
-        </div>
       ))}
+    </div>
+  );
+}
+
+const QUEUE_SKELETON_GROUPS = [3, 5, 3] as const;
+
+/**
+ * The timeline while it loads, on the real canvas: the window's own axis, night hours and now
+ * line, the pool lane, then driver lanes at the loaded lanes' geometry.
+ */
+export function DispatchTimelineSkeleton({
+  scale,
+  today,
+}: {
+  scale: TimelineScale;
+  today: number;
+}) {
+  const t = useT();
+  const items: TimelineSheetItem[] = [
+    {
+      key: "group:pool",
+      height: GROUP_HEIGHT,
+      header: true,
+      node: (
+        <TimelineGroupRow
+          scale={scale}
+          label={<Skeleton className="h-2.5 w-24" />}
+          count={<Skeleton className="h-2.5 w-4" />}
+        />
+      ),
+    },
+    {
+      key: "lane:pool",
+      height: ROW_HEIGHT,
+      node: (
+        <TimelineRow
+          scale={scale}
+          height={ROW_HEIGHT}
+          label={<TimelineLaneLabelSkeleton index={0} />}
+          lane={
+            <>
+              <TimelineBarSkeleton scale={scale} index={3} top={LANE_PAD} />
+              <TimelineBarSkeleton scale={scale} index={8} top={LANE_PAD} />
+            </>
+          }
+        />
+      ),
+    },
+    {
+      key: "group:drivers",
+      height: GROUP_HEIGHT,
+      header: true,
+      node: (
+        <TimelineGroupRow
+          scale={scale}
+          label={<Skeleton className="h-2.5 w-16" />}
+          count={<Skeleton className="h-2.5 w-4" />}
+        />
+      ),
+    },
+  ];
+  for (let i = 1; i <= TIMELINE_DRIVER_ROWS; i++) {
+    items.push({
+      key: `lane:${i}`,
+      height: ROW_HEIGHT,
+      node: (
+        <TimelineRow
+          scale={scale}
+          height={ROW_HEIGHT}
+          label={<TimelineLaneLabelSkeleton index={i} />}
+          lane={i % 3 === 2 ? null : <TimelineBarSkeleton scale={scale} index={i} top={LANE_PAD} />}
+        />
+      ),
+    });
+  }
+
+  return (
+    <div
+      className="relative min-h-0 flex-1"
+      aria-busy="true"
+      aria-label={t("Loading the timeline")}
+    >
+      <TimelineCanvas scale={scale} today={today} labelHeading={t("Move or driver")} items={items} />
     </div>
   );
 }
 
 export function InspectorSkeleton() {
+  const t = useT();
+
   return (
-    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
-        <Skeleton className="h-2.5 w-20" />
-      </header>
-
-      <div className="flex flex-col gap-1 border-b px-2.5 py-2">
+    <div className="flex flex-col gap-3 p-3.5" aria-busy="true" aria-label={t("Loading move")}>
+      <div className="flex flex-col gap-2">
         <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-2.5 w-40" />
-        <Skeleton className="h-2.5 w-32" />
+        <Skeleton className="h-4 w-56" />
+        <Skeleton className="h-2.5 w-44" />
+        <div className="mt-2 grid grid-cols-[6rem_minmax(0,1fr)] gap-x-3 gap-y-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="contents">
+              <Skeleton className="h-2.5 w-16" />
+              <Skeleton className="h-2.5 w-40" />
+            </div>
+          ))}
+        </div>
       </div>
-
-      <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5">
-        <Skeleton className="h-2.5 w-20" />
-        <Skeleton className="h-6 w-24 rounded-md" />
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden p-2">
-        {Array.from({ length: 5 }, (_, index) => (
-          <Skeleton key={index} className="h-24 shrink-0 rounded-md" />
+      <Skeleton className="h-44 rounded-md" />
+      <div className="border-border flex flex-col gap-1 rounded-md border p-1">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} className="h-11 rounded-md" />
         ))}
       </div>
-    </section>
+    </div>
   );
 }

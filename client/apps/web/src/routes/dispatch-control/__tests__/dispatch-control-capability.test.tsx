@@ -14,6 +14,7 @@ const control: DispatchControl = {
   organizationId: "org_01",
   businessUnitId: "bu_01",
   enableAutoAssignment: true,
+  autoProposeCoverage: false,
   autoAssignmentStrategy: "Proximity",
   scoringWeights: {},
   enforceWorkerAssign: true,

@@ -9,14 +9,20 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,6 +73,14 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 			operation: permission.OpRead,
 			invoke: func(ctx context.Context, r *Deps) error {
 				_, err := (&QueryResolver{r}).DispatchBoard(ctx, gqlmodel.DispatchBoardInput{})
+				return err
+			},
+		},
+		{
+			name:      "a single move requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchMove(ctx, pulid.MustNew("sm_").String())
 				return err
 			},
 		},
@@ -324,4 +338,117 @@ func TestParseDispatchID_ReturnsASafeValidationError(t *testing.T) {
 	message := errorMessage(err)
 	require.NotNil(t, message)
 	assert.Equal(t, "Move ID is not a valid identifier", *message)
+}
+
+type boardService struct {
+	dispatchconsoleports.DispatchConsoleService
+
+	board *dispatchconsoleservice.Board
+}
+
+func (s *boardService) GetBoard(
+	context.Context,
+	*dispatchconsoleservice.GetBoardRequest,
+) (*dispatchconsoleservice.Board, error) {
+	return s.board, nil
+}
+
+func boardOf(moves ...*dispatchconsoleservice.BoardMove) *dispatchconsoleservice.Board {
+	return &dispatchconsoleservice.Board{
+		Moves:   moves,
+		Drivers: []*dispatchconsoleservice.BoardDriver{},
+		Summary: &dispatchboardports.BoardSummary{},
+	}
+}
+
+func boardMove(covered bool, version int64) *dispatchconsoleservice.BoardMove {
+	return &dispatchconsoleservice.BoardMove{
+		BoardMove: &dispatchboardports.BoardMove{
+			MoveID:      pulid.MustNew("sm_"),
+			MoveVersion: version,
+		},
+		IsCovered: covered,
+	}
+}
+
+/*
+The board carries each uncovered move's coverage proposals, the one waiting and the last approval
+that failed, read once for the whole
+board, and only for someone who may see agent proposals: a dispatcher without it sees the
+moves and no proposal, rather than the board failing.
+*/
+func TestDispatchBoard_AttachesEachUncoveredMovesProposalsInOneRead(t *testing.T) {
+	t.Parallel()
+
+	uncovered, failed, covered := boardMove(false, 3), boardMove(false, 2), boardMove(true, 1)
+	autoAssign := dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t)
+	workerID := pulid.MustNew("wrk_")
+	failedProposalID := pulid.MustNew("ap_")
+	autoAssign.EXPECT().
+		CoverageProposals(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.CoverageProposalsRequest) bool {
+			return len(req.Moves) == 2 &&
+				req.Moves[0].MoveID == uncovered.MoveID &&
+				req.Moves[0].MoveVersion == 3 &&
+				req.Moves[1].MoveID == failed.MoveID
+		})).
+		Return(map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals{
+			uncovered.MoveID: {Pending: &dispatchconsoleports.PendingCoverage{
+				ProposalID: pulid.MustNew("ap_"),
+				MoveID:     uncovered.MoveID,
+				WorkerID:   workerID,
+				WorkerName: "Dana Ortiz",
+				TractorID:  pulid.MustNew("trc_"),
+				Confidence: decimal.NewFromFloat(0.91),
+				Stale:      true,
+			}},
+			failed.MoveID: {Failed: &dispatchconsoleports.FailedCoverage{
+				ProposalID: failedProposalID,
+				MoveID:     failed.MoveID,
+				WorkerID:   workerID,
+				WorkerName: "Dana Ortiz",
+				Reason:     "Move 1, stop 1: Scheduled window end must be before the next stop's scheduled window start",
+				FailedAt:   1_800_000_500,
+			}},
+		}, nil).
+		Once()
+
+	board, err := (&QueryResolver{&Deps{
+		Core:                      &resolvercore.Core{PermissionEngine: &mocks.AllowAllPermissionEngine{}},
+		DispatchConsoleService:    &boardService{board: boardOf(uncovered, failed, covered)},
+		DispatchAutoAssignService: autoAssign,
+	}}).DispatchBoard(dispatchAuthContext(t), gqlmodel.DispatchBoardInput{})
+	require.NoError(t, err)
+
+	require.NotNil(t, board.Moves[0].PendingProposal)
+	assert.Equal(t, workerID.String(), board.Moves[0].PendingProposal.WorkerID)
+	assert.Equal(t, "Dana Ortiz", board.Moves[0].PendingProposal.WorkerName)
+	assert.InDelta(t, 0.91, board.Moves[0].PendingProposal.Confidence, 0.0001)
+	assert.True(t, board.Moves[0].PendingProposal.Stale)
+	assert.Nil(t, board.Moves[0].FailedProposal)
+	assert.Equal(t, &gqlmodel.DispatchMoveFailedProposal{
+		ID:         failedProposalID.String(),
+		WorkerID:   workerID.String(),
+		WorkerName: "Dana Ortiz",
+		Reason:     "Move 1, stop 1: Scheduled window end must be before the next stop's scheduled window start",
+		FailedAt:   1_800_000_500,
+	}, board.Moves[1].FailedProposal, "an approval that failed stays on its move with why")
+	assert.Nil(t, board.Moves[2].PendingProposal, "a covered move waits on no proposal")
+}
+
+func TestDispatchBoard_LeavesProposalsOffForSomeoneWhoMayNotSeeThem(t *testing.T) {
+	t.Parallel()
+
+	autoAssign := dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t)
+
+	board, err := (&QueryResolver{&Deps{
+		Core: &resolvercore.Core{PermissionEngine: &denyResourcePermissionEngine{
+			deniedResource: permission.ResourceAgentProposal.String(),
+		}},
+		DispatchConsoleService:    &boardService{board: boardOf(boardMove(false, 1))},
+		DispatchAutoAssignService: autoAssign,
+	}}).DispatchBoard(dispatchAuthContext(t), gqlmodel.DispatchBoardInput{})
+	require.NoError(t, err)
+
+	assert.Nil(t, board.Moves[0].PendingProposal)
+	autoAssign.AssertNotCalled(t, "CoverageProposals", mock.Anything, mock.Anything)
 }

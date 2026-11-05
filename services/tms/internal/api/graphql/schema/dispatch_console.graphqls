@@ -137,6 +137,50 @@ type DispatchBoardMove {
   carrierTotalCost: Float
 
   liveTender: DispatchBoardTenderSummary
+  """
+  The coverage the dispatch agent proposed for this move and is waiting on a decision.
+  Present on dispatchBoard and dispatchMove for a caller who may see agent proposals;
+  absent everywhere else, and when nothing is waiting.
+  """
+  pendingProposal: DispatchMoveProposal
+  failedProposal: DispatchMoveFailedProposal
+}
+
+"""
+A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
+would put on it, how sure it is and why. Decide it with decideAgentProposals.
+"""
+type DispatchMoveProposal {
+  id: ID!
+  workerId: ID!
+  workerName: String!
+  tractorId: ID!
+  trailerId: ID
+  "The agent's confidence, from 0 to 1."
+  confidence: Float!
+  rationale: String!
+  createdAt: Timestamp!
+  "When the proposal stops being decidable; absent when it does not expire."
+  expiresAt: Timestamp
+  """
+  The move changed after the proposal was planned, so approving it would be refused.
+  The next plan replaces it.
+  """
+  stale: Boolean!
+}
+
+"""
+A coverage proposal someone approved whose assignment was refused. It stays on its move
+until the move changes or a newer proposal replaces it, so the board says why the move is
+still uncovered instead of showing it as never proposed.
+"""
+type DispatchMoveFailedProposal {
+  id: ID!
+  workerId: ID!
+  workerName: String!
+  "Why the assignment was refused, worded for the dispatcher, with the stop it is about."
+  reason: String!
+  failedAt: Timestamp!
 }
 
 """
@@ -212,7 +256,9 @@ The metrics strip at the top of the console: the numbers a dispatcher is measure
 type DispatchBoardSummary {
   uncoveredMoves: Int!
   coveredMoves: Int!
+  "Uncovered moves whose window closed unvisited: the board's Late group."
   lateMoves: Int!
+  "Uncovered moves whose window is open or opens within four hours: the board's Due now group."
   atRiskMoves: Int!
   unseatedDrivers: Int!
   availableDrivers: Int!
@@ -355,6 +401,11 @@ type DispatchCarrierEligibility {
 
 extend type Query {
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  """
+  One move as the board draws it, whatever window it falls in, so a selection that points
+  outside the window on screen still opens. Carries its pending proposal like the board.
+  """
+  dispatchMove(moveId: ID!): DispatchBoardMove!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchAssignmentPreview(
@@ -462,11 +513,6 @@ input DispatchPlanInput {
   windowEnd: Timestamp
   fleetCodeIds: [ID!]
   moveIds: [ID!]
-  """
-  Commit the plan immediately where the organization's autonomy tier allows it. When
-  false the plan is only proposed, whatever the tier.
-  """
-  apply: Boolean
 }
 
 extend type Mutation {

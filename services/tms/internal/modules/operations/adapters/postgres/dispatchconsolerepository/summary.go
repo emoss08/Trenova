@@ -14,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const atRiskLeadSeconds = int64(4 * 3600)
-
 const positionFreshnessSeconds = int64(4 * 3600)
 
 const metersPerMile = 1609.344
@@ -99,11 +97,9 @@ func moveSummaryQuery(
 	asn := assignments
 	ca := carrierAssignments
 	pos := telematicsdb.VehiclePositions
-	windowStart := origin.stop.ScheduledWindowStart
 
 	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
 	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
-	scheduled := windowStart.Coalesce(0).Gt(0)
 	urgency := urgencyOf(now)
 
 	return boardMoves().
@@ -114,13 +110,8 @@ func moveSummaryQuery(
 		Pick(
 			countIf(uncovered),
 			countIf(covered),
-			countIf(uncovered, scheduled, windowStart.Lt(now)),
-			countIf(
-				uncovered,
-				scheduled,
-				windowStart.Gte(now),
-				windowStart.Lte(now+atRiskLeadSeconds),
-			),
+			countIf(uncovered, urgency.overdue),
+			countIf(uncovered, urgency.dueNow),
 			countIf(urgency.overdue),
 			countIf(urgency.dueNow),
 			countIf(urgency.dueToday),

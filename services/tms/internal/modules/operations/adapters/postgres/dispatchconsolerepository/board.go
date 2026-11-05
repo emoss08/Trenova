@@ -126,6 +126,7 @@ func (r *repository) ListBoardMoves(
 				text(ca.CarrierID),
 				text(assignedCarriers.Name),
 				keel.CastFloat64(ca.TotalCost),
+				sm.Version,
 			).
 			Where(moveFilters(filter)...).
 			Where(

@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,6 +35,27 @@ func (m *stubProposalRepo) ExpirePendingByRun(
 ) (int, error) {
 	args := m.Called(ctx, req)
 	return args.Int(0), args.Error(1)
+}
+
+func (m *stubProposalRepo) ReplacePendingForTargets(
+	context.Context,
+	*agentproposalports.ReplaceTargetedProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (m *stubProposalRepo) ListPendingByTargets(
+	context.Context,
+	*agentproposalports.ListPendingByTargetsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
+func (m *stubProposalRepo) ListFailedByTargets(
+	context.Context,
+	*agentproposalports.ListFailedByTargetsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
 }
 
 func (m *stubProposalRepo) ExpirePendingByDefinition(
@@ -125,7 +148,23 @@ type activityMocks struct {
 	autoAssign *dispatchconsoleportsmock.MockDispatchAutoAssignService
 }
 
+// A tenant on the horizon sweep that only plans to spot risk; one that keeps coverage
+// proposed is built with newActivitiesWith.
+var horizonOnly = &dispatchcontrol.DispatchControl{
+	EnableAutoAssignment: true,
+	PlanningMode:         dispatchcontrol.PlanningModeHorizon,
+}
+
 func newActivities(t *testing.T) (*Activities, *activityMocks) {
+	t.Helper()
+
+	return newActivitiesWith(t, horizonOnly)
+}
+
+func newActivitiesWith(
+	t *testing.T,
+	control *dispatchcontrol.DispatchControl,
+) (*Activities, *activityMocks) {
 	t.Helper()
 
 	deps := &activityMocks{
@@ -133,6 +172,11 @@ func newActivities(t *testing.T) (*Activities, *activityMocks) {
 		proposals:  new(stubProposalRepo),
 		autoAssign: dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t),
 	}
+
+	deps.controls.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(control, nil).
+		Maybe()
 
 	return NewActivities(ActivitiesParams{
 		DispatchControlRepo: deps.controls,
@@ -175,7 +219,7 @@ func TestHorizonPlanSweepActivity_SummarisesEachTenant(t *testing.T) {
 	first, second := tenant(), tenant()
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{first, second}, nil)
 
 	deps.autoAssign.EXPECT().
@@ -230,7 +274,7 @@ func TestHorizonPlanSweepActivity_RetiresItsOwnProposals(t *testing.T) {
 	plan := planWithRun(4, 0, tourOf(4, 30))
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{only}, nil)
 
 	deps.autoAssign.EXPECT().Plan(mock.Anything, mock.Anything).Return(plan, nil)
@@ -258,7 +302,7 @@ func TestHorizonPlanSweepActivity_RetirementFailureDoesNotFailTheTenant(t *testi
 	only := tenant()
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{only}, nil)
 
 	deps.autoAssign.EXPECT().
@@ -283,7 +327,7 @@ func TestHorizonPlanSweepActivity_SkipsRetirementWithoutARun(t *testing.T) {
 	activities, deps := newActivities(t)
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{tenant()}, nil)
 
 	deps.autoAssign.EXPECT().
@@ -304,7 +348,7 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 	only := tenant()
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{only}, nil)
 
 	deps.autoAssign.EXPECT().
@@ -317,6 +361,85 @@ func TestHorizonPlanSweepActivity_NeverApplies(t *testing.T) {
 	require.NoError(t, err)
 }
 
+/*
+An organization that keeps coverage proposed gets its sweep's proposals applied where its
+autonomy allows and left waiting otherwise, rather than retired as a risk-only plan's are.
+*/
+func TestHorizonPlanSweepActivity_KeepsTheProposalsOfAnOrganizationThatKeepsCoverageProposed(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	activities, deps := newActivitiesWith(t, &dispatchcontrol.DispatchControl{
+		EnableAutoAssignment: true,
+		AutoProposeCoverage:  true,
+	})
+	only := tenant()
+
+	deps.controls.EXPECT().
+		ListCoveragePlanningTenants(mock.Anything).
+		Return([]pagination.TenantInfo{only}, nil)
+	deps.autoAssign.EXPECT().
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
+			return req.Apply && req.Trigger == agent.RunTriggerScheduled
+		})).
+		Return(planWithRun(3, 0), nil)
+
+	result, err := activities.HorizonPlanSweepActivity(t.Context())
+	require.NoError(t, err)
+
+	deps.proposals.AssertNotCalled(t, "ExpirePendingByRun", mock.Anything, mock.Anything)
+	assert.Equal(t, 3, result.MovesPlanned)
+}
+
+func refreshPayload(tenant pagination.TenantInfo) *dispatchcoveragecontract.RefreshPayload {
+	return &dispatchcoveragecontract.RefreshPayload{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	}
+}
+
+func TestRefreshCoverageActivity_PlansAsAnEventForAnOrganizationThatKeepsCoverageProposed(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	activities, deps := newActivitiesWith(t, &dispatchcontrol.DispatchControl{
+		EnableAutoAssignment: true,
+		AutoProposeCoverage:  true,
+	})
+	only := tenant()
+
+	deps.autoAssign.EXPECT().
+		Plan(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.DispatchPlanRequest) bool {
+			return req.TenantInfo.OrgID == only.OrgID &&
+				req.Apply &&
+				req.Trigger == agent.RunTriggerEvent
+		})).
+		Return(planWithRun(4, 1), nil)
+
+	result, err := activities.RefreshCoverageActivity(t.Context(), refreshPayload(only))
+	require.NoError(t, err)
+
+	assert.False(t, result.Skipped)
+	assert.Equal(t, 4, result.MovesProposed)
+	assert.Equal(t, 1, result.MovesUncovered)
+}
+
+func TestRefreshCoverageActivity_SkipsAnOrganizationThatTurnedTheSettingOff(t *testing.T) {
+	t.Parallel()
+
+	activities, _ := newActivitiesWith(t, &dispatchcontrol.DispatchControl{
+		EnableAutoAssignment: true,
+		AutoProposeCoverage:  false,
+	})
+
+	result, err := activities.RefreshCoverageActivity(t.Context(), refreshPayload(tenant()))
+	require.NoError(t, err)
+
+	assert.True(t, result.Skipped, "a refresh queued before the setting went off plans nothing")
+}
+
 func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing.T) {
 	t.Parallel()
 
@@ -324,7 +447,7 @@ func TestHorizonPlanSweepActivity_OneTenantFailingDoesNotStopTheSweep(t *testing
 	broken, healthy := tenant(), tenant()
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{broken, healthy}, nil)
 
 	deps.autoAssign.EXPECT().
@@ -361,7 +484,7 @@ func TestHorizonPlanSweepActivity_NoTenantsIsNotAnError(t *testing.T) {
 	activities, deps := newActivities(t)
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return([]pagination.TenantInfo{}, nil)
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())
@@ -377,7 +500,7 @@ func TestHorizonPlanSweepActivity_PropagatesTenantLookupFailure(t *testing.T) {
 	activities, deps := newActivities(t)
 
 	deps.controls.EXPECT().
-		ListHorizonPlanningTenants(mock.Anything).
+		ListCoveragePlanningTenants(mock.Anything).
 		Return(nil, errors.New("connection refused"))
 
 	result, err := activities.HorizonPlanSweepActivity(t.Context())

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShipmentTender } from "@/lib/graphql/tender";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { TenderHistory } from "../tender-history";
 
 const mocks = vi.hoisted(() => ({ shipmentTenders: vi.fn() }));
@@ -100,6 +101,47 @@ function seedTenderPermissions(operations: number) {
     isLoading: false,
   });
 }
+
+describe("TenderHistory folding", () => {
+  beforeEach(() => {
+    mocks.shipmentTenders.mockReset();
+    useDispatchConsoleStore.getState().reset();
+  });
+
+  afterEach(() => cleanup());
+
+  it("keeps a tender's offers folded and inert until it is opened, and folds them back", async () => {
+    mocks.shipmentTenders.mockResolvedValue([tender()]);
+    const user = userEvent.setup();
+
+    renderHistory();
+    const toggle = await screen.findByRole("button", { expanded: false });
+    const offers = () => document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(offers()).toHaveAttribute("inert");
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(offers()).not.toHaveAttribute("inert");
+
+    await user.click(toggle);
+    expect(offers()).toHaveAttribute("inert");
+  });
+
+  it("folds the whole tender history away from its heading and remembers it", async () => {
+    mocks.shipmentTenders.mockResolvedValue([tender()]);
+    const user = userEvent.setup();
+
+    renderHistory();
+    await user.click(await screen.findByRole("button", { name: "Hide the tenders" }));
+
+    const show = screen.getByRole("button", { name: "Show the tenders" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById(show.getAttribute("aria-controls") ?? "")).toHaveAttribute(
+      "inert",
+    );
+    expect(useDispatchConsoleStore.getState().tendersOpen).toBe(false);
+  });
+});
 
 describe("TenderHistory response provenance", () => {
   beforeEach(() => {

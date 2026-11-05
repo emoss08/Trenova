@@ -1,79 +1,63 @@
-import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
-import type { TimeRange } from "@/lib/timeline/time-scale";
-import { Suspense, lazy, useEffect } from "react";
-import { CoverageKanbanSkeleton, DispatchTimelineSkeleton } from "./console-skeletons";
-import type { TimelineZoomDays } from "./timeline-metrics";
-import { useDispatchView, type CenterMode } from "./url-state";
+import {
+  createTimelineScale,
+  LABEL_WIDTH,
+  type TimelineScale,
+} from "@/components/timeline/timeline-scale";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { dayBoundaries } from "@/lib/timeline/time-scale";
+import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
+import { getTodayDate } from "@trenova/shared/lib/date";
+import { Suspense, lazy, type ReactNode } from "react";
+import { DispatchTimelineSkeleton } from "./console-skeletons";
+import { timelineZoom } from "./timeline-metrics";
+import { useDispatchWindow, type CenterMode } from "./url-state";
 
-// The two center views are mutually exclusive and neither is small — the kanban carries the
-// urgency triage, the timeline carries the virtualizer and the whole time-scale renderer.
-// Only the one being looked at is worth downloading.
-const loadKanban = () => import("./coverage-kanban");
+// The timeline carries the lanes, bars and drag targets, and the queue is what the console
+// opens on; only someone who switches to it downloads it.
 const loadTimeline = () => import("./dispatch-timeline");
 
-const CoverageKanban = lazy(() => loadKanban().then((m) => ({ default: m.CoverageKanban })));
-const DispatchTimeline = lazy(() => loadTimeline().then((m) => ({ default: m.DispatchTimeline })));
+export const DispatchTimeline = lazy(() =>
+  loadTimeline().then((m) => ({ default: m.DispatchTimeline })),
+);
 
-/** Warms the chunk on hover so the switch itself never waits on the network. */
+/** Warms the timeline's chunk on hover so the switch itself never waits on the network. */
 export function preloadCenterView(mode: CenterMode): void {
-  void (mode === "board" ? loadKanban() : loadTimeline());
+  if (mode === "timeline") void loadTimeline();
 }
 
-export function ConsoleCenterPane({
-  moves,
-  drivers,
-  isLoading,
-  range,
-  zoom,
-  selectedMoveId,
-  selectedWorkerId,
-  onSelectMove,
-  onSelectDriver,
-}: {
-  moves: readonly DispatchBoardMove[];
-  drivers: readonly DispatchBoardDriver[];
-  isLoading: boolean;
-  range: TimeRange;
-  zoom: TimelineZoomDays;
-  selectedMoveId: string | null;
-  selectedWorkerId: string | null;
-  onSelectMove: (moveId: string) => void;
-  onSelectDriver: (workerId: string) => void;
-}) {
-  const { mode, urgencyFocus } = useDispatchView();
+/** The console's window laid out on the shared timeline's axis, and today's start. */
+export type TimelineSheet = { scale: TimelineScale; today: number };
 
-  useEffect(() => preloadCenterView(mode), [mode]);
+/**
+ * The timeline, framed as the queue is, with its own skeleton while either loads. The pane
+ * lays the window out once, so the skeleton draws the same axis the loaded sheet will.
+ */
+export function TimelinePane({
+  isLoading,
+  children,
+}: {
+  isLoading: boolean;
+  children: (sheet: TimelineSheet) => ReactNode;
+}) {
+  const [sheetRef, width] = useElementWidth<HTMLElement>();
+  const timezone = useUserTimezone();
+  const { range, zoom } = useDispatchWindow();
+  const sheet: TimelineSheet = {
+    scale: createTimelineScale(
+      dayBoundaries(range.start, zoom, timezone),
+      timelineZoom(zoom),
+      Math.max(0, width - LABEL_WIDTH),
+    ),
+    today: getTodayDate(timezone),
+  };
+  const skeleton = <DispatchTimelineSkeleton {...sheet} />;
 
   return (
-    <section className="bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border">
-      {mode === "board" ? (
-        <div className="min-h-0 flex-1 p-2">
-          <Suspense fallback={<CoverageKanbanSkeleton />}>
-            <CoverageKanban
-              moves={moves}
-              isLoading={isLoading}
-              urgencyFocus={urgencyFocus}
-              selectedMoveId={selectedMoveId}
-              onSelectMove={onSelectMove}
-            />
-          </Suspense>
-        </div>
-      ) : isLoading ? (
-        <DispatchTimelineSkeleton />
-      ) : (
-        <Suspense fallback={<DispatchTimelineSkeleton />}>
-          <DispatchTimeline
-            moves={moves}
-            drivers={drivers}
-            range={range}
-            zoom={zoom}
-            selectedMoveId={selectedMoveId}
-            selectedWorkerId={selectedWorkerId}
-            onSelectMove={onSelectMove}
-            onSelectDriver={onSelectDriver}
-          />
-        </Suspense>
-      )}
+    <section
+      ref={sheetRef}
+      className="bg-card relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+    >
+      {isLoading ? skeleton : <Suspense fallback={skeleton}>{children(sheet)}</Suspense>}
     </section>
   );
 }

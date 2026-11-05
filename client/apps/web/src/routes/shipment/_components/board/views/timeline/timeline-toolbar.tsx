@@ -6,10 +6,11 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixWeekday } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import type { TimelineScale } from "./timeline-scale";
+import type { TimelineScale } from "@/components/timeline/timeline-scale";
 
 type TimelineToolbarProps = {
   scale: TimelineScale;
+  range: TimelineRange;
   mode: TimelineRowMode;
   onModeChange: (mode: TimelineRowMode) => void;
   onRangeChange: (range: TimelineRange) => void;
@@ -24,6 +25,7 @@ type TimelineToolbarProps = {
 /** The timeline's one row of controls: rows, range and stages. */
 export function TimelineToolbar({
   scale,
+  range,
   mode,
   onModeChange,
   onRangeChange,
@@ -68,7 +70,7 @@ export function TimelineToolbar({
       </div>
       <SegmentedControl<TimelineRange>
         aria-label={t("Range")}
-        value={scale.range}
+        value={range}
         onValueChange={onRangeChange}
         items={[
           { value: "day", label: t("Day") },
