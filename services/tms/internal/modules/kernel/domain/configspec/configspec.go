@@ -20,6 +20,7 @@ type Field struct {
 	Type        FieldType `json:"type"`
 	Required    bool      `json:"required"`
 	Sensitive   bool      `json:"sensitive"`
+	Target      bool      `json:"-"`
 	Placeholder string    `json:"placeholder,omitempty"`
 	HelpText    string    `json:"helpText,omitempty"`
 	Default     string    `json:"default,omitempty"`

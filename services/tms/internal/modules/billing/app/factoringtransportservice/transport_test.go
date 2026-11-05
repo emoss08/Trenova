@@ -100,6 +100,112 @@ func TestSaveTransportSealsTheSecretToTheRow(t *testing.T) {
 	assert.Contains(t, err.Error(), "SFTP password or private key")
 }
 
+func TestSaveTransportRefusesTheSavedSecretWhenTheSFTPTargetChanges(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		change func(*factoringsubmissionports.TransportInput)
+	}{
+		{
+			name: "host",
+			change: func(in *factoringsubmissionports.TransportInput) {
+				in.SftpHost = "sftp.attacker.test"
+			},
+		},
+		{
+			name:   "port",
+			change: func(in *factoringsubmissionports.TransportInput) { in.SftpPort = 2222 },
+		},
+		{
+			name: "known host key",
+			change: func(in *factoringsubmissionports.TransportInput) {
+				in.SftpKnownHostKey = "ssh-ed25519 BBBB"
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			svc, _, _, tenant, factorID := newTransportHarness()
+			actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
+			secret := "hunter2"
+			saved, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+				TenantInfo:         tenant,
+				FactoringCompanyID: factorID,
+				Input:              sftpInput(&secret),
+			}, actor)
+			require.NoError(t, err)
+
+			moved := sftpInput(nil)
+			tc.change(&moved)
+			version := saved.Version
+			_, err = svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+				TenantInfo:         tenant,
+				FactoringCompanyID: factorID,
+				Version:            &version,
+				Input:              moved,
+			}, actor)
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "SFTP password or private key")
+		})
+	}
+}
+
+func TestSaveTransportKeepsTheSecretWhenOnlyHostWhitespaceDiffers(t *testing.T) {
+	t.Parallel()
+	svc, repo, _, tenant, factorID := newTransportHarness()
+	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
+	secret := "hunter2"
+	saved, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+		TenantInfo:         tenant,
+		FactoringCompanyID: factorID,
+		Input:              sftpInput(&secret),
+	}, actor)
+	require.NoError(t, err)
+	sealed := repo.Entity.SftpSecret
+
+	same := sftpInput(nil)
+	same.SftpHost = "  sftp.lonestar.test "
+	version := saved.Version
+	kept, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+		TenantInfo:         tenant,
+		FactoringCompanyID: factorID,
+		Version:            &version,
+		Input:              same,
+	}, actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, sealed, kept.SftpSecret)
+}
+
+func TestSaveTransportSealsANewSecretForANewSFTPTarget(t *testing.T) {
+	t.Parallel()
+	svc, _, _, tenant, factorID := newTransportHarness()
+	actor := &permissionports.RequestActor{UserID: pulid.MustNew("usr_")}
+	secret := "hunter2"
+	saved, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+		TenantInfo:         tenant,
+		FactoringCompanyID: factorID,
+		Input:              sftpInput(&secret),
+	}, actor)
+	require.NoError(t, err)
+
+	replacement := "correct-horse"
+	moved := sftpInput(&replacement)
+	moved.SftpHost = "sftp.moved.test"
+	version := saved.Version
+	updated, err := svc.Save(t.Context(), &factoringsubmissionports.SaveTransportRequest{
+		TenantInfo:         tenant,
+		FactoringCompanyID: factorID,
+		Version:            &version,
+		Input:              moved,
+	}, actor)
+
+	require.NoError(t, err)
+	assert.True(t, updated.SecretSet())
+}
+
 func TestTestTransportRecordsTheOutcome(t *testing.T) {
 	t.Parallel()
 	svc, repo, sftp, tenant, factorID := newTransportHarness()

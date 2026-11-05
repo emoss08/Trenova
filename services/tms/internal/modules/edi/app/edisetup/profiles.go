@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
@@ -17,6 +18,12 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/smime"
 )
+
+var targetSecretLabels = map[string]string{
+	"password":          "Password",
+	"privateKey":        "Private key",
+	"basicAuthPassword": "Basic auth password",
+}
 
 func (s *Service) SelectCommunicationProfileOptions(
 	ctx context.Context,
@@ -237,6 +244,15 @@ func (s *Service) buildCommunicationProfile(
 	if err != nil {
 		return nil, err
 	}
+	if err = requireSecretsForNewTarget(&secretTargetCheck{
+		method:   method,
+		config:   config,
+		entered:  req.Secrets,
+		existing: existing,
+		secrets:  secrets,
+	}); err != nil {
+		return nil, err
+	}
 
 	entity := &edi.EDICommunicationProfile{
 		ID:               profileID,
@@ -338,6 +354,43 @@ func (s *Service) resolveProfileSecrets(
 		secrets[trimmedKey] = encrypted
 	}
 	return secrets, nil
+}
+
+type secretTargetCheck struct {
+	method   edi.ConnectionMethod
+	config   map[string]any
+	entered  map[string]string
+	existing *edi.EDICommunicationProfile
+	secrets  map[string]string
+}
+
+func requireSecretsForNewTarget(check *secretTargetCheck) error {
+	if check.existing == nil || !editransport.TargetChanged(check.existing.Config, check.config) {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for _, key := range editransport.TargetBoundSecretKeys() {
+		if strings.TrimSpace(check.existing.EncryptedSecrets[key]) == "" ||
+			strings.TrimSpace(check.entered[key]) != "" {
+			continue
+		}
+		if !editransport.SecretInUse(check.method, check.config, key) {
+			delete(check.secrets, key)
+			continue
+		}
+		multiErr.Add(
+			"secrets."+key,
+			errortypes.ErrRequired,
+			"Enter {0} again: a saved secret does not follow a change of address",
+			targetSecretLabels[key],
+		)
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 func (s *Service) encryptProfileSecret(

@@ -688,15 +688,20 @@ func requireSecretsForNewTarget(
 
 	multiErr := errortypes.NewMultiError()
 	for _, field := range spec.Fields {
-		if field.Sensitive && strings.TrimSpace(incoming[field.Key]) == "" &&
-			integration.ReadConfigString(existing, field.Key) != "" {
-			multiErr.Add(
-				"configuration."+field.Key,
-				errortypes.ErrRequired,
-				"Enter {0} again: a saved secret does not follow a change of address",
-				field.Label,
-			)
+		if !field.Sensitive || strings.TrimSpace(incoming[field.Key]) != "" ||
+			integration.ReadConfigString(existing, field.Key) == "" {
+			continue
 		}
+		if integration.FuelCredentialUnused(final, field.Key) {
+			final[field.Key] = ""
+			continue
+		}
+		multiErr.Add(
+			"configuration."+field.Key,
+			errortypes.ErrRequired,
+			"Enter {0} again: a saved secret does not follow a change of address",
+			field.Label,
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -707,7 +712,7 @@ func requireSecretsForNewTarget(
 
 func targetChanged(spec integration.IntegrationSpec, existing, final map[string]any) bool {
 	for _, field := range spec.Fields {
-		if field.Type != integration.ConfigFieldTypeURL {
+		if !field.Target {
 			continue
 		}
 		before := integration.ReadConfigString(existing, field.Key)

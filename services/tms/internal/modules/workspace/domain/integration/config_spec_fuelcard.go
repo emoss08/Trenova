@@ -35,6 +35,17 @@ const (
 	FuelAuthModePrivateKey = "privateKey"
 )
 
+func FuelCredentialUnused(configuration map[string]any, key string) bool {
+	switch ReadConfigString(configuration, ConfigKeyFuelAuthMode) {
+	case FuelAuthModePassword:
+		return key == ConfigKeyFuelPrivateKey
+	case FuelAuthModePrivateKey:
+		return key == ConfigKeyFuelPassword
+	default:
+		return false
+	}
+}
+
 // sftpFeedFields is the transport half of a file-based fuel feed. Both fleet
 // networks let a customer schedule an export to their own SFTP server, which is
 // the only path that works without a partner agreement with the network.
@@ -44,6 +55,7 @@ func sftpFeedFields(defaultFormat, patternHelp string) []ConfigFieldSpec {
 			Key:         ConfigKeyFuelHost,
 			Label:       "SFTP Host",
 			Type:        ConfigFieldTypeString,
+			Target:      true,
 			Required:    true,
 			Placeholder: "sftp.example.com",
 			HelpText:    "The server Trenova reads transaction exports from.",
@@ -52,6 +64,7 @@ func sftpFeedFields(defaultFormat, patternHelp string) []ConfigFieldSpec {
 			Key:         ConfigKeyFuelPort,
 			Label:       "Port",
 			Type:        ConfigFieldTypeNumber,
+			Target:      true,
 			Default:     "22",
 			Placeholder: "22",
 		},
@@ -87,6 +100,7 @@ func sftpFeedFields(defaultFormat, patternHelp string) []ConfigFieldSpec {
 			Key:      ConfigKeyFuelKnownHostKey,
 			Label:    "Known Host Key",
 			Type:     ConfigFieldTypeString,
+			Target:   true,
 			Required: true,
 			HelpText: "The server's public host key, in authorized_keys or known_hosts form. Trenova refuses to connect to a server whose key does not match.",
 		},
@@ -244,6 +258,7 @@ func rampFuelSpec() IntegrationSpec {
 				Key:         ConfigKeyFuelBaseURL,
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://api.ramp.com/developer/v1",
 				Placeholder: "https://api.ramp.com/developer/v1",
 			},
