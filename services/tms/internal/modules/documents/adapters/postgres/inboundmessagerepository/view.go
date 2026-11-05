@@ -171,7 +171,7 @@ func (r *viewRepository) WaitingCounts(
 			Count  int64
 		}
 
-		rows, err := keel.Into[viewCount](ctx, db, waitingCountsQuery(views))
+		rows, err := keel.Into[viewCount](ctx, db, waitingCountsQuery(ctx, views))
 		if err != nil {
 			return nil, err
 		}
@@ -183,24 +183,30 @@ func (r *viewRepository) WaitingCounts(
 	})
 }
 
-func waitingCountsQuery(views []*triage.View) keel.Projection {
-	first := waitingSearchCount(views[0])
+func waitingCountsQuery(
+	ctx context.Context,
+	views []*triage.View,
+) keel.Projection {
+	first := waitingSearchCount(ctx, views[0])
 	if len(views) == 1 {
 		return first
 	}
 
-	counts := keel.UnionAll(first, waitingSearchCount(views[1]))
+	counts := keel.UnionAll(first, waitingSearchCount(ctx, views[1]))
 	for _, view := range views[2:] {
-		counts = keel.UnionAll(counts, waitingSearchCount(view))
+		counts = keel.UnionAll(counts, waitingSearchCount(ctx, view))
 	}
 
 	return counts
 }
 
-func waitingSearchCount(view *triage.View) keel.Query[*inboundmessage.InboundMessage] {
+func waitingSearchCount(
+	ctx context.Context,
+	view *triage.View,
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	q := m.Pick(keel.Text(view.ID.String()), keel.Count()).
 		Where(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())
 
-	return searchPredicate(q, view.Query)
+	return searchPredicate(ctx, q, view.Query)
 }

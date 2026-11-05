@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -79,7 +80,13 @@ func CommandRuntime(gate ExtensionGate, completion *ScriptedCompletion) *agentru
 		QueryTools:  query,
 		ActionTools: action,
 		Permissions: &agenttest.StubPermissions{},
-		Extensions:  gate,
+		Access: toolaccess.NewAccess(&toolaccess.AccessParams{
+			Logger:      zap.NewNop(),
+			QueryTools:  query,
+			ActionTools: action,
+			Permissions: &agenttest.StubPermissions{},
+			Extensions:  gate,
+		}),
 	})
 }
 

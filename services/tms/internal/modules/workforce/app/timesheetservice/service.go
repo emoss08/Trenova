@@ -465,7 +465,7 @@ func (s *Service) GetEntry(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*timesheet.TimeEntry, error) {
+) (*timesheet.TimeClockEntry, error) {
 	return s.repo.GetEntryByID(ctx, &timesheetports.GetTimeClockEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,

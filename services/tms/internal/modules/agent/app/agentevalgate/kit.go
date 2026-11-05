@@ -3,6 +3,7 @@ package agentevalgate
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
@@ -70,9 +71,16 @@ func (k *Kit) NewRuntime(p RuntimeParams) *agentruntime.Service {
 		QueryTools:  k.Queries,
 		ActionTools: k.Actions,
 		Permissions: p.Permissions,
-		Catalog:     k.Catalog,
-		Extensions:  p.Extensions,
-		Versions:    p.Versions,
-		Scripts:     p.Scripts,
+		Access: toolaccess.NewAccess(&toolaccess.AccessParams{
+			Logger:      zap.NewNop(),
+			QueryTools:  k.Queries,
+			ActionTools: k.Actions,
+			Permissions: p.Permissions,
+			Catalog:     k.Catalog,
+			Extensions:  p.Extensions,
+			Scripts:     p.Scripts,
+		}),
+		Versions: p.Versions,
+		Scripts:  p.Scripts,
 	})
 }

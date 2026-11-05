@@ -56,13 +56,16 @@ var settledStatuses = []inboundmessage.Status{
 	inboundmessage.StatusIgnored,
 }
 
-func narrow(req *inboundmessageports.ListInboundMessagesRequest) []keel.Pred {
+func narrow(
+	ctx context.Context,
+	req *inboundmessageports.ListInboundMessagesRequest,
+) []keel.Pred {
 	m := inboundmessagedb.InboundMessages
 
 	preds := applyFolder(m, req)
 	preds = append(preds, keel.When(req.ThreadKey != "", m.ThreadKey.Eq(req.ThreadKey)))
 	if req.CollapseThreads && req.ThreadKey == "" {
-		preds = append(preds, keel.NotExists(newerInFolder(req)))
+		preds = append(preds, keel.NotExists(newerInFolder(ctx, req)))
 	}
 
 	return preds
@@ -113,6 +116,7 @@ func lane(
 }
 
 func newerInFolder(
+	ctx context.Context,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
@@ -123,13 +127,14 @@ func newerInFolder(
 		keel.Tuple(nwr.ReceivedAt, nwr.ID).Gt(keel.Tuple(m.ReceivedAt, m.ID)),
 	).Where(applyFolder(nwr, req)...)
 	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
-		probe = searchPredicate(probe, req.Filter.Query)
+		probe = searchPredicate(ctx, probe, req.Filter.Query)
 	}
 
 	return probe
 }
 
 func searchPredicate(
+	ctx context.Context,
 	q keel.Query[*inboundmessage.InboundMessage],
 	query string,
 ) keel.Query[*inboundmessage.InboundMessage] {
@@ -148,7 +153,7 @@ func (r *repository) List(
 			return listquery.List(
 				ctx,
 				r.db.Keel(ctx),
-				m.Where(narrow(req)...),
+				m.Where(narrow(ctx, req)...),
 				&listquery.Request[inboundmessage.InboundMessage]{
 					Filter: req.Filter,
 					Shape:  withMailbox,
@@ -176,7 +181,7 @@ func (r *repository) ListCursor(
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				inboundmessagedb.InboundMessages.Where(narrow(req)...),
+				inboundmessagedb.InboundMessages.Where(narrow(ctx, req)...),
 				&listquery.Request[inboundmessage.InboundMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,

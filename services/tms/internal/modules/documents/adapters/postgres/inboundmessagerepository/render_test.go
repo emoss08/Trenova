@@ -21,19 +21,19 @@ func renderFolder(
 
 	m := inboundmessagedb.InboundMessages
 
-	return keeltest.Render(t, m.Where(narrow(req)...))
+	return keeltest.Render(t, m.Where(narrow(ctx, req)...))
 }
 
 func TestTheFolderSortsByArrivalOrSoonestDue(t *testing.T) {
 	t.Parallel()
 
-	arrival, _ := keeltest.Render(t, selectIDsQuery(inboundmessageports.SelectInboundMessageIDsRequest{
+	arrival, _ := keeltest.Render(t, selectIDsQuery(t.Context(), inboundmessageports.SelectInboundMessageIDsRequest{
 		Folder: &inboundmessageports.ListInboundMessagesRequest{},
 		Limit:  50,
 	}))
 	assert.Contains(t, arrival, `ORDER BY im."received_at" DESC, im."id" DESC LIMIT 50`, arrival)
 
-	due, _ := keeltest.Render(t, selectIDsQuery(inboundmessageports.SelectInboundMessageIDsRequest{
+	due, _ := keeltest.Render(t, selectIDsQuery(t.Context(), inboundmessageports.SelectInboundMessageIDsRequest{
 		Folder: &inboundmessageports.ListInboundMessagesRequest{Sort: inboundmessageports.SortDue},
 		Limit:  50,
 	}))

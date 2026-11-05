@@ -369,7 +369,10 @@ func (r *repository) ListByIDs(
 	})
 }
 
-func scoped(scope *aiauditports.AIAuditEventScope) keel.Query[*aiaudit.AIAuditEvent] {
+func scoped(
+	ctx context.Context,
+	scope *aiauditports.AIAuditEventScope,
+) keel.Query[*aiaudit.AIAuditEvent] {
 	e := aiauditdb.AIAuditEvents
 	filter := scope.Filter
 	if filter == nil {
@@ -402,7 +405,7 @@ func (r *repository) Summarize(
 			summary, err := keel.IntoOne[aiauditports.AIAuditEventSummary](
 				ctx,
 				r.db.Keel(ctx),
-				scoped(scope).Pick(
+				scoped(ctx, scope).Pick(
 					keel.Count(),
 					keel.Int64Of(e.Seq.Min()).Coalesce(0),
 					keel.Int64Of(e.Seq.Max()).Coalesce(0),
@@ -423,7 +426,7 @@ func (r *repository) ListPage(
 ) ([]*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditEvent, error) {
 		e := aiauditdb.AIAuditEvents
-		q := scoped(&req.Scope)
+		q := scoped(ctx, &req.Scope)
 		if req.HasAfterCursor {
 			q.Where(keel.Tuple(e.OccurredAt, e.ID).Gt(keel.Tuple(req.AfterOccurred, req.AfterID)))
 		}

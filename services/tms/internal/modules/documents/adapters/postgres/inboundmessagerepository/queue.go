@@ -162,7 +162,7 @@ func (r *repository) SelectIDs(
 			return []pulid.ID{}, nil
 		}
 
-		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), selectIDsQuery(req))
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), selectIDsQuery(ctx, req))
 		if err != nil {
 			return nil, err
 		}
@@ -175,12 +175,13 @@ func (r *repository) SelectIDs(
 }
 
 func selectIDsQuery(
+	ctx context.Context,
 	req inboundmessageports.SelectInboundMessageIDsRequest,
 ) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	folder := req.Folder
 
-	return listquery.Filter(ctx, m.Where(narrow(folder)...), folder.Filter).
+	return listquery.Filter(ctx, m.Where(narrow(ctx, folder)...), folder.Filter).
 		Pick(m.ID).
 		Order(folderOrder(folder.Sort)...).
 		Limit(req.Limit)

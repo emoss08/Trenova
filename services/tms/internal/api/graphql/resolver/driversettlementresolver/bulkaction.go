@@ -5,7 +5,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 )
 
-func bulkActionOperation(action driversettlementworkspaceservice.BulkAction) permission.Operation {
+func bulkActionOperation(
+	action driversettlementworkspaceservice.BulkActionType,
+) permission.Operation {
 	switch action {
 	case driversettlementworkspaceservice.BulkActionSubmit:
 		return permission.OpSubmit
