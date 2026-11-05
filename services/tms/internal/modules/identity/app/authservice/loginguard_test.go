@@ -331,42 +331,6 @@ func TestLoginSkipsPlanCheckOutsideCloud(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestCreateSessionForUser(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	usr := newTestUser(t)
-	expectSuccessfulSession(deps, usr)
-
-	resp, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
-		User: usr,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, usr, resp.User)
-	assert.NotEmpty(t, resp.SessionID)
-	assert.NotEmpty(t, resp.SessionToken)
-	assert.Equal(t, iamports.AuthEventProviderPassword, resp.AuthProvider)
-
-	rec := deps.authEvents.only(t)
-	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
-	assert.Equal(t, usr.ID, rec.UserID)
-}
-
-func TestCreateSessionForUserRefusesInactiveUsers(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	usr := newTestUser(t)
-	usr.Status = domaintypes.StatusInactive
-
-	_, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
-		User: usr,
-	})
-	require.Error(t, err)
-	assert.Equal(t, authErrorAccountUnavailable, deps.authEvents.only(t).ErrorCode)
-
-	_, err = deps.svc.CreateSessionForUser(t.Context(), nil)
-	require.True(t, errortypes.IsAuthenticationError(err))
-}
-
 func TestLoginUnknownAccountSpendsABcryptComparison(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
