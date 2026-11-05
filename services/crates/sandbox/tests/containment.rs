@@ -59,8 +59,8 @@ async fn pool(size: usize, max_jobs: u32) -> Pool {
         .expect("the pool starts hardened")
 }
 
-fn tenant() -> Option<String> {
-    Some("tenant-a".into())
+fn tenant() -> String {
+    "tenant-a".into()
 }
 
 async fn run(
@@ -68,7 +68,7 @@ async fn run(
     body: &str,
     timeout: Duration,
 ) -> (Result<Outcome, JobError>, Vec<Vec<u8>>) {
-    run_as(pool, tenant(), body, timeout).await
+    run_as(pool, Some(tenant()), body, timeout).await
 }
 
 async fn run_as(
@@ -112,7 +112,7 @@ async fn input_arrives_through_a_sealed_memfd_and_output_streams_back() {
                 body: b"echo".to_vec(),
                 input: Some(writer.seal().expect("seal")),
                 deadline: Instant::now() + Duration::from_secs(10),
-                tenant: tenant(),
+                tenant: Some(tenant()),
             },
             tx,
         )
@@ -133,7 +133,7 @@ async fn a_child_keeps_no_descriptor_for_an_input_it_has_mapped() {
                 body: b"input-descriptor".to_vec(),
                 input: Some(writer.seal().expect("seal")),
                 deadline: Instant::now() + Duration::from_secs(10),
-                tenant: tenant(),
+                tenant: Some(tenant()),
             },
             tx,
         )
@@ -161,7 +161,7 @@ async fn a_slow_consumer_holds_the_child_back_rather_than_buffering() {
                 body: b"outputs:2000".to_vec(),
                 input: None,
                 deadline: Instant::now() + Duration::from_secs(30),
-                tenant: tenant(),
+                tenant: Some(tenant()),
             },
             tx,
         )
@@ -294,7 +294,7 @@ async fn a_receiver_that_goes_away_mid_job_ends_it_and_frees_the_slot() {
         body: b"outputs:100000".to_vec(),
         input: None,
         deadline: Instant::now() + Duration::from_mins(10),
-        tenant: tenant(),
+        tenant: Some(tenant()),
     };
     let reader = tokio::spawn(async move {
         let first = rx.recv().await;
@@ -318,7 +318,7 @@ async fn dropping_the_caller_stops_the_job() {
         body: b"hang".to_vec(),
         input: None,
         deadline: Instant::now() + Duration::from_mins(10),
-        tenant: tenant(),
+        tenant: Some(tenant()),
     };
     let abandoned = tokio::time::timeout(Duration::from_millis(200), pool.run(job, tx)).await;
     assert!(abandoned.is_err(), "the job was still running");

@@ -1,0 +1,6 @@
+# Advisories the dependency scan accepts, each with why and until when.
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0089"
+ignoreUntil = 2027-02-05
+reason = "an unmaintained notice, not a vulnerability: atomic-polyfill comes in through postcard's heapless 0.7, which uses it only on targets without native atomics; none of ours lack them"
