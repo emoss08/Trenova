@@ -43,7 +43,7 @@ type ReportRun struct {
 	Truncated          bool           `json:"truncated"          keel:"truncated"`
 	Error              *RunError      `json:"error"              keel:"error,jsonb,noreport"`
 	ArtifactKey        string         `json:"artifactKey"        keel:"artifact_key,nullzero,noreport"`
-	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero"`
+	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero,noreport"`
 	Sample             []byte         `json:"-"                  keel:"sample,noreport"`
 	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  keel:"artifact_expires_at,nullzero,noreport"`
 	CacheHit           bool           `json:"cacheHit"           keel:"cache_hit"`
