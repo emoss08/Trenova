@@ -732,6 +732,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	device := rg.Group("")
 	device.Use(r.captureHandler.RequireDevice())
+	device.Use(r.readScopeMiddleware.Install())
 	device.Use(r.readOnlyGuard.Guard())
 	return device
 }
