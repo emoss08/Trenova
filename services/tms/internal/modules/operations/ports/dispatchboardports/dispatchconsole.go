@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -45,6 +46,11 @@ type DispatchBoardFilter struct {
 	DueFirst bool
 	// Offset skips that many moves of the same order, for the page after.
 	Offset int
+	// Near, when set, reads the dispatchable drivers nearest that point first,
+	// by a fresh vehicle position or else the tractor's last drop, so a driver
+	// limit keeps the drivers a move would choose among rather than the first
+	// by name. A driver with neither comes after every driver with one.
+	Near *geoutils.Point
 }
 
 type BoardMove struct {

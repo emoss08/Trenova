@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -507,12 +508,25 @@ func (s *Service) buildSnapshotForMoves(
 			FleetCodeIDs: p.FleetCodeIDs,
 			WindowStart:  windowStart,
 			WindowEnd:    windowEnd,
+			Near:         pickupOf(p.Moves),
 		},
 		Control:      p.Control,
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(p.Moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(p.Moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(p.Moves),
 	})
+}
+
+func pickupOf(moves []*dispatchboardports.BoardMove) *geoutils.Point {
+	if len(moves) != 1 {
+		return nil
+	}
+	move := moves[0]
+	if move.OriginLatitude == nil || move.OriginLongitude == nil {
+		return nil
+	}
+
+	return &geoutils.Point{Latitude: *move.OriginLatitude, Longitude: *move.OriginLongitude}
 }
 
 func firstNonNil(preferred, fallback pulid.ID) pulid.ID {

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 func (r *repository) ListBoardDrivers(
@@ -58,6 +59,13 @@ func (r *repository) ListBoardDrivers(
 				LeftJoin(fc, fc.ID.EqCol(w.FleetCodeID)).
 				LeftJoin(us, us.ID.EqCol(w.StateID)).
 				LeftJoinLateral(tractorOf), w)
+			order := []keel.Order{keel.Desc(w.AvailableForDispatch)}
+			if filter.Near != nil {
+				var distance keel.Expr
+				from, distance = nearestFirst(from, w, wt, *filter.Near, timeutils.NowUnix())
+				order = append(order, keel.Asc(distance).NullsLast())
+			}
+			order = append(order, w.LastName.Asc(), w.FirstName.Asc(), w.ID.Asc())
 
 			q := from.
 				Pick(
@@ -82,12 +90,7 @@ func (r *repository) ListBoardDrivers(
 					open,
 				).
 				Where(preds...).
-				Order(
-					keel.Desc(w.AvailableForDispatch),
-					w.LastName.Asc(),
-					w.FirstName.Asc(),
-					w.ID.Asc(),
-				).
+				Order(order...).
 				Limit(limit + 1)
 
 			rows, err := keel.Into[dispatchboardports.BoardDriver](ctx, r.db.Keel(ctx), q)

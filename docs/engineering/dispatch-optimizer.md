@@ -50,6 +50,10 @@ Dispatch is economics, so every number the optimizer works with is in cents.
    projected trip (departure to free), not the move's scheduled window. `Prepare` builds one
    profile per driver: origin (commitment, then GPS, then tractor last known), HOS timeline
    carried through committed drive, history signals.
+   One move's ranking (the inspector's candidates) reads the `DriverLimit` drivers nearest
+   its pickup (`DispatchBoardFilter.Near`), each placed in SQL by the same precedence (the
+   drop of their open work, a position under four hours old, the tractor's last drop), so
+   the drivers the plan chooses among, its pick included, are the ones the list ranks.
 2. **Graph** (`BuildGraph`): a quadtree picks the nearest drivers per move, the top
    `CandidatesPerMove` by cost are evaluated in parallel (`conc` pool), and the top 8 per move
    get road miles from the route estimator. A pair past the deadhead cap, blocked by a rule
