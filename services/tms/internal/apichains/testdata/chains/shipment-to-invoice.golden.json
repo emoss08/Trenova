@@ -507,7 +507,7 @@
           }
         }
       },
-      "roundTrips": 87,
+      "roundTrips": 88,
       "sideEffects": {
         "audit": [
           {
@@ -932,7 +932,11 @@
           "firstName": "Carlos",
           "fleetCodeId": null,
           "gender": "Male",
+          "homeLatitude": null,
+          "homeLongitude": null,
+          "homePlaceId": "",
           "id": "$fixture.driver",
+          "lastHomeAt": null,
           "lastName": "Rivera",
           "leaveType": "",
           "managerId": null,
@@ -1124,7 +1128,11 @@
             "firstName": "Carlos",
             "fleetCodeId": null,
             "gender": "Male",
+            "homeLatitude": null,
+            "homeLongitude": null,
+            "homePlaceId": "",
             "id": "$fixture.driver",
+            "lastHomeAt": null,
             "lastName": "Rivera",
             "leaveType": "",
             "managerId": null,
@@ -1326,7 +1334,7 @@
         "updatedAt": "<time>",
         "version": 3
       },
-      "roundTrips": 84,
+      "roundTrips": 83,
       "sideEffects": {
         "audit": [
           {
@@ -1508,7 +1516,11 @@
             "firstName": "Carlos",
             "fleetCodeId": null,
             "gender": "Male",
+            "homeLatitude": null,
+            "homeLongitude": null,
+            "homePlaceId": "",
             "id": "$fixture.driver",
+            "lastHomeAt": null,
             "lastName": "Rivera",
             "leaveType": "",
             "managerId": null,
@@ -1769,7 +1781,11 @@
             "firstName": "Carlos",
             "fleetCodeId": null,
             "gender": "Male",
+            "homeLatitude": null,
+            "homeLongitude": null,
+            "homePlaceId": "",
             "id": "$fixture.driver",
+            "lastHomeAt": null,
             "lastName": "Rivera",
             "leaveType": "",
             "managerId": null,
@@ -2108,7 +2124,11 @@
             "firstName": "Carlos",
             "fleetCodeId": null,
             "gender": "Male",
+            "homeLatitude": null,
+            "homeLongitude": null,
+            "homePlaceId": "",
             "id": "$fixture.driver",
+            "lastHomeAt": null,
             "lastName": "Rivera",
             "leaveType": "",
             "managerId": null,
