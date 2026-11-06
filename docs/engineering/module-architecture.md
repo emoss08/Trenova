@@ -257,6 +257,13 @@ default 10% verify sample takes an exported function added to `domain/shipment` 
 unexported function in `shipment.go` from 80 s to 29 s. It reused all 1,041 recompiled packages,
 and every shadow comparison and verified reuse was byte-identical to the compiler's output.
 
+gocut reads Go 1.27.1's export data and nothing else, so the Go version in `go.work` and the
+modules decides whether it does anything. On Go 1.26.10 it reuses no package: every changed
+dependency is refused as a dot import (1,361) or a failed patch (1,256), and the same S4 edit takes
+64 s with gocut and without it. On Go 1.27.1 the same tree and edit take 18 s warm (57 s without
+gocut), with 2,365 packages reused and all 254 verified reuses byte-identical (4 cores, the watch
+flags, measured 2026-11-06). Moving the Go version means moving gocut with it.
+
 ### Why `WorkerOptions` live in the jobs package
 
 `module.go` is imported by `internal/bootstrap/core`, and through it by `cmd/api`. If
@@ -410,9 +417,12 @@ type, and the linker throws the copies away afterwards. The rule is in the compi
 (`cmd/compile/internal/noder/reader.go`, `needWrapper` and `importedDef`): an instantiation read
 from another package's export data may carry type arguments its own package never saw, so the
 reading package always compiles every method of the instantiated type again, wrappers for
-promoted methods included. Two things cost nothing: an instantiated generic interface, which
-has no method bodies, and the methods of a non-generic type, which compile once, in their own
-package. A package "sees" a type when anything it
+promoted methods included. The methods of a non-generic type cost nothing elsewhere: they compile
+once, in their own package. An instantiated generic interface costs little but not nothing: the
+compiler writes a method-expression wrapper per method in every package that sees it, shared by
+every pointer type argument, so a package that sees any `keel.Query[T]` compiles about 50. Every
+promoted method of an embedded type costs a wrapper (two, with the pointer form) in the package
+that declares the embedding type. A package "sees" a type when anything it
 reads from another package mentions it: an exported struct's fields, even unexported ones, and
 the signatures of an exported type's methods, even unexported ones. The search is transitive:
 a pointer to an unexported struct is followed into that struct, and an interface's method
@@ -439,6 +449,15 @@ These designs did this at scale before they were changed:
 | keel's `Handle[T]` and `Query[T]` structs, one instantiation per table | a wrapper for every method of both per table in each package that could see the table, which relation accessors make almost every repository and `*db` package: `recordversionrepository`, 728 lines, compiled 18,814 functions, 18,660 of them keel wrappers for the 197 tables it could see; the repositories and `*db` packages were 56% of the compiler CPU of a cold `cmd/api` watch build (430 s wall, 3,977 CPU-seconds on 14 cores) | keel's `Query[T]`/`Handle[T]` are generic interfaces; `keel gen` emits a concrete `<Plural>Table`/`<Plural>Query` per table, compiled once in its `*db` package, over keel's non-generic `TableBase` and `QueryCore`; `Page[T]` has no methods. A cold `cmd/api` watch build now takes 2,192 compiler CPU-seconds (from 3,977) and at most 210 s wall on the same 14-core machine (from 430 s): the repositories fell from 1,407 to 327 CPU-seconds and the `*db` packages from 836 to 373, while the linker output shrank from 343 MB to 306 MB. `recordversionrepository` now compiles 360 functions, 209 of them generic, nearly all of them the pgx pool's `puddle` and `atomic.Pointer` instantiations of the next row. A reload after an exported function is added to `domain/shipment` fell from 181 s to 82 s, and the link of every reload from 11.4 s to 7.8 s ("Measured results"). |
 | `pagination.CursorListResult[T]`'s `EdgeCursorAt` and `NextCursor` methods | both methods for every result type a package could see: 286 functions in the GraphQL resolver root, 208 in `agentread` | `EdgeCursors` is a non-generic `[]string` type that carries `EdgeCursorAt`; `pagination.NextCursor(r)` is a generic function, compiled only where it is called; callers pass `result.EdgeCursors` as the `EdgeCursorProvider` |
 | `*keel.DB`, which held a `*pgxpool.Pool` and named `*pgxpool.Pool`/`*pgxpool.Conn` in its methods | puddle's generic pool, resource list and stack for `*pgxpool.connResource`: 93 functions (24 KB of machine code, about 0.1 s) in each of 699 packages that held a database handle, 65,010 functions per cold `cmd/api` build | keel's `DB` holds its pools behind interfaces whose methods name no pgxpool type; `keel.Pool(db)` hands out the pool and `db.Stat()` its statistics, so only a package that calls `keel.Pool` (a test helper, `dbcli`) compiles puddle. A probe holding a `*keel.DB` fell from 93 generic functions and about 190 ms of compiler CPU to none and about 80 ms; the 694 packages that held a handle compiled 14 percentage points faster than the rest of the cold build (about 50 to 70 CPU-seconds on 4 cores). |
+
+Function counts are not compile time. keel's move to non-generic row functions, `TypedStringCol`
+enum columns and no generated `Handle` assertion (keel `build-time-generics`) cut the functions
+first-party packages compile from 618,670 to 517,717 and the machine code of a cold `cmd/api`
+watch build from 255 MB to 231 MB, but the build's CPU only from 789 to about 752 seconds (4
+cores, Go 1.26.10, matched runs), and S1 to S6 did not move: the copies removed were small
+wrappers. A fit of compile CPU across the 2,706 first-party packages puts about 35% of it in a
+fixed cost per package (0.06 s) and 39% in imports (about 4 ms per direct import), against 25% in
+source size, so the number of packages and the imports of each weigh more than generics now.
 
 go-redis did it to every package that holds a `*redis.Client` or a `redis.UniversalClient`, at
 about 0.7 seconds each. `baseClient` kept a `weak.Pointer[Client]`, and because `Client` embeds
