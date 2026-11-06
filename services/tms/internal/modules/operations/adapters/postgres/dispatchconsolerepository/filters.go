@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/driverstart"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -27,10 +28,7 @@ var openBoardStatuses = []shipmentvocab.MoveStatus{
 	shipmentvocab.MoveStatusInTransit,
 }
 
-var openMoveStatuses = []shipmentvocab.MoveStatus{
-	shipmentvocab.MoveStatusAssigned,
-	shipmentvocab.MoveStatusInTransit,
-}
+var openMoveStatuses = driverstart.OpenMoveStatuses
 
 type moveQuery = keel.Query[*shipment.ShipmentMove]
 

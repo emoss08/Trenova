@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/driverstart"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -14,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const positionFreshnessSeconds = int64(4 * 3600)
+const positionFreshnessSeconds = driverstart.PositionFreshnessSeconds
 
 const metersPerMile = 1609.344
 
