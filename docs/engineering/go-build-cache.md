@@ -112,7 +112,11 @@ Anything that can write the store can put compiled code into every build that re
 
 ## The bucket
 
-A lifecycle rule expires objects 14 days after they were written and aborts multipart uploads
-after a day. R2 has no last-access expiry, so a hot object also expires after 14 days and the next
-`master` build writes it again. R2 has no egress fees; storage is $0.015 per GB-month, writes
-$4.50 per million and reads $0.36 per million, a few dollars a month at this size.
+A lifecycle rule expires objects 3 days after they were written and aborts multipart uploads
+after a day, so the bucket holds about three days of uploads: one full set of objects is about
+1.5 GB, and each `master` push adds only the packages it changed. R2 counts age from the upload,
+not the last read, and gobuildcache does not write an object it found, so a hot object (the
+standard library, a third-party module) also expires after 3 days and the next `master` build
+writes it again; a shorter rule would make that refill daily. R2 has no egress fees; storage is
+$0.015 per GB-month, writes $4.50 per million and reads $0.36 per million, cents a month at this
+size.
