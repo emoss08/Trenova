@@ -1,3 +1,4 @@
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ShipmentTender } from "@/lib/graphql/tender";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
@@ -52,6 +53,7 @@ function TenderHistoryRow({
   onBounceTender: BounceTender | null;
 }) {
   const t = useT();
+  const rt = useRichT();
 
   const [expanded, setExpanded] = useState(false);
   const [bouncing, setBouncing] = useState(false);
@@ -104,7 +106,11 @@ function TenderHistoryRow({
 
       {acceptedCarrier && (
         <span className="text-muted-foreground px-2 pb-1 text-2xs">
-          {t("Accepted by")} <span className="text-foreground font-medium">{acceptedCarrier}</span>
+          {rt(
+            "Accepted by <carrier>{0}</carrier>",
+            { carrier: (c) => <span className="text-foreground font-medium">{c}</span> },
+            acceptedCarrier,
+          )}
           {tender.acceptedAt != null ? ` · ${formatUnixDateTime(tender.acceptedAt)}` : ""}
           {accepted?.counterRate && accepted.agreedRate !== accepted.rate
             ? ` · ${t("at {0} after a counter-offer", formatOfferRate(accepted.agreedRate, accepted.rateMethod))}`

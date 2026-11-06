@@ -235,7 +235,8 @@ describe("TenderHistory backouts and counters", () => {
 
     renderHistory(vi.fn(async () => undefined));
 
-    expect(await screen.findByText("Knight Logistics")).toBeInTheDocument();
+    const [accepted] = await screen.findAllByText("Knight Logistics");
+    expect(accepted.parentElement).toHaveTextContent(/^Accepted by Knight Logistics/);
     expect(screen.queryByRole("button", { name: "Carrier backed out" })).toBeNull();
   });
 
@@ -275,7 +276,8 @@ describe("TenderHistory backouts and counters", () => {
 
     renderHistory();
 
-    expect(await screen.findByText("Knight Logistics")).toBeInTheDocument();
+    const [accepted] = await screen.findAllByText("Knight Logistics");
+    expect(accepted.parentElement).toHaveTextContent(/^Accepted by Knight Logistics/);
     expect(screen.queryByText(/after a counter-offer/)).toBeNull();
   });
 });
