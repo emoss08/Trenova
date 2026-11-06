@@ -21,9 +21,6 @@ import (
 )
 
 const (
-	secondsPerHour = int64(3600)
-	secondsPerDay  = dispatchboardports.UrgencyTodaySeconds
-
 	nowThresholdSeconds = dispatchboardports.UrgencyNowSeconds
 
 	defaultCandidateLimit = 25
@@ -51,7 +48,7 @@ type Service struct {
 	l                   *zap.Logger
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
 	return &Service{
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,

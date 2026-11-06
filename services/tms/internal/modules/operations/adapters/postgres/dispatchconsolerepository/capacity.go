@@ -54,10 +54,12 @@ func (r *repository) ListBoardDrivers(
 				))
 			}
 
-			q := w.
+			from, open := withOpenWork(w.
 				LeftJoin(fc, fc.ID.EqCol(w.FleetCodeID)).
 				LeftJoin(us, us.ID.EqCol(w.StateID)).
-				LeftJoinLateral(tractorOf).
+				LeftJoinLateral(tractorOf), w)
+
+			q := from.
 				Pick(
 					w.ID,
 					w.FirstName,
@@ -77,7 +79,7 @@ func (r *repository) ListBoardDrivers(
 					text(wt.EquipmentTypeID),
 					text(wt.FleetCodeID),
 					keel.BoolOf(isAvailable).Coalesce(false),
-					zero(openAssignments(w)),
+					open,
 				).
 				Where(preds...).
 				Order(

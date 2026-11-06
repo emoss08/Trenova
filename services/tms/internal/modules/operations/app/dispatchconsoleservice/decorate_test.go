@@ -18,6 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	secondsPerHour = int64(3600)
+	secondsPerDay  = dispatchboardports.UrgencyTodaySeconds
+)
+
 const testNow = int64(1_700_000_000)
 
 func TestDecorateMove_UrgencyBuckets(t *testing.T) {
