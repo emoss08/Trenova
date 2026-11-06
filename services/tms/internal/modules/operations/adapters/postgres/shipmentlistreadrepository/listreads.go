@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/searchtext"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -16,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
@@ -89,7 +90,7 @@ func orderReferenceCandidatesQuery(query string) keel.Query[*order.Order] {
 	o := orderdb.Orders
 
 	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce(""), o.CreatedAt).
-		Where(listquery.MatchVector(o.SearchVector, query)).
+		Where(searchtext.MatchVector(o.SearchVector, query)).
 		Limit(maxOrderReferenceCandidates + 1)
 }
 
@@ -120,7 +121,7 @@ func orderReferenceQuery(query string, limit int) keel.Query[*order.Order] {
 	o := orderdb.Orders
 
 	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce("")).
-		Where(listquery.MatchVector(o.SearchVector, query)).
+		Where(searchtext.MatchVector(o.SearchVector, query)).
 		Order(o.CreatedAt.Desc(), o.ID.Desc()).
 		Limit(limit).
 		CustomPlan()

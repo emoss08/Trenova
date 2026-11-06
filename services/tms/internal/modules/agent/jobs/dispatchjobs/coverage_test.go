@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -55,7 +56,7 @@ func coverageActivities(
 	controls := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	controls.EXPECT().
 		GetByOrgID(mock.Anything, mock.Anything).
-		Return(&dispatchcontrol.DispatchControl{CoverageRiskWindowHours: window}, nil).
+		Return(windowOf(window), nil).
 		Maybe()
 
 	publisher := &recordingPublisher{}
@@ -73,11 +74,15 @@ func coverageActivities(
 	return activities, publisher, projector
 }
 
-func uncoveredAt(hoursOut int64) *dispatchconsoleports.DispatchUncoveredMove {
-	return &dispatchconsoleports.DispatchUncoveredMove{
+func windowOf(hours int16) *dispatchcontrol.DispatchControl {
+	return &dispatchcontrol.DispatchControl{CoverageRiskWindowHours: hours}
+}
+
+func uncoveredAt(hoursOut int64) *dispatchplanports.Uncovered {
+	return &dispatchplanports.Uncovered{
 		MoveID:    pulid.MustNew("mov_"),
 		ProNumber: "PRO-1",
-		Reason:    "No eligible driver was available for this move",
+		Reason:    dispatchplanprice.UncoveredNoCandidate,
 		StartsAt:  testNow + hoursOut*secondsPerHour,
 	}
 }
@@ -128,12 +133,17 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			t.Parallel()
 
 			activities, publisher, projector := coverageActivities(t, tc.window)
-			moves := make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(tc.hoursOut))
+			moves := make([]*dispatchplanports.Uncovered, 0, len(tc.hoursOut))
 			for _, hours := range tc.hoursOut {
 				moves = append(moves, uncoveredAt(hours))
 			}
 
-			raised := activities.raiseCoverageRisk(t.Context(), tenant(), moves)
+			raised := activities.raiseCoverageRisk(
+				t.Context(),
+				tenant(),
+				windowOf(tc.window),
+				moves,
+			)
 
 			require.Equal(t, tc.wantCount, raised)
 			require.Len(t, publisher.events, tc.wantCount)
@@ -157,7 +167,8 @@ func TestRaiseCoverageRisk_LeavesUndatedMovesAlone(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*dispatchconsoleports.DispatchUncoveredMove{
+		windowOf(12),
+		[]*dispatchplanports.Uncovered{
 			nil,
 			{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
 		},
@@ -176,7 +187,8 @@ func TestRaiseCoverageRisk_SeverityRisesAsTheMoveNears(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*dispatchconsoleports.DispatchUncoveredMove{
+		windowOf(12),
+		[]*dispatchplanports.Uncovered{
 			uncoveredAt(2),
 			uncoveredAt(10),
 		},

@@ -3,6 +3,7 @@ package tenantbootstrap
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -17,7 +18,7 @@ func newDispatchControl(scope tenantscope.Scope) *dispatchcontrol.DispatchContro
 		ID:                              pulid.MustNew("dc_"),
 		OrganizationID:                  scope.OrganizationID,
 		BusinessUnitID:                  scope.BusinessUnitID,
-		AutoAssignmentStrategy:          dispatchcontrol.AutoAssignmentStrategyProximity,
+		Economics:                       dispatcheconomics.Default(),
 		AutoAssignConfidenceThreshold:   decimal.RequireFromString(autoAssignConfidenceThreshold),
 		AutoAssignPlanningHorizonHours:  dispatchcontrol.DefaultAutoAssignPlanningHorizonHours,
 		PlanningMode:                    dispatchcontrol.PlanningModeImmediate,

@@ -67,7 +67,7 @@ func reportDefinitionToModel(
 		Definition:      definitionJSON,
 		DefaultFormat:   string(entity.DefaultFormat),
 		CurrentRevision: int(entity.CurrentRevision),
-		LastRunAt:       nilIfZero(entity.LastRunAt),
+		LastRunAt:       gqlscalar.NonZeroIntPtr(entity.LastRunAt),
 		Version:         int(entity.Version),
 		CreatedAt:       int(entity.CreatedAt),
 		UpdatedAt:       int(entity.UpdatedAt),
@@ -108,11 +108,11 @@ func reportRunToModel(entity *report.ReportRun) *gqlmodel.ReportRun {
 		DurationMs:        int(entity.DurationMs),
 		Truncated:         entity.Truncated,
 		RowsStored:        entity.RowsKey != "",
-		ArtifactExpiresAt: nilIfZero(entity.ArtifactExpiresAt),
+		ArtifactExpiresAt: gqlscalar.NonZeroIntPtr(entity.ArtifactExpiresAt),
 		CacheHit:          entity.CacheHit,
-		QueuedAt:          nilIfZero(entity.QueuedAt),
-		StartedAt:         nilIfZero(entity.StartedAt),
-		CompletedAt:       nilIfZero(entity.CompletedAt),
+		QueuedAt:          gqlscalar.NonZeroIntPtr(entity.QueuedAt),
+		StartedAt:         gqlscalar.NonZeroIntPtr(entity.StartedAt),
+		CompletedAt:       gqlscalar.NonZeroIntPtr(entity.CompletedAt),
 		Version:           int(entity.Version),
 		CreatedAt:         int(entity.CreatedAt),
 	}
@@ -147,7 +147,7 @@ func reportScheduleToModel(entity *report.ReportSchedule) *gqlmodel.ReportSchedu
 		NotifyUserIds:       []string{},
 		Enabled:             entity.Enabled,
 		RunAsID:             entity.RunAsID.String(),
-		NextRunAt:           nilIfZero(entity.NextRunAt),
+		NextRunAt:           gqlscalar.NonZeroIntPtr(entity.NextRunAt),
 		ConsecutiveFailures: entity.ConsecutiveFailures,
 		AlertFiring:         entity.AlertFiring,
 		Alert:               reportScheduleAlertToModel(entity.Alert),
@@ -721,14 +721,6 @@ func nilIfEmpty(s string) *string {
 	return &s
 }
 
-func nilIfZero(v int64) *int {
-	if v == 0 {
-		return nil
-	}
-	out := int(v)
-	return &out
-}
-
 func emptyIfNil(values []string) []string {
 	if values == nil {
 		return []string{}
@@ -827,7 +819,7 @@ func reportViewToModel(entity *report.ReportView) *gqlmodel.ReportView {
 		Shared:       entity.Shared,
 		Pinned:       entity.Pinned,
 		Format:       nilIfEmpty(string(entity.Format)),
-		LastRunAt:    nilIfZero(entity.LastRunAt),
+		LastRunAt:    gqlscalar.NonZeroIntPtr(entity.LastRunAt),
 		RunCount:     int(entity.RunCount),
 		Version:      int(entity.Version),
 		CreatedAt:    int(entity.CreatedAt),

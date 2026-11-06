@@ -238,6 +238,7 @@ function DriverRow({
  */
 export function DriverQueue({
   drivers,
+  truncated,
   read,
   filter,
   search,
@@ -246,6 +247,7 @@ export function DriverQueue({
   onClearFilters,
 }: {
   drivers: readonly DispatchBoardDriver[];
+  truncated: boolean;
   read: QueueRead;
   filter: CapacityFilter;
   search: string;
@@ -326,6 +328,20 @@ export function DriverQueue({
         ),
       });
     }
+  }
+
+  if (truncated) {
+    rows.push({
+      key: "drivers-truncated",
+      render: () => (
+        <p className="text-muted-foreground px-4 py-3 text-xs">
+          {t(
+            "{0, plural, one {The board lists only the first driver} other {The board lists only the first # drivers}}, available drivers first. Filter by fleet to see the rest.",
+            drivers.length,
+          )}
+        </p>
+      ),
+    });
   }
 
   return (

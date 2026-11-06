@@ -440,8 +440,10 @@ type RationaleInput struct {
 	Narration string
 	ToolName  string
 	Arguments map[string]any
-	// Input is what the person asked, for a call with no account of itself.
-	Input string
+	// Ask is what a person typed in their own words, for a call with no
+	// account of itself. A run the system started has none: its input is the
+	// runtime's own instruction, never quoted as if someone had asked.
+	Ask string
 }
 
 // rationaleArguments are the argument names a tool's own explanation lives
@@ -462,8 +464,9 @@ var rationaleArguments = [...]string{
 //
 // The model's own narration comes first. A model that calls a tool without
 // narrating has usually put its reasoning in the call itself, so the
-// arguments are read next; failing that, the person's own request is the
-// best account of why, because they asked. Only a call with none of those
+// arguments are read next; failing that, the request a person typed is the
+// best account of why, because they asked. A run an event, a schedule or
+// another agent started has no such request. Only a call with none of those
 // says the agent gave no reason — which used to be the line under every
 // proposal from a model that explains in arguments rather than prose.
 func ProposalRationale(in RationaleInput) string {
@@ -481,20 +484,15 @@ func ProposalRationale(in RationaleInput) string {
 		}
 	}
 
-	if trimmed := strings.TrimSpace(in.Input); trimmed != "" {
-		prefix := fmt.Sprintf(
-			"Asked to %s in reply to: \u201c",
-			textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(in.ToolName)),
-		)
+	action := textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(in.ToolName))
+	if trimmed := strings.TrimSpace(in.Ask); trimmed != "" {
+		prefix := fmt.Sprintf("Asked to %s in reply to: \u201c", action)
 		room := maxRationaleChars - len([]rune(prefix)) - 1
 
 		return prefix + stringutils.Ellipsize(trimmed, room) + "\u201d"
 	}
 
-	return fmt.Sprintf(
-		"The agent asked to run %s without explaining why.",
-		in.ToolName,
-	)
+	return fmt.Sprintf("The agent asked to %s without explaining why.", action)
 }
 
 // ModelHistory is the conversation as the model is shown it: without the

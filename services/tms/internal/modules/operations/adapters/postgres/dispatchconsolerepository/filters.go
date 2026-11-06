@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
@@ -205,19 +206,34 @@ func driverFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	}
 }
 
-// openAssignments counts the worker's live assignments on moves still under way.
-func openAssignments(w *workerdb.WorkersTable) keel.Expr {
-	a := shipmentdb.Assignments.As("oa")
-	m := shipmentdb.ShipmentMoves.As("oa_sm")
+const (
+	openWorkWorker = "worker_id"
+	openWorkMoves  = "open_moves"
+)
 
-	return keel.Scalar(a.
+func openWork() *keel.CTETable {
+	a := shipmentdb.Assignments.As("ow")
+	m := shipmentdb.ShipmentMoves.As("ow_sm")
+
+	return keel.CTE("open_work", []string{openWorkWorker, openWorkMoves}, a.
 		Join(m, m.ID.EqCol(a.ShipmentMoveID)).
-		Pick(keel.Count()).
+		Pick(a.PrimaryWorkerID, keel.Count()).
 		Where(
-			a.PrimaryWorkerID.EqCol(w.ID),
+			a.PrimaryWorkerID.IsNotNull(),
 			a.ArchivedAt.IsNull(),
 			m.Status.In(openMoveStatuses...),
-		))
+		).
+		Group(a.PrimaryWorkerID))
+}
+
+func withOpenWork(
+	q keel.Query[*worker.Worker],
+	w *workerdb.WorkersTable,
+) (keel.Query[*worker.Worker], keel.Int64Expr) {
+	ow := openWork()
+
+	return q.With(ow).LeftJoin(ow, ow.Col(openWorkWorker).EqCol(w.ID)),
+		zero(ow.Col(openWorkMoves))
 }
 
 var serviceTypes = servicetypedb.ServiceTypes

@@ -1201,7 +1201,6 @@
   "Sent as bills since {0}. Company driver pay is never sent.": "Se envían como facturas de proveedor desde el {0}. El pago de los conductores de la empresa nunca se envía.",
   "Sent on {0}": "Enviado el {0}",
   "Separator character": "Carácter separador",
-  "Sequence": "Secuencia",
   "Sequence configuration sections": "Secciones de configuración de la secuencia",
   "Sequence digits": "Dígitos de la secuencia",
   "Server Token": "Token del servidor",

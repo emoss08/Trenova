@@ -118,6 +118,7 @@ export function QueuePane({
   exceptionsRead,
   exceptionsMore,
   drivers,
+  driversTruncated,
   selectedWorkerId,
   onSelectDriver,
   showsDrivers,
@@ -141,6 +142,7 @@ export function QueuePane({
   exceptionsRead: QueueRead;
   exceptionsMore: boolean;
   drivers: readonly DispatchBoardDriver[];
+  driversTruncated: boolean;
   selectedWorkerId: string | null;
   onSelectDriver: (workerId: string) => void;
   showsDrivers: boolean;
@@ -189,7 +191,13 @@ export function QueuePane({
             id="drivers"
             active={activeTab === "drivers"}
             label={t("Drivers")}
-            count={read.isPending || read.isError ? null : String(drivers.length)}
+            count={
+              read.isPending || read.isError
+                ? null
+                : driversTruncated
+                  ? t("{0}+", drivers.length)
+                  : String(drivers.length)
+            }
             onSelect={onTab}
           />
         ) : null}
@@ -282,6 +290,7 @@ export function QueuePane({
             ) : null}
             <DriverQueue
               drivers={drivers}
+              truncated={driversTruncated}
               read={read}
               filter={capacityFilter}
               search={driverSearch}

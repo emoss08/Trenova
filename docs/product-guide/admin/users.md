@@ -1,6 +1,6 @@
 ---
 path: /admin/users
-aliases: [users & roles, user accounts, staff accounts, logins, team members, add employee login, deactivate user]
+aliases: [users & roles, give access, user accounts, staff accounts, logins, team members, add employee login, deactivate user]
 related:
   - /admin/roles
   - /admin/audit-logs

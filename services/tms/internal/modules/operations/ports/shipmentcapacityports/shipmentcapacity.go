@@ -80,6 +80,7 @@ type CapacityMatch struct {
 	Quote           decimal.NullDecimal
 	MarginPercent   *float64
 	FitPercent      *float64
+	CostCents       *int64
 }
 
 type CapacityMatchesRequest struct {
@@ -98,7 +99,7 @@ type DriverCoverageSuggestion struct {
 	UnitLabel        string
 	DistanceMiles    *float64
 	DriveRemainingMs *int64
-	FitPercent       *float64
+	CostCents        *int64
 }
 
 type CarrierCoverageSuggestion struct {

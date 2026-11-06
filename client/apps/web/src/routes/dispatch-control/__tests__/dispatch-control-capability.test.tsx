@@ -15,8 +15,6 @@ const control: DispatchControl = {
   businessUnitId: "bu_01",
   enableAutoAssignment: true,
   autoProposeCoverage: false,
-  autoAssignmentStrategy: "Proximity",
-  scoringWeights: {},
   enforceWorkerAssign: true,
   enforceTrailerContinuity: true,
   enforceHosCompliance: true,
@@ -47,6 +45,24 @@ vi.mock("@/lib/queries/dispatch-control", () => ({
   },
 }));
 
+vi.mock("@/lib/queries/dispatch-style", () => ({
+  dispatchStyle: {
+    get: () => ({
+      queryKey: ["dispatch-style"],
+      queryFn: async () => ({
+        enabled: false,
+        decisions: 0,
+        approvals: 0,
+        overrides: 0,
+        declines: 0,
+        learningSince: null,
+        updatedAt: null,
+        weights: [],
+      }),
+    }),
+  },
+}));
+
 vi.mock("@/hooks/use-optimistic-mutation", () => ({
   useOptimisticMutation: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -54,8 +70,10 @@ vi.mock("@/hooks/use-optimistic-mutation", () => ({
 /** Every driver-compliance control the plan calls for hiding. */
 const DRIVER_COMPLIANCE_LABELS = [
   "Enable automated assignment",
-  "Assignment optimization strategy",
-  "Candidate scoring weights",
+  "Learn our dispatch style",
+  "Plan for where drivers end up",
+  "Costs and prices",
+  "Learned dispatch style",
   "Enable DOT compliance enforcement",
   "Medical certification validation",
   "Driver qualification verification",

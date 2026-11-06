@@ -128,6 +128,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -381,6 +382,7 @@ type Params struct {
 	TelematicsService                 *telematicsservice.Service
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
+	DispatchStyleService              dispatchlearningports.Service
 	AssignmentService                 assignmentports.AssignmentService
 	DocumentPacketRuleService         *documentpacketruleservice.Service
 	DocumentTemplateService           *documenttemplateservice.Service
@@ -668,6 +670,7 @@ type Services struct {
 	TelematicsService                 *telematicsservice.Service
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
+	DispatchStyleService              dispatchlearningports.Service
 	AssignmentService                 assignmentports.AssignmentService
 	DocumentPacketRuleService         *documentpacketruleservice.Service
 	DocumentTemplateService           *documenttemplateservice.Service
@@ -961,6 +964,7 @@ func newServices(p *Params) *Services {
 		TelematicsService:                 p.TelematicsService,
 		DispatchConsoleService:            p.DispatchConsoleService,
 		DispatchAutoAssignService:         p.DispatchAutoAssignService,
+		DispatchStyleService:              p.DispatchStyleService,
 		AssignmentService:                 p.AssignmentService,
 		DocumentPacketRuleService:         p.DocumentPacketRuleService,
 		DocumentTemplateService:           p.DocumentTemplateService,

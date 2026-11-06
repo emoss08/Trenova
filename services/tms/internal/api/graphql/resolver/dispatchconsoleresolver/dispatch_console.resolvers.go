@@ -322,8 +322,8 @@ func (r *QueryResolver) DispatchDriverMoves(ctx context.Context, input gqlmodel.
 	mapped := make([]*gqlmodel.DispatchDriverMoveMatch, 0, len(matches))
 	for _, match := range matches {
 		mapped = append(mapped, &gqlmodel.DispatchDriverMoveMatch{
-			Move:  mapDispatchBoardMove(match.Move),
-			Score: mapDispatchCandidate(match.Score),
+			Move:      mapDispatchBoardMove(match.Move),
+			Candidate: mapDispatchCandidate(match.Score),
 		})
 	}
 
@@ -378,7 +378,7 @@ func (r *QueryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 		TrailerID:        gqlid.IDPtr(preview.TrailerID),
 		Blocked:          preview.Blocked,
 		RequiresOverride: preview.RequiresOverride,
-		Score:            mapDispatchCandidate(preview.Score),
+		Candidate:        mapDispatchCandidate(preview.Score),
 	}, nil
 }
 

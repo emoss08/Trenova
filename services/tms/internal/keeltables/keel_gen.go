@@ -152,6 +152,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchlearning/dispatchlearningdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket/dispatchmarketdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice/dispatchplanpricedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
@@ -432,6 +435,9 @@ func All() []*schema.Table {
 		detentionpolicydb.DetentionPoliciesSchema(),
 		detentionpolicydb.DetentionPolicyTiersSchema(),
 		dispatchcontroldb.DispatchControlsSchema(),
+		dispatchmarketdb.MarketValuesSchema(),
+		dispatchplanpricedb.DispatchPlanPricesSchema(),
+		dispatchlearningdb.DispatchStylesSchema(),
 		distancecalculationdb.RunsSchema(),
 		distancecontroldb.DistanceControlsSchema(),
 		distanceoverridedb.DistanceOverrideStopsSchema(),

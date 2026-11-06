@@ -37,6 +37,9 @@ var protectedPaths = [...]Path{
 	{Path: "profile.licenseNumber", Group: Personal},
 	{Path: "profile.twicCardNumber", Group: Personal},
 	{Path: "profile.lastDrugTest", Group: Personal},
+	{Path: "homeLatitude", Group: Personal, Resource: permission.ResourceWorker},
+	{Path: "homeLongitude", Group: Personal, Resource: permission.ResourceWorker},
+	{Path: "homePlaceId", Group: Personal, Resource: permission.ResourceWorker},
 	{Path: "evidenceCredential.number", Group: Personal},
 	{Path: credentialNumber, Group: Personal, Resource: permission.ResourceWorkerCredential},
 

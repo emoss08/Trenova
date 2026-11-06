@@ -95,6 +95,7 @@ query CapacityUnitMatches($kind: CapacityUnitKind!, $unitId: ID!, $limit: Int) {
     quote
     marginPercent
     fitPercent
+    costCents
   }
 }
 
@@ -109,7 +110,7 @@ query ShipmentCoverageSuggestions($shipmentId: ID!) {
       unitLabel
       distanceMiles
       driveRemainingMs
-      fitPercent
+      costCents
     }
     carriers {
       carrierId

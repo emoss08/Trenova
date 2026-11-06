@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -41,9 +42,9 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 	}
 
 	if in.State == nil {
-		eval.Add(Finding{
-			Code:     CodeHOSMissing,
-			Severity: SeverityInfo,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHOSMissing,
+			Severity: dispatchfinding.SeverityInfo,
 			Field:    fieldHOS,
 			Message:  "No hours-of-service data is available for this driver",
 		})
@@ -56,9 +57,9 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 	}
 
 	if now-in.State.RecordedAt > HOSStateMaxAgeSeconds {
-		eval.Add(Finding{
-			Code:     CodeHOSStale,
-			Severity: SeverityInfo,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHOSStale,
+			Severity: dispatchfinding.SeverityInfo,
 			Field:    fieldHOS,
 			Message:  "Hours-of-service data is stale",
 		})
@@ -69,8 +70,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 	state := in.State
 
 	if state.ShiftDrivingViolationMs > 0 {
-		eval.Add(Finding{
-			Code:       CodeHOSShiftDrivingViolation,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSShiftDrivingViolation,
 			Severity:   severity,
 			Field:      fieldHOS,
 			Message:    "Driver has an active shift driving HOS violation (49 CFR 395.3(a)(3))",
@@ -78,8 +79,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 		})
 	}
 	if state.CycleViolationMs > 0 {
-		eval.Add(Finding{
-			Code:       CodeHOSCycleViolation,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSCycleViolation,
 			Severity:   severity,
 			Field:      fieldHOS,
 			Message:    "Driver has an active cycle HOS violation (49 CFR 395.3(b))",
@@ -87,8 +88,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 		})
 	}
 	if state.DriveRemainingMs <= 0 {
-		eval.Add(Finding{
-			Code:       CodeHOSNoDriveTime,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSNoDriveTime,
 			Severity:   severity,
 			Field:      fieldHOS,
 			Message:    "Driver has no drive time remaining on the 11-hour clock (49 CFR 395.3(a)(3))",
@@ -96,8 +97,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 		})
 	}
 	if state.ShiftRemainingMs <= 0 {
-		eval.Add(Finding{
-			Code:       CodeHOSNoShiftTime,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSNoShiftTime,
 			Severity:   severity,
 			Field:      fieldHOS,
 			Message:    "Driver has no on-duty time remaining in the 14-hour window (49 CFR 395.3(a)(2))",
@@ -105,8 +106,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 		})
 	}
 	if state.CycleRemainingMs <= 0 {
-		eval.Add(Finding{
-			Code:       CodeHOSNoCycleTime,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHOSNoCycleTime,
 			Severity:   severity,
 			Field:      fieldHOS,
 			Message:    "Driver has no cycle time remaining (49 CFR 395.3(b))",
@@ -114,8 +115,8 @@ func EvaluateHOSClocks(in HOSInput) *Evaluation {
 		})
 	}
 	if state.DutyStatus == telematics.DutyStatusDriving && state.BreakRemainingMs <= 0 {
-		eval.Add(Finding{
-			Code:     CodeHOSBreakRequired,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHOSBreakRequired,
 			Severity: severity,
 			Field:    fieldHOS,
 			Message: fmt.Sprintf(

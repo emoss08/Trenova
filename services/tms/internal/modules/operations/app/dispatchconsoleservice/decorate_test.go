@@ -5,7 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchurgency"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -16,41 +18,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	secondsPerHour = int64(3600)
+	secondsPerDay  = dispatchboardports.UrgencyTodaySeconds
+)
+
 const testNow = int64(1_700_000_000)
 
-func TestUrgencyFor(t *testing.T) {
+func TestDecorateMove_UrgencyBuckets(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		name        string
 		windowStart int64
-		expect      UrgencyBucket
+		expect      dispatchurgency.Bucket
 	}{
-		{"past an appointment with no window end", testNow - 3600, UrgencyLate},
-		{"within four hours", testNow + 2*secondsPerHour, UrgencyNow},
-		{"later today", testNow + 12*secondsPerHour, UrgencyToday},
-		{"tomorrow", testNow + 36*secondsPerHour, UrgencyTomorrow},
-		{"further out", testNow + 5*secondsPerDay, UrgencyPlanned},
-		{"no appointment", 0, UrgencyPlanned},
+		{"past an appointment with no window end", testNow - 3600, dispatchurgency.Late},
+		{"within four hours", testNow + 2*secondsPerHour, dispatchurgency.Now},
+		{"later today", testNow + 12*secondsPerHour, dispatchurgency.Today},
+		{"tomorrow", testNow + 36*secondsPerHour, dispatchurgency.Tomorrow},
+		{"further out", testNow + 5*secondsPerDay, dispatchurgency.Planned},
+		{"no appointment", 0, dispatchurgency.Planned},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got := urgencyFor(
+			got := decorateMove(
 				&dispatchboardports.BoardMove{OriginWindowStart: tc.windowStart},
 				testNow,
-			)
+			).Urgency
 			assert.Equal(t, tc.expect, got)
 		})
 	}
 }
 
-// A pickup is late once its window has closed, as a delivery is: inside its
-// window it is due now. The board called an open pickup window Late while the
-// shipment list's late read only closed ones, so the same question got two
-// counts.
-func TestUrgencyFor_APickupIsLateOnlyOnceItsWindowCloses(t *testing.T) {
+func TestDecorateMove_UrgencyAPickupIsLateOnlyOnceItsWindowCloses(t *testing.T) {
 	t.Parallel()
 
 	at := func(v int64) *int64 { return &v }
@@ -58,16 +61,16 @@ func TestUrgencyFor_APickupIsLateOnlyOnceItsWindowCloses(t *testing.T) {
 		OriginWindowStart: testNow - secondsPerHour,
 		OriginWindowEnd:   at(testNow + secondsPerHour),
 	}
-	assert.Equal(t, UrgencyNow, urgencyFor(&open, testNow))
+	assert.Equal(t, dispatchurgency.Now, decorateMove(&open, testNow).Urgency)
 
 	closed := dispatchboardports.BoardMove{
 		OriginWindowStart: testNow - 3*secondsPerHour,
 		OriginWindowEnd:   at(testNow - secondsPerHour),
 	}
-	assert.Equal(t, UrgencyLate, urgencyFor(&closed, testNow))
+	assert.Equal(t, dispatchurgency.Late, decorateMove(&closed, testNow).Urgency)
 }
 
-func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
+func TestDecorateMove_UrgencyAPickedUpMoveFollowsItsDelivery(t *testing.T) {
 	t.Parallel()
 
 	pickedUp := testNow - 6*secondsPerHour
@@ -75,36 +78,36 @@ func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
 	cases := []struct {
 		name   string
 		move   dispatchboardports.BoardMove
-		expect UrgencyBucket
+		expect dispatchurgency.Bucket
 	}{
 		{"on the road, delivery later today", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow + 10*secondsPerHour,
-		}, UrgencyToday},
+		}, dispatchurgency.Today},
 		{"on the road, delivery window open", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow - secondsPerHour,
 			DestinationWindowEnd:   at(testNow + secondsPerHour),
-		}, UrgencyNow},
+		}, dispatchurgency.Now},
 		{"on the road, delivery window closed", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow - 3*secondsPerHour,
 			DestinationWindowEnd:   at(testNow - secondsPerHour),
-		}, UrgencyLate},
+		}, dispatchurgency.Late},
 		{"arrived at delivery", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart:  testNow - 3*secondsPerHour,
 			DestinationActualArrive: at(testNow - 2*secondsPerHour),
-		}, UrgencyPlanned},
+		}, dispatchurgency.Planned},
 		{"picked up, delivery unscheduled", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
-		}, UrgencyPlanned},
+		}, dispatchurgency.Planned},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.expect, urgencyFor(&tc.move, testNow))
+			assert.Equal(t, tc.expect, decorateMove(&tc.move, testNow).Urgency)
 		})
 	}
 }
@@ -259,8 +262,6 @@ func TestAvailabilityFor_PTOEndDateIsInclusiveThroughTheDay(t *testing.T) {
 		"time off that ended yesterday no longer applies")
 }
 
-// A blocked driver must read as blocked whatever their calendar says: the reason they
-// cannot work outranks whether they happen to be free.
 func TestDecorateDrivers_BlockOutranksTimeOffAndCommitments(t *testing.T) {
 	t.Parallel()
 
@@ -397,6 +398,6 @@ func TestAvailabilityFindings_NoHOSFindingsWithoutTelematics(t *testing.T) {
 	for _, finding := range rows[0].Findings {
 		codes = append(codes, finding.Code)
 	}
-	assert.Contains(t, codes, dispatcheligibility.CodeHOSMissing,
+	assert.Contains(t, codes, dispatchfinding.CodeHOSMissing,
 		"with telematics enabled a missing feed is a data gap worth flagging")
 }

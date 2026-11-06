@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchstyleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentpacketruleexec"
@@ -183,6 +184,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchstyleresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceoverrideresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/distanceprofileresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/documentpacketruleresolver"
@@ -542,6 +544,10 @@ func FromServices(s *Services) *Resolver {
 		DispatchConsoleService:    s.DispatchConsoleService,
 		DispatchAutoAssignService: s.DispatchAutoAssignService,
 		AssignmentService:         s.AssignmentService,
+	}
+	dispatchstyleDeps := &dispatchstyleresolver.Deps{
+		Core:                 s.Core,
+		DispatchStyleService: s.DispatchStyleService,
 	}
 	distanceoverrideDeps := &distanceoverrideresolver.Deps{
 		Core:                    s.Core,
@@ -1284,6 +1290,7 @@ func FromServices(s *Services) *Resolver {
 	deskmemoryMutation := &deskmemoryresolver.MutationResolver{Deps: deskmemoryDeps}
 	detentionMutation := &detentionresolver.MutationResolver{Deps: detentionDeps}
 	dispatchconsoleMutation := &dispatchconsoleresolver.MutationResolver{Deps: dispatchconsoleDeps}
+	dispatchstyleMutation := &dispatchstyleresolver.MutationResolver{Deps: dispatchstyleDeps}
 	documenttemplateMutation := &documenttemplateresolver.MutationResolver{Deps: documenttemplateDeps}
 	documenttypeMutation := &documenttyperesolver.MutationResolver{Deps: documenttypeDeps}
 	driverportalMutation := &driverportalresolver.MutationResolver{Deps: driverportalDeps}
@@ -1409,6 +1416,7 @@ func FromServices(s *Services) *Resolver {
 	deskmemoryQuery := &deskmemoryresolver.QueryResolver{Deps: deskmemoryDeps}
 	detentionQuery := &detentionresolver.QueryResolver{Deps: detentionDeps}
 	dispatchconsoleQuery := &dispatchconsoleresolver.QueryResolver{Deps: dispatchconsoleDeps}
+	dispatchstyleQuery := &dispatchstyleresolver.QueryResolver{Deps: dispatchstyleDeps}
 	distanceoverrideQuery := &distanceoverrideresolver.QueryResolver{Deps: distanceoverrideDeps}
 	distanceprofileQuery := &distanceprofileresolver.QueryResolver{Deps: distanceprofileDeps}
 	documentpacketruleQuery := &documentpacketruleresolver.QueryResolver{Deps: documentpacketruleDeps}
@@ -1814,6 +1822,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@deskmemory":                                  deskmemoryMutation,
 			"Mutation@detention":                                   detentionMutation,
 			"Mutation@dispatchconsole":                             dispatchconsoleMutation,
+			"Mutation@dispatchstyle":                               dispatchstyleMutation,
 			"Mutation@documenttemplate":                            documenttemplateMutation,
 			"Mutation@documenttype":                                documenttypeMutation,
 			"Mutation@driverportal":                                driverportalMutation,
@@ -1939,6 +1948,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@deskmemory":                                     deskmemoryQuery,
 			"Query@detention":                                      detentionQuery,
 			"Query@dispatchconsole":                                dispatchconsoleQuery,
+			"Query@dispatchstyle":                                  dispatchstyleQuery,
 			"Query@distanceoverride":                               distanceoverrideQuery,
 			"Query@distanceprofile":                                distanceprofileQuery,
 			"Query@documentpacketrule":                             documentpacketruleQuery,
@@ -2349,6 +2359,7 @@ var (
 	_ deskmemoryexec.MutationResolver                                  = (*deskmemoryresolver.MutationResolver)(nil)
 	_ detentionexec.MutationResolver                                   = (*detentionresolver.MutationResolver)(nil)
 	_ dispatchconsoleexec.MutationResolver                             = (*dispatchconsoleresolver.MutationResolver)(nil)
+	_ dispatchstyleexec.MutationResolver                               = (*dispatchstyleresolver.MutationResolver)(nil)
 	_ documenttemplateexec.MutationResolver                            = (*documenttemplateresolver.MutationResolver)(nil)
 	_ documenttypeexec.MutationResolver                                = (*documenttyperesolver.MutationResolver)(nil)
 	_ driverportalexec.MutationResolver                                = (*driverportalresolver.MutationResolver)(nil)
@@ -2474,6 +2485,7 @@ var (
 	_ deskmemoryexec.QueryResolver                                     = (*deskmemoryresolver.QueryResolver)(nil)
 	_ detentionexec.QueryResolver                                      = (*detentionresolver.QueryResolver)(nil)
 	_ dispatchconsoleexec.QueryResolver                                = (*dispatchconsoleresolver.QueryResolver)(nil)
+	_ dispatchstyleexec.QueryResolver                                  = (*dispatchstyleresolver.QueryResolver)(nil)
 	_ distanceoverrideexec.QueryResolver                               = (*distanceoverrideresolver.QueryResolver)(nil)
 	_ distanceprofileexec.QueryResolver                                = (*distanceprofileresolver.QueryResolver)(nil)
 	_ documentpacketruleexec.QueryResolver                             = (*documentpacketruleresolver.QueryResolver)(nil)

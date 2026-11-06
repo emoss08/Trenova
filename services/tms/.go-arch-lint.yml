@@ -9,6 +9,7 @@ allow:
   ignoreNotFoundComponents: true
 excludeFiles:
   - "^.*_test\\.go$"
+  - "(^|/)\\.deskbench/"
 components:
   kernel-domain:
     in:
@@ -3200,7 +3201,7 @@ deps:
       - settlement-ports
       - pkg
       - infrastructure
-      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (3 imports)
+      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (1 imports)
   agent-app:
     mayDependOn:
       - agent-domain
@@ -3262,7 +3263,7 @@ deps:
       - equipment-app # TODO(build-arch): imports app of equipment; use its ports (rule 6) (6 imports)
       - identity-app # TODO(build-arch): imports app of identity; use its ports (rule 6) (28 imports)
       - kernel-app # TODO(build-arch): imports app of kernel; use its ports (rule 6) (6 imports)
-      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (48 imports)
+      - operations-app # TODO(build-arch): imports app of operations; use its ports (rule 6) (41 imports)
       - parties-app # TODO(build-arch): imports app of parties; use its ports (rule 6) (8 imports)
       - places-app # TODO(build-arch): imports app of places; use its ports (rule 6) (3 imports)
       - rating-app # TODO(build-arch): imports app of rating; use its ports (rule 6) (23 imports)

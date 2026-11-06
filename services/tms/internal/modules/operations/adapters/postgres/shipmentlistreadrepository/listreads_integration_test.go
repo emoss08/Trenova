@@ -5,6 +5,8 @@ package shipmentlistreadrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/searchtext"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
@@ -89,7 +90,7 @@ func TestListReads_FindTheOrdersPOAndTheHoldsInForce(t *testing.T) {
 	assert.Equal(t, []pulid.ID{held.ShipmentID}, byOrder)
 
 	byReference, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(listquery.MatchVector(sp.SearchVector, "LISTREADS-662193")))
+		Where(searchtext.MatchVector(sp.SearchVector, "LISTREADS-662193")))
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{held.ShipmentID}, byReference,
 		"the shipment's own words match its external reference")

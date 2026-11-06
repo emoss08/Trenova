@@ -4,7 +4,8 @@ import { NumberField } from "@/components/fields/number-field";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { SelectField } from "@/components/fields/select-field";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
-import { ScoringWeightForm } from "./scoring-weight-form";
+import { EconomicsForm } from "./economics-form";
+import { LearnedStyleCard } from "./learned-style-card";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import {
@@ -17,7 +18,6 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
-  autoAssignmentStrategyChoices,
   complianceEnforcementLevelChoices,
   serviceIncidentTypeChoices,
   tenderExhaustedActionChoices,
@@ -69,7 +69,7 @@ export default function DispatchControlForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
-          {/* Auto-assignment, its scoring weights and every DOT check on this
+          {/* Auto-assignment, its costs and prices and every DOT check on this
               page act on employed drivers. An organization that brokers all of
               its freight keeps the page — service failure monitoring is about
               the load, not the driver — with the driver-side cards withheld.
@@ -77,7 +77,8 @@ export default function DispatchControlForm() {
               is reset by passing through here. */}
           <CapabilityGate capability={OrganizationCapability.AssetOperations}>
             <AutoAssignmentForm />
-            <ScoringWeightForm />
+            <EconomicsForm />
+            <LearnedStyleCard />
           </CapabilityGate>
           <ServiceFailureForm />
           <CheckCallMonitoringForm />
@@ -142,15 +143,26 @@ function AutoAssignmentForm() {
                   position="left"
                 />
               </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px] pl-10">
-                <SelectField
+              <FormControl className="min-h-[3em] pl-10">
+                <SwitchField
                   control={control}
-                  name="autoAssignmentStrategy"
-                  label={t("Assignment optimization strategy")}
+                  name="learnDispatchStyle"
+                  label={t("Learn our dispatch style")}
                   description={t(
-                    "Select the primary strategy used when matching resources to shipments.",
+                    "Learns how much your dispatchers weigh each preference from the drivers they assign against the plan: the plan's driver, another it priced, or one it passed over. Shown and reset under Learned dispatch style.",
                   )}
-                  options={autoAssignmentStrategyChoices}
+                  position="left"
+                />
+              </FormControl>
+              <FormControl className="min-h-[3em] pl-10">
+                <SwitchField
+                  control={control}
+                  name="planForEndMarket"
+                  label={t("Plan for where drivers end up")}
+                  description={t(
+                    "Credits a move that leaves its driver where drivers have been worth more to the plan at that time of the week, learned from the planner's own history.",
+                  )}
+                  position="left"
                 />
               </FormControl>
               <FormControl className="min-h-[3em] max-w-[400px] pl-10">

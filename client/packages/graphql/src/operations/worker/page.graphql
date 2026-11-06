@@ -61,6 +61,7 @@ fragment WorkerTableRowFields on Worker {
   stateId
   fleetCodeId
   managerId
+  positionId
   status
   type
   driverType
@@ -82,6 +83,10 @@ fragment WorkerTableRowFields on Worker {
   gender
   canBeAssigned
   availableForDispatch
+  homeLatitude
+  homeLongitude
+  homePlaceId
+  lastHomeAt
   version
   createdAt
   updatedAt

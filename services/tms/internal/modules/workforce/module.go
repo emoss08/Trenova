@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/homevisitservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/orgholidayservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/permitservice"
@@ -93,6 +94,7 @@ func SharedOptions() fx.Option {
 			func(s *workeremploymentservice.Service) workeremploymentports.EmploymentEventRecorder { return s },
 			samsaracontract.NewManager,
 			telematicsservice.New,
+			homevisitservice.New,
 			workerrepository.New,
 			workerptorepository.New,
 			workercredentialrepository.New,

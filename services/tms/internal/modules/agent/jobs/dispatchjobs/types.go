@@ -7,12 +7,13 @@ type TenantHorizonPlan struct {
 	BusinessUnitID string `json:"businessUnitId"`
 	RunID          string `json:"runId,omitempty"`
 
-	MovesPlanned   int `json:"movesPlanned"`
-	MovesUncovered int `json:"movesUncovered"`
-	MovesAtRisk    int `json:"movesAtRisk"`
-	ToursBuilt     int `json:"toursBuilt"`
-	ChainedMoves   int `json:"chainedMoves"`
-	TotalScore     int `json:"totalScore"`
+	MovesPlanned   int   `json:"movesPlanned"`
+	MovesUncovered int   `json:"movesUncovered"`
+	MovesAtRisk    int   `json:"movesAtRisk"`
+	ToursBuilt     int   `json:"toursBuilt"`
+	ChainedMoves   int   `json:"chainedMoves"`
+	CostCents      int64 `json:"costCents"`
+	UncoveredCents int64 `json:"uncoveredCents"`
 
 	TotalDeadheadMiles float64 `json:"totalDeadheadMiles"`
 	ShadowMode         bool    `json:"shadowMode"`

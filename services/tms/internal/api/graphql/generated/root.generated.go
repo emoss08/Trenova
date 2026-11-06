@@ -52,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchstyleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceoverrideexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/distanceprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documentpacketruleexec"
@@ -205,6 +206,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
+		dispatchstyleexec.Shard,
 		distanceoverrideexec.Shard,
 		distanceprofileexec.Shard,
 		documentpacketruleexec.Shard,

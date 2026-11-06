@@ -72,6 +72,7 @@ function boardMove(overrides: Partial<DispatchBoardMove> = {}): DispatchBoardMov
     liveTender: null,
     pendingProposal: null,
     failedProposal: null,
+    planPrice: null,
     ...overrides,
   } as DispatchBoardMove;
 }

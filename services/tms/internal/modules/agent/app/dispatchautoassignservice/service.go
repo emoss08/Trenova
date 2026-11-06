@@ -14,16 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/assignmentsolver"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,25 +27,20 @@ const (
 	evidenceTypeHOS      = "worker_hos_state"
 	evidenceTypeDeadhead = "vehicle_position"
 
-	promptVersion = "dispatch-auto-assign-v1"
+	promptVersion = "dispatch-auto-assign-v2"
 
-	// assignMoveTool is the write each coverage proposal asks for, and the
-	// tool a move carries at most one pending proposal of.
 	assignMoveTool = "dispatch_assign_move"
-
-	maxPlanMoves = 400
 )
 
 type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	ConsoleRepo         dispatchboardports.DispatchConsoleRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	AgentControlRepo    tenantports.AgentControlRepository
 	DefinitionRepo      agentdefinitionports.AgentDefinitionRepository
 	ProposalRepo        agentproposalports.AgentProposalRepository
-	CandidateService    *dispatchcandidateservice.Service
+	Planner             dispatchplanports.Planner
 	AgentRunService     agentruntimeports.AgentRunService
 	Executor            *proposalexecutor.Service
 	WorkerRepo          workerports.WorkerRepository
@@ -59,12 +48,11 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	consoleRepo         dispatchboardports.DispatchConsoleRepository
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	agentControlRepo    tenantports.AgentControlRepository
 	definitionRepo      agentdefinitionports.AgentDefinitionRepository
 	proposalRepo        agentproposalports.AgentProposalRepository
-	candidates          *dispatchcandidateservice.Service
+	planner             dispatchplanports.Planner
 	runService          agentruntimeports.AgentRunService
 	executor            *proposalexecutor.Service
 	workerRepo          workerports.WorkerRepository
@@ -73,12 +61,11 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.dispatch-auto-assign"),
-		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
 		agentControlRepo:    p.AgentControlRepo,
 		definitionRepo:      p.DefinitionRepo,
 		proposalRepo:        p.ProposalRepo,
-		candidates:          p.CandidateService,
+		planner:             p.Planner,
 		runService:          p.AgentRunService,
 		executor:            p.Executor,
 		workerRepo:          p.WorkerRepo,
@@ -97,272 +84,62 @@ func (s *Service) Plan(
 	if err != nil {
 		return nil, err
 	}
-
-	policy, err := s.loadPolicy(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
 	if !control.EnableAutoAssignment {
 		return nil, errortypes.NewBusinessError(
 			"Auto assignment is disabled for this organization",
 		)
 	}
 
-	now := timeutils.NowUnix()
-	filter := buildFilter(req, control, now)
-
-	moves, err := s.consoleRepo.ListBoardMoves(ctx, filter)
+	policy, err := s.loadPolicy(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if len(moves) > maxPlanMoves {
-		moves = moves[:maxPlanMoves]
-		s.l.Warn(
-			"auto-assign plan truncated to the per-run move cap",
-			zap.Int("cap", maxPlanMoves),
-		)
-	}
 
-	if len(moves) == 0 {
-		return emptyPlan(control, policy, now), nil
-	}
-
-	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
-		TenantInfo:  req.TenantInfo,
-		Filter:      filter,
-		Control:     control,
-		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
-		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
+	planned, err := s.planner.Plan(ctx, &dispatchplanports.Request{
+		TenantInfo:   req.TenantInfo,
+		WindowStart:  req.WindowStart,
+		WindowEnd:    req.WindowEnd,
+		FleetCodeIDs: req.FleetCodeIDs,
+		MoveIDs:      req.MoveIDs,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	plan := s.solve(&solveParams{
-		Moves:    moves,
-		Snapshot: snapshot,
-		Control:  control,
-		Policy:   policy,
-		Now:      now,
-	})
+	plan := &dispatchconsoleports.DispatchPlan{
+		Mode:        planned.Mode,
+		GeneratedAt: planned.GeneratedAt,
+		Assignments: make(
+			[]*dispatchconsoleports.DispatchPlannedAssignment,
+			0,
+			len(planned.Pairings),
+		),
+		Uncovered:      planned.Uncovered,
+		Tours:          planned.Tours,
+		CostCents:      planned.CostCents,
+		UncoveredCents: planned.UncoveredCents,
+		ShadowMode:     policy.ShadowMode,
+		AutonomyTier:   policy.Tier,
+	}
+	threshold := control.ConfidenceThreshold()
+	for _, pairing := range planned.Pairings {
+		plan.Assignments = append(plan.Assignments, plannedAssignmentFor(&plannedAssignmentParams{
+			Pairing:    pairing,
+			Tier:       policy.Tier,
+			Threshold:  threshold,
+			ShadowMode: policy.ShadowMode,
+		}))
+	}
 
 	proposals, err := s.recordPlan(ctx, req, policy, plan)
 	if err != nil {
 		return nil, err
 	}
-
 	if req.Apply {
 		s.applyAutoExecutable(ctx, req, plan, proposals)
 	}
 
 	return plan, nil
-}
-
-func emptyPlan(
-	control *dispatchcontrol.DispatchControl,
-	policy Policy,
-	now int64,
-) *dispatchconsoleports.DispatchPlan {
-	return &dispatchconsoleports.DispatchPlan{
-		Assignments:  []*dispatchconsoleports.DispatchPlannedAssignment{},
-		Uncovered:    []*dispatchconsoleports.DispatchUncoveredMove{},
-		Tours:        []*dispatchconsoleports.DispatchTour{},
-		PlanningMode: control.ResolvedPlanningMode().String(),
-		ShadowMode:   policy.ShadowMode,
-		AutonomyTier: policy.Tier,
-		GeneratedAt:  now,
-	}
-}
-
-func buildFilter(
-	req *dispatchconsoleports.DispatchPlanRequest,
-	control *dispatchcontrol.DispatchControl,
-	now int64,
-) *dispatchboardports.DispatchBoardFilter {
-	windowStart, windowEnd := dispatchcandidateservice.ResolveWindow(
-		req.WindowStart,
-		req.WindowEnd,
-		control,
-		now,
-	)
-
-	return &dispatchboardports.DispatchBoardFilter{
-		TenantInfo:   req.TenantInfo,
-		WindowStart:  windowStart,
-		WindowEnd:    windowEnd,
-		FleetCodeIDs: req.FleetCodeIDs,
-		MoveIDs:      req.MoveIDs,
-		Limit:        maxPlanMoves,
-	}
-}
-
-type solveParams struct {
-	Moves    []*dispatchboardports.BoardMove
-	Snapshot *dispatchcandidateservice.FleetSnapshot
-	Control  *dispatchcontrol.DispatchControl
-	Policy   Policy
-	Now      int64
-}
-
-func (s *Service) solve(p *solveParams) *dispatchconsoleports.DispatchPlan {
-	if len(p.Snapshot.Drivers) == 0 {
-		return uncoveredOnlyPlan(p)
-	}
-
-	if p.Control.ResolvedPlanningMode() == dispatchcontrol.PlanningModeHorizon {
-		return s.solveHorizon(p)
-	}
-
-	return s.solveImmediate(p)
-}
-
-func uncoveredOnlyPlan(p *solveParams) *dispatchconsoleports.DispatchPlan {
-	plan := emptyPlan(p.Control, p.Policy, p.Now)
-	plan.Uncovered = make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(p.Moves))
-	for _, move := range p.Moves {
-		plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, nil, p.Control))
-	}
-	return plan
-}
-
-func (s *Service) solveImmediate(p *solveParams) *dispatchconsoleports.DispatchPlan {
-	drivers := p.Snapshot.Drivers
-
-	cost := make([][]float64, len(p.Moves))
-	scores := make([][]*dispatchcandidateservice.CandidateScore, len(p.Moves))
-	byWorker := make(map[pulid.ID]*dispatchcandidateservice.CandidateScore, len(drivers))
-
-	for i, move := range p.Moves {
-		ranked := s.candidates.RankCandidates(&dispatchcandidateservice.RankRequest{
-			Move:           move,
-			Snapshot:       p.Snapshot,
-			IncludeBlocked: true,
-		})
-
-		clear(byWorker)
-		for _, score := range ranked {
-			byWorker[score.WorkerID] = score
-		}
-
-		cost[i] = make([]float64, len(drivers))
-		scores[i] = make([]*dispatchcandidateservice.CandidateScore, len(drivers))
-		for j, driver := range drivers {
-			score := byWorker[driver.WorkerID]
-			scores[i][j] = score
-			cost[i][j] = costFor(score, p.Control)
-		}
-	}
-
-	return buildPlan(&buildPlanParams{
-		Moves:    p.Moves,
-		Solution: assignmentsolver.Solve(cost),
-		Scores:   scores,
-		Control:  p.Control,
-		Policy:   p.Policy,
-		Now:      p.Now,
-	})
-}
-
-type buildPlanParams struct {
-	Moves    []*dispatchboardports.BoardMove
-	Solution assignmentsolver.Result
-	Scores   [][]*dispatchcandidateservice.CandidateScore
-	Control  *dispatchcontrol.DispatchControl
-	Policy   Policy
-	Now      int64
-}
-
-func buildPlan(p *buildPlanParams) *dispatchconsoleports.DispatchPlan {
-	tier := p.Policy.Tier
-	threshold := p.Control.ConfidenceThreshold()
-
-	plan := &dispatchconsoleports.DispatchPlan{
-		Assignments:  make([]*dispatchconsoleports.DispatchPlannedAssignment, 0, len(p.Moves)),
-		Uncovered:    make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(p.Moves)),
-		Tours:        []*dispatchconsoleports.DispatchTour{},
-		PlanningMode: dispatchcontrol.PlanningModeImmediate.String(),
-		ShadowMode:   p.Policy.ShadowMode,
-		AutonomyTier: tier,
-		GeneratedAt:  p.Now,
-	}
-
-	for i, move := range p.Moves {
-		column := assignmentsolver.Unassigned
-		if i < len(p.Solution.RowAssignment) {
-			column = p.Solution.RowAssignment[i]
-		}
-		if column == assignmentsolver.Unassigned {
-			plan.Uncovered = append(plan.Uncovered, uncoveredFor(move, p.Scores[i], p.Control))
-			continue
-		}
-
-		score := p.Scores[i][column]
-		planned := plannedAssignmentFor(&plannedAssignmentParams{
-			Move:       move,
-			Score:      score,
-			Tier:       tier,
-			Threshold:  threshold,
-			ShadowMode: p.Policy.ShadowMode,
-		})
-
-		plan.Assignments = append(plan.Assignments, planned)
-		plan.TotalScore += score.Score
-	}
-
-	return plan
-}
-
-func uncoveredFor(
-	move *dispatchboardports.BoardMove,
-	scores []*dispatchcandidateservice.CandidateScore,
-	control *dispatchcontrol.DispatchControl,
-) *dispatchconsoleports.DispatchUncoveredMove {
-	uncovered := &dispatchconsoleports.DispatchUncoveredMove{
-		MoveID:              move.MoveID,
-		ProNumber:           move.ProNumber,
-		Reason:              "No eligible driver was available for this move",
-		StartsAt:            move.OriginWindowStart,
-		BestBlockedFindings: []dispatcheligibility.Finding{},
-	}
-
-	var best *dispatchcandidateservice.CandidateScore
-	for _, score := range scores {
-		if score == nil {
-			continue
-		}
-		if best == nil || score.Score > best.Score {
-			best = score
-		}
-	}
-
-	if best == nil {
-		return uncovered
-	}
-
-	switch {
-	case best.Blocked():
-		uncovered.BestBlockedFindings = best.Findings
-		uncovered.Reason = fmt.Sprintf(
-			"Closest candidate %s was disqualified",
-			best.WorkerName,
-		)
-	case deadheadExceedsLimit(best, control):
-		uncovered.Reason = fmt.Sprintf(
-			"Closest candidate %s exceeds the %d mile deadhead limit (%.0f empty miles)",
-			best.WorkerName,
-			*control.AutoAssignMaxDeadheadMiles,
-			*best.DeadheadMiles,
-		)
-	default:
-		uncovered.Reason = fmt.Sprintf(
-			"Closest candidate %s was eligible but no feasible pairing remained "+
-				"after higher-value assignments were made",
-			best.WorkerName,
-		)
-	}
-
-	return uncovered
 }
 
 func (s *Service) recordPlan(
@@ -382,7 +159,7 @@ func (s *Service) recordPlan(
 		SubjectID:         plan.Assignments[0].MoveID,
 		PromptVersion:     promptVersion,
 		Summary: fmt.Sprintf(
-			"Dispatch auto-assign proposed coverage for %d move(s)",
+			"Dispatch planning proposed coverage for %d move(s)",
 			len(plan.Assignments),
 		),
 		Trigger:    triggerOf(req),
@@ -395,7 +172,7 @@ func (s *Service) recordPlan(
 
 	proposals := make([]*agent.AgentProposal, 0, len(plan.Assignments))
 	for _, planned := range plan.Assignments {
-		toolParams, paramsErr := toolParamsFor(planned)
+		toolParams, paramsErr := toolParamsFor(planned.Candidate)
 		if paramsErr != nil {
 			return nil, paramsErr
 		}
@@ -408,12 +185,9 @@ func (s *Service) recordPlan(
 			ToolParams:     toolParams,
 			Confidence:     planned.Confidence,
 			Rationale:      planned.Rationale,
-			Evidence:       evidenceFor(planned.Score, moveStubFor(planned)),
+			Evidence:       evidenceFor(planned.Pairing),
 			AutonomyTier:   policy.Tier,
 			Status:         agent.ProposalStatusPending,
-			// The move the proposal covers, as it was when planned: the board
-			// reads a move's pending proposal by it, a newer plan supersedes it
-			// by it, and the executor refuses it once the move has moved on.
 			TargetResource: string(permission.ResourceShipmentMove),
 			TargetID:       planned.MoveID,
 			TargetVersion:  planned.MoveVersion,
@@ -422,9 +196,6 @@ func (s *Service) recordPlan(
 		proposals = append(proposals, proposal)
 	}
 
-	// One move carries one pending coverage proposal, the newest: a plan run
-	// again supersedes what an earlier plan proposed for the same moves rather
-	// than leaving both decidable in Decisions.
 	recorded, err := s.proposalRepo.ReplacePendingForTargets(
 		ctx,
 		&agentproposalports.ReplaceTargetedProposalsRequest{
@@ -444,8 +215,6 @@ func (s *Service) recordPlan(
 	return recorded, nil
 }
 
-// triggerOf says why a plan ran for its run record. A request that names
-// none came from a person in the console.
 func triggerOf(req *dispatchconsoleports.DispatchPlanRequest) agent.RunTrigger {
 	if req.Trigger.IsValid() {
 		return req.Trigger
@@ -487,7 +256,7 @@ func (s *Service) applyAutoExecutable(
 			s.l.Warn(
 				"auto-assign proposal could not be executed and remains pending",
 				zap.String("moveId", planned.MoveID.String()),
-				zap.String("workerId", planned.WorkerID.String()),
+				zap.String("workerId", planned.Candidate.WorkerID.String()),
 				zap.String("proposalId", planned.ProposalID.String()),
 				zap.Error(err),
 			)
@@ -502,16 +271,14 @@ type assignMoveToolParams struct {
 	TrailerID       string `json:"trailerId,omitempty"`
 }
 
-func toolParamsFor(
-	planned *dispatchconsoleports.DispatchPlannedAssignment,
-) (map[string]any, error) {
+func toolParamsFor(candidate *dispatchplanports.CandidateScore) (map[string]any, error) {
 	params := assignMoveToolParams{
-		ShipmentMoveID:  planned.MoveID.String(),
-		PrimaryWorkerID: planned.WorkerID.String(),
-		TractorID:       planned.TractorID.String(),
+		ShipmentMoveID:  candidate.MoveID.String(),
+		PrimaryWorkerID: candidate.WorkerID.String(),
+		TractorID:       candidate.TractorID.String(),
 	}
-	if !planned.TrailerID.IsNil() {
-		params.TrailerID = planned.TrailerID.String()
+	if !candidate.TrailerID.IsNil() {
+		params.TrailerID = candidate.TrailerID.String()
 	}
 
 	raw, err := sonic.Marshal(params)

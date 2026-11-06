@@ -6,11 +6,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -18,39 +22,52 @@ import (
 )
 
 type fakeRanker struct {
-	scores  []*dispatchcandidateservice.CandidateScore
+	scores  []*dispatchplanports.CandidateScore
 	lastReq *dispatchconsoleservice.MoveCandidatesRequest
 }
 
 func (f *fakeRanker) GetMoveCandidates(
 	_ context.Context,
 	req *dispatchconsoleservice.MoveCandidatesRequest,
-) ([]*dispatchcandidateservice.CandidateScore, error) {
+) ([]*dispatchplanports.CandidateScore, error) {
 	f.lastReq = req
 
 	return f.scores, nil
 }
 
-func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
+func TestRankMoveCandidates_PricesDriversWithFindingsAndCostLines(t *testing.T) {
 	t.Parallel()
 
 	deadhead := 12.5
-	ranker := &fakeRanker{scores: []*dispatchcandidateservice.CandidateScore{
+	ranker := &fakeRanker{scores: []*dispatchplanports.CandidateScore{
 		{
-			WorkerID: pulid.MustNew(
-				"wrk_",
-			), WorkerName: "Dana Ortiz", TractorID: pulid.MustNew("trk_"),
-			Score: 88, Verdict: "Recommended", DeadheadMiles: &deadhead, ProjectedArrival: 1_790_000_000,
-			MinutesOfSlack: 40, HOSKnown: true, DriveRemainingMs: 7 * 3_600_000,
-			ShiftRemainingMs: 9 * 3_600_000,
-			Factors: []dispatchcandidateservice.ScoreFactor{
-				{Label: "Deadhead", Contribution: 30, Detail: "12.5 mi"},
+			WorkerID:   pulid.MustNew("wrk_"),
+			WorkerName: "Dana Ortiz",
+			TractorID:  pulid.MustNew("trk_"),
+			Cost: dispatcheconomics.Cost{
+				TotalCents: 4_249,
+				Lines: []dispatcheconomics.Line{
+					{Component: dispatcheconomics.ComponentEmptyMiles, Cents: 2_500},
+					{Component: dispatcheconomics.ComponentFairness, Cents: -150},
+				},
 			},
+			Verdict:          "Recommended",
+			DeadheadMiles:    &deadhead,
+			ProjectedArrival: 1_790_000_000,
+			MinutesOfSlack:   40,
+			SlackKnown:       true,
+			HOSKnown:         true,
+			DriveRemainingMs: 7 * 3_600_000,
+			ShiftRemainingMs: 9 * 3_600_000,
 		},
 		{
-			WorkerID: pulid.MustNew("wrk_"), WorkerName: "Lee Park", Score: 0, Verdict: "Blocked",
-			Findings: []dispatcheligibility.Finding{{
-				Code: "HOS_DRIVE", Severity: dispatcheligibility.SeverityBlock, Message: "No drive time left",
+			WorkerID:   pulid.MustNew("wrk_"),
+			WorkerName: "Lee Park",
+			Verdict:    "Blocked",
+			Findings: []dispatchfinding.Finding{{
+				Code:     dispatchfinding.CodeHOSNoDriveTime,
+				Severity: dispatchfinding.SeverityBlock,
+				Message:  "No drive time left",
 			}},
 		},
 	}}
@@ -67,15 +84,36 @@ func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
 
 	view := result.(*candidatesView)
 	assert.Equal(t, 2, view.Count)
-	assert.Equal(t, "Dana Ortiz", view.Candidates[0].WorkerName)
-	require.NotNil(t, view.Candidates[0].DriveRemainingHours)
-	assert.InDelta(t, 7, *view.Candidates[0].DriveRemainingHours, 0.001)
-	assert.Empty(t, view.Candidates[0].Hours)
-	assert.Nil(t, view.Candidates[1].DriveRemainingHours, "no reading is not zero hours")
-	assert.Contains(t, view.Candidates[1].Hours, "unknown, not zero")
-	assert.Equal(t, "Deadhead", view.Candidates[0].Factors[0].Label)
-	assert.True(t, view.Candidates[1].Blocked)
-	assert.Equal(t, "HOS_DRIVE", view.Candidates[1].Findings[0].Code)
+
+	priced := view.Candidates[0]
+	assert.Equal(t, "Dana Ortiz", priced.WorkerName)
+	assert.Equal(t, "$42", priced.Cost)
+	assert.Equal(t, []costLineView{
+		{Component: "empty miles", Dollars: "$25"},
+		{Component: "miles above the fleet median", Dollars: "-$2"},
+	}, priced.CostLines)
+	require.NotNil(t, priced.MinutesOfSlack)
+	assert.Equal(t, int64(40), *priced.MinutesOfSlack)
+	require.NotNil(t, priced.DriveRemainingHours)
+	assert.InDelta(t, 7, *priced.DriveRemainingHours, 0.001)
+	assert.Empty(t, priced.Hours)
+	assert.False(t, priced.Blocked)
+	assert.Empty(t, priced.TrailerID)
+
+	blocked := view.Candidates[1]
+	assert.Nil(t, blocked.DriveRemainingHours, "no reading is not zero hours")
+	assert.Contains(t, blocked.Hours, "unknown, not zero")
+	assert.Nil(t, blocked.MinutesOfSlack, "slack that is not known is left out")
+	assert.True(t, blocked.Blocked)
+	assert.Equal(t, "$0", blocked.Cost)
+	assert.Empty(t, blocked.CostLines)
+	assert.Empty(t, blocked.TractorID)
+	require.Len(t, blocked.Findings, 1)
+	assert.Equal(t, findingView{
+		Code:     dispatchfinding.CodeHOSNoDriveTime,
+		Severity: "Block",
+		Message:  "No drive time left",
+	}, blocked.Findings[0])
 
 	assert.Equal(t, moveID, ranker.lastReq.MoveID)
 	assert.True(t, ranker.lastReq.IncludeBlocked)
@@ -113,22 +151,59 @@ func (f *fakePlanner) Plan(
 func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	t.Parallel()
 
-	planner := &fakePlanner{plan: &dispatchconsoleports.DispatchPlan{
-		PlanningMode: "Balanced",
-		TotalScore:   140,
-		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{{
-			MoveID: pulid.MustNew(
-				"smv_",
-			), ProNumber: "S1", WorkerID: pulid.MustNew("wrk_"), WorkerName: "Dana Ortiz",
-			Confidence: decimal.NewFromFloat(0.9), Rationale: "closest with hours",
-			Score: &dispatchcandidateservice.CandidateScore{Score: 88},
-		}},
-		Uncovered: []*dispatchconsoleports.DispatchUncoveredMove{{
-			MoveID: pulid.MustNew("smv_"), ProNumber: "S2", Reason: "no eligible driver",
-			BestBlockedFindings: []dispatcheligibility.Finding{
-				{Code: "HOS_DRIVE", Message: "No drive time left"},
+	deadhead := 18.0
+	chosen := &dispatchplanports.CandidateScore{
+		WorkerID:      pulid.MustNew("wrk_"),
+		WorkerName:    "Dana Ortiz",
+		TractorID:     pulid.MustNew("trk_"),
+		TrailerID:     pulid.MustNew("trl_"),
+		Cost:          dispatcheconomics.Cost{TotalCents: 8_850},
+		DeadheadMiles: &deadhead,
+	}
+	blocked := &dispatchplanports.CandidateScore{
+		WorkerName: "Lee Park",
+		Findings: []dispatchfinding.Finding{
+			{
+				Code:     dispatchfinding.CodeMVROverdue,
+				Severity: dispatchfinding.SeverityWarn,
+				Message:  "Annual MVR check is overdue",
 			},
-		}},
+			{
+				Code:     dispatchfinding.CodeHOSNoDriveTime,
+				Severity: dispatchfinding.SeverityBlock,
+				Message:  "No drive time left",
+			},
+		},
+	}
+	assignedMoveID := pulid.MustNew("smv_")
+	planner := &fakePlanner{plan: &dispatchconsoleports.DispatchPlan{
+		Mode:      dispatchcontrol.PlanningModeImmediate,
+		CostCents: 12_345,
+		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{
+			nil,
+			{
+				Pairing: &dispatchplanports.Pairing{
+					MoveID:    assignedMoveID,
+					ProNumber: "S1",
+					Candidate: chosen,
+				},
+				Confidence: decimal.RequireFromString("0.9"),
+				Rationale:  "Dana Ortiz costs $89 to cover S1, which is worth $1200.",
+			},
+		},
+		Uncovered: []*dispatchplanports.Uncovered{
+			{
+				MoveID:        pulid.MustNew("smv_"),
+				ProNumber:     "S2",
+				Reason:        dispatchplanprice.UncoveredDisqualified,
+				BestCandidate: blocked,
+			},
+			{
+				MoveID:    pulid.MustNew("smv_"),
+				ProNumber: "S3",
+				Reason:    dispatchplanprice.UncoveredNoCandidate,
+			},
+		},
 	}}
 	tool := NewPlanDispatchTool(planner)
 
@@ -140,16 +215,57 @@ func TestPlanDispatch_IsAlwaysADryRunOverTheWindow(t *testing.T) {
 	require.NoError(t, err)
 
 	view := result.(*planView)
-	require.Len(t, view.Assignments, 1)
-	assert.Equal(t, 88, view.Assignments[0].Score)
-	assert.Equal(t, "0.9", view.Assignments[0].Confidence)
-	require.Len(t, view.Uncovered, 1)
-	assert.Equal(t, "HOS_DRIVE", view.Uncovered[0].Findings[0].Code)
+	assert.Equal(t, "Immediate", view.PlanningMode)
+	assert.Equal(t, "$123", view.Cost)
+	require.Len(t, view.Assignments, 1, "a nil line is skipped")
+	assert.Equal(t, plannedAssignmentView{
+		MoveID:     assignedMoveID.String(),
+		ProNumber:  "S1",
+		WorkerID:   chosen.WorkerID.String(),
+		WorkerName: "Dana Ortiz",
+		TractorID:  chosen.TractorID.String(),
+		TrailerID:  chosen.TrailerID.String(),
+		Cost:       "$89",
+		Confidence: "0.9",
+		Rationale:  "Dana Ortiz costs $89 to cover S1, which is worth $1200.",
+		Deadhead:   &deadhead,
+	}, view.Assignments[0])
+
+	require.Len(t, view.Uncovered, 2)
+	assert.Equal(t, "S2", view.Uncovered[0].ProNumber)
+	assert.Equal(
+		t,
+		"The nearest driver, Lee Park, can't take it: No drive time left.",
+		view.Uncovered[0].Reason,
+	)
+	require.Len(t, view.Uncovered[0].Findings, 1, "only blocking findings explain a gap")
+	assert.Equal(t, dispatchfinding.CodeHOSNoDriveTime, view.Uncovered[0].Findings[0].Code)
+	assert.Equal(t, "No driver could take this move.", view.Uncovered[1].Reason)
+	assert.Empty(t, view.Uncovered[1].Findings)
 	assert.Contains(t, view.Note, "dry run")
 
 	assert.False(t, planner.lastReq.Apply, "the planner never applies from a tool")
+	assert.Equal(t, agent.RunTriggerChat, planner.lastReq.Trigger)
 	assert.Equal(t, []pulid.ID{moveID}, planner.lastReq.MoveIDs)
 	assert.Equal(t, int64(48*3600), planner.lastReq.WindowEnd-planner.lastReq.WindowStart)
+}
+
+func TestPlanDispatch_AnOutOfRangeHorizonFallsBackToADay(t *testing.T) {
+	t.Parallel()
+
+	planner := &fakePlanner{plan: &dispatchconsoleports.DispatchPlan{}}
+	tool := NewPlanDispatchTool(planner)
+
+	_, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
+		"hoursAhead": 500,
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(
+		t,
+		int64(defaultPlanHours*3600),
+		planner.lastReq.WindowEnd-planner.lastReq.WindowStart,
+	)
 }
 
 func TestOptionalPulidSlice_RefusesJunk(t *testing.T) {

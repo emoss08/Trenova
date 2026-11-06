@@ -47,6 +47,7 @@ type Params struct {
 	Logger              *zap.Logger
 	Watchtower          watchtowerports.WatchtowerProjector
 	Waits               agentwaitports.AgentWaitNotifier
+	HomeVisits          telematicsports.HomeVisitRecorder
 }
 
 type Service struct {
@@ -64,6 +65,7 @@ type Service struct {
 	customFieldValues   *customfieldservice.ValuesService
 	watchtower          watchtowerports.WatchtowerProjector
 	waits               agentwaitports.AgentWaitNotifier
+	homeVisits          telematicsports.HomeVisitRecorder
 	l                   *zap.Logger
 }
 
@@ -83,6 +85,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		customFieldValues:   p.CustomFieldValues,
 		watchtower:          p.Watchtower,
 		waits:               p.Waits,
+		homeVisits:          p.HomeVisits,
 		l:                   p.Logger.Named("telematics-service"),
 	}
 }

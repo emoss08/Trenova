@@ -26,14 +26,10 @@ type structuredCall struct {
 	schemaName string
 	context    llmports.DelimitedContext
 	schema     map[string]any
-	evaluation bool
 }
 
 func (c *structuredCall) novaTask(maxTokens int) *llmports.NovaTask {
 	attribution := documentAttribution(c.tenant, c.documentID, c.feature)
-	if c.evaluation {
-		attribution.Purpose = aiusageports.AIUsagePurposeEvaluation
-	}
 
 	return &llmports.NovaTask{
 		Name:         c.task,

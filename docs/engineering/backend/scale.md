@@ -31,6 +31,14 @@ fails it, fix it in the same change if it is small, or name it in your report.
   (`detentionrepository/intelligence.go`, `invoiced`). Measure under the application role, not
   as the superuser, who skips the policies
   ([row-level-security.md](../row-level-security.md#what-the-scope-costs)).
+- **A per-row fact from a small set in one pass.** A fact each row of a large list needs from a
+  small live set (a driver's open work among the tenant's open moves) is a grouped or
+  `DISTINCT ON` CTE over that set, joined to the list, never a correlated subquery or lateral
+  that walks each row's whole history to keep the few live rows. The dispatch driver read's
+  open-work count and final drop (`dispatchconsolerepository`, `openWork`, `finalDrops`): the
+  near-ordered read takes 69 ms this way against 548 ms as per-driver probes through about 26
+  historical assignments each, under the application role, and the plain board read 10-23 ms
+  against 100-130 ms.
 - **History in one pass.** A balance or state "as of" a series of dates is never a correlated
   subquery per row per date. Read the changes once, fold them into segments with a window
   function, expand each segment onto the dates it covers, and read only rows open now or

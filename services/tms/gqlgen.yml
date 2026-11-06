@@ -5335,6 +5335,15 @@ models:
   AIUsageSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports.AIUsageSummary
+  DispatchStyle:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports.Style
+  DispatchStyleWeight:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatchlearning.LearnedWeight
+  DispatchStyleComponent:
+    model:
+      - github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics.Component
   AIControlTab:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary.Tab

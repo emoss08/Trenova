@@ -40,7 +40,7 @@ const cleanPreview = {
   trailerId: "trl_9",
   requiresOverride: false,
   blocked: false,
-  score: {
+  candidate: {
     verdict: "feasible",
     findings: [],
     hosStrategy: "currentClocks",
@@ -48,8 +48,10 @@ const cleanPreview = {
     deadheadMiles: 38,
     driveRemainingMs: 24_000_000,
     minutesOfSlack: 22,
-    score: 83,
-    factors: [],
+    slackKnown: true,
+    hosKnown: true,
+    costCents: 8_300,
+    costLines: [{ component: "emptyMiles", cents: 7_600, soft: false }],
   },
 } as unknown as DispatchAssignmentPreview;
 

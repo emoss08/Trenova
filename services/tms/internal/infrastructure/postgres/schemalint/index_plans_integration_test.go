@@ -12,8 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchlearningrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket/dispatchmarketdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice/dispatchplanpricedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage/storedmileagedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
@@ -39,6 +44,9 @@ func TestHotPathQueriesReachTheirIndexesUnderAGenericPlan(t *testing.T) {
 	tr := tractordb.Tractors
 	ac := accessorialchargedb.AccessorialCharges
 	sp := shipmentdb.Shipments
+	pp := dispatchplanpricedb.DispatchPlanPrices
+	mv := dispatchmarketdb.MarketValues
+	dc := dispatchcontroldb.DispatchControls
 
 	cases := []struct {
 		name  string
@@ -98,6 +106,37 @@ func TestHotPathQueriesReachTheirIndexesUnderAGenericPlan(t *testing.T) {
 			sp.ExternalReference.Lower().Eq("po-1"),
 			sp.Status.Ne(shipmentvocab.StatusCanceled),
 		), "uq_shipments_external_reference"},
+		{
+			"dispatch learning decisions after the cursor",
+			true,
+			dispatchlearningrepository.DecisionEventsQuery(dispatchlearningports.DecisionCursor{
+				At: 1_700_000_000,
+				ID: pulid.ID("sev_1"),
+			}, 500),
+			"idx_shipment_events_user_driver_assigned",
+		},
+		{
+			"plan prices by move",
+			true,
+			pp.Where(pp.MoveID.In(pulid.ID("smv_1"), pulid.ID("smv_2"))).Limit(2),
+			"uq_dispatch_plan_prices_move",
+		},
+		{
+			"market values by cell",
+			true,
+			mv.Where(mv.Cell.In(int64(1), int64(2))).Limit(84),
+			"uq_dispatch_market_values_cell_slot",
+		},
+		{
+			"organizations that learn their dispatch style",
+			false,
+			dc.AllTenants().
+				Pick(dc.OrganizationID, dc.BusinessUnitID).
+				Where(dc.LearnDispatchStyle.IsTrue()).
+				Order(dc.OrganizationID.Asc(), dc.BusinessUnitID.Asc()).
+				Limit(100),
+			"idx_dispatch_controls_learn_dispatch_style",
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

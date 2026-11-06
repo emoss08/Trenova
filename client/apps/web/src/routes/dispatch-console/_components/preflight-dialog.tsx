@@ -32,7 +32,8 @@ import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { formatMiles, hosStrategyMeta, pickupState, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
-import { ScoreBreakdown } from "./score-breakdown";
+import { CostBreakdown } from "./cost-breakdown";
+import { preferenceFloorOf } from "./cost-vocabulary";
 
 const VERDICT_BANNER: Record<
   string,
@@ -69,14 +70,14 @@ function verdictLead(preview: DispatchAssignmentPreview): {
   message: string;
   promotedFinding: string | null;
 } {
-  const block = preview.score.findings.find((finding) => finding.severity === "Block");
+  const block = preview.candidate.findings.find((finding) => finding.severity === "Block");
   if (block) {
     return { message: block.message, promotedFinding: `${block.code}-${block.field}` };
   }
 
-  const strategy = hosStrategyMeta(preview.score.hosStrategy);
-  if (strategy && preview.score.hosStrategy !== "currentClocks") {
-    const deadline = preview.score.hosRestStartDeadline;
+  const strategy = hosStrategyMeta(preview.candidate.hosStrategy);
+  if (strategy && preview.candidate.hosStrategy !== "currentClocks") {
+    const deadline = preview.candidate.hosRestStartDeadline;
     const message =
       deadline > 0
         ? translate("{0} — rest must start by {1}", strategy.phrase, formatUnixTime(deadline))
@@ -84,7 +85,7 @@ function verdictLead(preview: DispatchAssignmentPreview): {
     return { message, promotedFinding: null };
   }
 
-  switch (preview.score.verdict) {
+  switch (preview.candidate.verdict) {
     case "feasible":
       return { message: translate("No blockers found for this pairing."), promotedFinding: null };
     case "tight":
@@ -152,17 +153,17 @@ export function PreflightDialog({
     }),
   );
 
-  const verdict = data ? verdictMeta(data.score.verdict) : null;
-  const banner = data ? (VERDICT_BANNER[data.score.verdict] ?? VERDICT_BANNER.unknown) : null;
+  const verdict = data ? verdictMeta(data.candidate.verdict) : null;
+  const banner = data ? (VERDICT_BANNER[data.candidate.verdict] ?? VERDICT_BANNER.unknown) : null;
   const lead = data ? verdictLead(data) : null;
   const tractorId = data?.tractorId ?? driver.tractorId;
   // Nothing commits on a pairing the dispatcher has not seen checked: confirm waits for
   // the preview, and stays off when it could not be read.
   const canAssign = Boolean(tractorId) && Boolean(data);
   const pickup = pickupState(move, nowSeconds, formatUnixTime);
-  const slack = data?.score.minutesOfSlack ?? 0;
+  const slack = data?.candidate.minutesOfSlack ?? 0;
   const listedFindings =
-    data?.score.findings.filter(
+    data?.candidate.findings.filter(
       (finding) => `${finding.code}-${finding.field}` !== lead?.promotedFinding,
     ) ?? [];
 
@@ -283,9 +284,9 @@ export function PreflightDialog({
               ) : null}
 
               <div className="divide-border border-border grid grid-cols-3 divide-x rounded-md border">
-                <Stat value={formatMiles(data.score.deadheadMiles)} label={t("Empty miles")} />
+                <Stat value={formatMiles(data.candidate.deadheadMiles)} label={t("Empty miles")} />
                 <Stat
-                  value={formatClockDurationMs(data.score.driveRemainingMs)}
+                  value={formatClockDurationMs(data.candidate.driveRemainingMs)}
                   label={t("Drive left")}
                 />
                 <Stat
@@ -308,7 +309,10 @@ export function PreflightDialog({
               ) : null}
 
               <div className="border-border border-t pt-3.5">
-                <ScoreBreakdown score={data.score.score} factors={data.score.factors} />
+                <CostBreakdown
+                  candidate={data.candidate}
+                  preferenceFloorCents={preferenceFloorOf(move)}
+                />
               </div>
             </div>
           </ScrollArea>

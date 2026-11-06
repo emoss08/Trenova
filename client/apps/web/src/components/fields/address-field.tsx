@@ -34,7 +34,7 @@ type AddressFieldProps<TForm extends FieldValues> = {
   control: Control<TForm>;
   onLocationSelect?: (location: LocationDetails) => void;
   populateFields?: boolean;
-  nameField?: Path<TForm>;
+  nameField?: Path<TForm> | null;
   addressLine1Field?: Path<TForm>;
   cityField?: Path<TForm>;
   stateIdField?: Path<TForm>;
