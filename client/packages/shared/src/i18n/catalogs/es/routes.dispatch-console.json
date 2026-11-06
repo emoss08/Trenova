@@ -4,7 +4,7 @@
   "2 Days": "2 días",
   "3 Days": "3 días",
   "34-hour restart": "Reinicio de 34 horas",
-  "Accepted by": "Aceptado por",
+  "Accepted by <carrier>{0}</carrier>": "Aceptado por <carrier>{0}</carrier>",
   "Agreed at {0} after a counter-offer": "Acordado en {0} tras una contraoferta",
   "All carriers at once — first accept wins": "Todos los transportistas a la vez: gana el primero que acepte",
   "Approval failed": "No se pudo aprobar",

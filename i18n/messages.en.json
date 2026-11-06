@@ -16242,7 +16242,7 @@
       "routes/edi"
     ]
   },
-  "Accepted by": {
+  "Accepted by <carrier>{0}</carrier>": {
     "sites": 1,
     "scope": [
       "ts"
@@ -21866,7 +21866,7 @@
     ]
   },
   "Address Line 1": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -122831,6 +122831,33 @@
       "routes/admin"
     ]
   },
+  "Home latitude and longitude are set together": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Home latitude must be between -90 and 90": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Home longitude must be between -180 and 180": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Home page": {
     "sites": 2,
     "scope": [
@@ -138270,6 +138297,15 @@
       "go/other"
     ]
   },
+  "Last Home": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Last Inspection": {
     "sites": 1,
     "scope": [
@@ -138542,6 +138578,34 @@
     ],
     "areas": [
       "routes/fuel-card"
+    ]
+  },
+  "Last home": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console",
+      "routes/worker"
+    ]
+  },
+  "Last home cannot be before 1970": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Last home cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Last inspected": {
@@ -148358,7 +148422,7 @@
     ]
   },
   "MM/DD/YYYY": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -258249,6 +258313,15 @@
       "routes/worker"
     ]
   },
+  "Street address of the worker's residence. Pick it from the list so dispatch knows where home is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "Street address or city, state": {
     "sites": 1,
     "scope": [
@@ -319358,6 +319431,24 @@
       "routes/worker"
     ]
   },
+  "When the driver was last at home, as a dispatcher recorded it or as the telematics feed saw them there. The planner also counts the end of approved time off as a day at home.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "When the driver was last at home. Dispatch plans home time from it, the end of approved time off, and telematics seeing the tractor near home.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "When the employee came back to full duty.": {
     "sites": 1,
     "scope": [
@@ -333164,7 +333255,7 @@
     ]
   },
   "e.g. 1200 W Main St": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

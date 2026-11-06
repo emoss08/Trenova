@@ -4,7 +4,7 @@
   "2 Days": "2 天",
   "3 Days": "3 天",
   "34-hour restart": "34 小時重啟",
-  "Accepted by": "接受者",
+  "Accepted by <carrier>{0}</carrier>": "由 <carrier>{0}</carrier> 接受",
   "Agreed at {0} after a counter-offer": "經還價後議定為 {0}",
   "All carriers at once — first accept wins": "同時發送給所有承運業者 — 先接受者得標",
   "Approval failed": "核准失敗",
