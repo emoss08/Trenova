@@ -95,7 +95,7 @@ func evaluate(
 			ApprovedPTO:      profile.pto,
 			CommittedWindows: profile.committedWindows,
 		},
-		Requirements:     requirementsFor(move),
+		Requirements:     requirementsFor(move, &eval.trip),
 		Control:          snapshot.Control,
 		Now:              snapshot.Now,
 		TelematicsActive: snapshot.TelematicsActive,
@@ -126,19 +126,27 @@ func evaluate(
 	return eval
 }
 
-func requirementsFor(move *dispatchboardports.BoardMove) dispatcheligibility.MoveRequirements {
+func requirementsFor(
+	move *dispatchboardports.BoardMove,
+	t *trip,
+) dispatcheligibility.MoveRequirements {
 	return dispatcheligibility.MoveRequirements{
-		MoveID:     move.MoveID,
-		ShipmentID: move.ShipmentID,
-		Window: dispatcheligibility.TimeWindow{
-			Start: move.OriginWindowStart,
-			End:   MoveWindowEnd(move),
-		},
+		MoveID:                move.MoveID,
+		ShipmentID:            move.ShipmentID,
+		Window:                busyWindow(move, t),
 		HasHazmatCommodities:  move.HasHazmat,
 		HasActiveHold:         move.HasActiveHold,
 		RequiredTractorTypeID: move.RequiredTractorTypeID,
 		RequiredTrailerTypeID: move.RequiredTrailerTypeID,
 	}
+}
+
+func busyWindow(move *dispatchboardports.BoardMove, t *trip) dispatcheligibility.TimeWindow {
+	if t.departure > 0 && t.freeAt > t.departure {
+		return dispatcheligibility.TimeWindow{Start: t.departure, End: t.freeAt}
+	}
+
+	return dispatcheligibility.TimeWindow{Start: move.OriginWindowStart, End: MoveWindowEnd(move)}
 }
 
 func planDistances(
@@ -224,7 +232,8 @@ func scheduleTrip(
 		t.pickupLateMinutes = lateMinutes(t.pickupArrival, max(appointment, now))
 	}
 	if windowClose := MoveWindowEnd(move); windowClose > 0 {
-		t.deliveryLateMinutes = lateMinutes(t.deliveryArrival, max(windowClose, now))
+		earliestDelivery := max(now, move.OriginWindowStart) + dwell + t.loadedSeconds
+		t.deliveryLateMinutes = lateMinutes(t.deliveryArrival, max(windowClose, earliestDelivery))
 	}
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -109,7 +110,7 @@ func TestEvaluate_DeliveryLatenessIsPricedPerMinute(t *testing.T) {
 	t.Parallel()
 
 	const dwell = int64(dispatchcontrol.DefaultEtaDwellMinutes) * 60
-	arrival := testNow + dwell + 14_400
+	earliest := testNow + dwell + 14_400
 
 	tests := []struct {
 		name        string
@@ -118,14 +119,14 @@ func TestEvaluate_DeliveryLatenessIsPricedPerMinute(t *testing.T) {
 		lateMinutes int64
 	}{
 		{
-			name:        "four hours past a delivery appointment",
+			name:        "lateness every driver would have costs nothing",
 			windowStart: testNow + 3_600,
-			lateMinutes: 240,
+			lateMinutes: 0,
 		},
 		{
 			name:        "the window end counts, not its start",
 			windowStart: testNow + 3_600,
-			windowEnd:   new(arrival + 600),
+			windowEnd:   new(earliest + 600),
 			lateMinutes: 0,
 		},
 		{
@@ -147,13 +148,34 @@ func TestEvaluate_DeliveryLatenessIsPricedPerMinute(t *testing.T) {
 			eval := evaluateFor(s, driver, move, nil)
 			score := candidateFrom(s, eval)
 
-			assert.Equal(t, arrival, eval.trip.deliveryArrival)
+			assert.Equal(t, earliest, eval.trip.deliveryArrival)
 			assert.InDelta(t, float64(tt.lateMinutes), eval.features.DeliveryLateMinutes, 0.0001)
 			assert.Equal(t, tt.lateMinutes, score.DeliveryLateMinutes)
 			assert.Equal(t, tt.lateMinutes*100,
 				costLine(score.Cost, dispatcheconomics.ComponentLateness))
 		})
 	}
+}
+
+func TestEvaluate_ADistantDriverPaysOnlyForTheDelayTheyAdd(t *testing.T) {
+	t.Parallel()
+
+	const dwell = int64(dispatchcontrol.DefaultEtaDwellMinutes) * 60
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", denverLat, denverLon)
+	move := pickupAt(chicagoLat, chicagoLon, 200)
+	move.DestinationWindowStart = testNow + 3_600
+
+	eval := evaluateFor(s, driver, move, nil)
+
+	deadhead := geoutils.PlanningDriveSeconds(
+		geoutils.PlanningRoadMiles(denverLat, denverLon, chicagoLat, chicagoLon),
+	)
+	added := eval.trip.deliveryArrival - (testNow + dwell + 14_400)
+	require.Positive(t, added)
+	assert.InDelta(t, float64(added)/60, eval.features.DeliveryLateMinutes, 0.0001,
+		"the four hours the move is late anyway are not this driver's")
+	assert.GreaterOrEqual(t, added, deadhead)
 }
 
 func TestEvaluate_EarlyArrivalPastTheGraceIsPricedAsIdleWait(t *testing.T) {
@@ -416,4 +438,50 @@ func TestResolveTrailer_PrefersTheExistingAssignment(t *testing.T) {
 		PreviousMoveTrailerID: previous,
 	}))
 	assert.True(t, resolveTrailer(&dispatchboardports.BoardMove{}).IsNil())
+}
+
+func TestEvaluate_WorkDoneBeforeALateLoadsStaleWindowDoesNotBlockADriverFreeNow(t *testing.T) {
+	t.Parallel()
+
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", chicagoLat, chicagoLon)
+	move := pickupAt(chicagoLat, chicagoLon, 200)
+	move.OriginWindowStart = testNow - 2*24*3600
+	move.DestinationWindowStart = testNow - 2*24*3600 + 8*3600
+	s.CommitmentsByWorker[driver.WorkerID] = []*dispatchboardports.WorkerCommitment{{
+		WorkerID:    driver.WorkerID,
+		MoveID:      pulid.MustNew("smv_"),
+		WindowStart: testNow - 2*24*3600,
+		WindowEnd:   testNow - 2*24*3600 + 6*3600,
+		ExpectedEnd: testNow - 2*24*3600 + 6*3600,
+	}}
+
+	eval := evaluateFor(s, driver, move, nil)
+
+	assert.NotContains(t, findingCodes(eval), dispatchfinding.CodeWorkerOverlappingMove,
+		"the driver did that work two days ago and is free to take the load now")
+}
+
+func TestEvaluate_ADriverWithLaterWorkTakesTheLoadAfterItAndPaysTheWait(t *testing.T) {
+	t.Parallel()
+
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", chicagoLat, chicagoLon)
+	move := pickupAt(chicagoLat, chicagoLon, 200)
+	move.OriginWindowStart = testNow
+	committedEnd := testNow + 10*3600
+	s.CommitmentsByWorker[driver.WorkerID] = []*dispatchboardports.WorkerCommitment{{
+		WorkerID:    driver.WorkerID,
+		MoveID:      pulid.MustNew("smv_"),
+		WindowStart: testNow + 2*3600,
+		WindowEnd:   committedEnd,
+		ExpectedEnd: committedEnd,
+	}}
+
+	eval := evaluateFor(s, driver, move, nil)
+
+	assert.GreaterOrEqual(t, eval.trip.departure, committedEnd,
+		"the trip is planned after the work the driver already holds")
+	assert.NotContains(t, findingCodes(eval), dispatchfinding.CodeWorkerOverlappingMove)
+	assert.Positive(t, eval.features.PickupLateMinutes, "waiting for the driver shows up as cost")
 }
