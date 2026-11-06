@@ -658,13 +658,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "homePlaceId",
-				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.Worker)
 					return obj.HomePlaceID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "lastHomeAt",

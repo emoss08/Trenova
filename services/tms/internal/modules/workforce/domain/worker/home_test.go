@@ -3,6 +3,8 @@ package worker
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -82,4 +84,33 @@ func TestValidate_RefusesAHalfSetHomeAndALastHomeInTheFuture(t *testing.T) {
 
 	assert.Contains(t, fields, "homeLatitude")
 	assert.Contains(t, fields, "lastHomeAt")
+}
+
+func TestWithholdFields_HidesTheHomePointWithoutPersonalDetails(t *testing.T) {
+	t.Parallel()
+
+	w := homedWorker()
+	w.WithholdFields(0)
+
+	assert.Nil(t, w.HomeLatitude)
+	assert.Nil(t, w.HomeLongitude)
+	assert.Empty(t, w.HomePlaceID)
+
+	shown := homedWorker()
+	shown.WithholdFields(protectedfield.AllGroups())
+	assert.NotNil(t, shown.HomeLatitude, "a reader with personal details sees where home is")
+}
+
+func TestKeepFields_KeepsTheStoredHomeWhenTheEditorCannotSeeIt(t *testing.T) {
+	t.Parallel()
+
+	stored := homedWorker()
+	edited := homedWorker()
+	edited.HomeLatitude, edited.HomeLongitude, edited.HomePlaceID = nil, nil, ""
+
+	edited.KeepFields(stored, 0)
+
+	assert.InDelta(t, 41.52, *edited.HomeLatitude, 0.0001,
+		"a save by someone who cannot see the home point never clears it")
+	assert.Equal(t, "place_1", edited.HomePlaceID)
 }
