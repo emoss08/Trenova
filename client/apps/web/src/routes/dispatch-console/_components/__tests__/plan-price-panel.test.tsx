@@ -15,6 +15,7 @@ function price(overrides: Partial<DispatchMovePlanPrice> = {}): DispatchMovePlan
     workerId: "wrk_1",
     workerName: "Ana Ruiz",
     costCents: 14_200,
+    preferenceFloorCents: 0,
     coveragePriceCents: 90_000,
     driverValueCents: 3_100,
     uncoveredReason: null,

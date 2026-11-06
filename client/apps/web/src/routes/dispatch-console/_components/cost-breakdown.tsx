@@ -13,10 +13,12 @@ import { costComponentLabel, costLineFact, formatCents } from "./cost-vocabulary
 export function CostBreakdown({
   candidate,
   coveragePriceCents,
+  preferenceFloorCents = 0,
   className,
 }: {
   candidate: DispatchCandidate;
   coveragePriceCents?: number;
+  preferenceFloorCents?: number;
   className?: string;
 }) {
   const t = useT();
@@ -30,7 +32,7 @@ export function CostBreakdown({
         <span className="text-muted-foreground text-xs font-medium">{t("Cost to cover")}</span>
         <span className="flex items-baseline gap-1.5">
           <span className="text-lg leading-none font-semibold tabular-nums">
-            {formatCents(candidate.costCents)}
+            {formatCents(candidate.costCents - preferenceFloorCents)}
           </span>
           {coveragePriceCents != null ? (
             <span className="text-muted-foreground text-2xs">
@@ -49,6 +51,16 @@ export function CostBreakdown({
             <div className="flex flex-col gap-1.5">
               <span className="text-muted-foreground text-2xs font-medium">{t("Preferences")}</span>
               <CostLines lines={soft} candidate={candidate} largest={largest} />
+              {preferenceFloorCents > 0 ? (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-medium">
+                    {t("Less what the best driver pays in preferences")}
+                  </span>
+                  <span className="text-success-foreground text-xs font-medium tabular-nums">
+                    {formatCents(-preferenceFloorCents)}
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </>

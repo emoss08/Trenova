@@ -60,11 +60,12 @@ func planImmediate(
 		}
 
 		arc, _ := arcFor(graph.Arcs[i], col)
-		pairing := pairingOf(move, arc.Candidate, graph.Coverage[i])
+		pairing := pairingOf(move, arc.Candidate, arc.CostCents, graph.Coverage[i])
+		pairing.PreferenceFloorCents = graph.PreferenceFloor[i]
 		pairing.DriverValueCents = values[col]
 		pairing.Alternatives = alternativesByRow[i]
 		plan.Pairings = append(plan.Pairings, pairing)
-		plan.CostCents += arc.Candidate.Cost.TotalCents
+		plan.CostCents += arc.CostCents
 	}
 }
 
@@ -81,6 +82,7 @@ func arcFor(arcs []dispatchcandidateservice.Arc, driver int) (dispatchcandidates
 func pairingOf(
 	move *dispatchboardports.BoardMove,
 	candidate *dispatchplanports.CandidateScore,
+	planCost int64,
 	coverage int64,
 ) *dispatchplanports.Pairing {
 	return &dispatchplanports.Pairing{
@@ -95,6 +97,7 @@ func pairingOf(
 		),
 		PickupOpens:         move.OriginWindowStart,
 		Candidate:           candidate,
+		PlanCostCents:       planCost,
 		CoveragePriceCents:  coverage,
 		ProjectedStartAt:    candidate.ProjectedArrival,
 		ProjectedCompleteAt: candidate.ProjectedFreeAt,
@@ -166,7 +169,7 @@ func alternatives(
 			WorkerID:   arc.Candidate.WorkerID,
 			WorkerName: arc.Candidate.WorkerName,
 			ExtraCents: extra,
-			CostCents:  arc.Candidate.Cost.TotalCents,
+			CostCents:  arc.CostCents,
 			Lines:      arc.Candidate.Cost.Lines,
 		})
 	}
@@ -180,10 +183,11 @@ func alternatives(
 func uncoveredOf(graph *dispatchcandidateservice.Graph, row int) *dispatchplanports.Uncovered {
 	move := graph.Moves[row]
 	uncovered := &dispatchplanports.Uncovered{
-		MoveID:             move.MoveID,
-		ProNumber:          move.ProNumber,
-		StartsAt:           move.OriginWindowStart,
-		CoveragePriceCents: graph.Coverage[row],
+		MoveID:               move.MoveID,
+		ProNumber:            move.ProNumber,
+		StartsAt:             move.OriginWindowStart,
+		CoveragePriceCents:   graph.Coverage[row],
+		PreferenceFloorCents: graph.PreferenceFloor[row],
 	}
 
 	arcs := graph.Arcs[row]
@@ -195,6 +199,7 @@ func uncoveredOf(graph *dispatchcandidateservice.Graph, row int) *dispatchplanpo
 			}
 		}
 		uncovered.BestCandidate = cheapest.Candidate
+		uncovered.PlanCostCents = cheapest.CostCents
 		uncovered.Reason = dispatchplanprice.UncoveredOutbid
 		if cheapest.CostCents >= graph.Coverage[row] {
 			uncovered.Reason = dispatchplanprice.UncoveredNotWorthIt
@@ -204,6 +209,9 @@ func uncoveredOf(graph *dispatchcandidateservice.Graph, row int) *dispatchplanpo
 
 	rejected := graph.Rejected[row]
 	uncovered.BestCandidate = rejected
+	if rejected != nil {
+		uncovered.PlanCostCents = rejected.Cost.TotalCents
+	}
 	switch {
 	case rejected == nil:
 		uncovered.Reason = dispatchplanprice.UncoveredNoCandidate

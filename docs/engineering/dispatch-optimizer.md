@@ -16,6 +16,15 @@ Dispatch is economics, so every number the optimizer works with is in cents.
   history, safety, acceptance, trailer continuity, haul fit, time-off buffer) are *soft*:
   they only choose between drivers. They are normalized per move, so the cheapest soft cost
   among a move's candidates is zero. Missing data is neutral (quality 0.5), never free.
+- **Only avoidable lateness counts.** Delivery lateness is measured against the later of the
+  window's close and the earliest delivery any driver could make (pickup no earlier than now
+  or the window opening, plus dwell and the loaded drive). A load days past its window is not
+  priced out of coverage for lateness no driver choice could avoid.
+- **The plan's cost.** A pairing costs the plan its own cost less the move's preference floor
+  (what its cheapest candidate pays in preferences). That is the number weighed against the
+  coverage price, stated in the rationale, stored as `dispatch_plan_prices.cost_cents` with
+  `preference_floor_cents`, and shown for every candidate of a planned move, whose breakdown
+  ends with "less what the best driver pays in preferences".
 - **Coverage price.** Each move has a price for leaving it uncovered:
   `max(revenue × margin %, floor) + urgency premium` (`dispatchcost.CoveragePrice`; Late and
   Now buckets from `dispatchurgency`). A move is covered only when a driver costs less than
@@ -36,7 +45,9 @@ Dispatch is economics, so every number the optimizer works with is in cents.
 
 1. **Snapshot** (`dispatchcandidateservice.BuildSnapshot`): sequential, bounded reads of every
    dispatchable driver (`DriverLimit`, dispatchable first), commitments by overlap with ETA
-   ends and remaining drive from `stop_etas`, HOS, positions, history. `Prepare` builds one
+   ends and remaining drive from `stop_etas`, HOS, positions, history. A driver's trip is
+   scheduled after the work they already hold; time off and overlap are checked against that
+   projected trip (departure to free), not the move's scheduled window. `Prepare` builds one
    profile per driver: origin (commitment, then GPS, then tractor last known), HOS timeline
    carried through committed drive, history signals.
 2. **Graph** (`BuildGraph`): a quadtree picks the nearest drivers per move, the top

@@ -1581,6 +1581,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
+				Name:     "slackKnown",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchCandidate)
+					return obj.SlackKnown, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "deliveryLateMinutes",
 				NonNull:  true,
 				ChildErr: errNoChild4,
@@ -1589,6 +1599,16 @@ var Shard = &gqlexec.Shard{
 					return obj.DeliveryLateMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "hosKnown",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchCandidate)
+					return obj.HosKnown, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:     "driveRemainingMs",
@@ -2065,6 +2085,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
+				Name:     "preferenceFloorCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchMovePlanPrice)
+					return obj.PreferenceFloorCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "coveragePriceCents",
 				NonNull:  true,
 				ChildErr: errNoChild4,
@@ -2461,6 +2491,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDispatchCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCandidate),
 			},
 			{
+				Name:     "planCostCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchPlannedAssignment)
+					return obj.PlanCostCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "coveragePriceCents",
 				NonNull:  true,
 				ChildErr: errNoChild4,
@@ -2685,6 +2725,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Explanation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "planCostCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchUncoveredMove)
+					return obj.PlanCostCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "coveragePriceCents",

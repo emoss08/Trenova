@@ -38,16 +38,9 @@ func newHorizonTimeline(p *horizonParams) *horizonTimeline {
 		graph:      p.Graph,
 		snapshot:   p.Snapshot,
 		candidates: p.Candidates,
-		floor:      make([]int64, len(p.Graph.Moves)),
+		floor:      p.Graph.PreferenceFloor,
 		base:       maps.Clone(p.Snapshot.CommitmentsByWorker),
 		held:       make(map[int]int32),
-	}
-	for i, arcs := range p.Graph.Arcs {
-		for j, arc := range arcs {
-			if soft := arc.Candidate.SoftCents; j == 0 || soft < t.floor[i] {
-				t.floor[i] = soft
-			}
-		}
 	}
 
 	return t

@@ -13182,7 +13182,11 @@ type DispatchCandidate {
   projectedDelivery: Timestamp!
   projectedFreeAt: Timestamp!
   minutesOfSlack: Int!
+  "False when the move has no pickup appointment still ahead to measure margin against."
+  slackKnown: Boolean!
   deliveryLateMinutes: Int!
+  "False when the driver's hours of service are not known or are too old to trust."
+  hosKnown: Boolean!
   driveRemainingMs: Int!
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
@@ -13302,8 +13306,13 @@ type DispatchMovePlanPrice {
   workerId: ID
   "The planned driver, or for an uncovered move the cheapest driver the plan considered."
   workerName: String!
-  "What the named driver costs on this move, in cents."
+  "What the named driver costs the plan on this move, in cents."
   costCents: Int!
+  """
+  What the best driver for this move pays in preferences, in cents. A candidate costs the
+  plan its own cost less this, which is what the plan weighed against the coverage price.
+  """
+  preferenceFloorCents: Int!
   coveragePriceCents: Int!
   "How much more the plan costs without the planned driver, in cents."
   driverValueCents: Int!
@@ -13631,6 +13640,12 @@ type DispatchPlannedAssignment {
   autoExecutable: Boolean!
   proposalId: ID
   candidate: DispatchCandidate!
+  """
+  What this driver costs the plan on the move, in cents: the candidate's cost less what the
+  best driver for the move pays in preferences too. This is what was weighed against the
+  coverage price.
+  """
+  planCostCents: Int!
   "What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium."
   coveragePriceCents: Int!
   "What this driver is worth to the plan, in cents: how much more the plan costs without them."
@@ -13695,6 +13710,8 @@ type DispatchUncoveredMove {
   reason: DispatchUncoveredReason!
   "The reason in a sentence, with the driver it is about."
   explanation: String!
+  "What the cheapest driver would have cost the plan, in cents; zero when none could take it."
+  planCostCents: Int!
   coveragePriceCents: Int!
   "The nearest driver who could not take it, or the cheapest who was outbid."
   bestCandidate: DispatchCandidate

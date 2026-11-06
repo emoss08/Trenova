@@ -235,14 +235,15 @@ func mapDispatchMovePlanPrice(
 	}
 
 	return &gqlmodel.DispatchMovePlanPrice{
-		WorkerID:           gqlid.IDPtr(price.WorkerID),
-		WorkerName:         price.WorkerName,
-		CostCents:          int(price.CostCents),
-		CoveragePriceCents: int(price.CoveragePriceCents),
-		DriverValueCents:   int(price.DriverValueCents),
-		UncoveredReason:    reason,
-		Alternatives:       mapDispatchPlanAlternatives(price.Alternatives),
-		GeneratedAt:        int(price.GeneratedAt),
+		WorkerID:             gqlid.IDPtr(price.WorkerID),
+		WorkerName:           price.WorkerName,
+		CostCents:            int(price.CostCents),
+		PreferenceFloorCents: int(price.PreferenceFloorCents),
+		CoveragePriceCents:   int(price.CoveragePriceCents),
+		DriverValueCents:     int(price.DriverValueCents),
+		UncoveredReason:      reason,
+		Alternatives:         mapDispatchPlanAlternatives(price.Alternatives),
+		GeneratedAt:          int(price.GeneratedAt),
 	}
 }
 
@@ -409,6 +410,8 @@ func mapDispatchCandidate(
 		ProjectedDelivery:      int(score.ProjectedDelivery),
 		ProjectedFreeAt:        int(score.ProjectedFreeAt),
 		MinutesOfSlack:         int(score.MinutesOfSlack),
+		SlackKnown:             score.SlackKnown,
+		HosKnown:               score.HOSKnown,
 		DeliveryLateMinutes:    int(score.DeliveryLateMinutes),
 		DriveRemainingMs:       int(score.DriveRemainingMs),
 		ShiftRemainingMs:       int(score.ShiftRemainingMs),
@@ -461,6 +464,7 @@ func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.Dispatch
 			AutoExecutable:      planned.AutoExecutable,
 			ProposalID:          gqlid.IDPtr(planned.ProposalID),
 			Candidate:           mapDispatchCandidate(candidate),
+			PlanCostCents:       int(planned.PlanCostCents),
 			CoveragePriceCents:  int(planned.CoveragePriceCents),
 			DriverValueCents:    int(planned.DriverValueCents),
 			Alternatives:        mapDispatchPlanAlternatives(planned.Alternatives),
@@ -478,6 +482,7 @@ func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.Dispatch
 			ProNumber:          item.ProNumber,
 			Reason:             gqlmodel.DispatchUncoveredReason(item.Reason),
 			Explanation:        item.Explanation(),
+			PlanCostCents:      int(item.PlanCostCents),
 			CoveragePriceCents: int(item.CoveragePriceCents),
 			BestCandidate:      mapDispatchCandidate(item.BestCandidate),
 		})

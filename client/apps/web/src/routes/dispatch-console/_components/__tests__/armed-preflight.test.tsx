@@ -48,6 +48,8 @@ const cleanPreview = {
     deadheadMiles: 38,
     driveRemainingMs: 24_000_000,
     minutesOfSlack: 22,
+    slackKnown: true,
+    hosKnown: true,
     costCents: 8_300,
     costLines: [{ component: "emptyMiles", cents: 7_600, soft: false }],
   },

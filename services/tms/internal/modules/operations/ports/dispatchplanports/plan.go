@@ -21,16 +21,18 @@ type Request struct {
 }
 
 type Pairing struct {
-	MoveID             pulid.ID                        `json:"moveId"`
-	MoveVersion        int64                           `json:"moveVersion"`
-	ProNumber          string                          `json:"proNumber"`
-	OriginLabel        string                          `json:"originLabel"`
-	DestinationLabel   string                          `json:"destinationLabel"`
-	PickupOpens        int64                           `json:"pickupOpens"`
-	Candidate          *CandidateScore                 `json:"candidate"`
-	CoveragePriceCents int64                           `json:"coveragePriceCents"`
-	DriverValueCents   int64                           `json:"driverValueCents"`
-	Alternatives       []dispatchplanprice.Alternative `json:"alternatives"`
+	MoveID               pulid.ID                        `json:"moveId"`
+	MoveVersion          int64                           `json:"moveVersion"`
+	ProNumber            string                          `json:"proNumber"`
+	OriginLabel          string                          `json:"originLabel"`
+	DestinationLabel     string                          `json:"destinationLabel"`
+	PickupOpens          int64                           `json:"pickupOpens"`
+	Candidate            *CandidateScore                 `json:"candidate"`
+	PlanCostCents        int64                           `json:"planCostCents"`
+	PreferenceFloorCents int64                           `json:"preferenceFloorCents"`
+	CoveragePriceCents   int64                           `json:"coveragePriceCents"`
+	DriverValueCents     int64                           `json:"driverValueCents"`
+	Alternatives         []dispatchplanprice.Alternative `json:"alternatives"`
 
 	TourID              pulid.ID `json:"tourId"`
 	SequenceIndex       int      `json:"sequenceIndex"`
@@ -39,12 +41,14 @@ type Pairing struct {
 }
 
 type Uncovered struct {
-	MoveID             pulid.ID                          `json:"moveId"`
-	ProNumber          string                            `json:"proNumber"`
-	StartsAt           int64                             `json:"startsAt"`
-	Reason             dispatchplanprice.UncoveredReason `json:"reason"`
-	CoveragePriceCents int64                             `json:"coveragePriceCents"`
-	BestCandidate      *CandidateScore                   `json:"bestCandidate"`
+	MoveID               pulid.ID                          `json:"moveId"`
+	ProNumber            string                            `json:"proNumber"`
+	StartsAt             int64                             `json:"startsAt"`
+	Reason               dispatchplanprice.UncoveredReason `json:"reason"`
+	PlanCostCents        int64                             `json:"planCostCents"`
+	PreferenceFloorCents int64                             `json:"preferenceFloorCents"`
+	CoveragePriceCents   int64                             `json:"coveragePriceCents"`
+	BestCandidate        *CandidateScore                   `json:"bestCandidate"`
 }
 
 type Tour struct {
@@ -116,7 +120,7 @@ func (u *Uncovered) Explanation() string {
 		return fmt.Sprintf(
 			"Every driver costs more than leaving it: the cheapest, %s, costs %s against %s.",
 			best.WorkerName,
-			dispatcheconomics.Dollars(best.Cost.TotalCents),
+			dispatcheconomics.Dollars(u.PlanCostCents),
 			dispatcheconomics.Dollars(u.CoveragePriceCents),
 		)
 	case dispatchplanprice.UncoveredOutbid:

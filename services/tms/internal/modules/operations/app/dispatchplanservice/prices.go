@@ -40,32 +40,34 @@ func pricesOf(
 	)
 	for _, pairing := range plan.Pairings {
 		prices = append(prices, &dispatchplanprice.DispatchPlanPrice{
-			OrganizationID:     tenant.OrgID,
-			BusinessUnitID:     tenant.BuID,
-			MoveID:             pairing.MoveID,
-			WorkerID:           pairing.Candidate.WorkerID,
-			WorkerName:         pairing.Candidate.WorkerName,
-			CostCents:          pairing.Candidate.Cost.TotalCents,
-			CostLines:          pairing.Candidate.Cost.Lines,
-			CoveragePriceCents: pairing.CoveragePriceCents,
-			DriverValueCents:   pairing.DriverValueCents,
-			Alternatives:       pairing.Alternatives,
-			GeneratedAt:        plan.GeneratedAt,
+			OrganizationID:       tenant.OrgID,
+			BusinessUnitID:       tenant.BuID,
+			MoveID:               pairing.MoveID,
+			WorkerID:             pairing.Candidate.WorkerID,
+			WorkerName:           pairing.Candidate.WorkerName,
+			CostCents:            pairing.PlanCostCents,
+			PreferenceFloorCents: pairing.PreferenceFloorCents,
+			CostLines:            pairing.Candidate.Cost.Lines,
+			CoveragePriceCents:   pairing.CoveragePriceCents,
+			DriverValueCents:     pairing.DriverValueCents,
+			Alternatives:         pairing.Alternatives,
+			GeneratedAt:          plan.GeneratedAt,
 		})
 	}
 	for _, uncovered := range plan.Uncovered {
 		price := &dispatchplanprice.DispatchPlanPrice{
-			OrganizationID:     tenant.OrgID,
-			BusinessUnitID:     tenant.BuID,
-			MoveID:             uncovered.MoveID,
-			CoveragePriceCents: uncovered.CoveragePriceCents,
-			UncoveredReason:    uncovered.Reason,
-			Alternatives:       []dispatchplanprice.Alternative{},
-			GeneratedAt:        plan.GeneratedAt,
+			OrganizationID:       tenant.OrgID,
+			BusinessUnitID:       tenant.BuID,
+			MoveID:               uncovered.MoveID,
+			CoveragePriceCents:   uncovered.CoveragePriceCents,
+			UncoveredReason:      uncovered.Reason,
+			PreferenceFloorCents: uncovered.PreferenceFloorCents,
+			Alternatives:         []dispatchplanprice.Alternative{},
+			GeneratedAt:          plan.GeneratedAt,
 		}
 		if uncovered.BestCandidate != nil {
 			price.WorkerName = uncovered.BestCandidate.WorkerName
-			price.CostCents = uncovered.BestCandidate.Cost.TotalCents
+			price.CostCents = uncovered.PlanCostCents
 			price.CostLines = uncovered.BestCandidate.Cost.Lines
 		}
 		prices = append(prices, price)

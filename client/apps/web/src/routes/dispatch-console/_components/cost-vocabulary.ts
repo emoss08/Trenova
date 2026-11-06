@@ -1,4 +1,8 @@
-import type { DispatchCandidate, DispatchUncoveredReason } from "@/lib/graphql/dispatch-console";
+import type {
+  DispatchBoardMove,
+  DispatchCandidate,
+  DispatchUncoveredReason,
+} from "@/lib/graphql/dispatch-console";
 import { defineLabels, type LabelMap } from "@trenova/shared/i18n/labels";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatClockDurationMs } from "@trenova/shared/lib/date";
@@ -45,6 +49,15 @@ export const UNCOVERED_REASON_LABELS: LabelMap<Record<DispatchUncoveredReason, s
   });
 
 /** Cents as whole dollars, with a sign for a credit: "$142", "−$15". */
+/**
+ * What the move's last plan says the best driver for it pays in preferences. A candidate
+ * costs the plan its own cost less this, which is the number the plan weighed against the
+ * coverage price; zero for a move no plan has priced or that is already covered.
+ */
+export function preferenceFloorOf(move: DispatchBoardMove): number {
+  return move.isCovered ? 0 : (move.planPrice?.preferenceFloorCents ?? 0);
+}
+
 export function formatCents(cents: number): string {
   const dollars = formatCurrencyWhole(Math.round(Math.abs(cents) / 100));
   return cents < 0 ? `−${dollars}` : dollars;

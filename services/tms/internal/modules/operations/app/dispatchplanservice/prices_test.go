@@ -30,21 +30,24 @@ func TestPricesOf_WritesOneRowPerMoveTheyPlanned(t *testing.T) {
 			Candidate: &dispatchplanports.CandidateScore{
 				WorkerID:   workerID,
 				WorkerName: "Ada",
-				Cost:       dispatcheconomics.Cost{TotalCents: 1_234},
+				Cost:       dispatcheconomics.Cost{TotalCents: 1_300},
 			},
-			CoveragePriceCents: 5_000,
-			DriverValueCents:   800,
-			Alternatives:       alternatives,
+			PlanCostCents:        1_234,
+			PreferenceFloorCents: 66,
+			CoveragePriceCents:   5_000,
+			DriverValueCents:     800,
+			Alternatives:         alternatives,
 		}},
 		Uncovered: []*dispatchplanports.Uncovered{
 			{
 				MoveID:             priced,
 				Reason:             dispatchplanprice.UncoveredNotWorthIt,
+				PlanCostCents:      900,
 				CoveragePriceCents: 400,
 				BestCandidate: &dispatchplanports.CandidateScore{
 					WorkerID:   pulid.MustNew("wrk_"),
 					WorkerName: "Cy",
-					Cost:       dispatcheconomics.Cost{TotalCents: 900},
+					Cost:       dispatcheconomics.Cost{TotalCents: 960},
 				},
 			},
 			{
@@ -59,16 +62,17 @@ func TestPricesOf_WritesOneRowPerMoveTheyPlanned(t *testing.T) {
 
 	require.Len(t, prices, 3)
 	assert.Equal(t, &dispatchplanprice.DispatchPlanPrice{
-		OrganizationID:     tenant.OrgID,
-		BusinessUnitID:     tenant.BuID,
-		MoveID:             covered,
-		WorkerID:           workerID,
-		WorkerName:         "Ada",
-		CostCents:          1_234,
-		CoveragePriceCents: 5_000,
-		DriverValueCents:   800,
-		Alternatives:       alternatives,
-		GeneratedAt:        generatedAt,
+		OrganizationID:       tenant.OrgID,
+		BusinessUnitID:       tenant.BuID,
+		MoveID:               covered,
+		WorkerID:             workerID,
+		WorkerName:           "Ada",
+		CostCents:            1_234,
+		PreferenceFloorCents: 66,
+		CoveragePriceCents:   5_000,
+		DriverValueCents:     800,
+		Alternatives:         alternatives,
+		GeneratedAt:          generatedAt,
 	}, prices[0])
 	assert.True(t, prices[0].Covered())
 

@@ -39,6 +39,8 @@ type Graph struct {
 	Arcs     [][]Arc
 	Coverage []int64
 	Rejected []*dispatchplanports.CandidateScore
+
+	PreferenceFloor []int64
 }
 
 type GraphRequest struct {
@@ -61,11 +63,12 @@ func (s *Service) BuildGraph(ctx context.Context, req *GraphRequest) *Graph {
 	}
 
 	graph := &Graph{
-		Moves:    req.Moves,
-		Drivers:  snapshot.Drivers,
-		Arcs:     make([][]Arc, len(req.Moves)),
-		Coverage: make([]int64, len(req.Moves)),
-		Rejected: make([]*dispatchplanports.CandidateScore, len(req.Moves)),
+		Moves:           req.Moves,
+		Drivers:         snapshot.Drivers,
+		Arcs:            make([][]Arc, len(req.Moves)),
+		Coverage:        make([]int64, len(req.Moves)),
+		PreferenceFloor: make([]int64, len(req.Moves)),
+		Rejected:        make([]*dispatchplanports.CandidateScore, len(req.Moves)),
 	}
 	limit := snapshot.Model.Economics().CandidatesPerMove
 	index := newDriverIndex(snapshot)
@@ -87,7 +90,7 @@ func (s *Service) BuildGraph(ctx context.Context, req *GraphRequest) *Graph {
 	s.routeTopPairs(ctx, req.TenantInfo, snapshot, req.Moves, pairs)
 
 	for i, candidates := range pairs {
-		graph.Arcs[i] = arcsFrom(snapshot, candidates)
+		graph.Arcs[i], graph.PreferenceFloor[i] = arcsFrom(snapshot, candidates)
 	}
 
 	return graph
@@ -170,16 +173,16 @@ func withinDeadheadCap(control *dispatchcontrol.DispatchControl, emptyMiles floa
 	return emptyMiles <= float64(*control.AutoAssignMaxDeadheadMiles)
 }
 
-func arcsFrom(snapshot *FleetSnapshot, pairs []pairEval) []Arc {
+func arcsFrom(snapshot *FleetSnapshot, pairs []pairEval) (arcs []Arc, floor int64) {
 	if len(pairs) == 0 {
-		return nil
+		return nil, 0
 	}
-	floor := pairs[0].soft
+	floor = pairs[0].soft
 	for _, pair := range pairs {
 		floor = min(floor, pair.soft)
 	}
 
-	arcs := make([]Arc, 0, len(pairs))
+	arcs = make([]Arc, 0, len(pairs))
 	for _, pair := range pairs {
 		arcs = append(arcs, Arc{
 			Driver:    pair.driver,
@@ -188,7 +191,7 @@ func arcsFrom(snapshot *FleetSnapshot, pairs []pairEval) []Arc {
 		})
 	}
 
-	return arcs
+	return arcs, floor
 }
 
 func (s *Service) routeTopPairs(

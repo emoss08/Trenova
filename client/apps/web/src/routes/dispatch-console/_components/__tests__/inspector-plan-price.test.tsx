@@ -55,6 +55,8 @@ function candidate(workerId: string, workerName: string, costCents: number): Dis
     projectedDelivery: 1_720_014_400,
     projectedFreeAt: 1_720_018_000,
     minutesOfSlack: 45,
+    slackKnown: true,
+    hosKnown: true,
     deliveryLateMinutes: 0,
     driveRemainingMs: 28_800_000,
     shiftRemainingMs: 36_000_000,
@@ -116,6 +118,7 @@ const plannedPrice: DispatchMovePlanPrice = {
   workerId: "wrk_1",
   workerName: "Ana Ruiz",
   costCents: 14_200,
+  preferenceFloorCents: 0,
   coveragePriceCents: 90_000,
   driverValueCents: 3_100,
   uncoveredReason: null,
@@ -251,5 +254,31 @@ describe("Inspector plan price", () => {
 
     expect(candidateRow("Ana Ruiz")).not.toHaveTextContent("Plan's pick");
     expect(candidateRow("Ana Ruiz")).not.toHaveTextContent("to the plan");
+  });
+
+  it("shows each driver's cost to the plan, less what the best driver pays in preferences", async () => {
+    candidatesQueryFn.mockResolvedValue([candidate("wrk_1", "Ana Ruiz", 14_200)]);
+
+    renderInspector(boardMove({ planPrice: { ...plannedPrice, preferenceFloorCents: 1_200 } }));
+    await within(screen.getByRole("region", { name: "Drivers for this move" })).findByText(
+      "Ana Ruiz",
+    );
+
+    expect(candidateRow("Ana Ruiz")).toHaveTextContent("$130");
+  });
+
+  it("says the hours are unknown and leaves out a margin it cannot measure", async () => {
+    candidatesQueryFn.mockResolvedValue([
+      { ...candidate("wrk_1", "Ana Ruiz", 14_200), hosKnown: false, slackKnown: false },
+    ]);
+
+    renderInspector(boardMove({ planPrice: null }));
+    await within(screen.getByRole("region", { name: "Drivers for this move" })).findByText(
+      "Ana Ruiz",
+    );
+
+    expect(candidateRow("Ana Ruiz")).toHaveTextContent("Hours unknown");
+    expect(candidateRow("Ana Ruiz")).not.toHaveTextContent("drive left");
+    expect(candidateRow("Ana Ruiz")).not.toHaveTextContent("margin");
   });
 });

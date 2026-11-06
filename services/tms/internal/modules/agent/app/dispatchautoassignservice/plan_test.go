@@ -33,6 +33,7 @@ func pairing(c *dispatchplanports.CandidateScore) *dispatchplanports.Pairing {
 		MoveVersion:        3,
 		ProNumber:          "PRO-42",
 		Candidate:          c,
+		PlanCostCents:      c.HardCents + c.SoftCents,
 		CoveragePriceCents: 100_000,
 	}
 }
@@ -62,12 +63,12 @@ func TestConfidenceFor(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "a pairing with no hard cost is certain",
+			name:     "a pairing that costs the plan nothing is certain",
 			pairing:  func() *dispatchplanports.Pairing { return pairing(candidate()) },
 			expected: "1",
 		},
 		{
-			name: "hard cost takes its share of what covering the move is worth",
+			name: "the plan cost takes its share of what covering the move is worth",
 			pairing: func() *dispatchplanports.Pairing {
 				c := candidate()
 				c.HardCents = 20_000
@@ -260,6 +261,7 @@ func TestRationaleFor_NamesTheCostItsLargestLinesAndTheNextDriver(t *testing.T) 
 		},
 	}
 	p := pairing(c)
+	p.PlanCostCents = 18_449
 	p.CoveragePriceCents = 120_000
 	p.Alternatives = []dispatchplanprice.Alternative{
 		{WorkerID: pulid.MustNew("wrk_"), WorkerName: "Lee Park", ExtraCents: 4_150},
@@ -268,7 +270,7 @@ func TestRationaleFor_NamesTheCostItsLargestLinesAndTheNextDriver(t *testing.T) 
 
 	assert.Equal(
 		t,
-		"Ada Reed costs $184 to cover PRO-42, which is worth $1200: "+
+		"Ada Reed costs the plan $184 to cover PRO-42, which is worth $1200: "+
 			"$90 empty miles, $64 time away from home, $31 waiting. "+
 			"Choosing Lee Park instead adds $42 to the plan. "+
 			"1 advisory finding(s) to review.",
@@ -283,7 +285,7 @@ func TestRationaleFor_AFreePairingWithNoAlternativesIsOneSentence(t *testing.T) 
 	p.ProNumber = "PRO-7"
 	p.CoveragePriceCents = 40_000
 
-	assert.Equal(t, "Ada Reed costs $0 to cover PRO-7, which is worth $400.", rationaleFor(p))
+	assert.Equal(t, "Ada Reed costs the plan $0 to cover PRO-7, which is worth $400.", rationaleFor(p))
 }
 
 func TestRationaleFor_NoCandidateHasNoRationale(t *testing.T) {

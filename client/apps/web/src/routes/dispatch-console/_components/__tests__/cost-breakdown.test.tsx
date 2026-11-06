@@ -2,6 +2,7 @@ import type { DispatchCandidate } from "@/lib/graphql/dispatch-console";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { CostBreakdown } from "../cost-breakdown";
+import { formatCents } from "../cost-vocabulary";
 
 afterEach(cleanup);
 
@@ -20,6 +21,8 @@ function candidate(overrides: Partial<DispatchCandidate> = {}): DispatchCandidat
     ],
     deadheadMiles: 49,
     minutesOfSlack: 30,
+    slackKnown: true,
+    hosKnown: true,
     deliveryLateMinutes: 0,
     restMs: 0,
     ...overrides,
@@ -56,5 +59,28 @@ describe("CostBreakdown", () => {
     render(<CostBreakdown candidate={candidate({ costCents: 0, costLines: [] })} />);
 
     expect(screen.getByText("This pairing costs nothing extra.")).toBeInTheDocument();
+  });
+
+  it("subtracts what the best driver pays in preferences, so the total is the plan's cost", () => {
+    render(
+      <CostBreakdown
+        candidate={candidate()}
+        coveragePriceCents={90_000}
+        preferenceFloorCents={2_500}
+      />,
+    );
+
+    expect(
+      screen.getByText("Less what the best driver pays in preferences").nextElementSibling,
+    ).toHaveTextContent("−$25");
+    expect(screen.getByText("Cost to cover").nextElementSibling).toHaveTextContent(
+      formatCents(candidate().costCents - 2_500),
+    );
+  });
+
+  it("shows no preference line for a move no plan has priced", () => {
+    render(<CostBreakdown candidate={candidate()} />);
+
+    expect(screen.queryByText("Less what the best driver pays in preferences")).toBeNull();
   });
 });

@@ -31,6 +31,7 @@ var dispatchPlanPricesTable = schema.Table{
 		{Name: "worker_name", Quoted: `"worker_name"`, Field: "WorkerName", Kind: schema.KindString, Flags: 0, Label: `Worker Name`, JSON: `workerName`},
 		{Name: "cost_cents", Quoted: `"cost_cents"`, Field: "CostCents", Kind: schema.KindInt64, Flags: 0, Label: `Cost Cents`, JSON: `costCents`},
 		{Name: "cost_lines", Quoted: `"cost_lines"`, Field: "CostLines", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Cost Lines`, JSON: `costLines`},
+		{Name: "preference_floor_cents", Quoted: `"preference_floor_cents"`, Field: "PreferenceFloorCents", Kind: schema.KindInt64, Flags: 0, Label: `Preference Floor Cents`, JSON: `preferenceFloorCents`},
 		{Name: "coverage_price_cents", Quoted: `"coverage_price_cents"`, Field: "CoveragePriceCents", Kind: schema.KindInt64, Flags: 0, Label: `Coverage Price Cents`, JSON: `coveragePriceCents`},
 		{Name: "driver_value_cents", Quoted: `"driver_value_cents"`, Field: "DriverValueCents", Kind: schema.KindInt64, Flags: 0, Label: `Driver Value Cents`, JSON: `driverValueCents`},
 		{Name: "uncovered_reason", Quoted: `"uncovered_reason"`, Field: "UncoveredReason", Kind: schema.KindString, Flags: 0, Label: `Uncovered Reason`, JSON: `uncoveredReason`, Enum: enumUncoveredReason[:]},
@@ -42,14 +43,14 @@ var dispatchPlanPricesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
 	Returning:  nil,
-	Version:    13,
+	Version:    14,
 	AutoID:     0,
-	AutoCreate: 14,
-	AutoUpdate: 15,
+	AutoCreate: 15,
+	AutoUpdate: 16,
 	IDPrefix:   "dpp_",
 	New:        newDispatchPlanPrice,
 	NewN:       newNDispatchPlanPrice,
@@ -63,65 +64,68 @@ var dispatchPlanPricesRef = keel.Ref{Table: &dispatchPlanPricesTable}
 // DispatchPlanPricesTable is the table of dispatchplanprice.DispatchPlanPrice.
 type DispatchPlanPricesTable struct {
 	keel.TableBase
-	ID                 keelkinds.PulidIDCol
-	BusinessUnitID     keelkinds.PulidIDCol
-	OrganizationID     keelkinds.PulidIDCol
-	MoveID             keelkinds.PulidIDCol
-	WorkerID           keelkinds.PulidIDCol
-	WorkerName         keel.StringCol
-	CostCents          keel.Int64Col
-	CostLines          keel.JSONBCol
-	CoveragePriceCents keel.Int64Col
-	DriverValueCents   keel.Int64Col
-	UncoveredReason    UncoveredReasonCol
-	Alternatives       keel.JSONBCol
-	GeneratedAt        keel.Int64Col
-	Version            keel.Int64Col
-	CreatedAt          keel.Int64Col
-	UpdatedAt          keel.Int64Col
+	ID                   keelkinds.PulidIDCol
+	BusinessUnitID       keelkinds.PulidIDCol
+	OrganizationID       keelkinds.PulidIDCol
+	MoveID               keelkinds.PulidIDCol
+	WorkerID             keelkinds.PulidIDCol
+	WorkerName           keel.StringCol
+	CostCents            keel.Int64Col
+	CostLines            keel.JSONBCol
+	PreferenceFloorCents keel.Int64Col
+	CoveragePriceCents   keel.Int64Col
+	DriverValueCents     keel.Int64Col
+	UncoveredReason      UncoveredReasonCol
+	Alternatives         keel.JSONBCol
+	GeneratedAt          keel.Int64Col
+	Version              keel.Int64Col
+	CreatedAt            keel.Int64Col
+	UpdatedAt            keel.Int64Col
 }
 
 // DispatchPlanPrices references the dispatch_plan_prices table.
 var DispatchPlanPrices = &DispatchPlanPricesTable{
-	TableBase:          keel.TableBase{Ref: &dispatchPlanPricesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 2}}},
-	MoveID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 3}}},
-	WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 4}}},
-	WorkerName:         keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 5}},
-	CostCents:          keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 6}},
-	CostLines:          keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 7}},
-	CoveragePriceCents: keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 8}},
-	DriverValueCents:   keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 9}},
-	UncoveredReason:    UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 10}}},
-	Alternatives:       keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 11}},
-	GeneratedAt:        keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 12}},
-	Version:            keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 13}},
-	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 14}},
-	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 15}},
+	TableBase:            keel.TableBase{Ref: &dispatchPlanPricesRef},
+	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 2}}},
+	MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 3}}},
+	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 4}}},
+	WorkerName:           keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 5}},
+	CostCents:            keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 6}},
+	CostLines:            keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 7}},
+	PreferenceFloorCents: keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 8}},
+	CoveragePriceCents:   keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 9}},
+	DriverValueCents:     keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 10}},
+	UncoveredReason:      UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 11}}},
+	Alternatives:         keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 12}},
+	GeneratedAt:          keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 13}},
+	Version:              keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 14}},
+	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 15}},
+	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 16}},
 }
 
 // BuildDispatchPlanPrices builds the table of dispatch_plan_prices for ref. Generated relation and alias methods call it.
 func BuildDispatchPlanPrices(r *keel.Ref) *DispatchPlanPricesTable {
 	return &DispatchPlanPricesTable{
-		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MoveID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		WorkerName:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		CostCents:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		CostLines:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		CoveragePriceCents: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		DriverValueCents:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		UncoveredReason:    UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Alternatives:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		GeneratedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		TableBase:            keel.TableBase{Ref: r},
+		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		WorkerName:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		CostCents:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		CostLines:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
+		PreferenceFloorCents: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		CoveragePriceCents:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		DriverValueCents:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		UncoveredReason:      UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Alternatives:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
+		GeneratedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 	}
 }
 
@@ -525,20 +529,22 @@ func ptrDispatchPlanPrice(p unsafe.Pointer, c int32) any {
 	case 7:
 		return &r.CostLines
 	case 8:
-		return &r.CoveragePriceCents
+		return &r.PreferenceFloorCents
 	case 9:
-		return &r.DriverValueCents
+		return &r.CoveragePriceCents
 	case 10:
-		return (*string)(unsafe.Pointer(&r.UncoveredReason))
+		return &r.DriverValueCents
 	case 11:
-		return &r.Alternatives
+		return (*string)(unsafe.Pointer(&r.UncoveredReason))
 	case 12:
-		return &r.GeneratedAt
+		return &r.Alternatives
 	case 13:
-		return &r.Version
+		return &r.GeneratedAt
 	case 14:
-		return &r.CreatedAt
+		return &r.Version
 	case 15:
+		return &r.CreatedAt
+	case 16:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -570,23 +576,25 @@ func valueDispatchPlanPrice(p unsafe.Pointer, c int32) any {
 		}
 		return r.CostLines
 	case 8:
-		return r.CoveragePriceCents
+		return r.PreferenceFloorCents
 	case 9:
-		return r.DriverValueCents
+		return r.CoveragePriceCents
 	case 10:
-		return string(r.UncoveredReason)
+		return r.DriverValueCents
 	case 11:
+		return string(r.UncoveredReason)
+	case 12:
 		if r.Alternatives == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Alternatives
-	case 12:
-		return r.GeneratedAt
 	case 13:
-		return r.Version
+		return r.GeneratedAt
 	case 14:
-		return r.CreatedAt
+		return r.Version
 	case 15:
+		return r.CreatedAt
+	case 16:
 		return r.UpdatedAt
 	}
 	return nil

@@ -33,6 +33,7 @@ import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { formatMiles, hosStrategyMeta, pickupState, verdictMeta } from "./dispatch-vocabulary";
 import { FindingList } from "./finding-list";
 import { CostBreakdown } from "./cost-breakdown";
+import { preferenceFloorOf } from "./cost-vocabulary";
 
 const VERDICT_BANNER: Record<
   string,
@@ -308,7 +309,10 @@ export function PreflightDialog({
               ) : null}
 
               <div className="border-border border-t pt-3.5">
-                <CostBreakdown candidate={data.candidate} />
+                <CostBreakdown
+                  candidate={data.candidate}
+                  preferenceFloorCents={preferenceFloorOf(move)}
+                />
               </div>
             </div>
           </ScrollArea>

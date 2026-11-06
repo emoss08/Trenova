@@ -4656,16 +4656,20 @@ type DispatchCandidate struct {
 	LoadedMiles      float64 `json:"loadedMiles"`
 	EstimatedDriveMs int     `json:"estimatedDriveMs"`
 	// Rest the driver needs on the way, from the hours-of-service projection.
-	RestMs                 int `json:"restMs"`
-	ProjectedArrival       int `json:"projectedArrival"`
-	ProjectedDelivery      int `json:"projectedDelivery"`
-	ProjectedFreeAt        int `json:"projectedFreeAt"`
-	MinutesOfSlack         int `json:"minutesOfSlack"`
-	DeliveryLateMinutes    int `json:"deliveryLateMinutes"`
-	DriveRemainingMs       int `json:"driveRemainingMs"`
-	ShiftRemainingMs       int `json:"shiftRemainingMs"`
-	CycleRemainingMs       int `json:"cycleRemainingMs"`
-	ProjectedTimeAvailable int `json:"projectedTimeAvailable"`
+	RestMs            int `json:"restMs"`
+	ProjectedArrival  int `json:"projectedArrival"`
+	ProjectedDelivery int `json:"projectedDelivery"`
+	ProjectedFreeAt   int `json:"projectedFreeAt"`
+	MinutesOfSlack    int `json:"minutesOfSlack"`
+	// False when the move has no pickup appointment still ahead to measure margin against.
+	SlackKnown          bool `json:"slackKnown"`
+	DeliveryLateMinutes int  `json:"deliveryLateMinutes"`
+	// False when the driver's hours of service are not known or are too old to trust.
+	HosKnown               bool `json:"hosKnown"`
+	DriveRemainingMs       int  `json:"driveRemainingMs"`
+	ShiftRemainingMs       int  `json:"shiftRemainingMs"`
+	CycleRemainingMs       int  `json:"cycleRemainingMs"`
+	ProjectedTimeAvailable int  `json:"projectedTimeAvailable"`
 	// Rest strategy that makes this trip legal: currentClocks, splitSleeper,
 	// tenHourReset, or restart34. Empty when no projection ran.
 	HosStrategy string `json:"hosStrategy"`
@@ -4787,9 +4791,12 @@ type DispatchMovePlanPrice struct {
 	WorkerID *string `json:"workerId,omitempty"`
 	// The planned driver, or for an uncovered move the cheapest driver the plan considered.
 	WorkerName string `json:"workerName"`
-	// What the named driver costs on this move, in cents.
-	CostCents          int `json:"costCents"`
-	CoveragePriceCents int `json:"coveragePriceCents"`
+	// What the named driver costs the plan on this move, in cents.
+	CostCents int `json:"costCents"`
+	// What the best driver for this move pays in preferences, in cents. A candidate costs the
+	// plan its own cost less this, which is what the plan weighed against the coverage price.
+	PreferenceFloorCents int `json:"preferenceFloorCents"`
+	CoveragePriceCents   int `json:"coveragePriceCents"`
 	// How much more the plan costs without the planned driver, in cents.
 	DriverValueCents int `json:"driverValueCents"`
 	// Why the plan left the move uncovered; absent when it is covered.
@@ -4866,6 +4873,10 @@ type DispatchPlannedAssignment struct {
 	AutoExecutable bool               `json:"autoExecutable"`
 	ProposalID     *string            `json:"proposalId,omitempty"`
 	Candidate      *DispatchCandidate `json:"candidate"`
+	// What this driver costs the plan on the move, in cents: the candidate's cost less what the
+	// best driver for the move pays in preferences too. This is what was weighed against the
+	// coverage price.
+	PlanCostCents int `json:"planCostCents"`
 	// What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium.
 	CoveragePriceCents int `json:"coveragePriceCents"`
 	// What this driver is worth to the plan, in cents: how much more the plan costs without them.
@@ -4907,8 +4918,10 @@ type DispatchUncoveredMove struct {
 	ProNumber string                  `json:"proNumber"`
 	Reason    DispatchUncoveredReason `json:"reason"`
 	// The reason in a sentence, with the driver it is about.
-	Explanation        string `json:"explanation"`
-	CoveragePriceCents int    `json:"coveragePriceCents"`
+	Explanation string `json:"explanation"`
+	// What the cheapest driver would have cost the plan, in cents; zero when none could take it.
+	PlanCostCents      int `json:"planCostCents"`
+	CoveragePriceCents int `json:"coveragePriceCents"`
 	// The nearest driver who could not take it, or the cheapest who was outbid.
 	BestCandidate *DispatchCandidate `json:"bestCandidate,omitempty"`
 }

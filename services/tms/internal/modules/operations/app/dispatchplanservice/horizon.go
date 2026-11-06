@@ -140,17 +140,19 @@ func writeTour(
 		}
 
 		move := p.Graph.Moves[assignment.Task]
-		pairing := pairingOf(move, score, p.Graph.Coverage[assignment.Task])
+		planCost := score.HardCents + score.SoftCents - timeline.floor[assignment.Task]
+		pairing := pairingOf(move, score, planCost, p.Graph.Coverage[assignment.Task])
+		pairing.PreferenceFloorCents = timeline.floor[assignment.Task]
 		pairing.TourID = tour.TourID
 		pairing.SequenceIndex = len(tour.MoveIDs)
 		pairing.DriverValueCents = result.ResourceValue[driver]
 		pairing.Alternatives = horizonAlternatives(p, assignment.Alternatives)
 		p.Plan.Pairings = append(p.Plan.Pairings, pairing)
-		p.Plan.CostCents += score.Cost.TotalCents
+		p.Plan.CostCents += planCost
 
 		tour.MoveIDs = append(tour.MoveIDs, move.MoveID)
 		tour.EndsAt = score.ProjectedFreeAt
-		tour.CostCents += score.Cost.TotalCents
+		tour.CostCents += planCost
 		if score.DeadheadMiles != nil {
 			tour.EmptyMiles += *score.DeadheadMiles
 		}

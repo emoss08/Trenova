@@ -54,7 +54,7 @@ func confidenceFor(pairing *dispatchplanports.Pairing) decimal.Decimal {
 		return decimal.Zero
 	}
 
-	share := float64(candidate.HardCents) / float64(pairing.CoveragePriceCents)
+	share := float64(pairing.PlanCostCents) / float64(pairing.CoveragePriceCents)
 	confidence := 1 - share - warningDiscount*float64(candidate.Warnings())
 
 	return decimal.NewFromFloat(min(max(confidence, 0), 1)).Round(2)
@@ -69,9 +69,9 @@ func rationaleFor(pairing *dispatchplanports.Pairing) string {
 	var rationale strings.Builder
 	fmt.Fprintf(
 		&rationale,
-		"%s costs %s to cover %s, which is worth %s",
+		"%s costs the plan %s to cover %s, which is worth %s",
 		candidate.WorkerName,
-		dispatcheconomics.Dollars(candidate.Cost.TotalCents),
+		dispatcheconomics.Dollars(pairing.PlanCostCents),
 		pairing.ProNumber,
 		dispatcheconomics.Dollars(pairing.CoveragePriceCents),
 	)

@@ -53,6 +53,8 @@ function candidate(index: number, workerName: string): DispatchCandidate {
     projectedDelivery: 1_720_014_400,
     projectedFreeAt: 1_720_018_000,
     minutesOfSlack: 45,
+    slackKnown: true,
+    hosKnown: true,
     deliveryLateMinutes: 0,
     driveRemainingMs: 28_800_000,
     shiftRemainingMs: 36_000_000,

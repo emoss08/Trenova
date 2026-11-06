@@ -258,8 +258,8 @@ func TestPlanHorizon_ChainsAFollowOnMoveOntoOneDriver(t *testing.T) {
 		plan.Pairings[1].ProjectedStartAt,
 		plan.Pairings[0].ProjectedCompleteAt,
 	)
-	assert.Equal(t, plan.Pairings[0].Candidate.Cost.TotalCents+
-		plan.Pairings[1].Candidate.Cost.TotalCents, plan.CostCents)
+	assert.Equal(t, plan.Pairings[0].PlanCostCents+plan.Pairings[1].PlanCostCents, plan.CostCents,
+		"a plan costs what it decided on: each step after preferences the best driver pays too")
 	assert.Empty(t, snapshot.CommitmentsByWorker[driver.WorkerID],
 		"planning leaves the snapshot's commitments as it found them")
 }

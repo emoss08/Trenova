@@ -15,7 +15,7 @@ import { ArmedPreflight } from "./armed-preflight";
 import { formatMiles } from "./dispatch-vocabulary";
 import { FindingList, FindingSummary, findingKey } from "./finding-list";
 import { CostBreakdown } from "./cost-breakdown";
-import { formatCents } from "./cost-vocabulary";
+import { formatCents, preferenceFloorOf } from "./cost-vocabulary";
 
 export const MAX_HOTKEY_RANK = 9;
 const INITIAL_VISIBLE = 6;
@@ -66,6 +66,23 @@ function CandidateSketch() {
   );
 }
 
+/** The facts a dispatcher reads first about a driver for a move, leaving out what is not known. */
+function candidateFacts(candidate: DispatchCandidate, t: ReturnType<typeof useT>): string {
+  return [
+    t("{0} empty", formatMiles(candidate.deadheadMiles)),
+    candidate.hosKnown
+      ? t("{0} drive left", formatClockDurationMs(candidate.driveRemainingMs))
+      : t("Hours unknown"),
+    candidate.slackKnown
+      ? candidate.minutesOfSlack < 0
+        ? t("{0} late", formatMinutesSpan(candidate.minutesOfSlack))
+        : t("{0} margin", formatMinutesSpan(candidate.minutesOfSlack))
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function CandidateRow({
   candidate,
   rank,
@@ -75,8 +92,10 @@ function CandidateRow({
   canAssign,
   onArm,
   sharedKeys,
+  preferenceFloorCents,
 }: {
   candidate: DispatchCandidate;
+  preferenceFloorCents: number;
   rank: number;
   proposed: boolean;
   /** Where the last plan stands on this driver: its pick, or what choosing them adds. */
@@ -127,24 +146,12 @@ function CandidateRow({
             )}
           </div>
           <div className="text-muted-foreground truncate text-2xs">
-            {candidate.minutesOfSlack < 0
-              ? t(
-                  "{0} empty · {1} drive left · {2} late",
-                  formatMiles(candidate.deadheadMiles),
-                  formatClockDurationMs(candidate.driveRemainingMs),
-                  formatMinutesSpan(candidate.minutesOfSlack),
-                )
-              : t(
-                  "{0} empty · {1} drive left · {2} margin",
-                  formatMiles(candidate.deadheadMiles),
-                  formatClockDurationMs(candidate.driveRemainingMs),
-                  formatMinutesSpan(candidate.minutesOfSlack),
-                )}
+            {candidateFacts(candidate, t)}
           </div>
         </div>
         <div className="flex items-center gap-2.5">
           <span className="text-right font-mono text-xs tabular-nums" title={t("Cost to cover")}>
-            {formatCents(candidate.costCents)}
+            {formatCents(candidate.costCents - preferenceFloorCents)}
           </span>
           {canAssign ? (
             <Button
@@ -181,7 +188,13 @@ function CandidateRow({
         >
           {open ? t("Hide detail") : t("Why this cost")}
         </Button>
-        {open ? <CostBreakdown candidate={candidate} className="mt-1" /> : null}
+        {open ? (
+          <CostBreakdown
+            candidate={candidate}
+            preferenceFloorCents={preferenceFloorCents}
+            className="mt-1"
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -279,6 +292,7 @@ export function CandidateList({
         canAssign={canAssign}
         onArm={onArm}
         sharedKeys={sharedKeys}
+        preferenceFloorCents={preferenceFloorOf(move)}
       />
       {candidate.workerId === armedWorkerId ? (
         <ArmedPreflight

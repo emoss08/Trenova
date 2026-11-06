@@ -40,7 +40,7 @@ function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssig
           </span>
           <span className="truncate text-xs">{assignment.workerName}</span>
           <span className="ml-auto shrink-0 font-mono text-xs tabular-nums">
-            {formatCents(candidate.costCents)}
+            {formatCents(assignment.planCostCents)}
           </span>
           <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
             {t(verdict.label)}

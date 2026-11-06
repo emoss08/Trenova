@@ -88,6 +88,7 @@ fragment DispatchBoardMoveFields on DispatchBoardMove {
     workerId
     workerName
     costCents
+    preferenceFloorCents
     coveragePriceCents
     driverValueCents
     uncoveredReason
@@ -345,6 +346,7 @@ mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
       candidate {
         ...DispatchCandidateFields
       }
+      planCostCents
       coveragePriceCents
       driverValueCents
       alternatives {
@@ -358,6 +360,7 @@ mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
       proNumber
       reason
       explanation
+      planCostCents
       coveragePriceCents
       bestCandidate {
         ...DispatchCandidateFields
@@ -389,6 +392,8 @@ fragment DispatchCandidateFields on DispatchCandidate {
   projectedDelivery
   projectedFreeAt
   minutesOfSlack
+  slackKnown
+  hosKnown
   deliveryLateMinutes
   driveRemainingMs
   shiftRemainingMs

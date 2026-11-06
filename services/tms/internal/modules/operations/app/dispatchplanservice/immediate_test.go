@@ -32,6 +32,8 @@ func testGraph(drivers int, coverage []int64, rows ...[]arcSpec) *dispatchcandid
 		Arcs:     make([][]dispatchcandidateservice.Arc, len(rows)),
 		Coverage: coverage,
 		Rejected: make([]*dispatchplanports.CandidateScore, len(rows)),
+
+		PreferenceFloor: make([]int64, len(rows)),
 	}
 	for i := range graph.Drivers {
 		graph.Drivers[i] = &dispatchboardports.BoardDriver{
@@ -49,6 +51,9 @@ func testGraph(drivers int, coverage []int64, rows ...[]arcSpec) *dispatchcandid
 			DestinationCity:   "Denver",
 			DestinationState:  "CO",
 			OriginWindowStart: int64(1_000 + i),
+		}
+		if len(arcs) > 0 {
+			graph.PreferenceFloor[i] = softFloorCents
 		}
 		for _, spec := range arcs {
 			graph.Arcs[i] = append(graph.Arcs[i], dispatchcandidateservice.Arc{
@@ -114,7 +119,7 @@ func TestPlanImmediate_ChoosesTheLeastTotalCostAcrossTheBoard(t *testing.T) {
 	assert.Equal(t, graph.Drivers[1].WorkerID, plan.Pairings[0].Candidate.WorkerID,
 		"the first move gives up its cheapest driver so the second avoids a $10 one")
 	assert.Equal(t, graph.Drivers[0].WorkerID, plan.Pairings[1].Candidate.WorkerID)
-	assert.Equal(t, int64(300+150+2*softFloorCents), plan.CostCents,
+	assert.Equal(t, int64(300+150), plan.CostCents,
 		"the plan's cost is the candidates' full cost, not the solve's normalized arcs")
 	assert.Zero(t, plan.UncoveredCents)
 }
@@ -153,14 +158,14 @@ func TestPlanImmediate_AlternativesCarryTheExactOverrideCost(t *testing.T) {
 		WorkerID:   graph.Drivers[0].WorkerID,
 		WorkerName: driverName(0),
 		ExtraCents: 650,
-		CostCents:  100 + softFloorCents,
+		CostCents:  100,
 	}}, plan.Pairings[0].Alternatives,
 		"forcing driver 0 onto the first move pushes the second onto driver 1: 1,100 against 450")
 	assert.Equal(t, []dispatchplanprice.Alternative{{
 		WorkerID:   graph.Drivers[1].WorkerID,
 		WorkerName: driverName(1),
 		ExtraCents: 650,
-		CostCents:  1_000 + softFloorCents,
+		CostCents:  1_000,
 	}}, plan.Pairings[1].Alternatives)
 }
 
@@ -188,19 +193,19 @@ func TestPlanImmediate_AlternativesAreSortedByExtraCostAndCappedAtThree(t *testi
 			WorkerID:   graph.Drivers[1].WorkerID,
 			WorkerName: driverName(1),
 			ExtraCents: 10,
-			CostCents:  20 + softFloorCents,
+			CostCents:  20,
 		},
 		{
 			WorkerID:   graph.Drivers[2].WorkerID,
 			WorkerName: driverName(2),
 			ExtraCents: 20,
-			CostCents:  30 + softFloorCents,
+			CostCents:  30,
 		},
 		{
 			WorkerID:   graph.Drivers[3].WorkerID,
 			WorkerName: driverName(3),
 			ExtraCents: 30,
-			CostCents:  40 + softFloorCents,
+			CostCents:  40,
 		},
 	}, alternatives)
 }
@@ -227,19 +232,19 @@ func TestPlanImmediate_AlternativesAreTheCheapestOverridesNotTheNearestArcs(t *t
 			WorkerID:   graph.Drivers[2].WorkerID,
 			WorkerName: driverName(2),
 			ExtraCents: 20,
-			CostCents:  30 + softFloorCents,
+			CostCents:  30,
 		},
 		{
 			WorkerID:   graph.Drivers[3].WorkerID,
 			WorkerName: driverName(3),
 			ExtraCents: 30,
-			CostCents:  40 + softFloorCents,
+			CostCents:  40,
 		},
 		{
 			WorkerID:   graph.Drivers[4].WorkerID,
 			WorkerName: driverName(4),
 			ExtraCents: 40,
-			CostCents:  50 + softFloorCents,
+			CostCents:  50,
 		},
 	}, plan.Pairings[0].Alternatives, "taking driver 1 costs the second move its only driver")
 }
@@ -265,7 +270,7 @@ func TestPlanImmediate_LeavesAMoveUncoveredWhenThatCostsTheBoardLess(t *testing.
 		WorkerID:   graph.Drivers[1].WorkerID,
 		WorkerName: driverName(1),
 		ExtraCents: 150,
-		CostCents:  300 + softFloorCents,
+		CostCents:  300,
 	}}, pairing.Alternatives, "driver 1 on the first move lets driver 0 cover the second: 450")
 
 	uncovered := plan.Uncovered[0]
@@ -273,7 +278,7 @@ func TestPlanImmediate_LeavesAMoveUncoveredWhenThatCostsTheBoardLess(t *testing.
 	assert.Equal(t, dispatchplanprice.UncoveredOutbid, uncovered.Reason)
 	assert.Same(t, graph.Arcs[1][0].Candidate, uncovered.BestCandidate)
 
-	assert.Equal(t, int64(100+softFloorCents), plan.CostCents)
+	assert.Equal(t, int64(100), plan.CostCents)
 	assert.Equal(t, int64(200), plan.UncoveredCents)
 }
 

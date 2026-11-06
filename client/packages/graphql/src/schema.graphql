@@ -13903,6 +13903,10 @@ type DispatchCandidate {
   driveRemainingMs: Int!
   estimatedDriveMs: Int!
   findings: [DispatchFinding!]!
+  """
+  False when the driver's hours of service are not known or are too old to trust.
+  """
+  hosKnown: Boolean!
   hosProjectedCycleMs: Int!
   hosProjectedDriveMs: Int!
   hosProjectedShiftMs: Int!
@@ -13931,6 +13935,10 @@ type DispatchCandidate {
   """
   restMs: Int!
   shiftRemainingMs: Int!
+  """
+  False when the move has no pickup appointment still ahead to measure margin against.
+  """
+  slackKnown: Boolean!
   tractorId: ID
   trailerId: ID
   verdict: String!
@@ -14063,12 +14071,17 @@ uncovered costs; the plan covers it when a driver costs less. Plan again to refr
 """
 type DispatchMovePlanPrice {
   alternatives: [DispatchPlanAlternative!]!
-  """What the named driver costs on this move, in cents."""
+  """What the named driver costs the plan on this move, in cents."""
   costCents: Int!
   coveragePriceCents: Int!
   """How much more the plan costs without the planned driver, in cents."""
   driverValueCents: Int!
   generatedAt: Timestamp!
+  """
+  What the best driver for this move pays in preferences, in cents. A candidate costs the
+  plan its own cost less this, which is what the plan weighed against the coverage price.
+  """
+  preferenceFloorCents: Int!
   """Why the plan left the move uncovered; absent when it is covered."""
   uncoveredReason: DispatchUncoveredReason
   """
@@ -14170,6 +14183,12 @@ type DispatchPlannedAssignment {
   """
   driverValueCents: Int!
   moveId: ID!
+  """
+  What this driver costs the plan on the move, in cents: the candidate's cost less what the
+  best driver for the move pays in preferences too. This is what was weighed against the
+  coverage price.
+  """
+  planCostCents: Int!
   proNumber: String!
   projectedCompleteAt: Timestamp!
   """
@@ -14277,6 +14296,10 @@ type DispatchUncoveredMove {
   """The reason in a sentence, with the driver it is about."""
   explanation: String!
   moveId: ID!
+  """
+  What the cheapest driver would have cost the plan, in cents; zero when none could take it.
+  """
+  planCostCents: Int!
   proNumber: String!
   reason: DispatchUncoveredReason!
 }
