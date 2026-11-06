@@ -122,15 +122,15 @@ type DocumentUploadSessionsTable struct {
 // DocumentUploadSessions references the document_upload_sessions table.
 var DocumentUploadSessions = &DocumentUploadSessionsTable{
 	TableBase:               keel.TableBase{Ref: &documentUploadSessionsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 0}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 1}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 2}}},
-	DocumentID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 3}}},
-	LineageID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 0}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 1}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 2}}},
+	DocumentID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 3}}},
+	LineageID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 4}}},
 	ResourceID:              keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 5}},
 	ResourceType:            keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 6}},
-	ProcessingProfile:       documentdb.ProcessingProfileCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 7}}},
-	DocumentTypeID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 8}}},
+	ProcessingProfile:       documentdb.ProcessingProfileCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 7}}},
+	DocumentTypeID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 8}}},
 	OriginalName:            keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 9}},
 	ContentType:             keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 10}},
 	FileSize:                keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 11}},
@@ -140,8 +140,8 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 	CryptoMode:              keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 15}},
 	CryptoVersion:           keel.Int16Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 16}},
 	MalwareScan:             keel.BoolCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 17}},
-	Strategy:                StrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 18}}},
-	Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 19}}},
+	Strategy:                StrategyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 18}}},
+	Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 19}}},
 	Description:             keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 20}},
 	Tags:                    keel.StringArrayCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 21}},
 	UploadedParts:           keel.JSONBCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 22}},
@@ -151,7 +151,7 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 	ThreatName:              keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 26}},
 	ExpiresAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 27}},
 	LastActivityAt:          keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 28}},
-	UploadedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 29}}},
+	UploadedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 29}}},
 	Version:                 keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 30}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 31}},
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 32}},
@@ -161,15 +161,15 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 	return &DocumentUploadSessionsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		LineageID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DocumentID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		LineageID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ResourceID:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ResourceType:            keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ProcessingProfile:       documentdb.ProcessingProfileCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		DocumentTypeID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ProcessingProfile:       documentdb.ProcessingProfileCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		DocumentTypeID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		OriginalName:            keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ContentType:             keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		FileSize:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -179,8 +179,8 @@ func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 		CryptoMode:              keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		CryptoVersion:           keel.Int16Col{Col: keel.Col{Ref: r, Index: 16}},
 		MalwareScan:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
-		Strategy:                StrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		Strategy:                StrategyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		Description:             keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		Tags:                    keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 21}},
 		UploadedParts:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
@@ -190,7 +190,7 @@ func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 		ThreatName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		ExpiresAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		LastActivityAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		UploadedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		UploadedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
 		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
@@ -212,8 +212,6 @@ func (t *DocumentUploadSessionsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // DocumentUploadSessionsQuery is a query over documentupload.DocumentUploadSession.
 type DocumentUploadSessionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documentupload.DocumentUploadSession] = (*DocumentUploadSessionsTable)(nil)
 
 var _ keel.Query[*documentupload.DocumentUploadSession] = (*DocumentUploadSessionsQuery)(nil)
 
@@ -329,42 +327,42 @@ func (t *DocumentUploadSessionsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *DocumentUploadSessionsTable) Create(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentUploadSessionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentUploadSessionsTable) Save(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentUploadSessionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentUploadSessionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentUploadSessionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentUploadSessionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentUploadSessionsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -536,37 +534,45 @@ func (q *DocumentUploadSessionsQuery) Clone() keel.Query[*documentupload.Documen
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentUploadSessionsQuery) One(ctx context.Context, db *keel.DB) (*documentupload.DocumentUploadSession, error) {
-	return keel.One[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documentupload.DocumentUploadSession)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentUploadSessionsQuery) First(ctx context.Context, db *keel.DB) (*documentupload.DocumentUploadSession, error) {
-	return keel.First[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documentupload.DocumentUploadSession)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentUploadSessionsQuery) List(ctx context.Context, db *keel.DB) ([]*documentupload.DocumentUploadSession, error) {
-	return keel.List[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentupload.DocumentUploadSession)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentUploadSessionsQuery) All(ctx context.Context, db *keel.DB) ([]*documentupload.DocumentUploadSession, error) {
-	return keel.All[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentupload.DocumentUploadSession)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentUploadSessionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentupload.DocumentUploadSession, error) {
-	return keel.UpdateReturning[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documentupload.DocumentUploadSession)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentUploadSessionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentupload.DocumentUploadSession], error) {
-	return keel.PageOf[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documentupload.DocumentUploadSession])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentUploadSessionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentupload.DocumentUploadSession) error) error {
-	return keel.Each[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documentupload.DocumentUploadSession)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocumentUploadSession() unsafe.Pointer {
@@ -799,47 +805,47 @@ var enumStrategy = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of documentupload.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v documentupload.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v documentupload.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v documentupload.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v documentupload.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v documentupload.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v documentupload.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v documentupload.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v documentupload.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v documentupload.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v documentupload.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v documentupload.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v documentupload.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v documentupload.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi documentupload.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v documentupload.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v documentupload.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...documentupload.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...documentupload.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StrategyCol is a column of documentupload.Strategy values.
-type StrategyCol struct{ keel.StringCol }
+type StrategyCol struct{ keel.TypedStringCol }
 
-func (c StrategyCol) Eq(v documentupload.Strategy) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StrategyCol) Ne(v documentupload.Strategy) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StrategyCol) Gt(v documentupload.Strategy) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StrategyCol) Gte(v documentupload.Strategy) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StrategyCol) Lt(v documentupload.Strategy) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StrategyCol) Lte(v documentupload.Strategy) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StrategyCol) Eq(v documentupload.Strategy) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StrategyCol) Ne(v documentupload.Strategy) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StrategyCol) Gt(v documentupload.Strategy) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StrategyCol) Gte(v documentupload.Strategy) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StrategyCol) Lt(v documentupload.Strategy) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StrategyCol) Lte(v documentupload.Strategy) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StrategyCol) IsDistinctFrom(v documentupload.Strategy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StrategyCol) Between(lo, hi documentupload.Strategy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StrategyCol) To(v documentupload.Strategy) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StrategyCol) To(v documentupload.Strategy) keel.Assignment { return c.Text().To(string(v)) }
 func (c StrategyCol) In(vs ...documentupload.Strategy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StrategyCol) NotIn(vs ...documentupload.Strategy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

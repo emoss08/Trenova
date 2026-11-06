@@ -80,11 +80,11 @@ type DocumentPacketRulesTable struct {
 // DocumentPacketRules references the document_packet_rules table.
 var DocumentPacketRules = &DocumentPacketRulesTable{
 	TableBase:             keel.TableBase{Ref: &documentPacketRulesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 2}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 2}}},
 	ResourceType:          keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 3}},
-	DocumentTypeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 4}}},
+	DocumentTypeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 4}}},
 	Required:              keel.BoolCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 5}},
 	AllowMultiple:         keel.BoolCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 6}},
 	DisplayOrder:          keel.Int64Col{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 7}},
@@ -99,11 +99,11 @@ var DocumentPacketRules = &DocumentPacketRulesTable{
 func BuildDocumentPacketRules(r *keel.Ref) *DocumentPacketRulesTable {
 	return &DocumentPacketRulesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ResourceType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		DocumentTypeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		DocumentTypeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Required:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		AllowMultiple:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		DisplayOrder:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -130,8 +130,6 @@ func (t *DocumentPacketRulesTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // DocumentPacketRulesQuery is a query over documentpacketrule.DocumentPacketRule.
 type DocumentPacketRulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documentpacketrule.DocumentPacketRule] = (*DocumentPacketRulesTable)(nil)
 
 var _ keel.Query[*documentpacketrule.DocumentPacketRule] = (*DocumentPacketRulesQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *DocumentPacketRulesTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *DocumentPacketRulesTable) Create(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentPacketRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentPacketRulesTable) Save(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentPacketRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentPacketRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentPacketRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentPacketRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentPacketRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *DocumentPacketRulesQuery) Clone() keel.Query[*documentpacketrule.Docume
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentPacketRulesQuery) One(ctx context.Context, db *keel.DB) (*documentpacketrule.DocumentPacketRule, error) {
-	return keel.One[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documentpacketrule.DocumentPacketRule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentPacketRulesQuery) First(ctx context.Context, db *keel.DB) (*documentpacketrule.DocumentPacketRule, error) {
-	return keel.First[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documentpacketrule.DocumentPacketRule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentPacketRulesQuery) List(ctx context.Context, db *keel.DB) ([]*documentpacketrule.DocumentPacketRule, error) {
-	return keel.List[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentpacketrule.DocumentPacketRule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentPacketRulesQuery) All(ctx context.Context, db *keel.DB) ([]*documentpacketrule.DocumentPacketRule, error) {
-	return keel.All[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentpacketrule.DocumentPacketRule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentPacketRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentpacketrule.DocumentPacketRule, error) {
-	return keel.UpdateReturning[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documentpacketrule.DocumentPacketRule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentPacketRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentpacketrule.DocumentPacketRule], error) {
-	return keel.PageOf[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documentpacketrule.DocumentPacketRule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentPacketRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentpacketrule.DocumentPacketRule) error) error {
-	return keel.Each[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documentpacketrule.DocumentPacketRule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocumentPacketRule() unsafe.Pointer {

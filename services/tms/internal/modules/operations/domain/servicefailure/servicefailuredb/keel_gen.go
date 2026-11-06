@@ -110,14 +110,14 @@ type ReasonCodesTable struct {
 // ReasonCodes references the service_failure_reason_codes table.
 var ReasonCodes = &ReasonCodesTable{
 	TableBase:            keel.TableBase{Ref: &reasonCodesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 2}}},
 	Code:                 keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 3}},
 	Label:                keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 4}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 5}},
-	Category:             ReasonCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 6}}},
-	AppliesTo:            ReasonCodeAppliesToCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 7}}},
+	Category:             ReasonCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 6}}},
+	AppliesTo:            ReasonCodeAppliesToCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 7}}},
 	DefaultStatusCode:    keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 8}},
 	DefaultReasonCode:    keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 9}},
 	DefaultExceptionCode: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 10}},
@@ -126,9 +126,9 @@ var ReasonCodes = &ReasonCodesTable{
 	SortOrder:            keel.Int32Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 13}},
 	ExternalMap:          keel.JSONBCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 14}},
 	ArchivedAt:           keel.Int64Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 15}},
-	ArchivedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 16}}},
+	ArchivedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 16}}},
 	ActivatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 17}},
-	ActivatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 18}}},
+	ActivatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 18}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 19}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 20}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &reasonCodesRef, Index: 21}},
@@ -139,14 +139,14 @@ var ReasonCodes = &ReasonCodesTable{
 func BuildReasonCodes(r *keel.Ref) *ReasonCodesTable {
 	return &ReasonCodesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Label:                keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Category:             ReasonCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		AppliesTo:            ReasonCodeAppliesToCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Category:             ReasonCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		AppliesTo:            ReasonCodeAppliesToCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DefaultStatusCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		DefaultReasonCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		DefaultExceptionCode: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -155,9 +155,9 @@ func BuildReasonCodes(r *keel.Ref) *ReasonCodesTable {
 		SortOrder:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 13}},
 		ExternalMap:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		ArchivedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ArchivedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ArchivedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ActivatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		ActivatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ActivatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -190,8 +190,6 @@ func (t *ReasonCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // ReasonCodesQuery is a query over servicefailure.ReasonCode.
 type ReasonCodesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*servicefailure.ReasonCode] = (*ReasonCodesTable)(nil)
 
 var _ keel.Query[*servicefailure.ReasonCode] = (*ReasonCodesQuery)(nil)
 
@@ -307,42 +305,42 @@ func (t *ReasonCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ser
 
 // Create inserts row.
 func (t *ReasonCodesTable) Create(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReasonCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReasonCodesTable) Save(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReasonCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReasonCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReasonCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReasonCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReasonCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -514,37 +512,45 @@ func (q *ReasonCodesQuery) Clone() keel.Query[*servicefailure.ReasonCode] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReasonCodesQuery) One(ctx context.Context, db *keel.DB) (*servicefailure.ReasonCode, error) {
-	return keel.One[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*servicefailure.ReasonCode)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReasonCodesQuery) First(ctx context.Context, db *keel.DB) (*servicefailure.ReasonCode, error) {
-	return keel.First[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*servicefailure.ReasonCode)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReasonCodesQuery) List(ctx context.Context, db *keel.DB) ([]*servicefailure.ReasonCode, error) {
-	return keel.List[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*servicefailure.ReasonCode)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReasonCodesQuery) All(ctx context.Context, db *keel.DB) ([]*servicefailure.ReasonCode, error) {
-	return keel.All[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*servicefailure.ReasonCode)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReasonCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*servicefailure.ReasonCode, error) {
-	return keel.UpdateReturning[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*servicefailure.ReasonCode)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReasonCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*servicefailure.ReasonCode], error) {
-	return keel.PageOf[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*servicefailure.ReasonCode])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReasonCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*servicefailure.ReasonCode) error) error {
-	return keel.Each[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*servicefailure.ReasonCode)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReasonCode() unsafe.Pointer { return unsafe.Pointer(new(servicefailure.ReasonCode)) }
@@ -829,18 +835,18 @@ type ServiceFailuresTable struct {
 // ServiceFailures references the service_failures table.
 var ServiceFailures = &ServiceFailuresTable{
 	TableBase:             keel.TableBase{Ref: &serviceFailuresRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 2}}},
-	ShipmentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 3}}},
-	ShipmentMoveID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 4}}},
-	StopID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 5}}},
-	ReasonCodeID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 6}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 2}}},
+	ShipmentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 3}}},
+	ShipmentMoveID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 4}}},
+	StopID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 5}}},
+	ReasonCodeID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 6}}},
 	Number:                keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 7}},
-	Type:                  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 8}}},
-	Source:                SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 9}}},
-	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 10}}},
-	StopType:              keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 11}}},
+	Type:                  TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 8}}},
+	Source:                SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 9}}},
+	Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 10}}},
+	StopType:              keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 11}}},
 	ScheduledCutoff:       keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 12}},
 	ActualArrival:         keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 13}},
 	GracePeriodMinutes:    keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 14}},
@@ -852,36 +858,36 @@ var ServiceFailures = &ServiceFailuresTable{
 	X12ExceptionCode:      keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 20}},
 	DetectedAt:            keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 21}},
 	ReviewedAt:            keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 22}},
-	ReviewedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 23}}},
+	ReviewedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 23}}},
 	ResolvedAt:            keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 24}},
-	ResolvedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 25}}},
+	ResolvedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 25}}},
 	VoidedAt:              keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 26}},
-	VoidedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 27}}},
+	VoidedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 27}}},
 	VoidReason:            keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 28}},
-	CreatedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 29}}},
+	CreatedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 29}}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 30}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 31}},
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &serviceFailuresRef, Index: 32}},
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 33}},
-	LocationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 34}}},
+	LocationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 34}}},
 }
 
 // BuildServiceFailures builds the table of service_failures for ref. Generated relation and alias methods call it.
 func BuildServiceFailures(r *keel.Ref) *ServiceFailuresTable {
 	return &ServiceFailuresTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		StopID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ReasonCodeID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		StopID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ReasonCodeID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Number:                keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Type:                  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Source:                SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		StopType:              keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Type:                  TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Source:                SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		StopType:              keelkinds.ShipmentvocabStopTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ScheduledCutoff:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ActualArrival:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		GracePeriodMinutes:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -893,18 +899,18 @@ func BuildServiceFailures(r *keel.Ref) *ServiceFailuresTable {
 		X12ExceptionCode:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		DetectedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		ReviewedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		ReviewedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ReviewedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		ResolvedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		ResolvedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ResolvedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		VoidedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		VoidedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		VoidedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		VoidReason:            keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
-		CreatedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		CreatedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
 		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
 		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 33}},
-		LocationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		LocationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 	}
 }
 
@@ -963,8 +969,6 @@ func (t *ServiceFailuresTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // ServiceFailuresQuery is a query over servicefailure.ServiceFailure.
 type ServiceFailuresQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*servicefailure.ServiceFailure] = (*ServiceFailuresTable)(nil)
 
 var _ keel.Query[*servicefailure.ServiceFailure] = (*ServiceFailuresQuery)(nil)
 
@@ -1080,42 +1084,42 @@ func (t *ServiceFailuresTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *ServiceFailuresTable) Create(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ServiceFailuresTable) CreateMany(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ServiceFailuresTable) Save(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ServiceFailuresTable) SaveExcept(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ServiceFailuresTable) DeleteRow(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ServiceFailuresTable) Upsert(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ServiceFailuresTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ServiceFailuresTable) Copy(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1287,37 +1291,45 @@ func (q *ServiceFailuresQuery) Clone() keel.Query[*servicefailure.ServiceFailure
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ServiceFailuresQuery) One(ctx context.Context, db *keel.DB) (*servicefailure.ServiceFailure, error) {
-	return keel.One[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*servicefailure.ServiceFailure)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ServiceFailuresQuery) First(ctx context.Context, db *keel.DB) (*servicefailure.ServiceFailure, error) {
-	return keel.First[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*servicefailure.ServiceFailure)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ServiceFailuresQuery) List(ctx context.Context, db *keel.DB) ([]*servicefailure.ServiceFailure, error) {
-	return keel.List[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*servicefailure.ServiceFailure)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ServiceFailuresQuery) All(ctx context.Context, db *keel.DB) ([]*servicefailure.ServiceFailure, error) {
-	return keel.All[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*servicefailure.ServiceFailure)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ServiceFailuresQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*servicefailure.ServiceFailure, error) {
-	return keel.UpdateReturning[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*servicefailure.ServiceFailure)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ServiceFailuresQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*servicefailure.ServiceFailure], error) {
-	return keel.PageOf[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*servicefailure.ServiceFailure])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ServiceFailuresQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*servicefailure.ServiceFailure) error) error {
-	return keel.Each[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*servicefailure.ServiceFailure)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newServiceFailure() unsafe.Pointer { return unsafe.Pointer(new(servicefailure.ServiceFailure)) }
@@ -1620,142 +1632,144 @@ var enumType = [...]schema.EnumValue{
 }
 
 // ReasonCategoryCol is a column of servicefailure.ReasonCategory values.
-type ReasonCategoryCol struct{ keel.StringCol }
+type ReasonCategoryCol struct{ keel.TypedStringCol }
 
 func (c ReasonCategoryCol) Eq(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReasonCategoryCol) Ne(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReasonCategoryCol) Gt(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReasonCategoryCol) Gte(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReasonCategoryCol) Lt(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReasonCategoryCol) Lte(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReasonCategoryCol) IsDistinctFrom(v servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReasonCategoryCol) Between(lo, hi servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReasonCategoryCol) To(v servicefailure.ReasonCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReasonCategoryCol) In(vs ...servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReasonCategoryCol) NotIn(vs ...servicefailure.ReasonCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReasonCodeAppliesToCol is a column of servicefailure.ReasonCodeAppliesTo values.
-type ReasonCodeAppliesToCol struct{ keel.StringCol }
+type ReasonCodeAppliesToCol struct{ keel.TypedStringCol }
 
 func (c ReasonCodeAppliesToCol) Eq(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReasonCodeAppliesToCol) Ne(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReasonCodeAppliesToCol) Gt(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReasonCodeAppliesToCol) Gte(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReasonCodeAppliesToCol) Lt(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReasonCodeAppliesToCol) Lte(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReasonCodeAppliesToCol) IsDistinctFrom(v servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReasonCodeAppliesToCol) Between(lo, hi servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReasonCodeAppliesToCol) To(v servicefailure.ReasonCodeAppliesTo) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReasonCodeAppliesToCol) In(vs ...servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReasonCodeAppliesToCol) NotIn(vs ...servicefailure.ReasonCodeAppliesTo) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceCol is a column of servicefailure.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v servicefailure.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v servicefailure.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v servicefailure.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v servicefailure.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v servicefailure.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v servicefailure.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v servicefailure.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v servicefailure.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v servicefailure.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v servicefailure.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v servicefailure.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v servicefailure.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v servicefailure.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi servicefailure.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v servicefailure.Source) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SourceCol) To(v servicefailure.Source) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceCol) In(vs ...servicefailure.Source) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceCol) NotIn(vs ...servicefailure.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of servicefailure.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v servicefailure.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v servicefailure.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v servicefailure.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v servicefailure.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v servicefailure.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v servicefailure.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v servicefailure.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v servicefailure.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v servicefailure.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v servicefailure.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v servicefailure.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v servicefailure.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v servicefailure.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi servicefailure.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v servicefailure.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v servicefailure.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...servicefailure.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...servicefailure.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TypeCol is a column of servicefailure.Type values.
-type TypeCol struct{ keel.StringCol }
+type TypeCol struct{ keel.TypedStringCol }
 
-func (c TypeCol) Eq(v servicefailure.Type) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TypeCol) Ne(v servicefailure.Type) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TypeCol) Gt(v servicefailure.Type) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TypeCol) Gte(v servicefailure.Type) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TypeCol) Lt(v servicefailure.Type) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TypeCol) Lte(v servicefailure.Type) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TypeCol) Eq(v servicefailure.Type) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TypeCol) Ne(v servicefailure.Type) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TypeCol) Gt(v servicefailure.Type) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TypeCol) Gte(v servicefailure.Type) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TypeCol) Lt(v servicefailure.Type) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TypeCol) Lte(v servicefailure.Type) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TypeCol) IsDistinctFrom(v servicefailure.Type) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TypeCol) Between(lo, hi servicefailure.Type) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TypeCol) To(v servicefailure.Type) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TypeCol) In(vs ...servicefailure.Type) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c TypeCol) To(v servicefailure.Type) keel.Assignment { return c.Text().To(string(v)) }
+func (c TypeCol) In(vs ...servicefailure.Type) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c TypeCol) NotIn(vs ...servicefailure.Type) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

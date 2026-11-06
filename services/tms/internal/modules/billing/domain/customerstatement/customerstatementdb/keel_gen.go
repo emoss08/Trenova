@@ -80,10 +80,10 @@ type StatementsTable struct {
 // Statements references the customer_statements table.
 var Statements = &StatementsTable{
 	TableBase:          keel.TableBase{Ref: &statementsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 2}}},
-	CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statementsRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statementsRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statementsRef, Index: 2}}},
+	CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statementsRef, Index: 3}}},
 	PeriodStart:        keel.Int64Col{Col: keel.Col{Ref: &statementsRef, Index: 4}},
 	PeriodEnd:          keel.Int64Col{Col: keel.Col{Ref: &statementsRef, Index: 5}},
 	EndingBalanceMinor: keel.Int64Col{Col: keel.Col{Ref: &statementsRef, Index: 6}},
@@ -91,7 +91,7 @@ var Statements = &StatementsTable{
 	CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 8}},
 	SentTo:             keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 9}},
 	Monthly:            keel.BoolCol{Col: keel.Col{Ref: &statementsRef, Index: 10}},
-	SentByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &statementsRef, Index: 11}}},
+	SentByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &statementsRef, Index: 11}}},
 	SentAt:             keel.Int64Col{Col: keel.Col{Ref: &statementsRef, Index: 12}},
 }
 
@@ -99,10 +99,10 @@ var Statements = &StatementsTable{
 func BuildStatements(r *keel.Ref) *StatementsTable {
 	return &StatementsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PeriodStart:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		PeriodEnd:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		EndingBalanceMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -110,7 +110,7 @@ func BuildStatements(r *keel.Ref) *StatementsTable {
 		CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		SentTo:             keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Monthly:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		SentByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		SentByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		SentAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 	}
 }
@@ -130,8 +130,6 @@ func (t *StatementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // StatementsQuery is a query over customerstatement.Statement.
 type StatementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customerstatement.Statement] = (*StatementsTable)(nil)
 
 var _ keel.Query[*customerstatement.Statement] = (*StatementsQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *StatementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*cust
 
 // Create inserts row.
 func (t *StatementsTable) Create(ctx context.Context, db *keel.DB, row *customerstatement.Statement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *StatementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerstatement.Statement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *StatementsTable) Save(ctx context.Context, db *keel.DB, row *customerstatement.Statement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *StatementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerstatement.Statement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *StatementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerstatement.Statement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *StatementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerstatement.Statement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *StatementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerstatement.Statement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *StatementsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerstatement.Statement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *StatementsQuery) Clone() keel.Query[*customerstatement.Statement] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *StatementsQuery) One(ctx context.Context, db *keel.DB) (*customerstatement.Statement, error) {
-	return keel.One[*customerstatement.Statement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerstatement.Statement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *StatementsQuery) First(ctx context.Context, db *keel.DB) (*customerstatement.Statement, error) {
-	return keel.First[*customerstatement.Statement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerstatement.Statement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *StatementsQuery) List(ctx context.Context, db *keel.DB) ([]*customerstatement.Statement, error) {
-	return keel.List[*customerstatement.Statement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerstatement.Statement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *StatementsQuery) All(ctx context.Context, db *keel.DB) ([]*customerstatement.Statement, error) {
-	return keel.All[*customerstatement.Statement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerstatement.Statement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *StatementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerstatement.Statement, error) {
-	return keel.UpdateReturning[*customerstatement.Statement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerstatement.Statement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *StatementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerstatement.Statement], error) {
-	return keel.PageOf[*customerstatement.Statement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerstatement.Statement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *StatementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerstatement.Statement) error) error {
-	return keel.Each[*customerstatement.Statement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerstatement.Statement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newStatement() unsafe.Pointer { return unsafe.Pointer(new(customerstatement.Statement)) }

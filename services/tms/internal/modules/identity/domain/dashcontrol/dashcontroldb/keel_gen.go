@@ -103,9 +103,9 @@ type DashControlsTable struct {
 // DashControls references the dash_controls table.
 var DashControls = &DashControlsTable{
 	TableBase:                      keel.TableBase{Ref: &dashControlsRef},
-	ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 0}}},
-	BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 1}}},
-	OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 2}}},
+	ID:                             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 0}}},
+	BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 1}}},
+	OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 2}}},
 	RequireLoadAcknowledgment:      keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 3}},
 	AllowLoadRefusals:              keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 4}},
 	AllowStopActions:               keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 5}},
@@ -121,7 +121,7 @@ var DashControls = &DashControlsTable{
 	AllowPtoRequests:               keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 15}},
 	SendCredentialReminders:        keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 16}},
 	RequireContactChangeApproval:   keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 17}},
-	DriverDigestCadence:            DriverDigestCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 18}}},
+	DriverDigestCadence:            DriverDigestCadenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 18}}},
 	DriverDigestWeekday:            keel.Int16Col{Col: keel.Col{Ref: &dashControlsRef, Index: 19}},
 	EnableDetentionAlerts:          keel.BoolCol{Col: keel.Col{Ref: &dashControlsRef, Index: 20}},
 	DetentionAlertThresholdMinutes: keel.Int16Col{Col: keel.Col{Ref: &dashControlsRef, Index: 21}},
@@ -134,9 +134,9 @@ var DashControls = &DashControlsTable{
 func BuildDashControls(r *keel.Ref) *DashControlsTable {
 	return &DashControlsTable{
 		TableBase:                      keel.TableBase{Ref: r},
-		ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		RequireLoadAcknowledgment:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
 		AllowLoadRefusals:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
 		AllowStopActions:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -152,7 +152,7 @@ func BuildDashControls(r *keel.Ref) *DashControlsTable {
 		AllowPtoRequests:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		SendCredentialReminders:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
 		RequireContactChangeApproval:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
-		DriverDigestCadence:            DriverDigestCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		DriverDigestCadence:            DriverDigestCadenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		DriverDigestWeekday:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 19}},
 		EnableDetentionAlerts:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		DetentionAlertThresholdMinutes: keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -177,8 +177,6 @@ func (t *DashControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // DashControlsQuery is a query over dashcontrol.DashControl.
 type DashControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dashcontrol.DashControl] = (*DashControlsTable)(nil)
 
 var _ keel.Query[*dashcontrol.DashControl] = (*DashControlsQuery)(nil)
 
@@ -294,42 +292,42 @@ func (t *DashControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*da
 
 // Create inserts row.
 func (t *DashControlsTable) Create(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DashControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DashControlsTable) Save(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DashControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DashControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DashControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DashControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DashControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -501,37 +499,45 @@ func (q *DashControlsQuery) Clone() keel.Query[*dashcontrol.DashControl] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DashControlsQuery) One(ctx context.Context, db *keel.DB) (*dashcontrol.DashControl, error) {
-	return keel.One[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dashcontrol.DashControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DashControlsQuery) First(ctx context.Context, db *keel.DB) (*dashcontrol.DashControl, error) {
-	return keel.First[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dashcontrol.DashControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DashControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dashcontrol.DashControl, error) {
-	return keel.List[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dashcontrol.DashControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DashControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dashcontrol.DashControl, error) {
-	return keel.All[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dashcontrol.DashControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DashControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dashcontrol.DashControl, error) {
-	return keel.UpdateReturning[*dashcontrol.DashControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dashcontrol.DashControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DashControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dashcontrol.DashControl], error) {
-	return keel.PageOf[*dashcontrol.DashControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dashcontrol.DashControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DashControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dashcontrol.DashControl) error) error {
-	return keel.Each[*dashcontrol.DashControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dashcontrol.DashControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDashControl() unsafe.Pointer { return unsafe.Pointer(new(dashcontrol.DashControl)) }
@@ -665,38 +671,38 @@ var enumDriverDigestCadence = [...]schema.EnumValue{
 }
 
 // DriverDigestCadenceCol is a column of dashcontrol.DriverDigestCadence values.
-type DriverDigestCadenceCol struct{ keel.StringCol }
+type DriverDigestCadenceCol struct{ keel.TypedStringCol }
 
 func (c DriverDigestCadenceCol) Eq(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DriverDigestCadenceCol) Ne(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DriverDigestCadenceCol) Gt(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DriverDigestCadenceCol) Gte(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DriverDigestCadenceCol) Lt(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DriverDigestCadenceCol) Lte(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DriverDigestCadenceCol) IsDistinctFrom(v dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriverDigestCadenceCol) Between(lo, hi dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DriverDigestCadenceCol) To(v dashcontrol.DriverDigestCadence) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DriverDigestCadenceCol) In(vs ...dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriverDigestCadenceCol) NotIn(vs ...dashcontrol.DriverDigestCadence) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

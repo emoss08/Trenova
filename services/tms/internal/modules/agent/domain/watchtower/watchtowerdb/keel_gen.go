@@ -64,9 +64,9 @@ type CursorsTable struct {
 // Cursors references the watchtower_cursors table.
 var Cursors = &CursorsTable{
 	TableBase:      keel.TableBase{Ref: &cursorsRef},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &cursorsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &cursorsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &cursorsRef, Index: 2}}},
 	SeenAt:         keel.Int64Col{Col: keel.Col{Ref: &cursorsRef, Index: 3}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &cursorsRef, Index: 4}},
 }
@@ -75,9 +75,9 @@ var Cursors = &CursorsTable{
 func BuildCursors(r *keel.Ref) *CursorsTable {
 	return &CursorsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		SeenAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 	}
@@ -96,8 +96,6 @@ func (t *CursorsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*wat
 
 // CursorsQuery is a query over watchtower.Cursor.
 type CursorsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*watchtower.Cursor] = (*CursorsTable)(nil)
 
 var _ keel.Query[*watchtower.Cursor] = (*CursorsQuery)(nil)
 
@@ -213,42 +211,42 @@ func (t *CursorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchto
 
 // Create inserts row.
 func (t *CursorsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Cursor) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CursorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CursorsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Cursor, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CursorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Cursor, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CursorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Cursor) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CursorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CursorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CursorsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -420,37 +418,45 @@ func (q *CursorsQuery) Clone() keel.Query[*watchtower.Cursor] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CursorsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Cursor, error) {
-	return keel.One[*watchtower.Cursor](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Cursor)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CursorsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Cursor, error) {
-	return keel.First[*watchtower.Cursor](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Cursor)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CursorsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Cursor, error) {
-	return keel.List[*watchtower.Cursor](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Cursor)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CursorsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Cursor, error) {
-	return keel.All[*watchtower.Cursor](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Cursor)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CursorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Cursor, error) {
-	return keel.UpdateReturning[*watchtower.Cursor](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*watchtower.Cursor)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CursorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Cursor], error) {
-	return keel.PageOf[*watchtower.Cursor](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*watchtower.Cursor])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CursorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Cursor) error) error {
-	return keel.Each[*watchtower.Cursor](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*watchtower.Cursor)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCursor() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Cursor)) }
@@ -551,12 +557,12 @@ type EventsTable struct {
 // Events references the watchtower_item_events table.
 var Events = &EventsTable{
 	TableBase:      keel.TableBase{Ref: &eventsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
-	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 3}}},
-	Kind:           EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 4}}},
-	ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
+	ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 3}}},
+	Kind:           EventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 4}}},
+	ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 5}}},
 	FromValue:      keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 6}},
 	ToValue:        keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 7}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 8}},
@@ -567,12 +573,12 @@ var Events = &EventsTable{
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:           EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:           EventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		FromValue:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ToValue:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -593,8 +599,6 @@ func (t *EventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watc
 
 // EventsQuery is a query over watchtower.Event.
 type EventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*watchtower.Event] = (*EventsTable)(nil)
 
 var _ keel.Query[*watchtower.Event] = (*EventsQuery)(nil)
 
@@ -710,42 +714,42 @@ func (t *EventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtow
 
 // Create inserts row.
 func (t *EventsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Event) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Event) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EventsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Event, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Event, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Event) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Event, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Event, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EventsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Event) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -917,37 +921,45 @@ func (q *EventsQuery) Clone() keel.Query[*watchtower.Event] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EventsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Event, error) {
-	return keel.One[*watchtower.Event](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Event)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EventsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Event, error) {
-	return keel.First[*watchtower.Event](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Event)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EventsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Event, error) {
-	return keel.List[*watchtower.Event](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Event)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EventsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Event, error) {
-	return keel.All[*watchtower.Event](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Event)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Event, error) {
-	return keel.UpdateReturning[*watchtower.Event](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*watchtower.Event)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Event], error) {
-	return keel.PageOf[*watchtower.Event](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*watchtower.Event])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Event) error) error {
-	return keel.Each[*watchtower.Event](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*watchtower.Event)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEvent() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Event)) }
@@ -1144,42 +1156,42 @@ type ItemsTable struct {
 // Items references the watchtower_items table.
 var Items = &ItemsTable{
 	TableBase:         keel.TableBase{Ref: &itemsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 2}}},
-	SourceKind:        SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 2}}},
+	SourceKind:        SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 3}}},
 	SourceID:          keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 4}},
-	Severity:          SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 5}}},
+	Severity:          SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 5}}},
 	Title:             keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 6}},
 	Summary:           keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 7}},
-	SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 8}}},
-	SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 9}}},
-	EventKind:         keelkinds.AgenttriggerEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 10}}},
+	SubjectType:       agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 8}}},
+	SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 9}}},
+	EventKind:         keelkinds.AgenttriggerEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 10}}},
 	Path:              keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 11}},
 	OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 12}},
 	ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 13}},
-	Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 14}}},
-	AssigneeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 15}}},
+	Status:            StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 14}}},
+	AssigneeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 15}}},
 	DueAt:             keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 16}},
 	SnoozedUntil:      keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 17}},
 	AcknowledgedAt:    keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 18}},
-	ResolutionCode:    ResolutionCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 19}}},
+	ResolutionCode:    ResolutionCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 19}}},
 	ResolutionNote:    keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 20}},
-	ResolvedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 21}}},
+	ResolvedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 21}}},
 	SourceClearedAt:   keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 22}},
 	EscalationLevel:   keel.Int16Col{Col: keel.Col{Ref: &itemsRef, Index: 23}},
 	LastEscalatedAt:   keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 24}},
 	DueLabel:          keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 25}},
-	DueSource:         DueSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 26}}},
-	RecordKind:        keelkinds.RecordkindKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 27}}},
+	DueSource:         DueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 26}}},
+	RecordKind:        keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 27}}},
 	RecordLabel:       keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 28}},
 	Facts:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 29}},
 	Impact:            keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 30}},
 	Trail:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 31}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 32}}},
-	AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 33}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 32}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 33}}},
 	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 34}},
-	AgentHandedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
+	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 36}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 37}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 38}},
@@ -1191,42 +1203,42 @@ var Items = &ItemsTable{
 func BuildItems(r *keel.Ref) *ItemsTable {
 	return &ItemsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceKind:        SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceKind:        SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SourceID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Severity:          SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Severity:          SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Title:             keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Summary:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		EventKind:         keelkinds.AgenttriggerEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SubjectType:       agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		EventKind:         keelkinds.AgenttriggerEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Path:              keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		AssigneeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Status:            StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		AssigneeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		DueAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		SnoozedUntil:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		AcknowledgedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		ResolutionCode:    ResolutionCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ResolutionCode:    ResolutionCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		ResolutionNote:    keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		ResolvedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		ResolvedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		SourceClearedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		EscalationLevel:   keel.Int16Col{Col: keel.Col{Ref: r, Index: 23}},
 		LastEscalatedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		DueLabel:          keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		DueSource:         DueSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		RecordKind:        keelkinds.RecordkindKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		DueSource:         DueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		RecordKind:        keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		RecordLabel:       keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
 		Facts:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
 		Impact:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
 		Trail:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 32}}},
-		AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		AgentHandedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
@@ -1248,8 +1260,6 @@ func (t *ItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watch
 
 // ItemsQuery is a query over watchtower.Item.
 type ItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*watchtower.Item] = (*ItemsTable)(nil)
 
 var _ keel.Query[*watchtower.Item] = (*ItemsQuery)(nil)
 
@@ -1365,42 +1375,42 @@ func (t *ItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtowe
 
 // Create inserts row.
 func (t *ItemsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Item) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Item) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ItemsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Item, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Item, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Item) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Item, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Item, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Item) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1572,37 +1582,45 @@ func (q *ItemsQuery) Clone() keel.Query[*watchtower.Item] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ItemsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Item, error) {
-	return keel.One[*watchtower.Item](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Item)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ItemsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Item, error) {
-	return keel.First[*watchtower.Item](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Item)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ItemsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Item, error) {
-	return keel.List[*watchtower.Item](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Item)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ItemsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Item, error) {
-	return keel.All[*watchtower.Item](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Item)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Item, error) {
-	return keel.UpdateReturning[*watchtower.Item](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*watchtower.Item)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Item], error) {
-	return keel.PageOf[*watchtower.Item](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*watchtower.Item])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Item) error) error {
-	return keel.Each[*watchtower.Item](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*watchtower.Item)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newItem() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Item)) }
@@ -1919,10 +1937,10 @@ type ReadsTable struct {
 // Reads references the watchtower_item_reads table.
 var Reads = &ReadsTable{
 	TableBase:      keel.TableBase{Ref: &readsRef},
-	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 0}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 2}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 3}}},
+	ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &readsRef, Index: 0}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &readsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &readsRef, Index: 2}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &readsRef, Index: 3}}},
 	SeenAt:         keel.Int64Col{Col: keel.Col{Ref: &readsRef, Index: 4}},
 }
 
@@ -1930,10 +1948,10 @@ var Reads = &ReadsTable{
 func BuildReads(r *keel.Ref) *ReadsTable {
 	return &ReadsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SeenAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 	}
 }
@@ -1946,8 +1964,6 @@ func (t *ReadsTable) As(alias string) *ReadsTable { return keel.Alias(t.Ref, ali
 
 // ReadsQuery is a query over watchtower.Read.
 type ReadsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*watchtower.Read] = (*ReadsTable)(nil)
 
 var _ keel.Query[*watchtower.Read] = (*ReadsQuery)(nil)
 
@@ -2063,42 +2079,42 @@ func (t *ReadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtowe
 
 // Create inserts row.
 func (t *ReadsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Read) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Read) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReadsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Read, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Read, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Read) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Read, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Read, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReadsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Read) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2270,37 +2286,45 @@ func (q *ReadsQuery) Clone() keel.Query[*watchtower.Read] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReadsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Read, error) {
-	return keel.One[*watchtower.Read](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Read)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReadsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Read, error) {
-	return keel.First[*watchtower.Read](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*watchtower.Read)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReadsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Read, error) {
-	return keel.List[*watchtower.Read](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Read)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReadsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Read, error) {
-	return keel.All[*watchtower.Read](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*watchtower.Read)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Read, error) {
-	return keel.UpdateReturning[*watchtower.Read](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*watchtower.Read)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Read], error) {
-	return keel.PageOf[*watchtower.Read](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*watchtower.Read])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Read) error) error {
-	return keel.Each[*watchtower.Read](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*watchtower.Read)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRead() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Read)) }
@@ -2554,151 +2578,141 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // DueSourceCol is a column of watchtower.DueSource values.
-type DueSourceCol struct{ keel.StringCol }
+type DueSourceCol struct{ keel.TypedStringCol }
 
-func (c DueSourceCol) Eq(v watchtower.DueSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DueSourceCol) Ne(v watchtower.DueSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DueSourceCol) Gt(v watchtower.DueSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DueSourceCol) Gte(v watchtower.DueSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DueSourceCol) Lt(v watchtower.DueSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DueSourceCol) Lte(v watchtower.DueSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DueSourceCol) Eq(v watchtower.DueSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DueSourceCol) Ne(v watchtower.DueSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DueSourceCol) Gt(v watchtower.DueSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DueSourceCol) Gte(v watchtower.DueSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DueSourceCol) Lt(v watchtower.DueSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DueSourceCol) Lte(v watchtower.DueSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DueSourceCol) IsDistinctFrom(v watchtower.DueSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DueSourceCol) Between(lo, hi watchtower.DueSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DueSourceCol) To(v watchtower.DueSource) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DueSourceCol) To(v watchtower.DueSource) keel.Assignment { return c.Text().To(string(v)) }
 func (c DueSourceCol) In(vs ...watchtower.DueSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DueSourceCol) NotIn(vs ...watchtower.DueSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventKindCol is a column of watchtower.EventKind values.
-type EventKindCol struct{ keel.StringCol }
+type EventKindCol struct{ keel.TypedStringCol }
 
-func (c EventKindCol) Eq(v watchtower.EventKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventKindCol) Ne(v watchtower.EventKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventKindCol) Gt(v watchtower.EventKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventKindCol) Gte(v watchtower.EventKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventKindCol) Lt(v watchtower.EventKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventKindCol) Lte(v watchtower.EventKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventKindCol) Eq(v watchtower.EventKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EventKindCol) Ne(v watchtower.EventKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EventKindCol) Gt(v watchtower.EventKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EventKindCol) Gte(v watchtower.EventKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EventKindCol) Lt(v watchtower.EventKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EventKindCol) Lte(v watchtower.EventKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EventKindCol) IsDistinctFrom(v watchtower.EventKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventKindCol) Between(lo, hi watchtower.EventKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EventKindCol) To(v watchtower.EventKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EventKindCol) To(v watchtower.EventKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c EventKindCol) In(vs ...watchtower.EventKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventKindCol) NotIn(vs ...watchtower.EventKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ResolutionCodeCol is a column of watchtower.ResolutionCode values.
-type ResolutionCodeCol struct{ keel.StringCol }
+type ResolutionCodeCol struct{ keel.TypedStringCol }
 
-func (c ResolutionCodeCol) Eq(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ResolutionCodeCol) Ne(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ResolutionCodeCol) Gt(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ResolutionCodeCol) Gte(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ResolutionCodeCol) Lt(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ResolutionCodeCol) Lte(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ResolutionCodeCol) Eq(v watchtower.ResolutionCode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ResolutionCodeCol) Ne(v watchtower.ResolutionCode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ResolutionCodeCol) Gt(v watchtower.ResolutionCode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ResolutionCodeCol) Gte(v watchtower.ResolutionCode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ResolutionCodeCol) Lt(v watchtower.ResolutionCode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ResolutionCodeCol) Lte(v watchtower.ResolutionCode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ResolutionCodeCol) IsDistinctFrom(v watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ResolutionCodeCol) Between(lo, hi watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ResolutionCodeCol) To(v watchtower.ResolutionCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ResolutionCodeCol) In(vs ...watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ResolutionCodeCol) NotIn(vs ...watchtower.ResolutionCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SeverityCol is a column of watchtower.Severity values.
-type SeverityCol struct{ keel.StringCol }
+type SeverityCol struct{ keel.TypedStringCol }
 
-func (c SeverityCol) Eq(v watchtower.Severity) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SeverityCol) Ne(v watchtower.Severity) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SeverityCol) Gt(v watchtower.Severity) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SeverityCol) Gte(v watchtower.Severity) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SeverityCol) Lt(v watchtower.Severity) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SeverityCol) Lte(v watchtower.Severity) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SeverityCol) Eq(v watchtower.Severity) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SeverityCol) Ne(v watchtower.Severity) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SeverityCol) Gt(v watchtower.Severity) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SeverityCol) Gte(v watchtower.Severity) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SeverityCol) Lt(v watchtower.Severity) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SeverityCol) Lte(v watchtower.Severity) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SeverityCol) IsDistinctFrom(v watchtower.Severity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SeverityCol) Between(lo, hi watchtower.Severity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SeverityCol) To(v watchtower.Severity) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SeverityCol) To(v watchtower.Severity) keel.Assignment { return c.Text().To(string(v)) }
 func (c SeverityCol) In(vs ...watchtower.Severity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SeverityCol) NotIn(vs ...watchtower.Severity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceKindCol is a column of watchtower.SourceKind values.
-type SourceKindCol struct{ keel.StringCol }
+type SourceKindCol struct{ keel.TypedStringCol }
 
-func (c SourceKindCol) Eq(v watchtower.SourceKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceKindCol) Ne(v watchtower.SourceKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceKindCol) Gt(v watchtower.SourceKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceKindCol) Gte(v watchtower.SourceKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceKindCol) Lt(v watchtower.SourceKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceKindCol) Lte(v watchtower.SourceKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceKindCol) Eq(v watchtower.SourceKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceKindCol) Ne(v watchtower.SourceKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceKindCol) Gt(v watchtower.SourceKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceKindCol) Gte(v watchtower.SourceKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceKindCol) Lt(v watchtower.SourceKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceKindCol) Lte(v watchtower.SourceKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceKindCol) IsDistinctFrom(v watchtower.SourceKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceKindCol) Between(lo, hi watchtower.SourceKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceKindCol) To(v watchtower.SourceKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SourceKindCol) To(v watchtower.SourceKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceKindCol) In(vs ...watchtower.SourceKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceKindCol) NotIn(vs ...watchtower.SourceKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of watchtower.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v watchtower.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v watchtower.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v watchtower.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v watchtower.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v watchtower.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v watchtower.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v watchtower.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v watchtower.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v watchtower.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v watchtower.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v watchtower.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v watchtower.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v watchtower.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi watchtower.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v watchtower.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...watchtower.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v watchtower.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...watchtower.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...watchtower.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

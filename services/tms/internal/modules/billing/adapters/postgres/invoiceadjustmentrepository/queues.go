@@ -342,7 +342,7 @@ func batchQueue(
 	preds := []keel.Pred{}
 	if filter.Query != "" {
 		preds = append(preds, keel.Or(
-			b.ID.ContainsFold(filter.Query),
+			b.ID.Text().ContainsFold(filter.Query),
 			b.IdempotencyKey.ContainsFold(filter.Query),
 			submitter.Name.ContainsFold(filter.Query),
 		))
@@ -380,7 +380,7 @@ func adjustmentSearch(ia *invoiceadjustmentdb.InvoiceAdjustmentsTable, search st
 
 	orig := ia.OriginalInvoice()
 	return keel.Or(
-		ia.ID.ContainsFold(search),
+		ia.ID.Text().ContainsFold(search),
 		orig.Number.ContainsFold(search),
 		orig.BillToName.ContainsFold(search),
 		ia.Reason.ContainsFold(search),

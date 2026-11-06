@@ -386,7 +386,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12.2
+          version: v2.15.0
           working-directory: ./services/tms
           verify: false
           skip-cache: true
@@ -552,7 +552,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ~/.cache/go-build
-          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
+          key: gobuild-${{ runner.os }}-1.27.1-lint-${{ github.sha }}
 
   fuzz:
     name: Fuzz (bounded)

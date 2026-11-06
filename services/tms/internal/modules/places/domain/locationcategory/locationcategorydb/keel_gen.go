@@ -89,13 +89,13 @@ type LocationCategoriesTable struct {
 // LocationCategories references the location_categories table.
 var LocationCategories = &LocationCategoriesTable{
 	TableBase:           keel.TableBase{Ref: &locationCategoriesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 2}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 2}}},
 	Name:                keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 3}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 4}},
-	Type:                CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 5}}},
-	FacilityType:        FacilityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 6}}},
+	Type:                CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 5}}},
+	FacilityType:        FacilityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 6}}},
 	Color:               keel.StringCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 7}},
 	HasSecureParking:    keel.BoolCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 8}},
 	RequiresAppointment: keel.BoolCol{Col: keel.Col{Ref: &locationCategoriesRef, Index: 9}},
@@ -112,13 +112,13 @@ var LocationCategories = &LocationCategoriesTable{
 func BuildLocationCategories(r *keel.Ref) *LocationCategoriesTable {
 	return &LocationCategoriesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Type:                CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		FacilityType:        FacilityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Type:                CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		FacilityType:        FacilityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Color:               keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		HasSecureParking:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		RequiresAppointment: keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -147,8 +147,6 @@ func (t *LocationCategoriesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // LocationCategoriesQuery is a query over locationcategory.LocationCategory.
 type LocationCategoriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*locationcategory.LocationCategory] = (*LocationCategoriesTable)(nil)
 
 var _ keel.Query[*locationcategory.LocationCategory] = (*LocationCategoriesQuery)(nil)
 
@@ -264,42 +262,42 @@ func (t *LocationCategoriesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *LocationCategoriesTable) Create(ctx context.Context, db *keel.DB, row *locationcategory.LocationCategory) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LocationCategoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*locationcategory.LocationCategory) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LocationCategoriesTable) Save(ctx context.Context, db *keel.DB, row *locationcategory.LocationCategory, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LocationCategoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *locationcategory.LocationCategory, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LocationCategoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *locationcategory.LocationCategory) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LocationCategoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*locationcategory.LocationCategory, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LocationCategoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*locationcategory.LocationCategory, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LocationCategoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*locationcategory.LocationCategory) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -471,37 +469,45 @@ func (q *LocationCategoriesQuery) Clone() keel.Query[*locationcategory.LocationC
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LocationCategoriesQuery) One(ctx context.Context, db *keel.DB) (*locationcategory.LocationCategory, error) {
-	return keel.One[*locationcategory.LocationCategory](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*locationcategory.LocationCategory)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LocationCategoriesQuery) First(ctx context.Context, db *keel.DB) (*locationcategory.LocationCategory, error) {
-	return keel.First[*locationcategory.LocationCategory](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*locationcategory.LocationCategory)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LocationCategoriesQuery) List(ctx context.Context, db *keel.DB) ([]*locationcategory.LocationCategory, error) {
-	return keel.List[*locationcategory.LocationCategory](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*locationcategory.LocationCategory)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LocationCategoriesQuery) All(ctx context.Context, db *keel.DB) ([]*locationcategory.LocationCategory, error) {
-	return keel.All[*locationcategory.LocationCategory](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*locationcategory.LocationCategory)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LocationCategoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*locationcategory.LocationCategory, error) {
-	return keel.UpdateReturning[*locationcategory.LocationCategory](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*locationcategory.LocationCategory)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LocationCategoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*locationcategory.LocationCategory], error) {
-	return keel.PageOf[*locationcategory.LocationCategory](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*locationcategory.LocationCategory])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LocationCategoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*locationcategory.LocationCategory) error) error {
-	return keel.Each[*locationcategory.LocationCategory](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*locationcategory.LocationCategory)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLocationCategory() unsafe.Pointer {
@@ -638,63 +644,53 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CategoryCol is a column of locationcategory.Category values.
-type CategoryCol struct{ keel.StringCol }
+type CategoryCol struct{ keel.TypedStringCol }
 
-func (c CategoryCol) Eq(v locationcategory.Category) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CategoryCol) Ne(v locationcategory.Category) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CategoryCol) Gt(v locationcategory.Category) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CategoryCol) Gte(v locationcategory.Category) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CategoryCol) Lt(v locationcategory.Category) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CategoryCol) Lte(v locationcategory.Category) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CategoryCol) Eq(v locationcategory.Category) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CategoryCol) Ne(v locationcategory.Category) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CategoryCol) Gt(v locationcategory.Category) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CategoryCol) Gte(v locationcategory.Category) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CategoryCol) Lt(v locationcategory.Category) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CategoryCol) Lte(v locationcategory.Category) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CategoryCol) IsDistinctFrom(v locationcategory.Category) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CategoryCol) Between(lo, hi locationcategory.Category) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CategoryCol) To(v locationcategory.Category) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c CategoryCol) To(v locationcategory.Category) keel.Assignment { return c.Text().To(string(v)) }
 func (c CategoryCol) In(vs ...locationcategory.Category) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CategoryCol) NotIn(vs ...locationcategory.Category) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FacilityTypeCol is a column of locationcategory.FacilityType values.
-type FacilityTypeCol struct{ keel.StringCol }
+type FacilityTypeCol struct{ keel.TypedStringCol }
 
-func (c FacilityTypeCol) Eq(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c FacilityTypeCol) Ne(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c FacilityTypeCol) Gt(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c FacilityTypeCol) Eq(v locationcategory.FacilityType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c FacilityTypeCol) Ne(v locationcategory.FacilityType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c FacilityTypeCol) Gt(v locationcategory.FacilityType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c FacilityTypeCol) Gte(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c FacilityTypeCol) Lt(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c FacilityTypeCol) Lt(v locationcategory.FacilityType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c FacilityTypeCol) Lte(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c FacilityTypeCol) IsDistinctFrom(v locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FacilityTypeCol) Between(lo, hi locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FacilityTypeCol) To(v locationcategory.FacilityType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FacilityTypeCol) In(vs ...locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FacilityTypeCol) NotIn(vs ...locationcategory.FacilityType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

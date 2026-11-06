@@ -228,7 +228,7 @@ func (r *actualsRepository) FleetCostAggregates(
 			result, err := keel.IntoOne[costingcontrolports.FleetCostAggregatesResult](
 				ctx,
 				r.db.Keel(ctx),
-				totals.Query().With(totals).Pick(
+				keel.RowsOf(totals.TableRef()).With(totals).Pick(
 					keel.Count().Filter(moving),
 					keel.Count().Filter(keel.And(
 						moving,

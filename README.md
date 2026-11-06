@@ -17,7 +17,7 @@
     <a href="https://github.com/emoss08/trenova/actions/workflows/test-tms.yml"><img src="https://github.com/emoss08/trenova/actions/workflows/test-tms.yml/badge.svg" alt="TMS tests"></a>
     <a href="https://github.com/emoss08/trenova/actions/workflows/test-client.yml"><img src="https://github.com/emoss08/trenova/actions/workflows/test-client.yml/badge.svg" alt="Client tests"></a>
     <a href="https://github.com/emoss08/trenova/releases"><img src="https://img.shields.io/github/v/release/emoss08/trenova?include_prereleases" alt="Latest release"></a>
-    <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white" alt="Go 1.26"></a>
+    <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.27-00ADD8?logo=go&logoColor=white" alt="Go 1.27"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-FSL--1.1--ALv2-blue" alt="License: FSL-1.1-ALv2"></a>
   </p>
 </div>
@@ -49,7 +49,7 @@ See the full capability list at [trenova.app/features](https://trenova.app/featu
 
 | Layer | Technology |
 | --- | --- |
-| API | Go 1.26, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
+| API | Go 1.27, [Gin](https://github.com/gin-gonic/gin), [gqlgen](https://github.com/99designs/gqlgen) GraphQL |
 | Database | PostgreSQL via [pgx](https://github.com/jackc/pgx), SQL-first migrations |
 | Search and cache | Meilisearch, Redis (JSON and Streams) |
 | Change data capture | [GTC](https://github.com/emoss08/gtc): a Go PostgreSQL logical-replication connector that projects rows into Meilisearch and Redis (runs as the `ghcr.io/emoss08/gtc` image; routing in `deploy/gtc/sinks.yaml`) |
@@ -75,7 +75,7 @@ docs/                     Engineering guides (indexed in docs/engineering/README
 
 ## Quick start (local development)
 
-Prerequisites: Go 1.26+, Node.js 26 (`client/.nvmrc`) with pnpm, Docker, and [Task](https://taskfile.dev/).
+Prerequisites: Go 1.27.1, Node.js 26 (`client/.nvmrc`) with pnpm, Docker, and [Task](https://taskfile.dev/).
 
 ```bash
 git clone https://github.com/emoss08/trenova.git

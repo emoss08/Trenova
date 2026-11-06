@@ -70,12 +70,12 @@ type DecisionRecordsTable struct {
 // DecisionRecords references the shipment_suggestion_decisions table.
 var DecisionRecords = &DecisionRecordsTable{
 	TableBase:      keel.TableBase{Ref: &decisionRecordsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 3}}},
 	SuggestionKey:  keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 4}},
-	Decision:       DecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 5}}},
+	Decision:       DecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &decisionRecordsRef, Index: 5}}},
 	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &decisionRecordsRef, Index: 6}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &decisionRecordsRef, Index: 7}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &decisionRecordsRef, Index: 8}},
@@ -85,12 +85,12 @@ var DecisionRecords = &DecisionRecordsTable{
 func BuildDecisionRecords(r *keel.Ref) *DecisionRecordsTable {
 	return &DecisionRecordsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SuggestionKey:  keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Decision:       DecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Decision:       DecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -112,8 +112,6 @@ func (t *DecisionRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // DecisionRecordsQuery is a query over shipmentsuggestion.DecisionRecord.
 type DecisionRecordsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*shipmentsuggestion.DecisionRecord] = (*DecisionRecordsTable)(nil)
 
 var _ keel.Query[*shipmentsuggestion.DecisionRecord] = (*DecisionRecordsQuery)(nil)
 
@@ -229,42 +227,42 @@ func (t *DecisionRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *DecisionRecordsTable) Create(ctx context.Context, db *keel.DB, row *shipmentsuggestion.DecisionRecord) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DecisionRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentsuggestion.DecisionRecord) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DecisionRecordsTable) Save(ctx context.Context, db *keel.DB, row *shipmentsuggestion.DecisionRecord, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DecisionRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentsuggestion.DecisionRecord, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DecisionRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentsuggestion.DecisionRecord) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DecisionRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentsuggestion.DecisionRecord, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DecisionRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentsuggestion.DecisionRecord, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DecisionRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentsuggestion.DecisionRecord) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -436,37 +434,45 @@ func (q *DecisionRecordsQuery) Clone() keel.Query[*shipmentsuggestion.DecisionRe
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DecisionRecordsQuery) One(ctx context.Context, db *keel.DB) (*shipmentsuggestion.DecisionRecord, error) {
-	return keel.One[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*shipmentsuggestion.DecisionRecord)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DecisionRecordsQuery) First(ctx context.Context, db *keel.DB) (*shipmentsuggestion.DecisionRecord, error) {
-	return keel.First[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*shipmentsuggestion.DecisionRecord)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DecisionRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentsuggestion.DecisionRecord, error) {
-	return keel.List[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentsuggestion.DecisionRecord)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DecisionRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentsuggestion.DecisionRecord, error) {
-	return keel.All[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentsuggestion.DecisionRecord)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DecisionRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentsuggestion.DecisionRecord, error) {
-	return keel.UpdateReturning[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*shipmentsuggestion.DecisionRecord)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DecisionRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentsuggestion.DecisionRecord], error) {
-	return keel.PageOf[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*shipmentsuggestion.DecisionRecord])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DecisionRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentsuggestion.DecisionRecord) error) error {
-	return keel.Each[*shipmentsuggestion.DecisionRecord](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*shipmentsuggestion.DecisionRecord)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDecisionRecord() unsafe.Pointer {
@@ -533,26 +539,24 @@ var enumDecision = [...]schema.EnumValue{
 }
 
 // DecisionCol is a column of shipmentsuggestion.Decision values.
-type DecisionCol struct{ keel.StringCol }
+type DecisionCol struct{ keel.TypedStringCol }
 
-func (c DecisionCol) Eq(v shipmentsuggestion.Decision) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DecisionCol) Ne(v shipmentsuggestion.Decision) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DecisionCol) Gt(v shipmentsuggestion.Decision) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DecisionCol) Gte(v shipmentsuggestion.Decision) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DecisionCol) Lt(v shipmentsuggestion.Decision) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DecisionCol) Lte(v shipmentsuggestion.Decision) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DecisionCol) Eq(v shipmentsuggestion.Decision) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DecisionCol) Ne(v shipmentsuggestion.Decision) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DecisionCol) Gt(v shipmentsuggestion.Decision) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DecisionCol) Gte(v shipmentsuggestion.Decision) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DecisionCol) Lt(v shipmentsuggestion.Decision) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DecisionCol) Lte(v shipmentsuggestion.Decision) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DecisionCol) IsDistinctFrom(v shipmentsuggestion.Decision) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DecisionCol) Between(lo, hi shipmentsuggestion.Decision) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DecisionCol) To(v shipmentsuggestion.Decision) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c DecisionCol) To(v shipmentsuggestion.Decision) keel.Assignment { return c.Text().To(string(v)) }
 func (c DecisionCol) In(vs ...shipmentsuggestion.Decision) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DecisionCol) NotIn(vs ...shipmentsuggestion.Decision) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

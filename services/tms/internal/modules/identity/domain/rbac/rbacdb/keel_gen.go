@@ -68,11 +68,11 @@ type ResourcePermissionsTable struct {
 // ResourcePermissions references the resource_permissions table.
 var ResourcePermissions = &ResourcePermissionsTable{
 	TableBase:  keel.TableBase{Ref: &resourcePermissionsRef},
-	ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 0}}},
-	RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 1}}},
+	ID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 0}}},
+	RoleID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 1}}},
 	Resource:   keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 2}},
 	Operations: keel.StringArrayCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 3}},
-	DataScope:  keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 4}}},
+	DataScope:  keelkinds.PermissionDataScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 4}}},
 	CreatedAt:  keel.Int64Col{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 5}},
 	UpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 6}},
 }
@@ -81,11 +81,11 @@ var ResourcePermissions = &ResourcePermissionsTable{
 func BuildResourcePermissions(r *keel.Ref) *ResourcePermissionsTable {
 	return &ResourcePermissionsTable{
 		TableBase:  keel.TableBase{Ref: r},
-		ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		ID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		RoleID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Resource:   keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
 		Operations: keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 3}},
-		DataScope:  keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		DataScope:  keelkinds.PermissionDataScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CreatedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		UpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
@@ -106,8 +106,6 @@ func (t *ResourcePermissionsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // ResourcePermissionsQuery is a query over rbac.ResourcePermission.
 type ResourcePermissionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.ResourcePermission] = (*ResourcePermissionsTable)(nil)
 
 var _ keel.Query[*rbac.ResourcePermission] = (*ResourcePermissionsQuery)(nil)
 
@@ -223,42 +221,42 @@ func (t *ResourcePermissionsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *ResourcePermissionsTable) Create(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ResourcePermissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ResourcePermissionsTable) Save(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ResourcePermissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ResourcePermissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ResourcePermissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ResourcePermissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ResourcePermissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -430,37 +428,45 @@ func (q *ResourcePermissionsQuery) Clone() keel.Query[*rbac.ResourcePermission] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ResourcePermissionsQuery) One(ctx context.Context, db *keel.DB) (*rbac.ResourcePermission, error) {
-	return keel.One[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.ResourcePermission)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ResourcePermissionsQuery) First(ctx context.Context, db *keel.DB) (*rbac.ResourcePermission, error) {
-	return keel.First[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.ResourcePermission)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ResourcePermissionsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.ResourcePermission, error) {
-	return keel.List[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.ResourcePermission)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ResourcePermissionsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.ResourcePermission, error) {
-	return keel.All[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.ResourcePermission)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ResourcePermissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.ResourcePermission, error) {
-	return keel.UpdateReturning[*rbac.ResourcePermission](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.ResourcePermission)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ResourcePermissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.ResourcePermission], error) {
-	return keel.PageOf[*rbac.ResourcePermission](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.ResourcePermission])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ResourcePermissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.ResourcePermission) error) error {
-	return keel.Each[*rbac.ResourcePermission](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.ResourcePermission)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newResourcePermission() unsafe.Pointer { return unsafe.Pointer(new(rbac.ResourcePermission)) }
@@ -589,16 +595,16 @@ type RolesTable struct {
 // Roles references the roles table.
 var Roles = &RolesTable{
 	TableBase:          keel.TableBase{Ref: &rolesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 2}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 2}}},
 	Name:               keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 3}},
 	Description:        keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 4}},
-	CoreResponsibility: CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 5}}},
+	CoreResponsibility: CoreResponsibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 5}}},
 	ParentRoleIDs:      keel.StringArrayCol{Col: keel.Col{Ref: &rolesRef, Index: 6}},
-	MaxSensitivity:     keelkinds.PermissionFieldSensitivityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 7}}},
+	MaxSensitivity:     keelkinds.PermissionFieldSensitivityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 7}}},
 	IsSystem:           keel.BoolCol{Col: keel.Col{Ref: &rolesRef, Index: 8}},
-	CreatedBy:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 9}}},
+	CreatedBy:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rolesRef, Index: 9}}},
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &rolesRef, Index: 10}},
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &rolesRef, Index: 11}},
 }
@@ -607,16 +613,16 @@ var Roles = &RolesTable{
 func BuildRoles(r *keel.Ref) *RolesTable {
 	return &RolesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:               keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CoreResponsibility: CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CoreResponsibility: CoreResponsibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ParentRoleIDs:      keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
-		MaxSensitivity:     keelkinds.PermissionFieldSensitivityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		MaxSensitivity:     keelkinds.PermissionFieldSensitivityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		IsSystem:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
-		CreatedBy:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CreatedBy:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
@@ -640,8 +646,6 @@ func (t *RolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.
 
 // RolesQuery is a query over rbac.Role.
 type RolesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.Role] = (*RolesTable)(nil)
 
 var _ keel.Query[*rbac.Role] = (*RolesQuery)(nil)
 
@@ -757,42 +761,42 @@ func (t *RolesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.Role
 
 // Create inserts row.
 func (t *RolesTable) Create(ctx context.Context, db *keel.DB, row *rbac.Role) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RolesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.Role) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RolesTable) Save(ctx context.Context, db *keel.DB, row *rbac.Role, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RolesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.Role, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RolesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.Role) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RolesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.Role, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RolesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.Role, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RolesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.Role) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -964,37 +968,45 @@ func (q *RolesQuery) Clone() keel.Query[*rbac.Role] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RolesQuery) One(ctx context.Context, db *keel.DB) (*rbac.Role, error) {
-	return keel.One[*rbac.Role](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.Role)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RolesQuery) First(ctx context.Context, db *keel.DB) (*rbac.Role, error) {
-	return keel.First[*rbac.Role](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.Role)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RolesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.Role, error) {
-	return keel.List[*rbac.Role](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.Role)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RolesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.Role, error) {
-	return keel.All[*rbac.Role](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.Role)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RolesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.Role, error) {
-	return keel.UpdateReturning[*rbac.Role](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.Role)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RolesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.Role], error) {
-	return keel.PageOf[*rbac.Role](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.Role])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RolesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.Role) error) error {
-	return keel.Each[*rbac.Role](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.Role)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRole() unsafe.Pointer { return unsafe.Pointer(new(rbac.Role)) }
@@ -1141,12 +1153,12 @@ type RoleAgentGrantsTable struct {
 // RoleAgentGrants references the role_agent_grants table.
 var RoleAgentGrants = &RoleAgentGrantsTable{
 	TableBase:         keel.TableBase{Ref: &roleAgentGrantsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 0}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 1}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 2}}},
-	RoleID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 3}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 4}}},
-	GrantedBy:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 0}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 1}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 2}}},
+	RoleID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 3}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 4}}},
+	GrantedBy:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 5}}},
 	GrantedAt:         keel.Int64Col{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 6}},
 }
 
@@ -1154,12 +1166,12 @@ var RoleAgentGrants = &RoleAgentGrantsTable{
 func BuildRoleAgentGrants(r *keel.Ref) *RoleAgentGrantsTable {
 	return &RoleAgentGrantsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RoleID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		GrantedBy:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RoleID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		GrantedBy:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		GrantedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
 }
@@ -1179,8 +1191,6 @@ func (t *RoleAgentGrantsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // RoleAgentGrantsQuery is a query over rbac.RoleAgentGrant.
 type RoleAgentGrantsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.RoleAgentGrant] = (*RoleAgentGrantsTable)(nil)
 
 var _ keel.Query[*rbac.RoleAgentGrant] = (*RoleAgentGrantsQuery)(nil)
 
@@ -1296,42 +1306,42 @@ func (t *RoleAgentGrantsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *RoleAgentGrantsTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RoleAgentGrantsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RoleAgentGrantsTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RoleAgentGrantsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RoleAgentGrantsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RoleAgentGrantsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RoleAgentGrantsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RoleAgentGrantsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1503,37 +1513,45 @@ func (q *RoleAgentGrantsQuery) Clone() keel.Query[*rbac.RoleAgentGrant] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RoleAgentGrantsQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleAgentGrant, error) {
-	return keel.One[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleAgentGrant)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RoleAgentGrantsQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleAgentGrant, error) {
-	return keel.First[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleAgentGrant)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RoleAgentGrantsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleAgentGrant, error) {
-	return keel.List[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleAgentGrant)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RoleAgentGrantsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleAgentGrant, error) {
-	return keel.All[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleAgentGrant)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RoleAgentGrantsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleAgentGrant, error) {
-	return keel.UpdateReturning[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.RoleAgentGrant)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RoleAgentGrantsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleAgentGrant], error) {
-	return keel.PageOf[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.RoleAgentGrant])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RoleAgentGrantsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleAgentGrant) error) error {
-	return keel.Each[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.RoleAgentGrant)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRoleAgentGrant() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleAgentGrant)) }
@@ -1655,15 +1673,15 @@ type RoleConstraintsTable struct {
 // RoleConstraints references the role_constraints table.
 var RoleConstraints = &RoleConstraintsTable{
 	TableBase:      keel.TableBase{Ref: &roleConstraintsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 3}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 4}},
-	Type:           RoleConstraintTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 5}}},
+	Type:           RoleConstraintTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 5}}},
 	MaxRoles:       keel.Int64Col{Col: keel.Col{Ref: &roleConstraintsRef, Index: 6}},
 	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 7}},
-	CreatedBy:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 8}}},
+	CreatedBy:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 8}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleConstraintsRef, Index: 9}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleConstraintsRef, Index: 10}},
 }
@@ -1672,15 +1690,15 @@ var RoleConstraints = &RoleConstraintsTable{
 func BuildRoleConstraints(r *keel.Ref) *RoleConstraintsTable {
 	return &RoleConstraintsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Type:           RoleConstraintTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Type:           RoleConstraintTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		MaxRoles:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		CreatedBy:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		CreatedBy:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
@@ -1704,8 +1722,6 @@ func (t *RoleConstraintsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // RoleConstraintsQuery is a query over rbac.RoleConstraint.
 type RoleConstraintsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.RoleConstraint] = (*RoleConstraintsTable)(nil)
 
 var _ keel.Query[*rbac.RoleConstraint] = (*RoleConstraintsQuery)(nil)
 
@@ -1821,42 +1837,42 @@ func (t *RoleConstraintsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *RoleConstraintsTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RoleConstraintsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RoleConstraintsTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RoleConstraintsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RoleConstraintsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RoleConstraintsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RoleConstraintsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RoleConstraintsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2028,37 +2044,45 @@ func (q *RoleConstraintsQuery) Clone() keel.Query[*rbac.RoleConstraint] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RoleConstraintsQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleConstraint, error) {
-	return keel.One[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleConstraint)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RoleConstraintsQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleConstraint, error) {
-	return keel.First[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleConstraint)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RoleConstraintsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraint, error) {
-	return keel.List[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleConstraint)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RoleConstraintsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraint, error) {
-	return keel.All[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleConstraint)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RoleConstraintsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleConstraint, error) {
-	return keel.UpdateReturning[*rbac.RoleConstraint](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.RoleConstraint)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RoleConstraintsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleConstraint], error) {
-	return keel.PageOf[*rbac.RoleConstraint](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.RoleConstraint])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RoleConstraintsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleConstraint) error) error {
-	return keel.Each[*rbac.RoleConstraint](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.RoleConstraint)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRoleConstraint() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleConstraint)) }
@@ -2194,11 +2218,11 @@ type RoleConstraintRolesTable struct {
 // RoleConstraintRoles references the role_constraint_roles table.
 var RoleConstraintRoles = &RoleConstraintRolesTable{
 	TableBase:        keel.TableBase{Ref: &roleConstraintRolesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 0}}},
-	RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 1}}},
-	RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 2}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 3}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 4}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 0}}},
+	RoleConstraintID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 1}}},
+	RoleID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 2}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 3}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 4}}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 5}},
 }
 
@@ -2206,11 +2230,11 @@ var RoleConstraintRoles = &RoleConstraintRolesTable{
 func BuildRoleConstraintRoles(r *keel.Ref) *RoleConstraintRolesTable {
 	return &RoleConstraintRolesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		RoleConstraintID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		RoleID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 	}
 }
@@ -2238,8 +2262,6 @@ func (t *RoleConstraintRolesTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // RoleConstraintRolesQuery is a query over rbac.RoleConstraintRole.
 type RoleConstraintRolesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.RoleConstraintRole] = (*RoleConstraintRolesTable)(nil)
 
 var _ keel.Query[*rbac.RoleConstraintRole] = (*RoleConstraintRolesQuery)(nil)
 
@@ -2355,42 +2377,42 @@ func (t *RoleConstraintRolesTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *RoleConstraintRolesTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RoleConstraintRolesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RoleConstraintRolesTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RoleConstraintRolesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RoleConstraintRolesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RoleConstraintRolesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RoleConstraintRolesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RoleConstraintRolesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2562,37 +2584,45 @@ func (q *RoleConstraintRolesQuery) Clone() keel.Query[*rbac.RoleConstraintRole] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RoleConstraintRolesQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleConstraintRole, error) {
-	return keel.One[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleConstraintRole)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RoleConstraintRolesQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleConstraintRole, error) {
-	return keel.First[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleConstraintRole)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RoleConstraintRolesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraintRole, error) {
-	return keel.List[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleConstraintRole)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RoleConstraintRolesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraintRole, error) {
-	return keel.All[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleConstraintRole)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RoleConstraintRolesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleConstraintRole, error) {
-	return keel.UpdateReturning[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.RoleConstraintRole)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RoleConstraintRolesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleConstraintRole], error) {
-	return keel.PageOf[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.RoleConstraintRole])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RoleConstraintRolesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleConstraintRole) error) error {
-	return keel.Each[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.RoleConstraintRole)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRoleConstraintRole() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleConstraintRole)) }
@@ -2708,12 +2738,12 @@ type RoleHierarchyEdgesTable struct {
 // RoleHierarchyEdges references the role_hierarchy_edges table.
 var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
 	TableBase:      keel.TableBase{Ref: &roleHierarchyEdgesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 0}}},
-	SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 1}}},
-	JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 2}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 3}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 4}}},
-	CreatedBy:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 0}}},
+	SeniorRoleID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 1}}},
+	JuniorRoleID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 2}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 3}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 4}}},
+	CreatedBy:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 5}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 6}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 7}},
 }
@@ -2722,12 +2752,12 @@ var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
 func BuildRoleHierarchyEdges(r *keel.Ref) *RoleHierarchyEdgesTable {
 	return &RoleHierarchyEdgesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CreatedBy:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		SeniorRoleID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		JuniorRoleID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CreatedBy:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
@@ -2754,8 +2784,6 @@ func (t *RoleHierarchyEdgesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // RoleHierarchyEdgesQuery is a query over rbac.RoleHierarchyEdge.
 type RoleHierarchyEdgesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.RoleHierarchyEdge] = (*RoleHierarchyEdgesTable)(nil)
 
 var _ keel.Query[*rbac.RoleHierarchyEdge] = (*RoleHierarchyEdgesQuery)(nil)
 
@@ -2871,42 +2899,42 @@ func (t *RoleHierarchyEdgesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *RoleHierarchyEdgesTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RoleHierarchyEdgesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RoleHierarchyEdgesTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RoleHierarchyEdgesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RoleHierarchyEdgesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RoleHierarchyEdgesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RoleHierarchyEdgesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RoleHierarchyEdgesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3078,37 +3106,45 @@ func (q *RoleHierarchyEdgesQuery) Clone() keel.Query[*rbac.RoleHierarchyEdge] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RoleHierarchyEdgesQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleHierarchyEdge, error) {
-	return keel.One[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleHierarchyEdge)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RoleHierarchyEdgesQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleHierarchyEdge, error) {
-	return keel.First[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.RoleHierarchyEdge)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RoleHierarchyEdgesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleHierarchyEdge, error) {
-	return keel.List[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleHierarchyEdge)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RoleHierarchyEdgesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleHierarchyEdge, error) {
-	return keel.All[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.RoleHierarchyEdge)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RoleHierarchyEdgesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleHierarchyEdge, error) {
-	return keel.UpdateReturning[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.RoleHierarchyEdge)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RoleHierarchyEdgesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleHierarchyEdge], error) {
-	return keel.PageOf[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.RoleHierarchyEdge])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RoleHierarchyEdgesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleHierarchyEdge) error) error {
-	return keel.Each[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.RoleHierarchyEdge)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRoleHierarchyEdge() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleHierarchyEdge)) }
@@ -3233,12 +3269,12 @@ type UserRoleAssignmentsTable struct {
 // UserRoleAssignments references the user_role_assignments table.
 var UserRoleAssignments = &UserRoleAssignmentsTable{
 	TableBase:      keel.TableBase{Ref: &userRoleAssignmentsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
-	RoleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
+	RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 3}}},
 	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 4}},
-	AssignedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 5}}},
+	AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 5}}},
 	AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 6}},
 }
 
@@ -3246,12 +3282,12 @@ var UserRoleAssignments = &UserRoleAssignmentsTable{
 func BuildUserRoleAssignments(r *keel.Ref) *UserRoleAssignmentsTable {
 	return &UserRoleAssignmentsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RoleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RoleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		AssignedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		AssignedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
 }
@@ -3274,8 +3310,6 @@ func (t *UserRoleAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // UserRoleAssignmentsQuery is a query over rbac.UserRoleAssignment.
 type UserRoleAssignmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rbac.UserRoleAssignment] = (*UserRoleAssignmentsTable)(nil)
 
 var _ keel.Query[*rbac.UserRoleAssignment] = (*UserRoleAssignmentsQuery)(nil)
 
@@ -3391,42 +3425,42 @@ func (t *UserRoleAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *UserRoleAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *UserRoleAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *UserRoleAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *UserRoleAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *UserRoleAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *UserRoleAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *UserRoleAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *UserRoleAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3598,37 +3632,45 @@ func (q *UserRoleAssignmentsQuery) Clone() keel.Query[*rbac.UserRoleAssignment] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *UserRoleAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*rbac.UserRoleAssignment, error) {
-	return keel.One[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rbac.UserRoleAssignment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *UserRoleAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*rbac.UserRoleAssignment, error) {
-	return keel.First[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rbac.UserRoleAssignment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *UserRoleAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.UserRoleAssignment, error) {
-	return keel.List[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.UserRoleAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *UserRoleAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.UserRoleAssignment, error) {
-	return keel.All[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rbac.UserRoleAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *UserRoleAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.UserRoleAssignment, error) {
-	return keel.UpdateReturning[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rbac.UserRoleAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *UserRoleAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.UserRoleAssignment], error) {
-	return keel.PageOf[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rbac.UserRoleAssignment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *UserRoleAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.UserRoleAssignment) error) error {
-	return keel.Each[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rbac.UserRoleAssignment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newUserRoleAssignment() unsafe.Pointer { return unsafe.Pointer(new(rbac.UserRoleAssignment)) }
@@ -3738,75 +3780,59 @@ var enumRoleConstraintType = [...]schema.EnumValue{
 }
 
 // CoreResponsibilityCol is a column of rbac.CoreResponsibility values.
-type CoreResponsibilityCol struct{ keel.StringCol }
+type CoreResponsibilityCol struct{ keel.TypedStringCol }
 
-func (c CoreResponsibilityCol) Eq(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CoreResponsibilityCol) Ne(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CoreResponsibilityCol) Gt(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c CoreResponsibilityCol) Eq(v rbac.CoreResponsibility) keel.Pred { return c.Text().Eq(string(v)) }
+func (c CoreResponsibilityCol) Ne(v rbac.CoreResponsibility) keel.Pred { return c.Text().Ne(string(v)) }
+func (c CoreResponsibilityCol) Gt(v rbac.CoreResponsibility) keel.Pred { return c.Text().Gt(string(v)) }
 func (c CoreResponsibilityCol) Gte(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c CoreResponsibilityCol) Lt(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c CoreResponsibilityCol) Lt(v rbac.CoreResponsibility) keel.Pred { return c.Text().Lt(string(v)) }
 func (c CoreResponsibilityCol) Lte(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CoreResponsibilityCol) IsDistinctFrom(v rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CoreResponsibilityCol) Between(lo, hi rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CoreResponsibilityCol) To(v rbac.CoreResponsibility) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CoreResponsibilityCol) In(vs ...rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CoreResponsibilityCol) NotIn(vs ...rbac.CoreResponsibility) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RoleConstraintTypeCol is a column of rbac.RoleConstraintType values.
-type RoleConstraintTypeCol struct{ keel.StringCol }
+type RoleConstraintTypeCol struct{ keel.TypedStringCol }
 
-func (c RoleConstraintTypeCol) Eq(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c RoleConstraintTypeCol) Ne(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c RoleConstraintTypeCol) Gt(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c RoleConstraintTypeCol) Eq(v rbac.RoleConstraintType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c RoleConstraintTypeCol) Ne(v rbac.RoleConstraintType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c RoleConstraintTypeCol) Gt(v rbac.RoleConstraintType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c RoleConstraintTypeCol) Gte(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c RoleConstraintTypeCol) Lt(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c RoleConstraintTypeCol) Lt(v rbac.RoleConstraintType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c RoleConstraintTypeCol) Lte(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RoleConstraintTypeCol) IsDistinctFrom(v rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RoleConstraintTypeCol) Between(lo, hi rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RoleConstraintTypeCol) To(v rbac.RoleConstraintType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RoleConstraintTypeCol) In(vs ...rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RoleConstraintTypeCol) NotIn(vs ...rbac.RoleConstraintType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

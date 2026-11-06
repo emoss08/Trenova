@@ -162,10 +162,10 @@ type DocumentsTable struct {
 // Documents references the documents table.
 var Documents = &DocumentsTable{
 	TableBase:             keel.TableBase{Ref: &documentsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 2}}},
-	LineageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 2}}},
+	LineageID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 3}}},
 	VersionNumber:         keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 4}},
 	IsCurrentVersion:      keel.BoolCol{Col: keel.Col{Ref: &documentsRef, Index: 5}},
 	FileName:              keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 6}},
@@ -180,32 +180,32 @@ var Documents = &DocumentsTable{
 	StorageLegalHold:      keel.BoolCol{Col: keel.Col{Ref: &documentsRef, Index: 15}},
 	CryptoMode:            keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 16}},
 	CryptoVersion:         keel.Int16Col{Col: keel.Col{Ref: &documentsRef, Index: 17}},
-	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 18}}},
+	Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 18}}},
 	Description:           keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 19}},
 	ResourceID:            keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 20}},
 	ResourceType:          keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 21}},
-	ProcessingProfile:     ProcessingProfileCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 22}}},
+	ProcessingProfile:     ProcessingProfileCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 22}}},
 	ExpirationDate:        keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 23}},
 	Tags:                  keel.StringArrayCol{Col: keel.Col{Ref: &documentsRef, Index: 24}},
 	IsPublic:              keel.BoolCol{Col: keel.Col{Ref: &documentsRef, Index: 25}},
-	UploadedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 26}}},
-	ApprovedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 27}}},
+	UploadedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 26}}},
+	ApprovedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 27}}},
 	ApprovedAt:            keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 28}},
-	RejectedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 29}}},
+	RejectedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 29}}},
 	RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 30}},
 	RejectionReason:       keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 31}},
 	PreviewStoragePath:    keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 32}},
-	PreviewStatus:         PreviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 33}}},
-	ContentStatus:         ContentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 34}}},
+	PreviewStatus:         PreviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 33}}},
+	ContentStatus:         ContentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 34}}},
 	ContentError:          keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 35}},
 	DetectedKind:          keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 36}},
 	HasExtractedText:      keel.BoolCol{Col: keel.Col{Ref: &documentsRef, Index: 37}},
-	ShipmentDraftStatus:   ShipmentDraftStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 38}}},
-	DocumentTypeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 39}}},
-	SignatureStatus:       SignatureStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 40}}},
+	ShipmentDraftStatus:   ShipmentDraftStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 38}}},
+	DocumentTypeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 39}}},
+	SignatureStatus:       SignatureStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 40}}},
 	SignedAt:              keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 41}},
-	SignatureSource:       SignatureSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 42}}},
-	SignatureUpdatedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentsRef, Index: 43}}},
+	SignatureSource:       SignatureSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 42}}},
+	SignatureUpdatedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentsRef, Index: 43}}},
 	SignatureUpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: &documentsRef, Index: 44}},
 	DeliveryFacts:         keel.JSONBCol{Col: keel.Col{Ref: &documentsRef, Index: 45}},
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &documentsRef, Index: 46}},
@@ -219,10 +219,10 @@ var Documents = &DocumentsTable{
 func BuildDocuments(r *keel.Ref) *DocumentsTable {
 	return &DocumentsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		LineageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		LineageID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VersionNumber:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		IsCurrentVersion:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		FileName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -237,32 +237,32 @@ func BuildDocuments(r *keel.Ref) *DocumentsTable {
 		StorageLegalHold:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		CryptoMode:            keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		CryptoVersion:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 17}},
-		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Description:           keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		ResourceID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		ResourceType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		ProcessingProfile:     ProcessingProfileCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		ProcessingProfile:     ProcessingProfileCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		ExpirationDate:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		Tags:                  keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 24}},
 		IsPublic:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
-		UploadedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		ApprovedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		UploadedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		ApprovedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		ApprovedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		RejectedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		RejectedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		RejectionReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		PreviewStoragePath:    keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		PreviewStatus:         PreviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		ContentStatus:         ContentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		PreviewStatus:         PreviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		ContentStatus:         ContentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		ContentError:          keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
 		DetectedKind:          keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
 		HasExtractedText:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 37}},
-		ShipmentDraftStatus:   ShipmentDraftStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		DocumentTypeID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
-		SignatureStatus:       SignatureStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}}},
+		ShipmentDraftStatus:   ShipmentDraftStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		DocumentTypeID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		SignatureStatus:       SignatureStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 40}}},
 		SignedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		SignatureSource:       SignatureSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
-		SignatureUpdatedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
+		SignatureSource:       SignatureSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		SignatureUpdatedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 43}}},
 		SignatureUpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
 		DeliveryFacts:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 45}},
 		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 46}},
@@ -293,8 +293,6 @@ func (t *DocumentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*d
 
 // DocumentsQuery is a query over document.Document.
 type DocumentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*document.Document] = (*DocumentsTable)(nil)
 
 var _ keel.Query[*document.Document] = (*DocumentsQuery)(nil)
 
@@ -410,42 +408,42 @@ func (t *DocumentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*docum
 
 // Create inserts row.
 func (t *DocumentsTable) Create(ctx context.Context, db *keel.DB, row *document.Document) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*document.Document) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentsTable) Save(ctx context.Context, db *keel.DB, row *document.Document, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *document.Document, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *document.Document) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*document.Document, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*document.Document, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentsTable) Copy(ctx context.Context, db *keel.DB, rows []*document.Document) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -617,37 +615,45 @@ func (q *DocumentsQuery) Clone() keel.Query[*document.Document] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentsQuery) One(ctx context.Context, db *keel.DB) (*document.Document, error) {
-	return keel.One[*document.Document](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*document.Document)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentsQuery) First(ctx context.Context, db *keel.DB) (*document.Document, error) {
-	return keel.First[*document.Document](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*document.Document)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentsQuery) List(ctx context.Context, db *keel.DB) ([]*document.Document, error) {
-	return keel.List[*document.Document](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*document.Document)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentsQuery) All(ctx context.Context, db *keel.DB) ([]*document.Document, error) {
-	return keel.All[*document.Document](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*document.Document)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*document.Document, error) {
-	return keel.UpdateReturning[*document.Document](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*document.Document)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*document.Document], error) {
-	return keel.PageOf[*document.Document](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*document.Document])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*document.Document) error) error {
-	return keel.Each[*document.Document](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*document.Document)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocument() unsafe.Pointer { return unsafe.Pointer(new(document.Document)) }
@@ -1019,220 +1025,194 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // ContentStatusCol is a column of document.ContentStatus values.
-type ContentStatusCol struct{ keel.StringCol }
+type ContentStatusCol struct{ keel.TypedStringCol }
 
-func (c ContentStatusCol) Eq(v document.ContentStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ContentStatusCol) Ne(v document.ContentStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ContentStatusCol) Gt(v document.ContentStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ContentStatusCol) Gte(v document.ContentStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ContentStatusCol) Lt(v document.ContentStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ContentStatusCol) Lte(v document.ContentStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ContentStatusCol) Eq(v document.ContentStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ContentStatusCol) Ne(v document.ContentStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ContentStatusCol) Gt(v document.ContentStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ContentStatusCol) Gte(v document.ContentStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ContentStatusCol) Lt(v document.ContentStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ContentStatusCol) Lte(v document.ContentStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ContentStatusCol) IsDistinctFrom(v document.ContentStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ContentStatusCol) Between(lo, hi document.ContentStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ContentStatusCol) To(v document.ContentStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c ContentStatusCol) To(v document.ContentStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c ContentStatusCol) In(vs ...document.ContentStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ContentStatusCol) NotIn(vs ...document.ContentStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PreviewStatusCol is a column of document.PreviewStatus values.
-type PreviewStatusCol struct{ keel.StringCol }
+type PreviewStatusCol struct{ keel.TypedStringCol }
 
-func (c PreviewStatusCol) Eq(v document.PreviewStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PreviewStatusCol) Ne(v document.PreviewStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PreviewStatusCol) Gt(v document.PreviewStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PreviewStatusCol) Gte(v document.PreviewStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PreviewStatusCol) Lt(v document.PreviewStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PreviewStatusCol) Lte(v document.PreviewStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PreviewStatusCol) Eq(v document.PreviewStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PreviewStatusCol) Ne(v document.PreviewStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PreviewStatusCol) Gt(v document.PreviewStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PreviewStatusCol) Gte(v document.PreviewStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PreviewStatusCol) Lt(v document.PreviewStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PreviewStatusCol) Lte(v document.PreviewStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PreviewStatusCol) IsDistinctFrom(v document.PreviewStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PreviewStatusCol) Between(lo, hi document.PreviewStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PreviewStatusCol) To(v document.PreviewStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PreviewStatusCol) To(v document.PreviewStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c PreviewStatusCol) In(vs ...document.PreviewStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PreviewStatusCol) NotIn(vs ...document.PreviewStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProcessingProfileCol is a column of document.ProcessingProfile values.
-type ProcessingProfileCol struct{ keel.StringCol }
+type ProcessingProfileCol struct{ keel.TypedStringCol }
 
 func (c ProcessingProfileCol) Eq(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ProcessingProfileCol) Ne(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ProcessingProfileCol) Gt(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ProcessingProfileCol) Gte(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ProcessingProfileCol) Lt(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ProcessingProfileCol) Lte(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ProcessingProfileCol) IsDistinctFrom(v document.ProcessingProfile) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProcessingProfileCol) Between(lo, hi document.ProcessingProfile) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ProcessingProfileCol) To(v document.ProcessingProfile) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ProcessingProfileCol) In(vs ...document.ProcessingProfile) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProcessingProfileCol) NotIn(vs ...document.ProcessingProfile) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ShipmentDraftStatusCol is a column of document.ShipmentDraftStatus values.
-type ShipmentDraftStatusCol struct{ keel.StringCol }
+type ShipmentDraftStatusCol struct{ keel.TypedStringCol }
 
 func (c ShipmentDraftStatusCol) Eq(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ShipmentDraftStatusCol) Ne(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ShipmentDraftStatusCol) Gt(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ShipmentDraftStatusCol) Gte(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ShipmentDraftStatusCol) Lt(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ShipmentDraftStatusCol) Lte(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ShipmentDraftStatusCol) IsDistinctFrom(v document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ShipmentDraftStatusCol) Between(lo, hi document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ShipmentDraftStatusCol) To(v document.ShipmentDraftStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ShipmentDraftStatusCol) In(vs ...document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ShipmentDraftStatusCol) NotIn(vs ...document.ShipmentDraftStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SignatureSourceCol is a column of document.SignatureSource values.
-type SignatureSourceCol struct{ keel.StringCol }
+type SignatureSourceCol struct{ keel.TypedStringCol }
 
-func (c SignatureSourceCol) Eq(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SignatureSourceCol) Ne(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SignatureSourceCol) Gt(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SignatureSourceCol) Gte(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SignatureSourceCol) Lt(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SignatureSourceCol) Lte(v document.SignatureSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SignatureSourceCol) Eq(v document.SignatureSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SignatureSourceCol) Ne(v document.SignatureSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SignatureSourceCol) Gt(v document.SignatureSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SignatureSourceCol) Gte(v document.SignatureSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SignatureSourceCol) Lt(v document.SignatureSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SignatureSourceCol) Lte(v document.SignatureSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SignatureSourceCol) IsDistinctFrom(v document.SignatureSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SignatureSourceCol) Between(lo, hi document.SignatureSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SignatureSourceCol) To(v document.SignatureSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SignatureSourceCol) In(vs ...document.SignatureSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SignatureSourceCol) NotIn(vs ...document.SignatureSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SignatureStatusCol is a column of document.SignatureStatus values.
-type SignatureStatusCol struct{ keel.StringCol }
+type SignatureStatusCol struct{ keel.TypedStringCol }
 
-func (c SignatureStatusCol) Eq(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SignatureStatusCol) Ne(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SignatureStatusCol) Gt(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SignatureStatusCol) Gte(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SignatureStatusCol) Lt(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SignatureStatusCol) Lte(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SignatureStatusCol) Eq(v document.SignatureStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SignatureStatusCol) Ne(v document.SignatureStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SignatureStatusCol) Gt(v document.SignatureStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SignatureStatusCol) Gte(v document.SignatureStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SignatureStatusCol) Lt(v document.SignatureStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SignatureStatusCol) Lte(v document.SignatureStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SignatureStatusCol) IsDistinctFrom(v document.SignatureStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SignatureStatusCol) Between(lo, hi document.SignatureStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SignatureStatusCol) To(v document.SignatureStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SignatureStatusCol) In(vs ...document.SignatureStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SignatureStatusCol) NotIn(vs ...document.SignatureStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of document.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v document.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v document.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v document.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v document.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v document.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v document.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v document.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v document.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v document.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v document.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v document.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v document.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v document.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi document.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v document.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...document.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v document.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...document.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...document.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

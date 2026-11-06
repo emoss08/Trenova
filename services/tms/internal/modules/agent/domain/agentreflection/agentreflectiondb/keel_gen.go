@@ -103,24 +103,24 @@ type ReflectionsTable struct {
 // Reflections references the agent_reflections table.
 var Reflections = &ReflectionsTable{
 	TableBase:         keel.TableBase{Ref: &reflectionsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 3}}},
-	SubjectType:       ReflectionSubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 4}}},
-	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 5}}},
-	RunID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 6}}},
-	UserID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 7}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 2}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 3}}},
+	SubjectType:       ReflectionSubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 4}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 5}}},
+	RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 6}}},
+	UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 7}}},
 	FromSequence:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 8}},
 	ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 9}},
-	Status:            ReflectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 10}}},
-	SkipReason:        ReflectionSkipCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 11}}},
+	Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 10}}},
+	SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 11}}},
 	Signals:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 12}},
 	Changes:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 13}},
 	Notes:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 14}},
 	Tainted:           keel.BoolCol{Col: keel.Col{Ref: &reflectionsRef, Index: 15}},
 	Model:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 16}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 17}}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 17}}},
 	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 18}},
 	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 19}},
 	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 20}},
@@ -134,24 +134,24 @@ var Reflections = &ReflectionsTable{
 func BuildReflections(r *keel.Ref) *ReflectionsTable {
 	return &ReflectionsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SubjectType:       ReflectionSubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		RunID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		UserID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SubjectType:       ReflectionSubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		FromSequence:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		Status:            ReflectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		SkipReason:        ReflectionSkipCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Signals:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		Changes:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
 		Notes:             keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Tainted:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
@@ -177,8 +177,6 @@ func (t *ReflectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // ReflectionsQuery is a query over agentreflection.Reflection.
 type ReflectionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentreflection.Reflection] = (*ReflectionsTable)(nil)
 
 var _ keel.Query[*agentreflection.Reflection] = (*ReflectionsQuery)(nil)
 
@@ -294,42 +292,42 @@ func (t *ReflectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*age
 
 // Create inserts row.
 func (t *ReflectionsTable) Create(ctx context.Context, db *keel.DB, row *agentreflection.Reflection) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReflectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReflectionsTable) Save(ctx context.Context, db *keel.DB, row *agentreflection.Reflection, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReflectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentreflection.Reflection, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReflectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentreflection.Reflection) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReflectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReflectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReflectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -501,37 +499,45 @@ func (q *ReflectionsQuery) Clone() keel.Query[*agentreflection.Reflection] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReflectionsQuery) One(ctx context.Context, db *keel.DB) (*agentreflection.Reflection, error) {
-	return keel.One[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentreflection.Reflection)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReflectionsQuery) First(ctx context.Context, db *keel.DB) (*agentreflection.Reflection, error) {
-	return keel.First[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentreflection.Reflection)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReflectionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentreflection.Reflection, error) {
-	return keel.List[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentreflection.Reflection)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReflectionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentreflection.Reflection, error) {
-	return keel.All[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentreflection.Reflection)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReflectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentreflection.Reflection, error) {
-	return keel.UpdateReturning[*agentreflection.Reflection](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentreflection.Reflection)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReflectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentreflection.Reflection], error) {
-	return keel.PageOf[*agentreflection.Reflection](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentreflection.Reflection])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReflectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentreflection.Reflection) error) error {
-	return keel.Each[*agentreflection.Reflection](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentreflection.Reflection)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReflection() unsafe.Pointer { return unsafe.Pointer(new(agentreflection.Reflection)) }
@@ -715,112 +721,112 @@ var enumReflectionSubject = [...]schema.EnumValue{
 }
 
 // ReflectionSkipCol is a column of agentreflection.ReflectionSkip values.
-type ReflectionSkipCol struct{ keel.StringCol }
+type ReflectionSkipCol struct{ keel.TypedStringCol }
 
 func (c ReflectionSkipCol) Eq(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReflectionSkipCol) Ne(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReflectionSkipCol) Gt(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReflectionSkipCol) Gte(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReflectionSkipCol) Lt(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReflectionSkipCol) Lte(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReflectionSkipCol) IsDistinctFrom(v agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReflectionSkipCol) Between(lo, hi agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReflectionSkipCol) To(v agentreflection.ReflectionSkip) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReflectionSkipCol) In(vs ...agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReflectionSkipCol) NotIn(vs ...agentreflection.ReflectionSkip) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReflectionStatusCol is a column of agentreflection.ReflectionStatus values.
-type ReflectionStatusCol struct{ keel.StringCol }
+type ReflectionStatusCol struct{ keel.TypedStringCol }
 
 func (c ReflectionStatusCol) Eq(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReflectionStatusCol) Ne(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReflectionStatusCol) Gt(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReflectionStatusCol) Gte(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReflectionStatusCol) Lt(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReflectionStatusCol) Lte(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReflectionStatusCol) IsDistinctFrom(v agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReflectionStatusCol) Between(lo, hi agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReflectionStatusCol) To(v agentreflection.ReflectionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReflectionStatusCol) In(vs ...agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReflectionStatusCol) NotIn(vs ...agentreflection.ReflectionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReflectionSubjectCol is a column of agentreflection.ReflectionSubject values.
-type ReflectionSubjectCol struct{ keel.StringCol }
+type ReflectionSubjectCol struct{ keel.TypedStringCol }
 
 func (c ReflectionSubjectCol) Eq(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReflectionSubjectCol) Ne(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReflectionSubjectCol) Gt(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReflectionSubjectCol) Gte(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReflectionSubjectCol) Lt(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReflectionSubjectCol) Lte(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReflectionSubjectCol) IsDistinctFrom(v agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReflectionSubjectCol) Between(lo, hi agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReflectionSubjectCol) To(v agentreflection.ReflectionSubject) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReflectionSubjectCol) In(vs ...agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReflectionSubjectCol) NotIn(vs ...agentreflection.ReflectionSubject) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

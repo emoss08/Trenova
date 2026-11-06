@@ -213,7 +213,7 @@ func servedStampQuery() keel.Query[*ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 
 	stamps := keel.StringAgg(
-		rm.ID.Cat(keel.ConstText("@"), keel.CastText(rm.PublishedVersionNumber)),
+		rm.ID.Text().Cat(keel.ConstText("@"), keel.CastText(rm.PublishedVersionNumber)),
 		",",
 	).OrderBy(rm.ID.Asc())
 

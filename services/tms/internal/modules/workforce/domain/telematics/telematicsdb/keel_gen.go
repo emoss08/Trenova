@@ -75,10 +75,10 @@ type FeedStatesTable struct {
 // FeedStates references the telematics_feed_states table.
 var FeedStates = &FeedStatesTable{
 	TableBase:      keel.TableBase{Ref: &feedStatesRef},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 1}}},
 	Provider:       keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 2}},
-	FeedType:       FeedTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 3}}},
+	FeedType:       FeedTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 3}}},
 	Cursor:         keel.StringCol{Col: keel.Col{Ref: &feedStatesRef, Index: 4}},
 	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &feedStatesRef, Index: 5}},
 	LastSuccessAt:  keel.Int64Col{Col: keel.Col{Ref: &feedStatesRef, Index: 6}},
@@ -90,10 +90,10 @@ var FeedStates = &FeedStatesTable{
 func BuildFeedStates(r *keel.Ref) *FeedStatesTable {
 	return &FeedStatesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Provider:       keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		FeedType:       FeedTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		FeedType:       FeedTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Cursor:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		LastSuccessAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -112,8 +112,6 @@ func (t *FeedStatesTable) As(alias string) *FeedStatesTable {
 
 // FeedStatesQuery is a query over telematics.FeedState.
 type FeedStatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.FeedState] = (*FeedStatesTable)(nil)
 
 var _ keel.Query[*telematics.FeedState] = (*FeedStatesQuery)(nil)
 
@@ -229,42 +227,42 @@ func (t *FeedStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tele
 
 // Create inserts row.
 func (t *FeedStatesTable) Create(ctx context.Context, db *keel.DB, row *telematics.FeedState) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FeedStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FeedState) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FeedStatesTable) Save(ctx context.Context, db *keel.DB, row *telematics.FeedState, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FeedStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FeedState, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FeedStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FeedState) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FeedStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FeedState, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FeedStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FeedState, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FeedStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FeedState) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -436,37 +434,45 @@ func (q *FeedStatesQuery) Clone() keel.Query[*telematics.FeedState] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FeedStatesQuery) One(ctx context.Context, db *keel.DB) (*telematics.FeedState, error) {
-	return keel.One[*telematics.FeedState](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.FeedState)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FeedStatesQuery) First(ctx context.Context, db *keel.DB) (*telematics.FeedState, error) {
-	return keel.First[*telematics.FeedState](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.FeedState)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FeedStatesQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FeedState, error) {
-	return keel.List[*telematics.FeedState](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FeedState)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FeedStatesQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FeedState, error) {
-	return keel.All[*telematics.FeedState](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FeedState)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FeedStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FeedState, error) {
-	return keel.UpdateReturning[*telematics.FeedState](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.FeedState)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FeedStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FeedState], error) {
-	return keel.PageOf[*telematics.FeedState](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.FeedState])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FeedStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FeedState) error) error {
-	return keel.Each[*telematics.FeedState](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.FeedState)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFeedState() unsafe.Pointer { return unsafe.Pointer(new(telematics.FeedState)) }
@@ -608,9 +614,9 @@ type FormMappingsTable struct {
 // FormMappings references the telematics_form_mappings table.
 var FormMappings = &FormMappingsTable{
 	TableBase:      keel.TableBase{Ref: &formMappingsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 2}}},
 	Provider:       keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 3}},
 	TemplateID:     keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 4}},
 	TemplateName:   keel.StringCol{Col: keel.Col{Ref: &formMappingsRef, Index: 5}},
@@ -626,9 +632,9 @@ var FormMappings = &FormMappingsTable{
 func BuildFormMappings(r *keel.Ref) *FormMappingsTable {
 	return &FormMappingsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:       keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		TemplateID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		TemplateName:   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -661,8 +667,6 @@ func (t *FormMappingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // FormMappingsQuery is a query over telematics.FormMapping.
 type FormMappingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.FormMapping] = (*FormMappingsTable)(nil)
 
 var _ keel.Query[*telematics.FormMapping] = (*FormMappingsQuery)(nil)
 
@@ -778,42 +782,42 @@ func (t *FormMappingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*te
 
 // Create inserts row.
 func (t *FormMappingsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormMapping) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FormMappingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FormMappingsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormMapping, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FormMappingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormMapping, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FormMappingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormMapping) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FormMappingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FormMappingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FormMappingsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormMapping) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -985,37 +989,45 @@ func (q *FormMappingsQuery) Clone() keel.Query[*telematics.FormMapping] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FormMappingsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormMapping, error) {
-	return keel.One[*telematics.FormMapping](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormMapping)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FormMappingsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormMapping, error) {
-	return keel.First[*telematics.FormMapping](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormMapping)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FormMappingsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormMapping, error) {
-	return keel.List[*telematics.FormMapping](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormMapping)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FormMappingsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormMapping, error) {
-	return keel.All[*telematics.FormMapping](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormMapping)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FormMappingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormMapping, error) {
-	return keel.UpdateReturning[*telematics.FormMapping](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.FormMapping)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FormMappingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormMapping], error) {
-	return keel.PageOf[*telematics.FormMapping](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.FormMapping])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FormMappingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormMapping) error) error {
-	return keel.Each[*telematics.FormMapping](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.FormMapping)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFormMapping() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormMapping)) }
@@ -1160,12 +1172,12 @@ type FormMappingItemsTable struct {
 // FormMappingItems references the telematics_form_mapping_items table.
 var FormMappingItems = &FormMappingItemsTable{
 	TableBase:            keel.TableBase{Ref: &formMappingItemsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 2}}},
-	MappingID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 2}}},
+	MappingID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 3}}},
 	SourceFieldLabel:     keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 4}},
-	TargetKind:           FormMappingTargetKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 5}}},
+	TargetKind:           FormMappingTargetKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 5}}},
 	TargetField:          keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 6}},
 	TargetCustomFieldKey: keel.StringCol{Col: keel.Col{Ref: &formMappingItemsRef, Index: 7}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formMappingItemsRef, Index: 8}},
@@ -1175,12 +1187,12 @@ var FormMappingItems = &FormMappingItemsTable{
 func BuildFormMappingItems(r *keel.Ref) *FormMappingItemsTable {
 	return &FormMappingItemsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MappingID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MappingID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SourceFieldLabel:     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		TargetKind:           FormMappingTargetKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		TargetKind:           FormMappingTargetKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TargetField:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		TargetCustomFieldKey: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1202,8 +1214,6 @@ func (t *FormMappingItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // FormMappingItemsQuery is a query over telematics.FormMappingItem.
 type FormMappingItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.FormMappingItem] = (*FormMappingItemsTable)(nil)
 
 var _ keel.Query[*telematics.FormMappingItem] = (*FormMappingItemsQuery)(nil)
 
@@ -1319,42 +1329,42 @@ func (t *FormMappingItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *FormMappingItemsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FormMappingItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FormMappingItemsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FormMappingItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FormMappingItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormMappingItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FormMappingItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FormMappingItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FormMappingItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormMappingItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1526,37 +1536,45 @@ func (q *FormMappingItemsQuery) Clone() keel.Query[*telematics.FormMappingItem] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FormMappingItemsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormMappingItem, error) {
-	return keel.One[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormMappingItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FormMappingItemsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormMappingItem, error) {
-	return keel.First[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormMappingItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FormMappingItemsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormMappingItem, error) {
-	return keel.List[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormMappingItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FormMappingItemsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormMappingItem, error) {
-	return keel.All[*telematics.FormMappingItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormMappingItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FormMappingItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormMappingItem, error) {
-	return keel.UpdateReturning[*telematics.FormMappingItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.FormMappingItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FormMappingItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormMappingItem], error) {
-	return keel.PageOf[*telematics.FormMappingItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.FormMappingItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FormMappingItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormMappingItem) error) error {
-	return keel.Each[*telematics.FormMappingItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.FormMappingItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFormMappingItem() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormMappingItem)) }
@@ -1694,17 +1712,17 @@ type FormSubmissionsTable struct {
 // FormSubmissions references the telematics_form_submissions table.
 var FormSubmissions = &FormSubmissionsTable{
 	TableBase:            keel.TableBase{Ref: &formSubmissionsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 2}}},
 	Provider:             keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 3}},
 	ProviderSubmissionID: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 4}},
 	TemplateID:           keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 5}},
 	TemplateName:         keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 6}},
-	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 7}}},
-	ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 8}}},
-	ShipmentMoveID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 9}}},
-	StopID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 10}}},
+	WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 7}}},
+	ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 8}}},
+	ShipmentMoveID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 9}}},
+	StopID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 10}}},
 	SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: &formSubmissionsRef, Index: 11}},
 	Fields:               keel.JSONBCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 12}},
 	Applied:              keel.BoolCol{Col: keel.Col{Ref: &formSubmissionsRef, Index: 13}},
@@ -1717,17 +1735,17 @@ var FormSubmissions = &FormSubmissionsTable{
 func BuildFormSubmissions(r *keel.Ref) *FormSubmissionsTable {
 	return &FormSubmissionsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:             keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		ProviderSubmissionID: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		TemplateID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		TemplateName:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ShipmentMoveID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		StopID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ShipmentMoveID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		StopID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		Fields:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		Applied:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -1752,8 +1770,6 @@ func (t *FormSubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // FormSubmissionsQuery is a query over telematics.FormSubmission.
 type FormSubmissionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.FormSubmission] = (*FormSubmissionsTable)(nil)
 
 var _ keel.Query[*telematics.FormSubmission] = (*FormSubmissionsQuery)(nil)
 
@@ -1869,42 +1885,42 @@ func (t *FormSubmissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *FormSubmissionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.FormSubmission) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FormSubmissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FormSubmissionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.FormSubmission, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FormSubmissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.FormSubmission, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FormSubmissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.FormSubmission) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FormSubmissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FormSubmissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FormSubmissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.FormSubmission) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2076,37 +2092,45 @@ func (q *FormSubmissionsQuery) Clone() keel.Query[*telematics.FormSubmission] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FormSubmissionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.FormSubmission, error) {
-	return keel.One[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormSubmission)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FormSubmissionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.FormSubmission, error) {
-	return keel.First[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.FormSubmission)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FormSubmissionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.FormSubmission, error) {
-	return keel.List[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormSubmission)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FormSubmissionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.FormSubmission, error) {
-	return keel.All[*telematics.FormSubmission](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.FormSubmission)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FormSubmissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.FormSubmission, error) {
-	return keel.UpdateReturning[*telematics.FormSubmission](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.FormSubmission)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FormSubmissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.FormSubmission], error) {
-	return keel.PageOf[*telematics.FormSubmission](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.FormSubmission])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FormSubmissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.FormSubmission) error) error {
-	return keel.Each[*telematics.FormSubmission](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.FormSubmission)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFormSubmission() unsafe.Pointer { return unsafe.Pointer(new(telematics.FormSubmission)) }
@@ -2299,50 +2323,50 @@ type TelematicsEventsTable struct {
 // TelematicsEvents references the telematics_events table.
 var TelematicsEvents = &TelematicsEventsTable{
 	TableBase:         keel.TableBase{Ref: &telematicsEventsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 0}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 1}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 2}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 0}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 1}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 2}}},
 	Provider:          keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 3}},
 	EventID:           keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 4}},
-	EventType:         EventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 5}}},
+	EventType:         EventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 5}}},
 	OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: &telematicsEventsRef, Index: 6}},
-	TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 7}}},
-	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 8}}},
-	LocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 9}}},
+	TractorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 7}}},
+	WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 8}}},
+	LocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 9}}},
 	AddressName:       keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 10}},
 	Payload:           keel.JSONBCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 11}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &telematicsEventsRef, Index: 12}},
-	StopOutcome:       StopOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 13}}},
-	StopVisit:         keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 14}}},
-	ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 15}}},
-	StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 16}}},
+	StopOutcome:       StopOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 13}}},
+	StopVisit:         keelkinds.ShipmentvocabVisitKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 14}}},
+	ShipmentMoveID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 15}}},
+	StopID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 16}}},
 	StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 17}},
-	MoveShipmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 18}}},
+	MoveShipmentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &telematicsEventsRef, Index: 18}}},
 }
 
 // BuildTelematicsEvents builds the table of telematics_events for ref. Generated relation and alias methods call it.
 func BuildTelematicsEvents(r *keel.Ref) *TelematicsEventsTable {
 	return &TelematicsEventsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:          keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		EventID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		EventType:         EventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EventType:         EventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		OccurredAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		LocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		TractorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		LocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		AddressName:       keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Payload:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		StopOutcome:       StopOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		StopVisit:         keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		ShipmentMoveID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		StopID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		StopOutcome:       StopOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		StopVisit:         keelkinds.ShipmentvocabVisitKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ShipmentMoveID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		StopID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		StopOutcomeReason: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		MoveShipmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		MoveShipmentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 	}
 }
 
@@ -2361,8 +2385,6 @@ func (t *TelematicsEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // TelematicsEventsQuery is a query over telematics.TelematicsEvent.
 type TelematicsEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.TelematicsEvent] = (*TelematicsEventsTable)(nil)
 
 var _ keel.Query[*telematics.TelematicsEvent] = (*TelematicsEventsQuery)(nil)
 
@@ -2478,42 +2500,42 @@ func (t *TelematicsEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *TelematicsEventsTable) Create(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TelematicsEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TelematicsEventsTable) Save(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TelematicsEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TelematicsEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.TelematicsEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TelematicsEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TelematicsEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TelematicsEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.TelematicsEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2685,37 +2707,45 @@ func (q *TelematicsEventsQuery) Clone() keel.Query[*telematics.TelematicsEvent] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TelematicsEventsQuery) One(ctx context.Context, db *keel.DB) (*telematics.TelematicsEvent, error) {
-	return keel.One[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.TelematicsEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TelematicsEventsQuery) First(ctx context.Context, db *keel.DB) (*telematics.TelematicsEvent, error) {
-	return keel.First[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.TelematicsEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TelematicsEventsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.TelematicsEvent, error) {
-	return keel.List[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.TelematicsEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TelematicsEventsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.TelematicsEvent, error) {
-	return keel.All[*telematics.TelematicsEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.TelematicsEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TelematicsEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.TelematicsEvent, error) {
-	return keel.UpdateReturning[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.TelematicsEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TelematicsEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.TelematicsEvent], error) {
-	return keel.PageOf[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.TelematicsEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TelematicsEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.TelematicsEvent) error) error {
-	return keel.Each[*telematics.TelematicsEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.TelematicsEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTelematicsEvent() unsafe.Pointer { return unsafe.Pointer(new(telematics.TelematicsEvent)) }
@@ -2926,13 +2956,13 @@ type VehicleInspectionsTable struct {
 // VehicleInspections references the vehicle_inspections table.
 var VehicleInspections = &VehicleInspectionsTable{
 	TableBase:             keel.TableBase{Ref: &vehicleInspectionsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 2}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 2}}},
 	Provider:              keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 3}},
 	ProviderDvirID:        keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 4}},
-	TractorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 5}}},
-	WorkerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 6}}},
+	TractorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 5}}},
+	WorkerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 6}}},
 	InspectionType:        keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 7}},
 	SafetyStatus:          keel.StringCol{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 8}},
 	StartedAt:             keel.Int64Col{Col: keel.Col{Ref: &vehicleInspectionsRef, Index: 9}},
@@ -2950,13 +2980,13 @@ var VehicleInspections = &VehicleInspectionsTable{
 func BuildVehicleInspections(r *keel.Ref) *VehicleInspectionsTable {
 	return &VehicleInspectionsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:              keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		ProviderDvirID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		TractorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		WorkerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		TractorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		WorkerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		InspectionType:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SafetyStatus:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		StartedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -2986,8 +3016,6 @@ func (t *VehicleInspectionsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // VehicleInspectionsQuery is a query over telematics.VehicleInspection.
 type VehicleInspectionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.VehicleInspection] = (*VehicleInspectionsTable)(nil)
 
 var _ keel.Query[*telematics.VehicleInspection] = (*VehicleInspectionsQuery)(nil)
 
@@ -3103,42 +3131,42 @@ func (t *VehicleInspectionsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *VehicleInspectionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *VehicleInspectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *VehicleInspectionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *VehicleInspectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *VehicleInspectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.VehicleInspection) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *VehicleInspectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *VehicleInspectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *VehicleInspectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.VehicleInspection) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3310,37 +3338,45 @@ func (q *VehicleInspectionsQuery) Clone() keel.Query[*telematics.VehicleInspecti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *VehicleInspectionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.VehicleInspection, error) {
-	return keel.One[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.VehicleInspection)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *VehicleInspectionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.VehicleInspection, error) {
-	return keel.First[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.VehicleInspection)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *VehicleInspectionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.VehicleInspection, error) {
-	return keel.List[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.VehicleInspection)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *VehicleInspectionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.VehicleInspection, error) {
-	return keel.All[*telematics.VehicleInspection](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.VehicleInspection)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *VehicleInspectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.VehicleInspection, error) {
-	return keel.UpdateReturning[*telematics.VehicleInspection](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.VehicleInspection)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *VehicleInspectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.VehicleInspection], error) {
-	return keel.PageOf[*telematics.VehicleInspection](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.VehicleInspection])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *VehicleInspectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.VehicleInspection) error) error {
-	return keel.Each[*telematics.VehicleInspection](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.VehicleInspection)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newVehicleInspection() unsafe.Pointer { return unsafe.Pointer(new(telematics.VehicleInspection)) }
@@ -3527,16 +3563,16 @@ type VehiclePositionsTable struct {
 // VehiclePositions references the telematics_vehicle_positions table.
 var VehiclePositions = &VehiclePositionsTable{
 	TableBase:         keel.TableBase{Ref: &vehiclePositionsRef},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 1}}},
-	TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 2}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 1}}},
+	TractorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 2}}},
 	Provider:          keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 3}},
 	ProviderVehicleID: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 4}},
 	Latitude:          keel.Float64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 5}},
 	Longitude:         keel.Float64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 6}},
 	HeadingDegrees:    keel.Float64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 7}},
 	SpeedMph:          keel.Float64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 8}},
-	EngineState:       EngineStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 9}}},
+	EngineState:       EngineStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 9}}},
 	FuelPercent:       keel.Float64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 10}},
 	OdometerMeters:    keel.Int64Col{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 11}},
 	FormattedLocation: keel.StringCol{Col: keel.Col{Ref: &vehiclePositionsRef, Index: 12}},
@@ -3548,16 +3584,16 @@ var VehiclePositions = &VehiclePositionsTable{
 func BuildVehiclePositions(r *keel.Ref) *VehiclePositionsTable {
 	return &VehiclePositionsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		TractorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		TractorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:          keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		ProviderVehicleID: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Latitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Longitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 6}},
 		HeadingDegrees:    keel.Float64Col{Col: keel.Col{Ref: r, Index: 7}},
 		SpeedMph:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 8}},
-		EngineState:       EngineStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		EngineState:       EngineStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		FuelPercent:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 10}},
 		OdometerMeters:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		FormattedLocation: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
@@ -3586,8 +3622,6 @@ func (t *VehiclePositionsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // VehiclePositionsQuery is a query over telematics.VehiclePosition.
 type VehiclePositionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.VehiclePosition] = (*VehiclePositionsTable)(nil)
 
 var _ keel.Query[*telematics.VehiclePosition] = (*VehiclePositionsQuery)(nil)
 
@@ -3703,42 +3737,42 @@ func (t *VehiclePositionsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *VehiclePositionsTable) Create(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *VehiclePositionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *VehiclePositionsTable) Save(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *VehiclePositionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *VehiclePositionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.VehiclePosition) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *VehiclePositionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *VehiclePositionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *VehiclePositionsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.VehiclePosition) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3910,37 +3944,45 @@ func (q *VehiclePositionsQuery) Clone() keel.Query[*telematics.VehiclePosition] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *VehiclePositionsQuery) One(ctx context.Context, db *keel.DB) (*telematics.VehiclePosition, error) {
-	return keel.One[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.VehiclePosition)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *VehiclePositionsQuery) First(ctx context.Context, db *keel.DB) (*telematics.VehiclePosition, error) {
-	return keel.First[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.VehiclePosition)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *VehiclePositionsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.VehiclePosition, error) {
-	return keel.List[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.VehiclePosition)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *VehiclePositionsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.VehiclePosition, error) {
-	return keel.All[*telematics.VehiclePosition](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.VehiclePosition)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *VehiclePositionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.VehiclePosition, error) {
-	return keel.UpdateReturning[*telematics.VehiclePosition](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.VehiclePosition)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *VehiclePositionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.VehiclePosition], error) {
-	return keel.PageOf[*telematics.VehiclePosition](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.VehiclePosition])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *VehiclePositionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.VehiclePosition) error) error {
-	return keel.Each[*telematics.VehiclePosition](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.VehiclePosition)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newVehiclePosition() unsafe.Pointer { return unsafe.Pointer(new(telematics.VehiclePosition)) }
@@ -4110,11 +4152,11 @@ type WorkerHOSLogsTable struct {
 // WorkerHOSLogs references the worker_hos_logs table.
 var WorkerHOSLogs = &WorkerHOSLogsTable{
 	TableBase:         keel.TableBase{Ref: &workerHOSLogsRef},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 1}}},
-	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 2}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 1}}},
+	WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 2}}},
 	LogStartAt:        keel.Int64Col{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 3}},
-	DutyStatus:        DutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 4}}},
+	DutyStatus:        DutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 4}}},
 	LogEndAt:          keel.Int64Col{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 5}},
 	Remark:            keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 6}},
 	Provider:          keel.StringCol{Col: keel.Col{Ref: &workerHOSLogsRef, Index: 7}},
@@ -4126,11 +4168,11 @@ var WorkerHOSLogs = &WorkerHOSLogsTable{
 func BuildWorkerHOSLogs(r *keel.Ref) *WorkerHOSLogsTable {
 	return &WorkerHOSLogsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		LogStartAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		DutyStatus:        DutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		DutyStatus:        DutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		LogEndAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Remark:            keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Provider:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -4154,8 +4196,6 @@ func (t *WorkerHOSLogsTable) Worker() *workerdb.WorkersTable {
 
 // WorkerHOSLogsQuery is a query over telematics.WorkerHOSLog.
 type WorkerHOSLogsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.WorkerHOSLog] = (*WorkerHOSLogsTable)(nil)
 
 var _ keel.Query[*telematics.WorkerHOSLog] = (*WorkerHOSLogsQuery)(nil)
 
@@ -4271,42 +4311,42 @@ func (t *WorkerHOSLogsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*t
 
 // Create inserts row.
 func (t *WorkerHOSLogsTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerHOSLogsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerHOSLogsTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerHOSLogsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerHOSLogsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSLog) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerHOSLogsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerHOSLogsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerHOSLogsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSLog) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -4478,37 +4518,45 @@ func (q *WorkerHOSLogsQuery) Clone() keel.Query[*telematics.WorkerHOSLog] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerHOSLogsQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSLog, error) {
-	return keel.One[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSLog)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerHOSLogsQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSLog, error) {
-	return keel.First[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSLog)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerHOSLogsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSLog, error) {
-	return keel.List[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSLog)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerHOSLogsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSLog, error) {
-	return keel.All[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSLog)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerHOSLogsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSLog, error) {
-	return keel.UpdateReturning[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.WorkerHOSLog)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerHOSLogsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSLog], error) {
-	return keel.PageOf[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.WorkerHOSLog])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerHOSLogsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSLog) error) error {
-	return keel.Each[*telematics.WorkerHOSLog](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.WorkerHOSLog)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerHOSLog() unsafe.Pointer { return unsafe.Pointer(new(telematics.WorkerHOSLog)) }
@@ -4681,12 +4729,12 @@ type WorkerHOSStatesTable struct {
 // WorkerHOSStates references the worker_hos_states table.
 var WorkerHOSStates = &WorkerHOSStatesTable{
 	TableBase:               keel.TableBase{Ref: &workerHOSStatesRef},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 1}}},
-	WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 2}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 1}}},
+	WorkerID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 2}}},
 	Provider:                keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 3}},
 	ProviderDriverID:        keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 4}},
-	DutyStatus:              DutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 5}}},
+	DutyStatus:              DutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 5}}},
 	DriveRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 6}},
 	ShiftRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 7}},
 	CycleRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 8}},
@@ -4701,7 +4749,7 @@ var WorkerHOSStates = &WorkerHOSStatesTable{
 	RulesetRestart:          keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 17}},
 	RulesetBreak:            keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 18}},
 	RulesetJurisdiction:     keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 19}},
-	CurrentTractorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 20}}},
+	CurrentTractorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 20}}},
 	RecordedAt:              keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 21}},
 	ReceivedAt:              keel.Int64Col{Col: keel.Col{Ref: &workerHOSStatesRef, Index: 22}},
 }
@@ -4710,12 +4758,12 @@ var WorkerHOSStates = &WorkerHOSStatesTable{
 func BuildWorkerHOSStates(r *keel.Ref) *WorkerHOSStatesTable {
 	return &WorkerHOSStatesTable{
 		TableBase:               keel.TableBase{Ref: r},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		WorkerID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Provider:                keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		ProviderDriverID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		DutyStatus:              DutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		DutyStatus:              DutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		DriveRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		ShiftRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CycleRemainingMs:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -4730,7 +4778,7 @@ func BuildWorkerHOSStates(r *keel.Ref) *WorkerHOSStatesTable {
 		RulesetRestart:          keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		RulesetBreak:            keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		RulesetJurisdiction:     keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		CurrentTractorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		CurrentTractorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		RecordedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		ReceivedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 	}
@@ -4756,8 +4804,6 @@ func (t *WorkerHOSStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // WorkerHOSStatesQuery is a query over telematics.WorkerHOSState.
 type WorkerHOSStatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.WorkerHOSState] = (*WorkerHOSStatesTable)(nil)
 
 var _ keel.Query[*telematics.WorkerHOSState] = (*WorkerHOSStatesQuery)(nil)
 
@@ -4873,42 +4919,42 @@ func (t *WorkerHOSStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *WorkerHOSStatesTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerHOSStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerHOSStatesTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerHOSStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerHOSStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSState) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerHOSStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerHOSStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerHOSStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSState) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -5080,37 +5126,45 @@ func (q *WorkerHOSStatesQuery) Clone() keel.Query[*telematics.WorkerHOSState] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerHOSStatesQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSState, error) {
-	return keel.One[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSState)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerHOSStatesQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSState, error) {
-	return keel.First[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSState)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerHOSStatesQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSState, error) {
-	return keel.List[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSState)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerHOSStatesQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSState, error) {
-	return keel.All[*telematics.WorkerHOSState](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSState)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerHOSStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSState, error) {
-	return keel.UpdateReturning[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.WorkerHOSState)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerHOSStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSState], error) {
-	return keel.PageOf[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.WorkerHOSState])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerHOSStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSState) error) error {
-	return keel.Each[*telematics.WorkerHOSState](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.WorkerHOSState)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerHOSState() unsafe.Pointer { return unsafe.Pointer(new(telematics.WorkerHOSState)) }
@@ -5326,9 +5380,9 @@ type WorkerHOSViolationsTable struct {
 // WorkerHOSViolations references the worker_hos_violations table.
 var WorkerHOSViolations = &WorkerHOSViolationsTable{
 	TableBase:        keel.TableBase{Ref: &workerHOSViolationsRef},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 1}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 2}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 1}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 2}}},
 	ViolationType:    keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 3}},
 	ViolationStartAt: keel.Int64Col{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 4}},
 	Description:      keel.StringCol{Col: keel.Col{Ref: &workerHOSViolationsRef, Index: 5}},
@@ -5342,9 +5396,9 @@ var WorkerHOSViolations = &WorkerHOSViolationsTable{
 func BuildWorkerHOSViolations(r *keel.Ref) *WorkerHOSViolationsTable {
 	return &WorkerHOSViolationsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ViolationType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		ViolationStartAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Description:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -5370,8 +5424,6 @@ func (t *WorkerHOSViolationsTable) Worker() *workerdb.WorkersTable {
 
 // WorkerHOSViolationsQuery is a query over telematics.WorkerHOSViolation.
 type WorkerHOSViolationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*telematics.WorkerHOSViolation] = (*WorkerHOSViolationsTable)(nil)
 
 var _ keel.Query[*telematics.WorkerHOSViolation] = (*WorkerHOSViolationsQuery)(nil)
 
@@ -5487,42 +5539,42 @@ func (t *WorkerHOSViolationsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *WorkerHOSViolationsTable) Create(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerHOSViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerHOSViolationsTable) Save(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerHOSViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerHOSViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *telematics.WorkerHOSViolation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerHOSViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerHOSViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerHOSViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*telematics.WorkerHOSViolation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -5694,37 +5746,45 @@ func (q *WorkerHOSViolationsQuery) Clone() keel.Query[*telematics.WorkerHOSViola
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerHOSViolationsQuery) One(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSViolation, error) {
-	return keel.One[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSViolation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerHOSViolationsQuery) First(ctx context.Context, db *keel.DB) (*telematics.WorkerHOSViolation, error) {
-	return keel.First[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*telematics.WorkerHOSViolation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerHOSViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSViolation, error) {
-	return keel.List[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSViolation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerHOSViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*telematics.WorkerHOSViolation, error) {
-	return keel.All[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*telematics.WorkerHOSViolation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerHOSViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*telematics.WorkerHOSViolation, error) {
-	return keel.UpdateReturning[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*telematics.WorkerHOSViolation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerHOSViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*telematics.WorkerHOSViolation], error) {
-	return keel.PageOf[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*telematics.WorkerHOSViolation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerHOSViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*telematics.WorkerHOSViolation) error) error {
-	return keel.Each[*telematics.WorkerHOSViolation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*telematics.WorkerHOSViolation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerHOSViolation() unsafe.Pointer {
@@ -5862,157 +5922,153 @@ var enumStopOutcome = [...]schema.EnumValue{
 }
 
 // DutyStatusCol is a column of telematics.DutyStatus values.
-type DutyStatusCol struct{ keel.StringCol }
+type DutyStatusCol struct{ keel.TypedStringCol }
 
-func (c DutyStatusCol) Eq(v telematics.DutyStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DutyStatusCol) Ne(v telematics.DutyStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DutyStatusCol) Gt(v telematics.DutyStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DutyStatusCol) Gte(v telematics.DutyStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DutyStatusCol) Lt(v telematics.DutyStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DutyStatusCol) Lte(v telematics.DutyStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DutyStatusCol) Eq(v telematics.DutyStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DutyStatusCol) Ne(v telematics.DutyStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DutyStatusCol) Gt(v telematics.DutyStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DutyStatusCol) Gte(v telematics.DutyStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DutyStatusCol) Lt(v telematics.DutyStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DutyStatusCol) Lte(v telematics.DutyStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DutyStatusCol) IsDistinctFrom(v telematics.DutyStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DutyStatusCol) Between(lo, hi telematics.DutyStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DutyStatusCol) To(v telematics.DutyStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DutyStatusCol) To(v telematics.DutyStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c DutyStatusCol) In(vs ...telematics.DutyStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DutyStatusCol) NotIn(vs ...telematics.DutyStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EngineStateCol is a column of telematics.EngineState values.
-type EngineStateCol struct{ keel.StringCol }
+type EngineStateCol struct{ keel.TypedStringCol }
 
-func (c EngineStateCol) Eq(v telematics.EngineState) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EngineStateCol) Ne(v telematics.EngineState) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EngineStateCol) Gt(v telematics.EngineState) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EngineStateCol) Gte(v telematics.EngineState) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EngineStateCol) Lt(v telematics.EngineState) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EngineStateCol) Lte(v telematics.EngineState) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EngineStateCol) Eq(v telematics.EngineState) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EngineStateCol) Ne(v telematics.EngineState) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EngineStateCol) Gt(v telematics.EngineState) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EngineStateCol) Gte(v telematics.EngineState) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EngineStateCol) Lt(v telematics.EngineState) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EngineStateCol) Lte(v telematics.EngineState) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EngineStateCol) IsDistinctFrom(v telematics.EngineState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EngineStateCol) Between(lo, hi telematics.EngineState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EngineStateCol) To(v telematics.EngineState) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c EngineStateCol) To(v telematics.EngineState) keel.Assignment { return c.Text().To(string(v)) }
 func (c EngineStateCol) In(vs ...telematics.EngineState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EngineStateCol) NotIn(vs ...telematics.EngineState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventTypeCol is a column of telematics.EventType values.
-type EventTypeCol struct{ keel.StringCol }
+type EventTypeCol struct{ keel.TypedStringCol }
 
-func (c EventTypeCol) Eq(v telematics.EventType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventTypeCol) Ne(v telematics.EventType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventTypeCol) Gt(v telematics.EventType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventTypeCol) Gte(v telematics.EventType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventTypeCol) Lt(v telematics.EventType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventTypeCol) Lte(v telematics.EventType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventTypeCol) Eq(v telematics.EventType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EventTypeCol) Ne(v telematics.EventType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EventTypeCol) Gt(v telematics.EventType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EventTypeCol) Gte(v telematics.EventType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EventTypeCol) Lt(v telematics.EventType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EventTypeCol) Lte(v telematics.EventType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EventTypeCol) IsDistinctFrom(v telematics.EventType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventTypeCol) Between(lo, hi telematics.EventType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EventTypeCol) To(v telematics.EventType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EventTypeCol) To(v telematics.EventType) keel.Assignment { return c.Text().To(string(v)) }
 func (c EventTypeCol) In(vs ...telematics.EventType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventTypeCol) NotIn(vs ...telematics.EventType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FeedTypeCol is a column of telematics.FeedType values.
-type FeedTypeCol struct{ keel.StringCol }
+type FeedTypeCol struct{ keel.TypedStringCol }
 
-func (c FeedTypeCol) Eq(v telematics.FeedType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FeedTypeCol) Ne(v telematics.FeedType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FeedTypeCol) Gt(v telematics.FeedType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FeedTypeCol) Gte(v telematics.FeedType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FeedTypeCol) Lt(v telematics.FeedType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FeedTypeCol) Lte(v telematics.FeedType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FeedTypeCol) Eq(v telematics.FeedType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FeedTypeCol) Ne(v telematics.FeedType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FeedTypeCol) Gt(v telematics.FeedType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FeedTypeCol) Gte(v telematics.FeedType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FeedTypeCol) Lt(v telematics.FeedType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FeedTypeCol) Lte(v telematics.FeedType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FeedTypeCol) IsDistinctFrom(v telematics.FeedType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FeedTypeCol) Between(lo, hi telematics.FeedType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FeedTypeCol) To(v telematics.FeedType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c FeedTypeCol) To(v telematics.FeedType) keel.Assignment { return c.Text().To(string(v)) }
 func (c FeedTypeCol) In(vs ...telematics.FeedType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FeedTypeCol) NotIn(vs ...telematics.FeedType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FormMappingTargetKindCol is a column of telematics.FormMappingTargetKind values.
-type FormMappingTargetKindCol struct{ keel.StringCol }
+type FormMappingTargetKindCol struct{ keel.TypedStringCol }
 
 func (c FormMappingTargetKindCol) Eq(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c FormMappingTargetKindCol) Ne(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c FormMappingTargetKindCol) Gt(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c FormMappingTargetKindCol) Gte(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c FormMappingTargetKindCol) Lt(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c FormMappingTargetKindCol) Lte(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c FormMappingTargetKindCol) IsDistinctFrom(v telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FormMappingTargetKindCol) Between(lo, hi telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FormMappingTargetKindCol) To(v telematics.FormMappingTargetKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FormMappingTargetKindCol) In(vs ...telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FormMappingTargetKindCol) NotIn(vs ...telematics.FormMappingTargetKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StopOutcomeCol is a column of telematics.StopOutcome values.
-type StopOutcomeCol struct{ keel.StringCol }
+type StopOutcomeCol struct{ keel.TypedStringCol }
 
-func (c StopOutcomeCol) Eq(v telematics.StopOutcome) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StopOutcomeCol) Ne(v telematics.StopOutcome) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StopOutcomeCol) Gt(v telematics.StopOutcome) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StopOutcomeCol) Gte(v telematics.StopOutcome) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StopOutcomeCol) Lt(v telematics.StopOutcome) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StopOutcomeCol) Lte(v telematics.StopOutcome) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StopOutcomeCol) Eq(v telematics.StopOutcome) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StopOutcomeCol) Ne(v telematics.StopOutcome) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StopOutcomeCol) Gt(v telematics.StopOutcome) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StopOutcomeCol) Gte(v telematics.StopOutcome) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StopOutcomeCol) Lt(v telematics.StopOutcome) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StopOutcomeCol) Lte(v telematics.StopOutcome) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StopOutcomeCol) IsDistinctFrom(v telematics.StopOutcome) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StopOutcomeCol) Between(lo, hi telematics.StopOutcome) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StopOutcomeCol) To(v telematics.StopOutcome) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c StopOutcomeCol) To(v telematics.StopOutcome) keel.Assignment { return c.Text().To(string(v)) }
 func (c StopOutcomeCol) In(vs ...telematics.StopOutcome) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StopOutcomeCol) NotIn(vs ...telematics.StopOutcome) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

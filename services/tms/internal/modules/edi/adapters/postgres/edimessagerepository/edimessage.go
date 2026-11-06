@@ -86,9 +86,9 @@ func archiveQuery(req *edimessageports.ListEDIMessagesRequest) keel.Query[*edime
 			keel.When(req.GeneratedFrom > 0, m.GeneratedAt.Gte(req.GeneratedFrom)),
 			keel.When(req.GeneratedTo > 0, m.GeneratedAt.Lte(req.GeneratedTo)),
 			keel.When(search != "", keel.Or(
-				m.ID.ContainsFold(search),
-				m.ShipmentID.ContainsFold(search),
-				m.TransferID.ContainsFold(search),
+				m.ID.Text().ContainsFold(search),
+				m.ShipmentID.Text().ContainsFold(search),
+				m.TransferID.Text().ContainsFold(search),
 				m.InterchangeControlNumber.ContainsFold(search),
 				m.GroupControlNumber.ContainsFold(search),
 				m.TransactionControlNumber.ContainsFold(search),

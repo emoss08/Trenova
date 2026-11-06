@@ -154,19 +154,19 @@ type MessagesTable struct {
 // Messages references the assistant_messages table.
 var Messages = &MessagesTable{
 	TableBase:         keel.TableBase{Ref: &messagesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
-	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
 	Sequence:          keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 4}},
-	Role:              RoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
-	TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}}},
-	Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
+	Role:              RoleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
+	TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}}},
+	Kind:              MessageKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
 	DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 9}},
 	DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 10}},
-	ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
-	ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 12}}},
+	ScheduleID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}}},
+	ProposalID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 12}}},
 	Handoff:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 13}},
 	Content:           keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 14}},
 	WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 15}},
@@ -191,7 +191,7 @@ var Messages = &MessagesTable{
 	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
 	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
 	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 36}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 37}}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 37}}},
 	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 38}},
 	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 39}},
 	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 40}},
@@ -206,19 +206,19 @@ var Messages = &MessagesTable{
 func BuildMessages(r *keel.Ref) *MessagesTable {
 	return &MessagesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Sequence:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Role:              RoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Kind:              MessageKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Role:              RoleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:              MessageKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		DelegateReport:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		ScheduleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ScheduleID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ProposalID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Handoff:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
 		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		WorldChanges:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
@@ -243,7 +243,7 @@ func BuildMessages(r *keel.Ref) *MessagesTable {
 		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 34}},
 		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 35}},
 		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 36}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
 		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
 		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
@@ -273,8 +273,6 @@ func (t *MessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*co
 
 // MessagesQuery is a query over conversation.Message.
 type MessagesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*conversation.Message] = (*MessagesTable)(nil)
 
 var _ keel.Query[*conversation.Message] = (*MessagesQuery)(nil)
 
@@ -390,42 +388,42 @@ func (t *MessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conver
 
 // Create inserts row.
 func (t *MessagesTable) Create(ctx context.Context, db *keel.DB, row *conversation.Message) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *MessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversation.Message) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *MessagesTable) Save(ctx context.Context, db *keel.DB, row *conversation.Message, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *MessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversation.Message, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *MessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversation.Message) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *MessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversation.Message, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *MessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversation.Message, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *MessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*conversation.Message) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -597,37 +595,45 @@ func (q *MessagesQuery) Clone() keel.Query[*conversation.Message] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *MessagesQuery) One(ctx context.Context, db *keel.DB) (*conversation.Message, error) {
-	return keel.One[*conversation.Message](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*conversation.Message)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *MessagesQuery) First(ctx context.Context, db *keel.DB) (*conversation.Message, error) {
-	return keel.First[*conversation.Message](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*conversation.Message)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *MessagesQuery) List(ctx context.Context, db *keel.DB) ([]*conversation.Message, error) {
-	return keel.List[*conversation.Message](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversation.Message)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *MessagesQuery) All(ctx context.Context, db *keel.DB) ([]*conversation.Message, error) {
-	return keel.All[*conversation.Message](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversation.Message)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *MessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversation.Message, error) {
-	return keel.UpdateReturning[*conversation.Message](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*conversation.Message)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *MessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversation.Message], error) {
-	return keel.PageOf[*conversation.Message](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*conversation.Message])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *MessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversation.Message) error) error {
-	return keel.Each[*conversation.Message](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*conversation.Message)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newMessage() unsafe.Pointer { return unsafe.Pointer(new(conversation.Message)) }
@@ -1043,28 +1049,28 @@ type ThreadsTable struct {
 // Threads references the assistant_threads table.
 var Threads = &ThreadsTable{
 	TableBase:           keel.TableBase{Ref: &threadsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 2}}},
-	UserID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 3}}},
-	AgentDefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 4}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 2}}},
+	UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 3}}},
+	AgentDefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 4}}},
 	Title:               keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 5}},
-	Status:              ThreadStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 6}}},
+	Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 6}}},
 	LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 7}},
 	LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 8}},
-	PreferredProviderID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 9}}},
-	Origin:              ThreadOriginCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 10}}},
+	PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 9}}},
+	Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 10}}},
 	Pinned:              keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 11}},
-	SubjectType:         agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 12}}},
-	SubjectID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 13}}},
+	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 12}}},
+	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 13}}},
 	SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 14}},
-	SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 15}}},
-	SnoozeStopID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 16}}},
+	SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 15}}},
+	SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 16}}},
 	PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 17}},
 	WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 18}},
 	ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 19}},
 	AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 20}},
-	HandedFromThreadID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 21}}},
+	HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 21}}},
 	Taint:               keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 22}},
 	TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 23}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 24}},
@@ -1076,28 +1082,28 @@ var Threads = &ThreadsTable{
 func BuildThreads(r *keel.Ref) *ThreadsTable {
 	return &ThreadsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		AgentDefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AgentDefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Title:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:              ThreadStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		PreferredProviderID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Origin:              ThreadOriginCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Pinned:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
-		SubjectType:         agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		SubjectID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		SnoozeStopID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
 		WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
 		ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
 		AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
-		HandedFromThreadID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		Taint:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
 		TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
@@ -1122,8 +1128,6 @@ func (t *ThreadsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*con
 
 // ThreadsQuery is a query over conversation.Thread.
 type ThreadsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*conversation.Thread] = (*ThreadsTable)(nil)
 
 var _ keel.Query[*conversation.Thread] = (*ThreadsQuery)(nil)
 
@@ -1239,42 +1243,42 @@ func (t *ThreadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*convers
 
 // Create inserts row.
 func (t *ThreadsTable) Create(ctx context.Context, db *keel.DB, row *conversation.Thread) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ThreadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversation.Thread) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ThreadsTable) Save(ctx context.Context, db *keel.DB, row *conversation.Thread, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ThreadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversation.Thread, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ThreadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversation.Thread) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ThreadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversation.Thread, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ThreadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversation.Thread, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ThreadsTable) Copy(ctx context.Context, db *keel.DB, rows []*conversation.Thread) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1446,37 +1450,45 @@ func (q *ThreadsQuery) Clone() keel.Query[*conversation.Thread] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ThreadsQuery) One(ctx context.Context, db *keel.DB) (*conversation.Thread, error) {
-	return keel.One[*conversation.Thread](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*conversation.Thread)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ThreadsQuery) First(ctx context.Context, db *keel.DB) (*conversation.Thread, error) {
-	return keel.First[*conversation.Thread](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*conversation.Thread)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ThreadsQuery) List(ctx context.Context, db *keel.DB) ([]*conversation.Thread, error) {
-	return keel.List[*conversation.Thread](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversation.Thread)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ThreadsQuery) All(ctx context.Context, db *keel.DB) ([]*conversation.Thread, error) {
-	return keel.All[*conversation.Thread](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversation.Thread)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ThreadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversation.Thread, error) {
-	return keel.UpdateReturning[*conversation.Thread](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*conversation.Thread)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ThreadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversation.Thread], error) {
-	return keel.PageOf[*conversation.Thread](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*conversation.Thread])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ThreadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversation.Thread) error) error {
-	return keel.Each[*conversation.Thread](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*conversation.Thread)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newThread() unsafe.Pointer { return unsafe.Pointer(new(conversation.Thread)) }
@@ -1735,142 +1747,134 @@ var enumThreadStatus = [...]schema.EnumValue{
 }
 
 // AssistantTurnStatusCol is a column of conversation.AssistantTurnStatus values.
-type AssistantTurnStatusCol struct{ keel.StringCol }
+type AssistantTurnStatusCol struct{ keel.TypedStringCol }
 
 func (c AssistantTurnStatusCol) Eq(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AssistantTurnStatusCol) Ne(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AssistantTurnStatusCol) Gt(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AssistantTurnStatusCol) Gte(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AssistantTurnStatusCol) Lt(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AssistantTurnStatusCol) Lte(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AssistantTurnStatusCol) IsDistinctFrom(v conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AssistantTurnStatusCol) Between(lo, hi conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AssistantTurnStatusCol) To(v conversation.AssistantTurnStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AssistantTurnStatusCol) In(vs ...conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AssistantTurnStatusCol) NotIn(vs ...conversation.AssistantTurnStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MessageKindCol is a column of conversation.MessageKind values.
-type MessageKindCol struct{ keel.StringCol }
+type MessageKindCol struct{ keel.TypedStringCol }
 
-func (c MessageKindCol) Eq(v conversation.MessageKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MessageKindCol) Ne(v conversation.MessageKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MessageKindCol) Gt(v conversation.MessageKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MessageKindCol) Gte(v conversation.MessageKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MessageKindCol) Lt(v conversation.MessageKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MessageKindCol) Lte(v conversation.MessageKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MessageKindCol) Eq(v conversation.MessageKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MessageKindCol) Ne(v conversation.MessageKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MessageKindCol) Gt(v conversation.MessageKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MessageKindCol) Gte(v conversation.MessageKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MessageKindCol) Lt(v conversation.MessageKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MessageKindCol) Lte(v conversation.MessageKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MessageKindCol) IsDistinctFrom(v conversation.MessageKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MessageKindCol) Between(lo, hi conversation.MessageKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MessageKindCol) To(v conversation.MessageKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c MessageKindCol) To(v conversation.MessageKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c MessageKindCol) In(vs ...conversation.MessageKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MessageKindCol) NotIn(vs ...conversation.MessageKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RoleCol is a column of conversation.Role values.
-type RoleCol struct{ keel.StringCol }
+type RoleCol struct{ keel.TypedStringCol }
 
-func (c RoleCol) Eq(v conversation.Role) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RoleCol) Ne(v conversation.Role) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RoleCol) Gt(v conversation.Role) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RoleCol) Gte(v conversation.Role) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RoleCol) Lt(v conversation.Role) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RoleCol) Lte(v conversation.Role) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RoleCol) Eq(v conversation.Role) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RoleCol) Ne(v conversation.Role) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RoleCol) Gt(v conversation.Role) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RoleCol) Gte(v conversation.Role) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RoleCol) Lt(v conversation.Role) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RoleCol) Lte(v conversation.Role) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RoleCol) IsDistinctFrom(v conversation.Role) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RoleCol) Between(lo, hi conversation.Role) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RoleCol) To(v conversation.Role) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c RoleCol) In(vs ...conversation.Role) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c RoleCol) To(v conversation.Role) keel.Assignment { return c.Text().To(string(v)) }
+func (c RoleCol) In(vs ...conversation.Role) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c RoleCol) NotIn(vs ...conversation.Role) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ThreadOriginCol is a column of conversation.ThreadOrigin values.
-type ThreadOriginCol struct{ keel.StringCol }
+type ThreadOriginCol struct{ keel.TypedStringCol }
 
-func (c ThreadOriginCol) Eq(v conversation.ThreadOrigin) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ThreadOriginCol) Ne(v conversation.ThreadOrigin) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ThreadOriginCol) Gt(v conversation.ThreadOrigin) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ThreadOriginCol) Gte(v conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ThreadOriginCol) Lt(v conversation.ThreadOrigin) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ThreadOriginCol) Lte(v conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ThreadOriginCol) Eq(v conversation.ThreadOrigin) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ThreadOriginCol) Ne(v conversation.ThreadOrigin) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ThreadOriginCol) Gt(v conversation.ThreadOrigin) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ThreadOriginCol) Gte(v conversation.ThreadOrigin) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ThreadOriginCol) Lt(v conversation.ThreadOrigin) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ThreadOriginCol) Lte(v conversation.ThreadOrigin) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ThreadOriginCol) IsDistinctFrom(v conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ThreadOriginCol) Between(lo, hi conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ThreadOriginCol) To(v conversation.ThreadOrigin) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ThreadOriginCol) In(vs ...conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ThreadOriginCol) NotIn(vs ...conversation.ThreadOrigin) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ThreadStatusCol is a column of conversation.ThreadStatus values.
-type ThreadStatusCol struct{ keel.StringCol }
+type ThreadStatusCol struct{ keel.TypedStringCol }
 
-func (c ThreadStatusCol) Eq(v conversation.ThreadStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ThreadStatusCol) Ne(v conversation.ThreadStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ThreadStatusCol) Gt(v conversation.ThreadStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ThreadStatusCol) Gte(v conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ThreadStatusCol) Lt(v conversation.ThreadStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ThreadStatusCol) Lte(v conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ThreadStatusCol) Eq(v conversation.ThreadStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ThreadStatusCol) Ne(v conversation.ThreadStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ThreadStatusCol) Gt(v conversation.ThreadStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ThreadStatusCol) Gte(v conversation.ThreadStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ThreadStatusCol) Lt(v conversation.ThreadStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ThreadStatusCol) Lte(v conversation.ThreadStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ThreadStatusCol) IsDistinctFrom(v conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ThreadStatusCol) Between(lo, hi conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ThreadStatusCol) To(v conversation.ThreadStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ThreadStatusCol) In(vs ...conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ThreadStatusCol) NotIn(vs ...conversation.ThreadStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

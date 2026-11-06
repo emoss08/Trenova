@@ -106,24 +106,24 @@ type AccountingMappingsTable struct {
 // AccountingMappings references the accounting_mappings table.
 var AccountingMappings = &AccountingMappingsTable{
 	TableBase:       keel.TableBase{Ref: &accountingMappingsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 2}}},
-	ConnectionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 3}}},
-	TargetType:      accountingsyncdb.MappingTargetTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 4}}},
-	TrenovaObjectID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 5}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 2}}},
+	ConnectionID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 3}}},
+	TargetType:      accountingsyncdb.MappingTargetTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 4}}},
+	TrenovaObjectID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 5}}},
 	TrenovaKey:      keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 6}},
 	TargetLabel:     keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 7}},
 	SearchLabel:     keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 8}},
-	ProviderKind:    keelkinds.AccountingproviderReferenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 9}}},
+	ProviderKind:    keelkinds.AccountingproviderReferenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 9}}},
 	ExternalID:      keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 10}},
 	ExternalName:    keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 11}},
-	State:           MappingStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 12}}},
-	Source:          MappingSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 13}}},
+	State:           MappingStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 12}}},
+	Source:          MappingSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 13}}},
 	Confidence:      keel.Float64Col{Col: keel.Col{Ref: &accountingMappingsRef, Index: 14}},
 	Reason:          keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 15}},
 	Signals:         keel.JSONBCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 16}},
-	ConfirmedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 17}}},
+	ConfirmedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingMappingsRef, Index: 17}}},
 	ConfirmedAt:     keel.Int64Col{Col: keel.Col{Ref: &accountingMappingsRef, Index: 18}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &accountingMappingsRef, Index: 19}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &accountingMappingsRef, Index: 20}},
@@ -134,24 +134,24 @@ var AccountingMappings = &AccountingMappingsTable{
 func BuildAccountingMappings(r *keel.Ref) *AccountingMappingsTable {
 	return &AccountingMappingsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TargetType:      accountingsyncdb.MappingTargetTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TrenovaObjectID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TargetType:      accountingsyncdb.MappingTargetTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TrenovaObjectID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TrenovaKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		TargetLabel:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SearchLabel:     keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		ProviderKind:    keelkinds.AccountingproviderReferenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ProviderKind:    keelkinds.AccountingproviderReferenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ExternalID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ExternalName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		State:           MappingStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Source:          MappingSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		State:           MappingStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Source:          MappingSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		Confidence:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 14}},
 		Reason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		Signals:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		ConfirmedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ConfirmedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		ConfirmedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -179,8 +179,6 @@ func (t *AccountingMappingsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // AccountingMappingsQuery is a query over accountingmapping.AccountingMapping.
 type AccountingMappingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingmapping.AccountingMapping] = (*AccountingMappingsTable)(nil)
 
 var _ keel.Query[*accountingmapping.AccountingMapping] = (*AccountingMappingsQuery)(nil)
 
@@ -296,42 +294,42 @@ func (t *AccountingMappingsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *AccountingMappingsTable) Create(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingMappingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingMappingsTable) Save(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingMappingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingMappingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingMapping) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingMappingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingMappingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingMappingsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingMapping) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -503,37 +501,45 @@ func (q *AccountingMappingsQuery) Clone() keel.Query[*accountingmapping.Accounti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingMappingsQuery) One(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingMapping, error) {
-	return keel.One[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingmapping.AccountingMapping)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingMappingsQuery) First(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingMapping, error) {
-	return keel.First[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingmapping.AccountingMapping)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingMappingsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingMapping, error) {
-	return keel.List[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingmapping.AccountingMapping)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingMappingsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingMapping, error) {
-	return keel.All[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingmapping.AccountingMapping)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingMappingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingmapping.AccountingMapping, error) {
-	return keel.UpdateReturning[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingmapping.AccountingMapping)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingMappingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingmapping.AccountingMapping], error) {
-	return keel.PageOf[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingmapping.AccountingMapping])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingMappingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingmapping.AccountingMapping) error) error {
-	return keel.Each[*accountingmapping.AccountingMapping](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingmapping.AccountingMapping)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingMapping() unsafe.Pointer {
@@ -804,11 +810,11 @@ type AccountingReferenceObjectsTable struct {
 // AccountingReferenceObjects references the accounting_reference_objects table.
 var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
 	TableBase:               keel.TableBase{Ref: &accountingReferenceObjectsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 2}}},
-	ConnectionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 3}}},
-	Kind:                    keelkinds.AccountingproviderReferenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 2}}},
+	ConnectionID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 3}}},
+	Kind:                    keelkinds.AccountingproviderReferenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 4}}},
 	ExternalID:              keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 5}},
 	Name:                    keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 6}},
 	SearchName:              keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 7}},
@@ -818,7 +824,7 @@ var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
 	Classification:          keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 11}},
 	AccountType:             keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 12}},
 	AccountSubType:          keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 13}},
-	AccountClass:            AccountClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 14}}},
+	AccountClass:            AccountClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 14}}},
 	ItemType:                keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 15}},
 	SubType:                 keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 16}},
 	ParentExternalID:        keel.StringCol{Col: keel.Col{Ref: &accountingReferenceObjectsRef, Index: 17}},
@@ -845,11 +851,11 @@ var AccountingReferenceObjects = &AccountingReferenceObjectsTable{
 func BuildAccountingReferenceObjects(r *keel.Ref) *AccountingReferenceObjectsTable {
 	return &AccountingReferenceObjectsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:                    keelkinds.AccountingproviderReferenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:                    keelkinds.AccountingproviderReferenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ExternalID:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Name:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SearchName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -859,7 +865,7 @@ func BuildAccountingReferenceObjects(r *keel.Ref) *AccountingReferenceObjectsTab
 		Classification:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		AccountType:             keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		AccountSubType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		AccountClass:            AccountClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		AccountClass:            AccountClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ItemType:                keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		SubType:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		ParentExternalID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -898,8 +904,6 @@ func (t *AccountingReferenceObjectsTable) Get(ctx context.Context, db *keel.DB, 
 
 // AccountingReferenceObjectsQuery is a query over accountingmapping.AccountingReferenceObject.
 type AccountingReferenceObjectsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingmapping.AccountingReferenceObject] = (*AccountingReferenceObjectsTable)(nil)
 
 var _ keel.Query[*accountingmapping.AccountingReferenceObject] = (*AccountingReferenceObjectsQuery)(nil)
 
@@ -1015,42 +1019,42 @@ func (t *AccountingReferenceObjectsTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *AccountingReferenceObjectsTable) Create(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingReferenceObjectsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingReferenceObjectsTable) Save(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingReferenceObjectsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingReferenceObjectsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingmapping.AccountingReferenceObject) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingReferenceObjectsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingReferenceObjectsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingReferenceObjectsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingmapping.AccountingReferenceObject) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1222,37 +1226,45 @@ func (q *AccountingReferenceObjectsQuery) Clone() keel.Query[*accountingmapping.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingReferenceObjectsQuery) One(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingReferenceObject, error) {
-	return keel.One[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingmapping.AccountingReferenceObject)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingReferenceObjectsQuery) First(ctx context.Context, db *keel.DB) (*accountingmapping.AccountingReferenceObject, error) {
-	return keel.First[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingmapping.AccountingReferenceObject)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingReferenceObjectsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingReferenceObject, error) {
-	return keel.List[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingmapping.AccountingReferenceObject)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingReferenceObjectsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingmapping.AccountingReferenceObject, error) {
-	return keel.All[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingmapping.AccountingReferenceObject)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingReferenceObjectsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingmapping.AccountingReferenceObject, error) {
-	return keel.UpdateReturning[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingmapping.AccountingReferenceObject)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingReferenceObjectsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingmapping.AccountingReferenceObject], error) {
-	return keel.PageOf[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingmapping.AccountingReferenceObject])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingReferenceObjectsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingmapping.AccountingReferenceObject) error) error {
-	return keel.Each[*accountingmapping.AccountingReferenceObject](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingmapping.AccountingReferenceObject)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingReferenceObject() unsafe.Pointer {
@@ -1554,112 +1566,112 @@ var enumMappingState = [...]schema.EnumValue{
 }
 
 // AccountClassCol is a column of accountingmapping.AccountClass values.
-type AccountClassCol struct{ keel.StringCol }
+type AccountClassCol struct{ keel.TypedStringCol }
 
 func (c AccountClassCol) Eq(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AccountClassCol) Ne(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AccountClassCol) Gt(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AccountClassCol) Gte(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AccountClassCol) Lt(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AccountClassCol) Lte(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AccountClassCol) IsDistinctFrom(v accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AccountClassCol) Between(lo, hi accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AccountClassCol) To(v accountingmapping.AccountClass) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AccountClassCol) In(vs ...accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AccountClassCol) NotIn(vs ...accountingmapping.AccountClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MappingSourceCol is a column of accountingmapping.MappingSource values.
-type MappingSourceCol struct{ keel.StringCol }
+type MappingSourceCol struct{ keel.TypedStringCol }
 
 func (c MappingSourceCol) Eq(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MappingSourceCol) Ne(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MappingSourceCol) Gt(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MappingSourceCol) Gte(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MappingSourceCol) Lt(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MappingSourceCol) Lte(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MappingSourceCol) IsDistinctFrom(v accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MappingSourceCol) Between(lo, hi accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MappingSourceCol) To(v accountingmapping.MappingSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MappingSourceCol) In(vs ...accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MappingSourceCol) NotIn(vs ...accountingmapping.MappingSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MappingStateCol is a column of accountingmapping.MappingState values.
-type MappingStateCol struct{ keel.StringCol }
+type MappingStateCol struct{ keel.TypedStringCol }
 
 func (c MappingStateCol) Eq(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MappingStateCol) Ne(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MappingStateCol) Gt(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MappingStateCol) Gte(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MappingStateCol) Lt(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MappingStateCol) Lte(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MappingStateCol) IsDistinctFrom(v accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MappingStateCol) Between(lo, hi accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MappingStateCol) To(v accountingmapping.MappingState) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MappingStateCol) In(vs ...accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MappingStateCol) NotIn(vs ...accountingmapping.MappingState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

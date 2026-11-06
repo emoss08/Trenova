@@ -27,7 +27,7 @@ func Refresh(ctx context.Context, db *keel.DB, itemIDs ...pulid.ID) error {
 	lane := LaneExpr(bq)
 	if _, err := bq.Where(
 		bq.ID.In(ids...),
-		bq.Lane.IsDistinctFromExpr(lane),
+		bq.Lane.Text().IsDistinctFromExpr(lane),
 	).Update(
 		ctx,
 		db,

@@ -93,21 +93,21 @@ type KeysTable struct {
 // Keys references the api_keys table.
 var Keys = &KeysTable{
 	TableBase:         keel.TableBase{Ref: &keysRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 2}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 2}}},
 	Name:              keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 3}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 4}},
 	KeyPrefix:         keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 5}},
 	SecretHash:        keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 6}},
 	SecretSalt:        keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 7}},
-	Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 8}}},
+	Status:            StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 8}}},
 	ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: &keysRef, Index: 9}},
 	LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: &keysRef, Index: 10}},
 	LastUsedIP:        keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 11}},
 	LastUsedUserAgent: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 12}},
-	CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 13}}},
-	RevokedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &keysRef, Index: 14}}},
+	CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 13}}},
+	RevokedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &keysRef, Index: 14}}},
 	RevokedAt:         keel.Int64Col{Col: keel.Col{Ref: &keysRef, Index: 15}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &keysRef, Index: 16}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &keysRef, Index: 17}},
@@ -117,21 +117,21 @@ var Keys = &KeysTable{
 func BuildKeys(r *keel.Ref) *KeysTable {
 	return &KeysTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		KeyPrefix:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SecretHash:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SecretSalt:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:            StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		LastUsedIP:        keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		LastUsedUserAgent: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		RevokedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		RevokedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		RevokedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -154,8 +154,6 @@ func (t *KeysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*apikey
 
 // KeysQuery is a query over apikey.Key.
 type KeysQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*apikey.Key] = (*KeysTable)(nil)
 
 var _ keel.Query[*apikey.Key] = (*KeysQuery)(nil)
 
@@ -271,42 +269,42 @@ func (t *KeysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*apikey.Key
 
 // Create inserts row.
 func (t *KeysTable) Create(ctx context.Context, db *keel.DB, row *apikey.Key) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *KeysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*apikey.Key) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *KeysTable) Save(ctx context.Context, db *keel.DB, row *apikey.Key, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *KeysTable) SaveExcept(ctx context.Context, db *keel.DB, row *apikey.Key, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *KeysTable) DeleteRow(ctx context.Context, db *keel.DB, row *apikey.Key) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *KeysTable) Upsert(ctx context.Context, db *keel.DB, rows []*apikey.Key, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *KeysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*apikey.Key, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *KeysTable) Copy(ctx context.Context, db *keel.DB, rows []*apikey.Key) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -478,37 +476,45 @@ func (q *KeysQuery) Clone() keel.Query[*apikey.Key] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *KeysQuery) One(ctx context.Context, db *keel.DB) (*apikey.Key, error) {
-	return keel.One[*apikey.Key](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*apikey.Key)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *KeysQuery) First(ctx context.Context, db *keel.DB) (*apikey.Key, error) {
-	return keel.First[*apikey.Key](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*apikey.Key)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *KeysQuery) List(ctx context.Context, db *keel.DB) ([]*apikey.Key, error) {
-	return keel.List[*apikey.Key](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.Key)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *KeysQuery) All(ctx context.Context, db *keel.DB) ([]*apikey.Key, error) {
-	return keel.All[*apikey.Key](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.Key)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *KeysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*apikey.Key, error) {
-	return keel.UpdateReturning[*apikey.Key](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*apikey.Key)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *KeysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*apikey.Key], error) {
-	return keel.PageOf[*apikey.Key](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*apikey.Key])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *KeysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*apikey.Key) error) error {
-	return keel.Each[*apikey.Key](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*apikey.Key)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newKey() unsafe.Pointer { return unsafe.Pointer(new(apikey.Key)) }
@@ -693,13 +699,13 @@ type PermissionsTable struct {
 // Permissions references the api_key_permissions table.
 var Permissions = &PermissionsTable{
 	TableBase:      keel.TableBase{Ref: &permissionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 0}}},
-	APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 2}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &permissionsRef, Index: 0}}},
+	APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &permissionsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &permissionsRef, Index: 2}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &permissionsRef, Index: 3}}},
 	Resource:       keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 4}},
 	Operations:     keel.StringArrayCol{Col: keel.Col{Ref: &permissionsRef, Index: 5}},
-	DataScope:      keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permissionsRef, Index: 6}}},
+	DataScope:      keelkinds.PermissionDataScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &permissionsRef, Index: 6}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &permissionsRef, Index: 7}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &permissionsRef, Index: 8}},
 }
@@ -708,13 +714,13 @@ var Permissions = &PermissionsTable{
 func BuildPermissions(r *keel.Ref) *PermissionsTable {
 	return &PermissionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Resource:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Operations:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 5}},
-		DataScope:      keelkinds.PermissionDataScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		DataScope:      keelkinds.PermissionDataScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}
@@ -735,8 +741,6 @@ func (t *PermissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PermissionsQuery is a query over apikey.Permission.
 type PermissionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*apikey.Permission] = (*PermissionsTable)(nil)
 
 var _ keel.Query[*apikey.Permission] = (*PermissionsQuery)(nil)
 
@@ -852,42 +856,42 @@ func (t *PermissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*api
 
 // Create inserts row.
 func (t *PermissionsTable) Create(ctx context.Context, db *keel.DB, row *apikey.Permission) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PermissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*apikey.Permission) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PermissionsTable) Save(ctx context.Context, db *keel.DB, row *apikey.Permission, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PermissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *apikey.Permission, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PermissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *apikey.Permission) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PermissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*apikey.Permission, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PermissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*apikey.Permission, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PermissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*apikey.Permission) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1059,37 +1063,45 @@ func (q *PermissionsQuery) Clone() keel.Query[*apikey.Permission] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PermissionsQuery) One(ctx context.Context, db *keel.DB) (*apikey.Permission, error) {
-	return keel.One[*apikey.Permission](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*apikey.Permission)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PermissionsQuery) First(ctx context.Context, db *keel.DB) (*apikey.Permission, error) {
-	return keel.First[*apikey.Permission](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*apikey.Permission)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PermissionsQuery) List(ctx context.Context, db *keel.DB) ([]*apikey.Permission, error) {
-	return keel.List[*apikey.Permission](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.Permission)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PermissionsQuery) All(ctx context.Context, db *keel.DB) ([]*apikey.Permission, error) {
-	return keel.All[*apikey.Permission](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.Permission)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PermissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*apikey.Permission, error) {
-	return keel.UpdateReturning[*apikey.Permission](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*apikey.Permission)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PermissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*apikey.Permission], error) {
-	return keel.PageOf[*apikey.Permission](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*apikey.Permission])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PermissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*apikey.Permission) error) error {
-	return keel.Each[*apikey.Permission](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*apikey.Permission)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPermission() unsafe.Pointer { return unsafe.Pointer(new(apikey.Permission)) }
@@ -1211,9 +1223,9 @@ type UsageDailiesTable struct {
 // UsageDailies references the api_key_usage_daily table.
 var UsageDailies = &UsageDailiesTable{
 	TableBase:      keel.TableBase{Ref: &usageDailiesRef},
-	APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 2}}},
+	APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 2}}},
 	UsageDate:      keel.TimeCol{Col: keel.Col{Ref: &usageDailiesRef, Index: 3}},
 	RequestCount:   keel.Int64Col{Col: keel.Col{Ref: &usageDailiesRef, Index: 4}},
 }
@@ -1222,9 +1234,9 @@ var UsageDailies = &UsageDailiesTable{
 func BuildUsageDailies(r *keel.Ref) *UsageDailiesTable {
 	return &UsageDailiesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		APIKeyID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		UsageDate:      keel.TimeCol{Col: keel.Col{Ref: r, Index: 3}},
 		RequestCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 	}
@@ -1240,8 +1252,6 @@ func (t *UsageDailiesTable) As(alias string) *UsageDailiesTable {
 
 // UsageDailiesQuery is a query over apikey.UsageDaily.
 type UsageDailiesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*apikey.UsageDaily] = (*UsageDailiesTable)(nil)
 
 var _ keel.Query[*apikey.UsageDaily] = (*UsageDailiesQuery)(nil)
 
@@ -1357,42 +1367,42 @@ func (t *UsageDailiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ap
 
 // Create inserts row.
 func (t *UsageDailiesTable) Create(ctx context.Context, db *keel.DB, row *apikey.UsageDaily) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *UsageDailiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*apikey.UsageDaily) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *UsageDailiesTable) Save(ctx context.Context, db *keel.DB, row *apikey.UsageDaily, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *UsageDailiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *apikey.UsageDaily, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *UsageDailiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *apikey.UsageDaily) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *UsageDailiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*apikey.UsageDaily, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *UsageDailiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*apikey.UsageDaily, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *UsageDailiesTable) Copy(ctx context.Context, db *keel.DB, rows []*apikey.UsageDaily) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1564,37 +1574,45 @@ func (q *UsageDailiesQuery) Clone() keel.Query[*apikey.UsageDaily] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *UsageDailiesQuery) One(ctx context.Context, db *keel.DB) (*apikey.UsageDaily, error) {
-	return keel.One[*apikey.UsageDaily](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*apikey.UsageDaily)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *UsageDailiesQuery) First(ctx context.Context, db *keel.DB) (*apikey.UsageDaily, error) {
-	return keel.First[*apikey.UsageDaily](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*apikey.UsageDaily)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *UsageDailiesQuery) List(ctx context.Context, db *keel.DB) ([]*apikey.UsageDaily, error) {
-	return keel.List[*apikey.UsageDaily](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.UsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *UsageDailiesQuery) All(ctx context.Context, db *keel.DB) ([]*apikey.UsageDaily, error) {
-	return keel.All[*apikey.UsageDaily](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*apikey.UsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *UsageDailiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*apikey.UsageDaily, error) {
-	return keel.UpdateReturning[*apikey.UsageDaily](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*apikey.UsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *UsageDailiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*apikey.UsageDaily], error) {
-	return keel.PageOf[*apikey.UsageDaily](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*apikey.UsageDaily])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *UsageDailiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*apikey.UsageDaily) error) error {
-	return keel.Each[*apikey.UsageDaily](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*apikey.UsageDaily)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newUsageDaily() unsafe.Pointer { return unsafe.Pointer(new(apikey.UsageDaily)) }
@@ -1655,22 +1673,24 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of apikey.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v apikey.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v apikey.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v apikey.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v apikey.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v apikey.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v apikey.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v apikey.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v apikey.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v apikey.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v apikey.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v apikey.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v apikey.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v apikey.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi apikey.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v apikey.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...apikey.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v apikey.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...apikey.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...apikey.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

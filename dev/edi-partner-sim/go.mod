@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova/edi-partner-sim
 
-go 1.26.10
+go 1.27.1
 
 require (
 	github.com/bytedance/sonic v1.15.5

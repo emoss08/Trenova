@@ -75,14 +75,14 @@ type ToolRuleOverridesTable struct {
 // ToolRuleOverrides references the agent_tool_rule_overrides table.
 var ToolRuleOverrides = &ToolRuleOverridesTable{
 	TableBase:      keel.TableBase{Ref: &toolRuleOverridesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 2}}},
 	ToolName:       keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 3}},
-	MaxTier:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 4}}},
-	ReadsExternal:  ExternalReadCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 5}}},
+	MaxTier:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 4}}},
+	ReadsExternal:  ExternalReadCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 5}}},
 	Reason:         keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 6}},
-	UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 7}}},
+	UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 7}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 8}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 9}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 10}},
@@ -92,14 +92,14 @@ var ToolRuleOverrides = &ToolRuleOverridesTable{
 func BuildToolRuleOverrides(r *keel.Ref) *ToolRuleOverridesTable {
 	return &ToolRuleOverridesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ToolName:       keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		MaxTier:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ReadsExternal:  ExternalReadCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		MaxTier:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ReadsExternal:  ExternalReadCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -121,8 +121,6 @@ func (t *ToolRuleOverridesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // ToolRuleOverridesQuery is a query over agenttooltrust.ToolRuleOverride.
 type ToolRuleOverridesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agenttooltrust.ToolRuleOverride] = (*ToolRuleOverridesTable)(nil)
 
 var _ keel.Query[*agenttooltrust.ToolRuleOverride] = (*ToolRuleOverridesQuery)(nil)
 
@@ -238,42 +236,42 @@ func (t *ToolRuleOverridesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *ToolRuleOverridesTable) Create(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ToolRuleOverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ToolRuleOverridesTable) Save(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ToolRuleOverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ToolRuleOverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ToolRuleOverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ToolRuleOverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ToolRuleOverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -445,37 +443,45 @@ func (q *ToolRuleOverridesQuery) Clone() keel.Query[*agenttooltrust.ToolRuleOver
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ToolRuleOverridesQuery) One(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolRuleOverride, error) {
-	return keel.One[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agenttooltrust.ToolRuleOverride)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ToolRuleOverridesQuery) First(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolRuleOverride, error) {
-	return keel.First[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agenttooltrust.ToolRuleOverride)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ToolRuleOverridesQuery) List(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolRuleOverride, error) {
-	return keel.List[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttooltrust.ToolRuleOverride)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ToolRuleOverridesQuery) All(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolRuleOverride, error) {
-	return keel.All[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttooltrust.ToolRuleOverride)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ToolRuleOverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agenttooltrust.ToolRuleOverride, error) {
-	return keel.UpdateReturning[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agenttooltrust.ToolRuleOverride)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ToolRuleOverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agenttooltrust.ToolRuleOverride], error) {
-	return keel.PageOf[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agenttooltrust.ToolRuleOverride])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ToolRuleOverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agenttooltrust.ToolRuleOverride) error) error {
-	return keel.Each[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agenttooltrust.ToolRuleOverride)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newToolRuleOverride() unsafe.Pointer {
@@ -626,17 +632,17 @@ type ToolTrustsTable struct {
 // ToolTrusts references the agent_tool_trust table.
 var ToolTrusts = &ToolTrustsTable{
 	TableBase:         keel.TableBase{Ref: &toolTrustsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 2}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 3}}},
 	ToolName:          keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 4}},
 	Streak:            keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 5}},
 	Approvals:         keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 6}},
 	Modifications:     keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 7}},
 	Rejections:        keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 8}},
 	ExecutionFailures: keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 9}},
-	EarnedTier:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 10}}},
+	EarnedTier:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 10}}},
 	LastDecisionAt:    keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 11}},
 	PromotedAt:        keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 12}},
 	DemotedAt:         keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 13}},
@@ -649,17 +655,17 @@ var ToolTrusts = &ToolTrustsTable{
 func BuildToolTrusts(r *keel.Ref) *ToolTrustsTable {
 	return &ToolTrustsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Streak:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Approvals:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Modifications:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Rejections:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		ExecutionFailures: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		EarnedTier:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		EarnedTier:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		LastDecisionAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		PromotedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		DemotedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -684,8 +690,6 @@ func (t *ToolTrustsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // ToolTrustsQuery is a query over agenttooltrust.ToolTrust.
 type ToolTrustsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agenttooltrust.ToolTrust] = (*ToolTrustsTable)(nil)
 
 var _ keel.Query[*agenttooltrust.ToolTrust] = (*ToolTrustsQuery)(nil)
 
@@ -801,42 +805,42 @@ func (t *ToolTrustsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agen
 
 // Create inserts row.
 func (t *ToolTrustsTable) Create(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ToolTrustsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ToolTrustsTable) Save(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ToolTrustsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ToolTrustsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ToolTrustsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ToolTrustsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ToolTrustsTable) Copy(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1008,37 +1012,45 @@ func (q *ToolTrustsQuery) Clone() keel.Query[*agenttooltrust.ToolTrust] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ToolTrustsQuery) One(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolTrust, error) {
-	return keel.One[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agenttooltrust.ToolTrust)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ToolTrustsQuery) First(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolTrust, error) {
-	return keel.First[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agenttooltrust.ToolTrust)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ToolTrustsQuery) List(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolTrust, error) {
-	return keel.List[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttooltrust.ToolTrust)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ToolTrustsQuery) All(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolTrust, error) {
-	return keel.All[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttooltrust.ToolTrust)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ToolTrustsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agenttooltrust.ToolTrust, error) {
-	return keel.UpdateReturning[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agenttooltrust.ToolTrust)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ToolTrustsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agenttooltrust.ToolTrust], error) {
-	return keel.PageOf[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agenttooltrust.ToolTrust])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ToolTrustsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agenttooltrust.ToolTrust) error) error {
-	return keel.Each[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agenttooltrust.ToolTrust)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newToolTrust() unsafe.Pointer { return unsafe.Pointer(new(agenttooltrust.ToolTrust)) }
@@ -1157,38 +1169,26 @@ var enumExternalRead = [...]schema.EnumValue{
 }
 
 // ExternalReadCol is a column of agenttooltrust.ExternalRead values.
-type ExternalReadCol struct{ keel.StringCol }
+type ExternalReadCol struct{ keel.TypedStringCol }
 
-func (c ExternalReadCol) Eq(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ExternalReadCol) Ne(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ExternalReadCol) Gt(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ExternalReadCol) Gte(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ExternalReadCol) Lt(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ExternalReadCol) Lte(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ExternalReadCol) Eq(v agenttooltrust.ExternalRead) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ExternalReadCol) Ne(v agenttooltrust.ExternalRead) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ExternalReadCol) Gt(v agenttooltrust.ExternalRead) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ExternalReadCol) Gte(v agenttooltrust.ExternalRead) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ExternalReadCol) Lt(v agenttooltrust.ExternalRead) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ExternalReadCol) Lte(v agenttooltrust.ExternalRead) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ExternalReadCol) IsDistinctFrom(v agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExternalReadCol) Between(lo, hi agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExternalReadCol) To(v agenttooltrust.ExternalRead) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExternalReadCol) In(vs ...agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExternalReadCol) NotIn(vs ...agenttooltrust.ExternalRead) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

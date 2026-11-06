@@ -78,14 +78,14 @@ type ItemEventsTable struct {
 // ItemEvents references the billing_queue_events table.
 var ItemEvents = &ItemEventsTable{
 	TableBase:      keel.TableBase{Ref: &itemEventsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 2}}},
-	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 3}}},
-	Kind:           EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 2}}},
+	ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 3}}},
+	Kind:           EventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 4}}},
 	Text:           keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 5}},
-	ActorType:      EventActorTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 6}}},
-	ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 7}}},
+	ActorType:      EventActorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 6}}},
+	ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 7}}},
 	ActorName:      keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 8}},
 	Payload:        keel.JSONBCol{Col: keel.Col{Ref: &itemEventsRef, Index: 9}},
 	At:             keel.Int64Col{Col: keel.Col{Ref: &itemEventsRef, Index: 10}},
@@ -96,14 +96,14 @@ var ItemEvents = &ItemEventsTable{
 func BuildItemEvents(r *keel.Ref) *ItemEventsTable {
 	return &ItemEventsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:           EventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:           EventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Text:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		ActorType:      EventActorTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ActorType:      EventActorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ActorName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Payload:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		At:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -126,8 +126,6 @@ func (t *ItemEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // ItemEventsQuery is a query over billingqueueevent.ItemEvent.
 type ItemEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingqueueevent.ItemEvent] = (*ItemEventsTable)(nil)
 
 var _ keel.Query[*billingqueueevent.ItemEvent] = (*ItemEventsQuery)(nil)
 
@@ -243,42 +241,42 @@ func (t *ItemEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bill
 
 // Create inserts row.
 func (t *ItemEventsTable) Create(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ItemEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ItemEventsTable) Save(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ItemEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ItemEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ItemEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ItemEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ItemEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -450,37 +448,45 @@ func (q *ItemEventsQuery) Clone() keel.Query[*billingqueueevent.ItemEvent] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ItemEventsQuery) One(ctx context.Context, db *keel.DB) (*billingqueueevent.ItemEvent, error) {
-	return keel.One[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingqueueevent.ItemEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ItemEventsQuery) First(ctx context.Context, db *keel.DB) (*billingqueueevent.ItemEvent, error) {
-	return keel.First[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingqueueevent.ItemEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ItemEventsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueueevent.ItemEvent, error) {
-	return keel.List[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueueevent.ItemEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ItemEventsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueueevent.ItemEvent, error) {
-	return keel.All[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueueevent.ItemEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ItemEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueueevent.ItemEvent, error) {
-	return keel.UpdateReturning[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingqueueevent.ItemEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ItemEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueueevent.ItemEvent], error) {
-	return keel.PageOf[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingqueueevent.ItemEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ItemEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueueevent.ItemEvent) error) error {
-	return keel.Each[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingqueueevent.ItemEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newItemEvent() unsafe.Pointer { return unsafe.Pointer(new(billingqueueevent.ItemEvent)) }
@@ -586,63 +592,63 @@ var enumEventKind = [...]schema.EnumValue{
 }
 
 // EventActorTypeCol is a column of billingqueueevent.EventActorType values.
-type EventActorTypeCol struct{ keel.StringCol }
+type EventActorTypeCol struct{ keel.TypedStringCol }
 
 func (c EventActorTypeCol) Eq(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EventActorTypeCol) Ne(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EventActorTypeCol) Gt(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EventActorTypeCol) Gte(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EventActorTypeCol) Lt(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EventActorTypeCol) Lte(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EventActorTypeCol) IsDistinctFrom(v billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventActorTypeCol) Between(lo, hi billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EventActorTypeCol) To(v billingqueueevent.EventActorType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EventActorTypeCol) In(vs ...billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventActorTypeCol) NotIn(vs ...billingqueueevent.EventActorType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventKindCol is a column of billingqueueevent.EventKind values.
-type EventKindCol struct{ keel.StringCol }
+type EventKindCol struct{ keel.TypedStringCol }
 
-func (c EventKindCol) Eq(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventKindCol) Ne(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventKindCol) Gt(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventKindCol) Gte(v billingqueueevent.EventKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventKindCol) Lt(v billingqueueevent.EventKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventKindCol) Lte(v billingqueueevent.EventKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventKindCol) Eq(v billingqueueevent.EventKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EventKindCol) Ne(v billingqueueevent.EventKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EventKindCol) Gt(v billingqueueevent.EventKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EventKindCol) Gte(v billingqueueevent.EventKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EventKindCol) Lt(v billingqueueevent.EventKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EventKindCol) Lte(v billingqueueevent.EventKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EventKindCol) IsDistinctFrom(v billingqueueevent.EventKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventKindCol) Between(lo, hi billingqueueevent.EventKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EventKindCol) To(v billingqueueevent.EventKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EventKindCol) In(vs ...billingqueueevent.EventKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventKindCol) NotIn(vs ...billingqueueevent.EventKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

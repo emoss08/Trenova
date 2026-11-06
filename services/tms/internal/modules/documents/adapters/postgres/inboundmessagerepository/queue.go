@@ -350,7 +350,7 @@ func dueFromTargetsExpr(targets triage.Targets) keel.Int64Expr {
 	m := inboundmessagedb.InboundMessages
 	kinds := inboundmessage.AllClassifications()
 
-	classification := m.Classification.Coalesce(string(inboundmessage.ClassificationOther))
+	classification := m.Classification.Text().Coalesce(string(inboundmessage.ClassificationOther))
 	minutes := keel.CaseInt64()
 	for _, kind := range kinds {
 		minutes = minutes.When(

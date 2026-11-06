@@ -211,14 +211,14 @@ func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projecti
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(closure.Col("root_id"), parent.ID, parent.ParentRoleIDs).
-			Join(closure, parent.ID.InArray(keel.StringArrayOf(closure.Col("parent_role_ids")))),
+			Join(closure, parent.ID.Text().InArray(keel.StringArrayOf(closure.Col("parent_role_ids")))),
 	)).Distinct()
 
 	rp := rbacdb.ResourcePermissions
 	op := keel.Rows("op", []string{"op"}, rp.Operations.Unnest())
 	root := closure.Col("root_id")
 
-	return forTenant(ctx, closure.Query().
+	return forTenant(ctx, keel.RowsOf(closure.TableRef()).
 		With(closure).
 		LeftJoin(rp, rp.RoleID.EqCol(closure.Col("role_id"))).
 		LeftJoinLateral(op).

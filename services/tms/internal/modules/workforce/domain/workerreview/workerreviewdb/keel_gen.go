@@ -115,13 +115,13 @@ type PerformanceReviewsTable struct {
 // PerformanceReviews references the performance_reviews table.
 var PerformanceReviews = &PerformanceReviewsTable{
 	TableBase:      keel.TableBase{Ref: &performanceReviewsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 3}}},
-	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 4}}},
-	ReviewerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 5}}},
-	Status:         ReviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 3}}},
+	TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 4}}},
+	ReviewerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 5}}},
+	Status:         ReviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 6}}},
 	Title:          keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 7}},
 	PeriodStart:    keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 8}},
 	PeriodEnd:      keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 9}},
@@ -135,7 +135,7 @@ var PerformanceReviews = &PerformanceReviewsTable{
 	AcknowledgedAt: keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 17}},
 	WorkerComment:  keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 18}},
 	ClosedAt:       keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 19}},
-	ClosedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 20}}},
+	ClosedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewsRef, Index: 20}}},
 	NextReviewAt:   keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 21}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 22}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &performanceReviewsRef, Index: 23}},
@@ -146,13 +146,13 @@ var PerformanceReviews = &PerformanceReviewsTable{
 func BuildPerformanceReviews(r *keel.Ref) *PerformanceReviewsTable {
 	return &PerformanceReviewsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ReviewerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:         ReviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ReviewerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:         ReviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Title:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		PeriodStart:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		PeriodEnd:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -166,7 +166,7 @@ func BuildPerformanceReviews(r *keel.Ref) *PerformanceReviewsTable {
 		AcknowledgedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		WorkerComment:  keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		ClosedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		ClosedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ClosedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		NextReviewAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -204,8 +204,6 @@ func (t *PerformanceReviewsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // PerformanceReviewsQuery is a query over workerreview.PerformanceReview.
 type PerformanceReviewsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerreview.PerformanceReview] = (*PerformanceReviewsTable)(nil)
 
 var _ keel.Query[*workerreview.PerformanceReview] = (*PerformanceReviewsQuery)(nil)
 
@@ -321,42 +319,42 @@ func (t *PerformanceReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *PerformanceReviewsTable) Create(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PerformanceReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PerformanceReviewsTable) Save(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PerformanceReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PerformanceReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReview) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PerformanceReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PerformanceReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PerformanceReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReview) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -528,37 +526,45 @@ func (q *PerformanceReviewsQuery) Clone() keel.Query[*workerreview.PerformanceRe
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PerformanceReviewsQuery) One(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReview, error) {
-	return keel.One[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerreview.PerformanceReview)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PerformanceReviewsQuery) First(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReview, error) {
-	return keel.First[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerreview.PerformanceReview)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PerformanceReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReview, error) {
-	return keel.List[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerreview.PerformanceReview)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PerformanceReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReview, error) {
-	return keel.All[*workerreview.PerformanceReview](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerreview.PerformanceReview)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PerformanceReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerreview.PerformanceReview, error) {
-	return keel.UpdateReturning[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerreview.PerformanceReview)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PerformanceReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerreview.PerformanceReview], error) {
-	return keel.PageOf[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerreview.PerformanceReview])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PerformanceReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerreview.PerformanceReview) error) error {
-	return keel.Each[*workerreview.PerformanceReview](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerreview.PerformanceReview)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPerformanceReview() unsafe.Pointer {
@@ -809,13 +815,13 @@ type PerformanceReviewTemplatesTable struct {
 // PerformanceReviewTemplates references the performance_review_templates table.
 var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
 	TableBase:      keel.TableBase{Ref: &performanceReviewTemplatesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 2}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 3}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 5}},
-	Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 6}}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 6}}},
 	IsDefault:      keel.BoolCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 7}},
 	CadenceMonths:  keel.Int32Col{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 8}},
 	Items:          keel.JSONBCol{Col: keel.Col{Ref: &performanceReviewTemplatesRef, Index: 9}},
@@ -829,13 +835,13 @@ var PerformanceReviewTemplates = &PerformanceReviewTemplatesTable{
 func BuildPerformanceReviewTemplates(r *keel.Ref) *PerformanceReviewTemplatesTable {
 	return &PerformanceReviewTemplatesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		IsDefault:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		CadenceMonths:  keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
 		Items:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -861,8 +867,6 @@ func (t *PerformanceReviewTemplatesTable) Get(ctx context.Context, db *keel.DB, 
 
 // PerformanceReviewTemplatesQuery is a query over workerreview.PerformanceReviewTemplate.
 type PerformanceReviewTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerreview.PerformanceReviewTemplate] = (*PerformanceReviewTemplatesTable)(nil)
 
 var _ keel.Query[*workerreview.PerformanceReviewTemplate] = (*PerformanceReviewTemplatesQuery)(nil)
 
@@ -978,42 +982,42 @@ func (t *PerformanceReviewTemplatesTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *PerformanceReviewTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PerformanceReviewTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PerformanceReviewTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PerformanceReviewTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PerformanceReviewTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerreview.PerformanceReviewTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PerformanceReviewTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PerformanceReviewTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PerformanceReviewTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerreview.PerformanceReviewTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1185,37 +1189,45 @@ func (q *PerformanceReviewTemplatesQuery) Clone() keel.Query[*workerreview.Perfo
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PerformanceReviewTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReviewTemplate, error) {
-	return keel.One[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerreview.PerformanceReviewTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PerformanceReviewTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerreview.PerformanceReviewTemplate, error) {
-	return keel.First[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerreview.PerformanceReviewTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PerformanceReviewTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReviewTemplate, error) {
-	return keel.List[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerreview.PerformanceReviewTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PerformanceReviewTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerreview.PerformanceReviewTemplate, error) {
-	return keel.All[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerreview.PerformanceReviewTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PerformanceReviewTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerreview.PerformanceReviewTemplate, error) {
-	return keel.UpdateReturning[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerreview.PerformanceReviewTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PerformanceReviewTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerreview.PerformanceReviewTemplate], error) {
-	return keel.PageOf[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerreview.PerformanceReviewTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PerformanceReviewTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerreview.PerformanceReviewTemplate) error) error {
-	return keel.Each[*workerreview.PerformanceReviewTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerreview.PerformanceReviewTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPerformanceReviewTemplate() unsafe.Pointer {
@@ -1336,30 +1348,26 @@ var enumReviewStatus = [...]schema.EnumValue{
 }
 
 // ReviewStatusCol is a column of workerreview.ReviewStatus values.
-type ReviewStatusCol struct{ keel.StringCol }
+type ReviewStatusCol struct{ keel.TypedStringCol }
 
-func (c ReviewStatusCol) Eq(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ReviewStatusCol) Ne(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ReviewStatusCol) Gt(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ReviewStatusCol) Gte(v workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ReviewStatusCol) Lt(v workerreview.ReviewStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ReviewStatusCol) Lte(v workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ReviewStatusCol) Eq(v workerreview.ReviewStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ReviewStatusCol) Ne(v workerreview.ReviewStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ReviewStatusCol) Gt(v workerreview.ReviewStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ReviewStatusCol) Gte(v workerreview.ReviewStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ReviewStatusCol) Lt(v workerreview.ReviewStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ReviewStatusCol) Lte(v workerreview.ReviewStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ReviewStatusCol) IsDistinctFrom(v workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReviewStatusCol) Between(lo, hi workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReviewStatusCol) To(v workerreview.ReviewStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReviewStatusCol) In(vs ...workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReviewStatusCol) NotIn(vs ...workerreview.ReviewStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

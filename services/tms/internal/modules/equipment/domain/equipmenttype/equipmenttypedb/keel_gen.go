@@ -99,16 +99,16 @@ type EquipmentTypesTable struct {
 // EquipmentTypes references the equipment_types table.
 var EquipmentTypes = &EquipmentTypesTable{
 	TableBase:        keel.TableBase{Ref: &equipmentTypesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 2}}},
-	Status:           keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 2}}},
+	Status:           keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 3}}},
 	Code:             keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 4}},
 	Description:      keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 5}},
-	Class:            ClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 6}}},
+	Class:            ClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 6}}},
 	Color:            keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 7}},
 	InteriorLength:   keel.Float64Col{Col: keel.Col{Ref: &equipmentTypesRef, Index: 8}},
-	DeckType:         DeckTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 9}}},
+	DeckType:         DeckTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 9}}},
 	DeckHeightInches: keel.Float64Col{Col: keel.Col{Ref: &equipmentTypesRef, Index: 10}},
 	WellLengthFeet:   keel.Float64Col{Col: keel.Col{Ref: &equipmentTypesRef, Index: 11}},
 	AxleCount:        keel.Int16Col{Col: keel.Col{Ref: &equipmentTypesRef, Index: 12}},
@@ -123,16 +123,16 @@ var EquipmentTypes = &EquipmentTypesTable{
 func BuildEquipmentTypes(r *keel.Ref) *EquipmentTypesTable {
 	return &EquipmentTypesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:           keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:           keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:             keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Class:            ClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Class:            ClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Color:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		InteriorLength:   keel.Float64Col{Col: keel.Col{Ref: r, Index: 8}},
-		DeckType:         DeckTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		DeckType:         DeckTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DeckHeightInches: keel.Float64Col{Col: keel.Col{Ref: r, Index: 10}},
 		WellLengthFeet:   keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
 		AxleCount:        keel.Int16Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -169,8 +169,6 @@ func (t *EquipmentTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // EquipmentTypesQuery is a query over equipmenttype.EquipmentType.
 type EquipmentTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*equipmenttype.EquipmentType] = (*EquipmentTypesTable)(nil)
 
 var _ keel.Query[*equipmenttype.EquipmentType] = (*EquipmentTypesQuery)(nil)
 
@@ -286,42 +284,42 @@ func (t *EquipmentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *EquipmentTypesTable) Create(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EquipmentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EquipmentTypesTable) Save(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EquipmentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EquipmentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EquipmentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EquipmentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EquipmentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -493,37 +491,45 @@ func (q *EquipmentTypesQuery) Clone() keel.Query[*equipmenttype.EquipmentType] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EquipmentTypesQuery) One(ctx context.Context, db *keel.DB) (*equipmenttype.EquipmentType, error) {
-	return keel.One[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*equipmenttype.EquipmentType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EquipmentTypesQuery) First(ctx context.Context, db *keel.DB) (*equipmenttype.EquipmentType, error) {
-	return keel.First[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*equipmenttype.EquipmentType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EquipmentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*equipmenttype.EquipmentType, error) {
-	return keel.List[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*equipmenttype.EquipmentType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EquipmentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*equipmenttype.EquipmentType, error) {
-	return keel.All[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*equipmenttype.EquipmentType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EquipmentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*equipmenttype.EquipmentType, error) {
-	return keel.UpdateReturning[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*equipmenttype.EquipmentType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EquipmentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*equipmenttype.EquipmentType], error) {
-	return keel.PageOf[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*equipmenttype.EquipmentType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EquipmentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*equipmenttype.EquipmentType) error) error {
-	return keel.Each[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*equipmenttype.EquipmentType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEquipmentType() unsafe.Pointer { return unsafe.Pointer(new(equipmenttype.EquipmentType)) }
@@ -696,45 +702,47 @@ var reportMeasureFloat = schema.ReportInfo{Included: true, Kind: schema.Measure,
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ClassCol is a column of equipmenttype.Class values.
-type ClassCol struct{ keel.StringCol }
+type ClassCol struct{ keel.TypedStringCol }
 
-func (c ClassCol) Eq(v equipmenttype.Class) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ClassCol) Ne(v equipmenttype.Class) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ClassCol) Gt(v equipmenttype.Class) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ClassCol) Gte(v equipmenttype.Class) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ClassCol) Lt(v equipmenttype.Class) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ClassCol) Lte(v equipmenttype.Class) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ClassCol) Eq(v equipmenttype.Class) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ClassCol) Ne(v equipmenttype.Class) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ClassCol) Gt(v equipmenttype.Class) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ClassCol) Gte(v equipmenttype.Class) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ClassCol) Lt(v equipmenttype.Class) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ClassCol) Lte(v equipmenttype.Class) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ClassCol) IsDistinctFrom(v equipmenttype.Class) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClassCol) Between(lo, hi equipmenttype.Class) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ClassCol) To(v equipmenttype.Class) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ClassCol) In(vs ...equipmenttype.Class) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c ClassCol) To(v equipmenttype.Class) keel.Assignment { return c.Text().To(string(v)) }
+func (c ClassCol) In(vs ...equipmenttype.Class) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c ClassCol) NotIn(vs ...equipmenttype.Class) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeckTypeCol is a column of equipmenttype.DeckType values.
-type DeckTypeCol struct{ keel.StringCol }
+type DeckTypeCol struct{ keel.TypedStringCol }
 
-func (c DeckTypeCol) Eq(v equipmenttype.DeckType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DeckTypeCol) Ne(v equipmenttype.DeckType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DeckTypeCol) Gt(v equipmenttype.DeckType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DeckTypeCol) Gte(v equipmenttype.DeckType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DeckTypeCol) Lt(v equipmenttype.DeckType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DeckTypeCol) Lte(v equipmenttype.DeckType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DeckTypeCol) Eq(v equipmenttype.DeckType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DeckTypeCol) Ne(v equipmenttype.DeckType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DeckTypeCol) Gt(v equipmenttype.DeckType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DeckTypeCol) Gte(v equipmenttype.DeckType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DeckTypeCol) Lt(v equipmenttype.DeckType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DeckTypeCol) Lte(v equipmenttype.DeckType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DeckTypeCol) IsDistinctFrom(v equipmenttype.DeckType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeckTypeCol) Between(lo, hi equipmenttype.DeckType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DeckTypeCol) To(v equipmenttype.DeckType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DeckTypeCol) To(v equipmenttype.DeckType) keel.Assignment { return c.Text().To(string(v)) }
 func (c DeckTypeCol) In(vs ...equipmenttype.DeckType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeckTypeCol) NotIn(vs ...equipmenttype.DeckType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

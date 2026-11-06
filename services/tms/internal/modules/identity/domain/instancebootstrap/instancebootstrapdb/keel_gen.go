@@ -67,10 +67,10 @@ type InstanceBootstrapsTable struct {
 // InstanceBootstraps references the instance_bootstraps table.
 var InstanceBootstraps = &InstanceBootstrapsTable{
 	TableBase:      keel.TableBase{Ref: &instanceBootstrapsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 2}}},
-	AdminUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 2}}},
+	AdminUserID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 3}}},
 	Inputs:         keel.JSONBCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 4}},
 	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 5}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 6}},
@@ -80,10 +80,10 @@ var InstanceBootstraps = &InstanceBootstrapsTable{
 func BuildInstanceBootstraps(r *keel.Ref) *InstanceBootstrapsTable {
 	return &InstanceBootstrapsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AdminUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AdminUserID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Inputs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 4}},
 		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -105,8 +105,6 @@ func (t *InstanceBootstrapsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // InstanceBootstrapsQuery is a query over instancebootstrap.InstanceBootstrap.
 type InstanceBootstrapsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*instancebootstrap.InstanceBootstrap] = (*InstanceBootstrapsTable)(nil)
 
 var _ keel.Query[*instancebootstrap.InstanceBootstrap] = (*InstanceBootstrapsQuery)(nil)
 
@@ -222,42 +220,42 @@ func (t *InstanceBootstrapsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *InstanceBootstrapsTable) Create(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InstanceBootstrapsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InstanceBootstrapsTable) Save(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InstanceBootstrapsTable) SaveExcept(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InstanceBootstrapsTable) DeleteRow(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InstanceBootstrapsTable) Upsert(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InstanceBootstrapsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InstanceBootstrapsTable) Copy(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -429,37 +427,45 @@ func (q *InstanceBootstrapsQuery) Clone() keel.Query[*instancebootstrap.Instance
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InstanceBootstrapsQuery) One(ctx context.Context, db *keel.DB) (*instancebootstrap.InstanceBootstrap, error) {
-	return keel.One[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*instancebootstrap.InstanceBootstrap)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InstanceBootstrapsQuery) First(ctx context.Context, db *keel.DB) (*instancebootstrap.InstanceBootstrap, error) {
-	return keel.First[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*instancebootstrap.InstanceBootstrap)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InstanceBootstrapsQuery) List(ctx context.Context, db *keel.DB) ([]*instancebootstrap.InstanceBootstrap, error) {
-	return keel.List[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*instancebootstrap.InstanceBootstrap)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InstanceBootstrapsQuery) All(ctx context.Context, db *keel.DB) ([]*instancebootstrap.InstanceBootstrap, error) {
-	return keel.All[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*instancebootstrap.InstanceBootstrap)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InstanceBootstrapsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*instancebootstrap.InstanceBootstrap, error) {
-	return keel.UpdateReturning[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*instancebootstrap.InstanceBootstrap)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InstanceBootstrapsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*instancebootstrap.InstanceBootstrap], error) {
-	return keel.PageOf[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*instancebootstrap.InstanceBootstrap])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InstanceBootstrapsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*instancebootstrap.InstanceBootstrap) error) error {
-	return keel.Each[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*instancebootstrap.InstanceBootstrap)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInstanceBootstrap() unsafe.Pointer {

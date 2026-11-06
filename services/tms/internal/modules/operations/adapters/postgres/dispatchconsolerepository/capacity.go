@@ -286,8 +286,7 @@ func (r *repository) ListWorkerWorkload(
 			rows, err := keel.Into[dispatchboardports.WorkerWorkload](
 				ctx,
 				r.db.Keel(ctx),
-				perShipment.
-					Query().
+				keel.RowsOf(perShipment.TableRef()).
 					With(perShipment).
 					Group(workerID).
 					Pick(

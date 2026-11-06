@@ -86,13 +86,13 @@ type PayProfilesTable struct {
 // PayProfiles references the driver_pay_profiles table.
 var PayProfiles = &PayProfilesTable{
 	TableBase:                    keel.TableBase{Ref: &payProfilesRef},
-	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 0}}},
-	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 1}}},
-	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 2}}},
-	Status:                       keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 3}}},
+	ID:                           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 0}}},
+	BusinessUnitID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 1}}},
+	OrganizationID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 2}}},
+	Status:                       keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 3}}},
 	Name:                         keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 4}},
 	Description:                  keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 5}},
-	Classification:               PayeeClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 6}}},
+	Classification:               PayeeClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 6}}},
 	CurrencyCode:                 keel.StringCol{Col: keel.Col{Ref: &payProfilesRef, Index: 7}},
 	GuaranteedPeriodMinimumMinor: keel.Int64Col{Col: keel.Col{Ref: &payProfilesRef, Index: 8}},
 	PerDiemRatePerMile:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &payProfilesRef, Index: 9}}},
@@ -106,13 +106,13 @@ var PayProfiles = &PayProfilesTable{
 func BuildPayProfiles(r *keel.Ref) *PayProfilesTable {
 	return &PayProfilesTable{
 		TableBase:                    keel.TableBase{Ref: r},
-		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:                       keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:                       keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:                         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Classification:               PayeeClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Classification:               PayeeClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CurrencyCode:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		GuaranteedPeriodMinimumMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		PerDiemRatePerMile:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
@@ -143,8 +143,6 @@ func (t *PayProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PayProfilesQuery is a query over driverpay.PayProfile.
 type PayProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driverpay.PayProfile] = (*PayProfilesTable)(nil)
 
 var _ keel.Query[*driverpay.PayProfile] = (*PayProfilesQuery)(nil)
 
@@ -260,42 +258,42 @@ func (t *PayProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dri
 
 // Create inserts row.
 func (t *PayProfilesTable) Create(ctx context.Context, db *keel.DB, row *driverpay.PayProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayProfilesTable) Save(ctx context.Context, db *keel.DB, row *driverpay.PayProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driverpay.PayProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driverpay.PayProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -467,37 +465,45 @@ func (q *PayProfilesQuery) Clone() keel.Query[*driverpay.PayProfile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayProfilesQuery) One(ctx context.Context, db *keel.DB) (*driverpay.PayProfile, error) {
-	return keel.One[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driverpay.PayProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayProfilesQuery) First(ctx context.Context, db *keel.DB) (*driverpay.PayProfile, error) {
-	return keel.First[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driverpay.PayProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfile, error) {
-	return keel.List[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driverpay.PayProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfile, error) {
-	return keel.All[*driverpay.PayProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driverpay.PayProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driverpay.PayProfile, error) {
-	return keel.UpdateReturning[*driverpay.PayProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driverpay.PayProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driverpay.PayProfile], error) {
-	return keel.PageOf[*driverpay.PayProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driverpay.PayProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driverpay.PayProfile) error) error {
-	return keel.Each[*driverpay.PayProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driverpay.PayProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayProfile() unsafe.Pointer { return unsafe.Pointer(new(driverpay.PayProfile)) }
@@ -663,15 +669,15 @@ type PayProfileComponentsTable struct {
 // PayProfileComponents references the driver_pay_profile_components table.
 var PayProfileComponents = &PayProfileComponentsTable{
 	TableBase:       keel.TableBase{Ref: &payProfileComponentsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 2}}},
-	PayProfileID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 3}}},
-	Kind:            ComponentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 4}}},
-	Method:          CalcMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 5}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 2}}},
+	PayProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 3}}},
+	Kind:            ComponentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 4}}},
+	Method:          CalcMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 5}}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 6}},
 	Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 7}}},
-	RevenueBasis:    RevenueBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 8}}},
+	RevenueBasis:    RevenueBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 8}}},
 	Bands:           keel.JSONBCol{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 9}},
 	FreeTimeMinutes: keel.Int64Col{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 10}},
 	MinAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: &payProfileComponentsRef, Index: 11}},
@@ -686,15 +692,15 @@ var PayProfileComponents = &PayProfileComponentsTable{
 func BuildPayProfileComponents(r *keel.Ref) *PayProfileComponentsTable {
 	return &PayProfileComponentsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PayProfileID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:            ComponentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Method:          CalcMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PayProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:            ComponentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Method:          CalcMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
-		RevenueBasis:    RevenueBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		RevenueBasis:    RevenueBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Bands:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		FreeTimeMinutes: keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		MinAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -721,8 +727,6 @@ func (t *PayProfileComponentsTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // PayProfileComponentsQuery is a query over driverpay.PayProfileComponent.
 type PayProfileComponentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driverpay.PayProfileComponent] = (*PayProfileComponentsTable)(nil)
 
 var _ keel.Query[*driverpay.PayProfileComponent] = (*PayProfileComponentsQuery)(nil)
 
@@ -838,42 +842,42 @@ func (t *PayProfileComponentsTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *PayProfileComponentsTable) Create(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayProfileComponentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayProfileComponentsTable) Save(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayProfileComponentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayProfileComponentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driverpay.PayProfileComponent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayProfileComponentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayProfileComponentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayProfileComponentsTable) Copy(ctx context.Context, db *keel.DB, rows []*driverpay.PayProfileComponent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1045,37 +1049,45 @@ func (q *PayProfileComponentsQuery) Clone() keel.Query[*driverpay.PayProfileComp
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayProfileComponentsQuery) One(ctx context.Context, db *keel.DB) (*driverpay.PayProfileComponent, error) {
-	return keel.One[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driverpay.PayProfileComponent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayProfileComponentsQuery) First(ctx context.Context, db *keel.DB) (*driverpay.PayProfileComponent, error) {
-	return keel.First[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driverpay.PayProfileComponent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayProfileComponentsQuery) List(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfileComponent, error) {
-	return keel.List[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driverpay.PayProfileComponent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayProfileComponentsQuery) All(ctx context.Context, db *keel.DB) ([]*driverpay.PayProfileComponent, error) {
-	return keel.All[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driverpay.PayProfileComponent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayProfileComponentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driverpay.PayProfileComponent, error) {
-	return keel.UpdateReturning[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driverpay.PayProfileComponent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayProfileComponentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driverpay.PayProfileComponent], error) {
-	return keel.PageOf[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driverpay.PayProfileComponent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayProfileComponentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driverpay.PayProfileComponent) error) error {
-	return keel.Each[*driverpay.PayProfileComponent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driverpay.PayProfileComponent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayProfileComponent() unsafe.Pointer {
@@ -1232,111 +1244,109 @@ var enumRevenueBasis = [...]schema.EnumValue{
 }
 
 // CalcMethodCol is a column of driverpay.CalcMethod values.
-type CalcMethodCol struct{ keel.StringCol }
+type CalcMethodCol struct{ keel.TypedStringCol }
 
-func (c CalcMethodCol) Eq(v driverpay.CalcMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CalcMethodCol) Ne(v driverpay.CalcMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CalcMethodCol) Gt(v driverpay.CalcMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CalcMethodCol) Gte(v driverpay.CalcMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CalcMethodCol) Lt(v driverpay.CalcMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CalcMethodCol) Lte(v driverpay.CalcMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CalcMethodCol) Eq(v driverpay.CalcMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CalcMethodCol) Ne(v driverpay.CalcMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CalcMethodCol) Gt(v driverpay.CalcMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CalcMethodCol) Gte(v driverpay.CalcMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CalcMethodCol) Lt(v driverpay.CalcMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CalcMethodCol) Lte(v driverpay.CalcMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CalcMethodCol) IsDistinctFrom(v driverpay.CalcMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CalcMethodCol) Between(lo, hi driverpay.CalcMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CalcMethodCol) To(v driverpay.CalcMethod) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CalcMethodCol) To(v driverpay.CalcMethod) keel.Assignment { return c.Text().To(string(v)) }
 func (c CalcMethodCol) In(vs ...driverpay.CalcMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CalcMethodCol) NotIn(vs ...driverpay.CalcMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ComponentKindCol is a column of driverpay.ComponentKind values.
-type ComponentKindCol struct{ keel.StringCol }
+type ComponentKindCol struct{ keel.TypedStringCol }
 
-func (c ComponentKindCol) Eq(v driverpay.ComponentKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ComponentKindCol) Ne(v driverpay.ComponentKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ComponentKindCol) Gt(v driverpay.ComponentKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ComponentKindCol) Gte(v driverpay.ComponentKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ComponentKindCol) Lt(v driverpay.ComponentKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ComponentKindCol) Lte(v driverpay.ComponentKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ComponentKindCol) Eq(v driverpay.ComponentKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ComponentKindCol) Ne(v driverpay.ComponentKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ComponentKindCol) Gt(v driverpay.ComponentKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ComponentKindCol) Gte(v driverpay.ComponentKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ComponentKindCol) Lt(v driverpay.ComponentKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ComponentKindCol) Lte(v driverpay.ComponentKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ComponentKindCol) IsDistinctFrom(v driverpay.ComponentKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ComponentKindCol) Between(lo, hi driverpay.ComponentKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ComponentKindCol) To(v driverpay.ComponentKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ComponentKindCol) In(vs ...driverpay.ComponentKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ComponentKindCol) NotIn(vs ...driverpay.ComponentKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PayeeClassificationCol is a column of driverpay.PayeeClassification values.
-type PayeeClassificationCol struct{ keel.StringCol }
+type PayeeClassificationCol struct{ keel.TypedStringCol }
 
 func (c PayeeClassificationCol) Eq(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PayeeClassificationCol) Ne(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PayeeClassificationCol) Gt(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PayeeClassificationCol) Gte(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PayeeClassificationCol) Lt(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PayeeClassificationCol) Lte(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PayeeClassificationCol) IsDistinctFrom(v driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayeeClassificationCol) Between(lo, hi driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayeeClassificationCol) To(v driverpay.PayeeClassification) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayeeClassificationCol) In(vs ...driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayeeClassificationCol) NotIn(vs ...driverpay.PayeeClassification) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RevenueBasisCol is a column of driverpay.RevenueBasis values.
-type RevenueBasisCol struct{ keel.StringCol }
+type RevenueBasisCol struct{ keel.TypedStringCol }
 
-func (c RevenueBasisCol) Eq(v driverpay.RevenueBasis) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RevenueBasisCol) Ne(v driverpay.RevenueBasis) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RevenueBasisCol) Gt(v driverpay.RevenueBasis) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RevenueBasisCol) Gte(v driverpay.RevenueBasis) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RevenueBasisCol) Lt(v driverpay.RevenueBasis) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RevenueBasisCol) Lte(v driverpay.RevenueBasis) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RevenueBasisCol) Eq(v driverpay.RevenueBasis) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RevenueBasisCol) Ne(v driverpay.RevenueBasis) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RevenueBasisCol) Gt(v driverpay.RevenueBasis) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RevenueBasisCol) Gte(v driverpay.RevenueBasis) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RevenueBasisCol) Lt(v driverpay.RevenueBasis) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RevenueBasisCol) Lte(v driverpay.RevenueBasis) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RevenueBasisCol) IsDistinctFrom(v driverpay.RevenueBasis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RevenueBasisCol) Between(lo, hi driverpay.RevenueBasis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RevenueBasisCol) To(v driverpay.RevenueBasis) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RevenueBasisCol) To(v driverpay.RevenueBasis) keel.Assignment { return c.Text().To(string(v)) }
 func (c RevenueBasisCol) In(vs ...driverpay.RevenueBasis) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RevenueBasisCol) NotIn(vs ...driverpay.RevenueBasis) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

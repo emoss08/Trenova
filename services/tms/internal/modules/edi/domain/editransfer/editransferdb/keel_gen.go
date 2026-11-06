@@ -122,32 +122,32 @@ type EDITransfersTable struct {
 // EDITransfers references the edi_load_tender_transfers table.
 var EDITransfers = &EDITransfersTable{
 	TableBase:             keel.TableBase{Ref: &eDITransfersRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 0}}},
-	SourceOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 1}}},
-	SourceBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 2}}},
-	TargetOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 3}}},
-	TargetBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 4}}},
-	SourcePartnerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 5}}},
-	TargetPartnerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 6}}},
-	SourceShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 7}}},
-	TargetShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 8}}},
-	InboundMessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 9}}},
-	Status:                TransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 10}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 0}}},
+	SourceOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 1}}},
+	SourceBusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 2}}},
+	TargetOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 3}}},
+	TargetBusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 4}}},
+	SourcePartnerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 5}}},
+	TargetPartnerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 6}}},
+	SourceShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 7}}},
+	TargetShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 8}}},
+	InboundMessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 9}}},
+	Status:                TransferStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 10}}},
 	TenderPayload:         keel.JSONBCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 11}},
 	MappingSnapshot:       keel.JSONBCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 12}},
 	RejectionReason:       keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 13}},
 	FailureReason:         keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 14}},
 	ApprovalWorkflowID:    keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 15}},
 	ApprovalWorkflowRunID: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 16}},
-	SubmittedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 17}}},
+	SubmittedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 17}}},
 	SubmittedAt:           keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 18}},
-	ApprovedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 19}}},
+	ApprovedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 19}}},
 	ApprovedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 20}},
 	ProcessingStartedAt:   keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 21}},
 	ProcessedAt:           keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 22}},
-	RejectedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 23}}},
+	RejectedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 23}}},
 	RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 24}},
-	CanceledByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 25}}},
+	CanceledByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransfersRef, Index: 25}}},
 	CanceledAt:            keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 26}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 27}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &eDITransfersRef, Index: 28}},
@@ -158,32 +158,32 @@ var EDITransfers = &EDITransfersTable{
 func BuildEDITransfers(r *keel.Ref) *EDITransfersTable {
 	return &EDITransfersTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		SourceOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TargetOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TargetBusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		SourcePartnerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TargetPartnerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SourceShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		TargetShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		InboundMessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:                TransferStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		SourceOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceBusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TargetOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TargetBusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		SourcePartnerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		TargetPartnerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SourceShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		TargetShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		InboundMessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:                TransferStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		TenderPayload:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		MappingSnapshot:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		RejectionReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		FailureReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		ApprovalWorkflowID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		ApprovalWorkflowRunID: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		SubmittedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		SubmittedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		SubmittedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		ApprovedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ApprovedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		ApprovedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		ProcessingStartedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		ProcessedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		RejectedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		RejectedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		RejectedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		CanceledByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		CanceledByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		CanceledAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -216,8 +216,6 @@ func (t *EDITransfersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // EDITransfersQuery is a query over editransfer.EDITransfer.
 type EDITransfersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*editransfer.EDITransfer] = (*EDITransfersTable)(nil)
 
 var _ keel.Query[*editransfer.EDITransfer] = (*EDITransfersQuery)(nil)
 
@@ -333,42 +331,42 @@ func (t *EDITransfersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ed
 
 // Create inserts row.
 func (t *EDITransfersTable) Create(ctx context.Context, db *keel.DB, row *editransfer.EDITransfer) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDITransfersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*editransfer.EDITransfer) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDITransfersTable) Save(ctx context.Context, db *keel.DB, row *editransfer.EDITransfer, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDITransfersTable) SaveExcept(ctx context.Context, db *keel.DB, row *editransfer.EDITransfer, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDITransfersTable) DeleteRow(ctx context.Context, db *keel.DB, row *editransfer.EDITransfer) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDITransfersTable) Upsert(ctx context.Context, db *keel.DB, rows []*editransfer.EDITransfer, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDITransfersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*editransfer.EDITransfer, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDITransfersTable) Copy(ctx context.Context, db *keel.DB, rows []*editransfer.EDITransfer) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -540,37 +538,45 @@ func (q *EDITransfersQuery) Clone() keel.Query[*editransfer.EDITransfer] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDITransfersQuery) One(ctx context.Context, db *keel.DB) (*editransfer.EDITransfer, error) {
-	return keel.One[*editransfer.EDITransfer](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*editransfer.EDITransfer)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDITransfersQuery) First(ctx context.Context, db *keel.DB) (*editransfer.EDITransfer, error) {
-	return keel.First[*editransfer.EDITransfer](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*editransfer.EDITransfer)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDITransfersQuery) List(ctx context.Context, db *keel.DB) ([]*editransfer.EDITransfer, error) {
-	return keel.List[*editransfer.EDITransfer](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editransfer.EDITransfer)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDITransfersQuery) All(ctx context.Context, db *keel.DB) ([]*editransfer.EDITransfer, error) {
-	return keel.All[*editransfer.EDITransfer](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editransfer.EDITransfer)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDITransfersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*editransfer.EDITransfer, error) {
-	return keel.UpdateReturning[*editransfer.EDITransfer](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*editransfer.EDITransfer)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDITransfersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*editransfer.EDITransfer], error) {
-	return keel.PageOf[*editransfer.EDITransfer](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*editransfer.EDITransfer])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDITransfersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*editransfer.EDITransfer) error) error {
-	return keel.Each[*editransfer.EDITransfer](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*editransfer.EDITransfer)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDITransfer() unsafe.Pointer { return unsafe.Pointer(new(editransfer.EDITransfer)) }
@@ -804,38 +810,30 @@ var enumTransferStatus = [...]schema.EnumValue{
 }
 
 // TransferStatusCol is a column of editransfer.TransferStatus values.
-type TransferStatusCol struct{ keel.StringCol }
+type TransferStatusCol struct{ keel.TypedStringCol }
 
-func (c TransferStatusCol) Eq(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TransferStatusCol) Ne(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TransferStatusCol) Gt(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c TransferStatusCol) Eq(v editransfer.TransferStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c TransferStatusCol) Ne(v editransfer.TransferStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c TransferStatusCol) Gt(v editransfer.TransferStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c TransferStatusCol) Gte(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c TransferStatusCol) Lt(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c TransferStatusCol) Lt(v editransfer.TransferStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c TransferStatusCol) Lte(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransferStatusCol) IsDistinctFrom(v editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransferStatusCol) Between(lo, hi editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransferStatusCol) To(v editransfer.TransferStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransferStatusCol) In(vs ...editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransferStatusCol) NotIn(vs ...editransfer.TransferStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

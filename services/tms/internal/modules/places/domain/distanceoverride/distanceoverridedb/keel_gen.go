@@ -88,12 +88,12 @@ type DistanceOverridesTable struct {
 // DistanceOverrides references the distance_overrides table.
 var DistanceOverrides = &DistanceOverridesTable{
 	TableBase:             keel.TableBase{Ref: &distanceOverridesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 2}}},
-	OriginLocationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 3}}},
-	DestinationLocationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 4}}},
-	CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 5}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 2}}},
+	OriginLocationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 3}}},
+	DestinationLocationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 4}}},
+	CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 5}}},
 	Distance:              keel.Float64Col{Col: keel.Col{Ref: &distanceOverridesRef, Index: 6}},
 	RouteSignature:        keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 7}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &distanceOverridesRef, Index: 8}},
@@ -106,12 +106,12 @@ var DistanceOverrides = &DistanceOverridesTable{
 func BuildDistanceOverrides(r *keel.Ref) *DistanceOverridesTable {
 	return &DistanceOverridesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OriginLocationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DestinationLocationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OriginLocationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DestinationLocationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Distance:              keel.Float64Col{Col: keel.Col{Ref: r, Index: 6}},
 		RouteSignature:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -156,8 +156,6 @@ func (t *DistanceOverridesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // DistanceOverridesQuery is a query over distanceoverride.DistanceOverride.
 type DistanceOverridesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*distanceoverride.DistanceOverride] = (*DistanceOverridesTable)(nil)
 
 var _ keel.Query[*distanceoverride.DistanceOverride] = (*DistanceOverridesQuery)(nil)
 
@@ -273,42 +271,42 @@ func (t *DistanceOverridesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *DistanceOverridesTable) Create(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DistanceOverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DistanceOverridesTable) Save(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DistanceOverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DistanceOverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DistanceOverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DistanceOverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DistanceOverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -480,37 +478,45 @@ func (q *DistanceOverridesQuery) Clone() keel.Query[*distanceoverride.DistanceOv
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DistanceOverridesQuery) One(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverride, error) {
-	return keel.One[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*distanceoverride.DistanceOverride)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DistanceOverridesQuery) First(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverride, error) {
-	return keel.First[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*distanceoverride.DistanceOverride)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DistanceOverridesQuery) List(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverride, error) {
-	return keel.List[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceoverride.DistanceOverride)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DistanceOverridesQuery) All(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverride, error) {
-	return keel.All[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceoverride.DistanceOverride)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DistanceOverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceoverride.DistanceOverride, error) {
-	return keel.UpdateReturning[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*distanceoverride.DistanceOverride)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DistanceOverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceoverride.DistanceOverride], error) {
-	return keel.PageOf[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*distanceoverride.DistanceOverride])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DistanceOverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceoverride.DistanceOverride) error) error {
-	return keel.Each[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*distanceoverride.DistanceOverride)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDistanceOverride() unsafe.Pointer {
@@ -653,22 +659,22 @@ type DistanceOverrideStopsTable struct {
 // DistanceOverrideStops references the distance_override_stops table.
 var DistanceOverrideStops = &DistanceOverrideStopsTable{
 	TableBase:          keel.TableBase{Ref: &distanceOverrideStopsRef},
-	DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 2}}},
+	DistanceOverrideID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 2}}},
 	StopOrder:          keel.Int64Col{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 3}},
-	LocationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 4}}},
+	LocationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 4}}},
 }
 
 // BuildDistanceOverrideStops builds the table of distance_override_stops for ref. Generated relation and alias methods call it.
 func BuildDistanceOverrideStops(r *keel.Ref) *DistanceOverrideStopsTable {
 	return &DistanceOverrideStopsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DistanceOverrideID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		StopOrder:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		LocationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		LocationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 	}
 }
 
@@ -687,8 +693,6 @@ func (t *DistanceOverrideStopsTable) Location() *locationdb.LocationsTable {
 
 // DistanceOverrideStopsQuery is a query over distanceoverride.DistanceOverrideStop.
 type DistanceOverrideStopsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*distanceoverride.DistanceOverrideStop] = (*DistanceOverrideStopsTable)(nil)
 
 var _ keel.Query[*distanceoverride.DistanceOverrideStop] = (*DistanceOverrideStopsQuery)(nil)
 
@@ -804,42 +808,42 @@ func (t *DistanceOverrideStopsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *DistanceOverrideStopsTable) Create(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DistanceOverrideStopsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DistanceOverrideStopsTable) Save(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DistanceOverrideStopsTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DistanceOverrideStopsTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DistanceOverrideStopsTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DistanceOverrideStopsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DistanceOverrideStopsTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1011,37 +1015,45 @@ func (q *DistanceOverrideStopsQuery) Clone() keel.Query[*distanceoverride.Distan
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DistanceOverrideStopsQuery) One(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverrideStop, error) {
-	return keel.One[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*distanceoverride.DistanceOverrideStop)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DistanceOverrideStopsQuery) First(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverrideStop, error) {
-	return keel.First[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*distanceoverride.DistanceOverrideStop)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DistanceOverrideStopsQuery) List(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverrideStop, error) {
-	return keel.List[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceoverride.DistanceOverrideStop)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DistanceOverrideStopsQuery) All(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverrideStop, error) {
-	return keel.All[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceoverride.DistanceOverrideStop)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DistanceOverrideStopsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceoverride.DistanceOverrideStop, error) {
-	return keel.UpdateReturning[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*distanceoverride.DistanceOverrideStop)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DistanceOverrideStopsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceoverride.DistanceOverrideStop], error) {
-	return keel.PageOf[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*distanceoverride.DistanceOverrideStop])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DistanceOverrideStopsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceoverride.DistanceOverrideStop) error) error {
-	return keel.Each[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*distanceoverride.DistanceOverrideStop)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDistanceOverrideStop() unsafe.Pointer {

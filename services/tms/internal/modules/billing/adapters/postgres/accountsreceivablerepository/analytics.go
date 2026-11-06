@@ -247,13 +247,13 @@ func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) keel.Query[
 	at := seriesWindow(req).build()
 	items := at.items
 	points := at.points
-	balances := keel.CTE("balances", []string{"n", "ar_balance_minor"}, items.Query().
+	balances := keel.CTE("balances", []string{"n", "ar_balance_minor"}, keel.RowsOf(items.TableRef()).
 		Pick(items.Col("n"), keel.Sum(items.Col("open_minor"))).
 		Group(items.Col("n")))
 	periodEnd := keel.Int64Of(points.Col(colPeriodEnd))
 	inv := invoicedb.Invoices
 
-	return points.Query().
+	return keel.RowsOf(points.TableRef()).
 		With(append(at.ctes, balances)...).
 		LeftJoin(balances, balances.Col("n").EqCol(points.Col("n"))).
 		Pick(
@@ -315,7 +315,7 @@ func agingTrendQuery(req customerledgerports.ListARSeriesRequest) keel.Query[*ke
 	open := keel.Int64Of(items.Col("open_minor"))
 	buckets := agingBuckets(keel.Int64Of(items.Col(colDueDate)), periodEnd, open)
 
-	return points.Query().
+	return keel.RowsOf(points.TableRef()).
 		With(at.ctes...).
 		LeftJoin(items, items.Col("n").EqCol(points.Col("n"))).
 		Pick(
@@ -435,7 +435,7 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) keel.Query[*ke
 		Where(reservedInv.ID.EqCol(reserved.InvoiceID))))
 	releaseAt := reservedDue.Greatest(keel.Int64(req.AsOfDate))
 
-	return weeks.Query().With(weeks).
+	return keel.RowsOf(weeks.TableRef()).With(weeks).
 		Pick(
 			weekStart,
 			orZero(keel.Scalar(inv.
@@ -517,10 +517,10 @@ func collectionTotalsQuery(periodStart, periodEnd int64) keel.Query[*keel.Row] {
 	}
 	open := receivablesql.OpenMinor(inv)
 
-	return bounds.Query().
+	return keel.RowsOf(bounds.TableRef()).
 		With(append(at.ctes, bounds)...).
 		Pick(
-			orZero(keel.Scalar(items.Query().Pick(keel.Sum(items.Col("open_minor"))))),
+			orZero(keel.Scalar(keel.RowsOf(items.TableRef()).Pick(keel.Sum(items.Col("open_minor"))))),
 			orZero(keel.Scalar(inv.Pick(open.Sum()).Where(receivablesql.Open(inv)))),
 			orZero(keel.Scalar(inv.
 				Pick(open.Sum()).
@@ -706,7 +706,7 @@ func worklistQuery(
 		picks = append(picks, items.Col(name))
 	}
 	daysPastDue := items.Col("days_past_due")
-	return items.Query().With(items).
+	return keel.RowsOf(items.TableRef()).With(items).
 		Pick(picks...).
 		Where(keel.Or(
 			daysPastDue.Gte(15),

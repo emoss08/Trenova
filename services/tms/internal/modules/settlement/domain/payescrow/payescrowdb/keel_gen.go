@@ -94,11 +94,11 @@ type EscrowAccountsTable struct {
 // EscrowAccounts references the escrow_accounts table.
 var EscrowAccounts = &EscrowAccountsTable{
 	TableBase:               keel.TableBase{Ref: &escrowAccountsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 2}}},
-	WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 3}}},
-	Status:                  EscrowAccountStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 2}}},
+	WorkerID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 3}}},
+	Status:                  EscrowAccountStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 4}}},
 	TargetAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: &escrowAccountsRef, Index: 5}},
 	BalanceMinor:            keel.Int64Col{Col: keel.Col{Ref: &escrowAccountsRef, Index: 6}},
 	AnnualInterestRate:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 7}}},
@@ -115,11 +115,11 @@ var EscrowAccounts = &EscrowAccountsTable{
 func BuildEscrowAccounts(r *keel.Ref) *EscrowAccountsTable {
 	return &EscrowAccountsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                  EscrowAccountStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                  EscrowAccountStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TargetAmountMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		BalanceMinor:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		AnnualInterestRate:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
@@ -163,8 +163,6 @@ func (t *EscrowAccountsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // EscrowAccountsQuery is a query over payescrow.EscrowAccount.
 type EscrowAccountsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*payescrow.EscrowAccount] = (*EscrowAccountsTable)(nil)
 
 var _ keel.Query[*payescrow.EscrowAccount] = (*EscrowAccountsQuery)(nil)
 
@@ -280,42 +278,42 @@ func (t *EscrowAccountsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *EscrowAccountsTable) Create(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EscrowAccountsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EscrowAccountsTable) Save(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EscrowAccountsTable) SaveExcept(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EscrowAccountsTable) DeleteRow(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EscrowAccountsTable) Upsert(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EscrowAccountsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EscrowAccountsTable) Copy(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -487,37 +485,45 @@ func (q *EscrowAccountsQuery) Clone() keel.Query[*payescrow.EscrowAccount] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EscrowAccountsQuery) One(ctx context.Context, db *keel.DB) (*payescrow.EscrowAccount, error) {
-	return keel.One[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*payescrow.EscrowAccount)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EscrowAccountsQuery) First(ctx context.Context, db *keel.DB) (*payescrow.EscrowAccount, error) {
-	return keel.First[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*payescrow.EscrowAccount)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EscrowAccountsQuery) List(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowAccount, error) {
-	return keel.List[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payescrow.EscrowAccount)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EscrowAccountsQuery) All(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowAccount, error) {
-	return keel.All[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payescrow.EscrowAccount)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EscrowAccountsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payescrow.EscrowAccount, error) {
-	return keel.UpdateReturning[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*payescrow.EscrowAccount)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EscrowAccountsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payescrow.EscrowAccount], error) {
-	return keel.PageOf[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*payescrow.EscrowAccount])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EscrowAccountsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payescrow.EscrowAccount) error) error {
-	return keel.Each[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*payescrow.EscrowAccount)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEscrowAccount() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowAccount)) }
@@ -690,17 +696,17 @@ type EscrowTransactionsTable struct {
 // EscrowTransactions references the escrow_transactions table.
 var EscrowTransactions = &EscrowTransactionsTable{
 	TableBase:         keel.TableBase{Ref: &escrowTransactionsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 2}}},
-	EscrowAccountID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 3}}},
-	Type:              EscrowTransactionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 4}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 2}}},
+	EscrowAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 3}}},
+	Type:              EscrowTransactionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 4}}},
 	AmountMinor:       keel.Int64Col{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 5}},
 	BalanceAfterMinor: keel.Int64Col{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 6}},
 	OccurredDate:      keel.Int64Col{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 7}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 8}},
-	SettlementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 9}}},
-	CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 10}}},
+	SettlementID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 9}}},
+	CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 10}}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 11}},
 }
 
@@ -708,17 +714,17 @@ var EscrowTransactions = &EscrowTransactionsTable{
 func BuildEscrowTransactions(r *keel.Ref) *EscrowTransactionsTable {
 	return &EscrowTransactionsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EscrowAccountID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Type:              EscrowTransactionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EscrowAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Type:              EscrowTransactionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		AmountMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		BalanceAfterMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		OccurredDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		SettlementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SettlementID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
 }
@@ -743,8 +749,6 @@ func (t *EscrowTransactionsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // EscrowTransactionsQuery is a query over payescrow.EscrowTransaction.
 type EscrowTransactionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*payescrow.EscrowTransaction] = (*EscrowTransactionsTable)(nil)
 
 var _ keel.Query[*payescrow.EscrowTransaction] = (*EscrowTransactionsQuery)(nil)
 
@@ -860,42 +864,42 @@ func (t *EscrowTransactionsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *EscrowTransactionsTable) Create(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EscrowTransactionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EscrowTransactionsTable) Save(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EscrowTransactionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EscrowTransactionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EscrowTransactionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EscrowTransactionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EscrowTransactionsTable) Copy(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1067,37 +1071,45 @@ func (q *EscrowTransactionsQuery) Clone() keel.Query[*payescrow.EscrowTransactio
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EscrowTransactionsQuery) One(ctx context.Context, db *keel.DB) (*payescrow.EscrowTransaction, error) {
-	return keel.One[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*payescrow.EscrowTransaction)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EscrowTransactionsQuery) First(ctx context.Context, db *keel.DB) (*payescrow.EscrowTransaction, error) {
-	return keel.First[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*payescrow.EscrowTransaction)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EscrowTransactionsQuery) List(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowTransaction, error) {
-	return keel.List[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payescrow.EscrowTransaction)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EscrowTransactionsQuery) All(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowTransaction, error) {
-	return keel.All[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payescrow.EscrowTransaction)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EscrowTransactionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payescrow.EscrowTransaction, error) {
-	return keel.UpdateReturning[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*payescrow.EscrowTransaction)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EscrowTransactionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payescrow.EscrowTransaction], error) {
-	return keel.PageOf[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*payescrow.EscrowTransaction])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EscrowTransactionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payescrow.EscrowTransaction) error) error {
-	return keel.Each[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*payescrow.EscrowTransaction)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEscrowTransaction() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowTransaction)) }
@@ -1220,75 +1232,75 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // EscrowAccountStatusCol is a column of payescrow.EscrowAccountStatus values.
-type EscrowAccountStatusCol struct{ keel.StringCol }
+type EscrowAccountStatusCol struct{ keel.TypedStringCol }
 
 func (c EscrowAccountStatusCol) Eq(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EscrowAccountStatusCol) Ne(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EscrowAccountStatusCol) Gt(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EscrowAccountStatusCol) Gte(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EscrowAccountStatusCol) Lt(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EscrowAccountStatusCol) Lte(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EscrowAccountStatusCol) IsDistinctFrom(v payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EscrowAccountStatusCol) Between(lo, hi payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EscrowAccountStatusCol) To(v payescrow.EscrowAccountStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EscrowAccountStatusCol) In(vs ...payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EscrowAccountStatusCol) NotIn(vs ...payescrow.EscrowAccountStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EscrowTransactionTypeCol is a column of payescrow.EscrowTransactionType values.
-type EscrowTransactionTypeCol struct{ keel.StringCol }
+type EscrowTransactionTypeCol struct{ keel.TypedStringCol }
 
 func (c EscrowTransactionTypeCol) Eq(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EscrowTransactionTypeCol) Ne(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EscrowTransactionTypeCol) Gt(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EscrowTransactionTypeCol) Gte(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EscrowTransactionTypeCol) Lt(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EscrowTransactionTypeCol) Lte(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EscrowTransactionTypeCol) IsDistinctFrom(v payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EscrowTransactionTypeCol) Between(lo, hi payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EscrowTransactionTypeCol) To(v payescrow.EscrowTransactionType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EscrowTransactionTypeCol) In(vs ...payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EscrowTransactionTypeCol) NotIn(vs ...payescrow.EscrowTransactionType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

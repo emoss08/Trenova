@@ -112,21 +112,21 @@ type PostingsTable struct {
 // Postings references the carrier_capacity_postings table.
 var Postings = &PostingsTable{
 	TableBase:          keel.TableBase{Ref: &postingsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 2}}},
-	CarrierID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 3}}},
-	OriginLocationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 4}}},
-	OriginStateID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 5}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 2}}},
+	CarrierID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 3}}},
+	OriginLocationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 4}}},
+	OriginStateID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 5}}},
 	OriginRadiusMiles:  keel.Int64Col{Col: keel.Col{Ref: &postingsRef, Index: 6}},
-	DestinationStateID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 7}}},
-	EquipmentTypeID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 8}}},
+	DestinationStateID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 7}}},
+	EquipmentTypeID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 8}}},
 	AvailableFrom:      keel.Int64Col{Col: keel.Col{Ref: &postingsRef, Index: 9}},
 	AvailableTo:        keel.Int64Col{Col: keel.Col{Ref: &postingsRef, Index: 10}},
 	TruckCount:         keel.Int64Col{Col: keel.Col{Ref: &postingsRef, Index: 11}},
-	RateMethod:         RateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 12}}},
+	RateMethod:         RateMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 12}}},
 	Rate:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &postingsRef, Index: 13}}},
-	Source:             SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 14}}},
+	Source:             SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &postingsRef, Index: 14}}},
 	Notes:              keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 15}},
 	SearchVector:       keel.TSVectorCol{Col: keel.Col{Ref: &postingsRef, Index: 16}},
 	Rank:               keel.StringCol{Col: keel.Col{Ref: &postingsRef, Index: 17}},
@@ -139,21 +139,21 @@ var Postings = &PostingsTable{
 func BuildPostings(r *keel.Ref) *PostingsTable {
 	return &PostingsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OriginLocationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		OriginStateID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OriginLocationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		OriginStateID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		OriginRadiusMiles:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		DestinationStateID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		EquipmentTypeID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		DestinationStateID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		EquipmentTypeID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		AvailableFrom:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		AvailableTo:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		TruckCount:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		RateMethod:         RateMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		RateMethod:         RateMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Rate:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Source:             SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Source:             SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Notes:              keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		SearchVector:       keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 16}},
 		Rank:               keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -203,8 +203,6 @@ func (t *PostingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ca
 
 // PostingsQuery is a query over carriercapacity.Posting.
 type PostingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriercapacity.Posting] = (*PostingsTable)(nil)
 
 var _ keel.Query[*carriercapacity.Posting] = (*PostingsQuery)(nil)
 
@@ -320,42 +318,42 @@ func (t *PostingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrie
 
 // Create inserts row.
 func (t *PostingsTable) Create(ctx context.Context, db *keel.DB, row *carriercapacity.Posting) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PostingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriercapacity.Posting) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PostingsTable) Save(ctx context.Context, db *keel.DB, row *carriercapacity.Posting, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PostingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriercapacity.Posting, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PostingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriercapacity.Posting) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PostingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriercapacity.Posting, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PostingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriercapacity.Posting, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PostingsTable) Copy(ctx context.Context, db *keel.DB, rows []*carriercapacity.Posting) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -527,37 +525,45 @@ func (q *PostingsQuery) Clone() keel.Query[*carriercapacity.Posting] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PostingsQuery) One(ctx context.Context, db *keel.DB) (*carriercapacity.Posting, error) {
-	return keel.One[*carriercapacity.Posting](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriercapacity.Posting)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PostingsQuery) First(ctx context.Context, db *keel.DB) (*carriercapacity.Posting, error) {
-	return keel.First[*carriercapacity.Posting](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriercapacity.Posting)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PostingsQuery) List(ctx context.Context, db *keel.DB) ([]*carriercapacity.Posting, error) {
-	return keel.List[*carriercapacity.Posting](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriercapacity.Posting)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PostingsQuery) All(ctx context.Context, db *keel.DB) ([]*carriercapacity.Posting, error) {
-	return keel.All[*carriercapacity.Posting](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriercapacity.Posting)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PostingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriercapacity.Posting, error) {
-	return keel.UpdateReturning[*carriercapacity.Posting](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriercapacity.Posting)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PostingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriercapacity.Posting], error) {
-	return keel.PageOf[*carriercapacity.Posting](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriercapacity.Posting])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PostingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriercapacity.Posting) error) error {
-	return keel.Each[*carriercapacity.Posting](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriercapacity.Posting)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPosting() unsafe.Pointer { return unsafe.Pointer(new(carriercapacity.Posting)) }
@@ -725,49 +731,49 @@ var enumSource = [...]schema.EnumValue{
 }
 
 // RateMethodCol is a column of carriercapacity.RateMethod values.
-type RateMethodCol struct{ keel.StringCol }
+type RateMethodCol struct{ keel.TypedStringCol }
 
-func (c RateMethodCol) Eq(v carriercapacity.RateMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RateMethodCol) Ne(v carriercapacity.RateMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RateMethodCol) Gt(v carriercapacity.RateMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RateMethodCol) Gte(v carriercapacity.RateMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RateMethodCol) Lt(v carriercapacity.RateMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RateMethodCol) Lte(v carriercapacity.RateMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RateMethodCol) Eq(v carriercapacity.RateMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateMethodCol) Ne(v carriercapacity.RateMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateMethodCol) Gt(v carriercapacity.RateMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateMethodCol) Gte(v carriercapacity.RateMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateMethodCol) Lt(v carriercapacity.RateMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateMethodCol) Lte(v carriercapacity.RateMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateMethodCol) IsDistinctFrom(v carriercapacity.RateMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateMethodCol) Between(lo, hi carriercapacity.RateMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RateMethodCol) To(v carriercapacity.RateMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RateMethodCol) In(vs ...carriercapacity.RateMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateMethodCol) NotIn(vs ...carriercapacity.RateMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceCol is a column of carriercapacity.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v carriercapacity.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v carriercapacity.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v carriercapacity.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v carriercapacity.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v carriercapacity.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v carriercapacity.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v carriercapacity.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v carriercapacity.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v carriercapacity.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v carriercapacity.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v carriercapacity.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v carriercapacity.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v carriercapacity.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi carriercapacity.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v carriercapacity.Source) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SourceCol) To(v carriercapacity.Source) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceCol) In(vs ...carriercapacity.Source) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceCol) NotIn(vs ...carriercapacity.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

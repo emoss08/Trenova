@@ -88,13 +88,13 @@ type CapabilityRulesTable struct {
 // CapabilityRules references the mode_profile_capability_rules table.
 var CapabilityRules = &CapabilityRulesTable{
 	TableBase:      keel.TableBase{Ref: &capabilityRulesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 2}}},
-	ModeProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 3}}},
-	RuleKey:        RuleKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 4}}},
-	Capability:     CapabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 5}}},
-	Enforcement:    tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 2}}},
+	ModeProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 3}}},
+	RuleKey:        RuleKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 4}}},
+	Capability:     CapabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 5}}},
+	Enforcement:    tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 6}}},
 	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 7}},
 	Parameters:     keel.JSONBCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 8}},
 	OverrideReason: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 9}},
@@ -107,13 +107,13 @@ var CapabilityRules = &CapabilityRulesTable{
 func BuildCapabilityRules(r *keel.Ref) *CapabilityRulesTable {
 	return &CapabilityRulesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ModeProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RuleKey:        RuleKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Capability:     CapabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Enforcement:    tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ModeProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RuleKey:        RuleKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Capability:     CapabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Enforcement:    tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		Parameters:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		OverrideReason: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -141,8 +141,6 @@ func (t *CapabilityRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // CapabilityRulesQuery is a query over modeprofile.CapabilityRule.
 type CapabilityRulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*modeprofile.CapabilityRule] = (*CapabilityRulesTable)(nil)
 
 var _ keel.Query[*modeprofile.CapabilityRule] = (*CapabilityRulesQuery)(nil)
 
@@ -258,42 +256,42 @@ func (t *CapabilityRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *CapabilityRulesTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CapabilityRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CapabilityRulesTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CapabilityRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CapabilityRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CapabilityRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CapabilityRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CapabilityRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -465,37 +463,45 @@ func (q *CapabilityRulesQuery) Clone() keel.Query[*modeprofile.CapabilityRule] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CapabilityRulesQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.CapabilityRule, error) {
-	return keel.One[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.CapabilityRule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CapabilityRulesQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.CapabilityRule, error) {
-	return keel.First[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.CapabilityRule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CapabilityRulesQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.CapabilityRule, error) {
-	return keel.List[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.CapabilityRule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CapabilityRulesQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.CapabilityRule, error) {
-	return keel.All[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.CapabilityRule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CapabilityRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.CapabilityRule, error) {
-	return keel.UpdateReturning[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*modeprofile.CapabilityRule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CapabilityRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.CapabilityRule], error) {
-	return keel.PageOf[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*modeprofile.CapabilityRule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CapabilityRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.CapabilityRule) error) error {
-	return keel.Each[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*modeprofile.CapabilityRule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCapabilityRule() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.CapabilityRule)) }
@@ -689,21 +695,21 @@ type DeviationsTable struct {
 // Deviations references the mode_profile_deviations table.
 var Deviations = &DeviationsTable{
 	TableBase:             keel.TableBase{Ref: &deviationsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 2}}},
-	ModeProfileID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 3}}},
-	CapabilityRuleID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 4}}},
-	RuleKey:               RuleKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 5}}},
-	Capability:            CapabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 6}}},
-	Enforcement:           tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 7}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 2}}},
+	ModeProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 3}}},
+	CapabilityRuleID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 4}}},
+	RuleKey:               RuleKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 5}}},
+	Capability:            CapabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 6}}},
+	Enforcement:           tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 7}}},
 	ResourceType:          keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 8}},
-	ResourceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 9}}},
+	ResourceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 9}}},
 	Field:                 keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 10}},
 	Message:               keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 11}},
-	State:                 DeviationStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 12}}},
+	State:                 DeviationStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 12}}},
 	OccurredAt:            keel.Int64Col{Col: keel.Col{Ref: &deviationsRef, Index: 13}},
-	AcknowledgedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 14}}},
+	AcknowledgedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &deviationsRef, Index: 14}}},
 	AcknowledgedAt:        keel.Int64Col{Col: keel.Col{Ref: &deviationsRef, Index: 15}},
 	AcknowledgementReason: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 16}},
 	Provenance:            keel.JSONBCol{Col: keel.Col{Ref: &deviationsRef, Index: 17}},
@@ -718,21 +724,21 @@ var Deviations = &DeviationsTable{
 func BuildDeviations(r *keel.Ref) *DeviationsTable {
 	return &DeviationsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ModeProfileID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CapabilityRuleID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RuleKey:               RuleKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Capability:            CapabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Enforcement:           tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ModeProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CapabilityRuleID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RuleKey:               RuleKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Capability:            CapabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Enforcement:           tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ResourceType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		ResourceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ResourceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Field:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Message:               keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		State:                 DeviationStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		State:                 DeviationStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		OccurredAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		AcknowledgedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		AcknowledgedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		AcknowledgedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		AcknowledgementReason: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		Provenance:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -767,8 +773,6 @@ func (t *DeviationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // DeviationsQuery is a query over modeprofile.Deviation.
 type DeviationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*modeprofile.Deviation] = (*DeviationsTable)(nil)
 
 var _ keel.Query[*modeprofile.Deviation] = (*DeviationsQuery)(nil)
 
@@ -884,42 +888,42 @@ func (t *DeviationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*mode
 
 // Create inserts row.
 func (t *DeviationsTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.Deviation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DeviationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DeviationsTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.Deviation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DeviationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.Deviation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DeviationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.Deviation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DeviationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DeviationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DeviationsTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1091,37 +1095,45 @@ func (q *DeviationsQuery) Clone() keel.Query[*modeprofile.Deviation] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DeviationsQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.Deviation, error) {
-	return keel.One[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.Deviation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DeviationsQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.Deviation, error) {
-	return keel.First[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.Deviation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DeviationsQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.Deviation, error) {
-	return keel.List[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.Deviation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DeviationsQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.Deviation, error) {
-	return keel.All[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.Deviation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DeviationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.Deviation, error) {
-	return keel.UpdateReturning[*modeprofile.Deviation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*modeprofile.Deviation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DeviationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.Deviation], error) {
-	return keel.PageOf[*modeprofile.Deviation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*modeprofile.Deviation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DeviationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.Deviation) error) error {
-	return keel.Each[*modeprofile.Deviation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*modeprofile.Deviation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDeviation() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.Deviation)) }
@@ -1372,21 +1384,21 @@ type ProfilesTable struct {
 // Profiles references the mode_profiles table.
 var Profiles = &ProfilesTable{
 	TableBase:          keel.TableBase{Ref: &profilesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
 	Name:               keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 3}},
 	Code:               keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 4}},
 	Description:        keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 5}},
-	Status:             ProfileStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 6}}},
-	ServiceModel:       ServiceModelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 7}}},
-	EquipmentClass:     EquipmentClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 8}}},
-	ExecutionParty:     ExecutionPartyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 9}}},
+	Status:             ProfileStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 6}}},
+	ServiceModel:       ServiceModelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 7}}},
+	EquipmentClass:     EquipmentClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 8}}},
+	ExecutionParty:     ExecutionPartyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 9}}},
 	Capabilities:       keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 10}},
 	IsOrgDefault:       keel.BoolCol{Col: keel.Col{Ref: &profilesRef, Index: 11}},
 	Priority:           keel.Int16Col{Col: keel.Col{Ref: &profilesRef, Index: 12}},
 	SpecificityScore:   keel.Int32Col{Col: keel.Col{Ref: &profilesRef, Index: 13}},
-	CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 14}}},
+	CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 14}}},
 	ShipmentTypeIDs:    keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 15}},
 	ServiceTypeIDs:     keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 16}},
 	EquipmentTypeIDs:   keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 17}},
@@ -1403,21 +1415,21 @@ var Profiles = &ProfilesTable{
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:               keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Code:               keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:             ProfileStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ServiceModel:       ServiceModelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		EquipmentClass:     EquipmentClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ExecutionParty:     ExecutionPartyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:             ProfileStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ServiceModel:       ServiceModelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		EquipmentClass:     EquipmentClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ExecutionParty:     ExecutionPartyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Capabilities:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		IsOrgDefault:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
 		Priority:           keel.Int16Col{Col: keel.Col{Ref: r, Index: 12}},
 		SpecificityScore:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 13}},
-		CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ShipmentTypeIDs:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
 		ServiceTypeIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		EquipmentTypeIDs:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -1451,8 +1463,6 @@ func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*mo
 
 // ProfilesQuery is a query over modeprofile.Profile.
 type ProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*modeprofile.Profile] = (*ProfilesTable)(nil)
 
 var _ keel.Query[*modeprofile.Profile] = (*ProfilesQuery)(nil)
 
@@ -1568,42 +1578,42 @@ func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*modepr
 
 // Create inserts row.
 func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.Profile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.Profile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.Profile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.Profile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1775,37 +1785,45 @@ func (q *ProfilesQuery) Clone() keel.Query[*modeprofile.Profile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.Profile, error) {
-	return keel.One[*modeprofile.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.Profile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.Profile, error) {
-	return keel.First[*modeprofile.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*modeprofile.Profile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.Profile, error) {
-	return keel.List[*modeprofile.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.Profile, error) {
-	return keel.All[*modeprofile.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*modeprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.Profile, error) {
-	return keel.UpdateReturning[*modeprofile.Profile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*modeprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.Profile], error) {
-	return keel.PageOf[*modeprofile.Profile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*modeprofile.Profile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.Profile) error) error {
-	return keel.Each[*modeprofile.Profile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*modeprofile.Profile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.Profile)) }
@@ -2056,212 +2074,184 @@ var enumTenantEnforcementLevel = [...]schema.EnumValue{
 }
 
 // CapabilityCol is a column of modeprofile.Capability values.
-type CapabilityCol struct{ keel.StringCol }
+type CapabilityCol struct{ keel.TypedStringCol }
 
-func (c CapabilityCol) Eq(v modeprofile.Capability) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CapabilityCol) Ne(v modeprofile.Capability) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CapabilityCol) Gt(v modeprofile.Capability) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CapabilityCol) Gte(v modeprofile.Capability) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CapabilityCol) Lt(v modeprofile.Capability) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CapabilityCol) Lte(v modeprofile.Capability) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CapabilityCol) Eq(v modeprofile.Capability) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CapabilityCol) Ne(v modeprofile.Capability) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CapabilityCol) Gt(v modeprofile.Capability) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CapabilityCol) Gte(v modeprofile.Capability) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CapabilityCol) Lt(v modeprofile.Capability) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CapabilityCol) Lte(v modeprofile.Capability) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CapabilityCol) IsDistinctFrom(v modeprofile.Capability) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CapabilityCol) Between(lo, hi modeprofile.Capability) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CapabilityCol) To(v modeprofile.Capability) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CapabilityCol) To(v modeprofile.Capability) keel.Assignment { return c.Text().To(string(v)) }
 func (c CapabilityCol) In(vs ...modeprofile.Capability) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CapabilityCol) NotIn(vs ...modeprofile.Capability) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeviationStateCol is a column of modeprofile.DeviationState values.
-type DeviationStateCol struct{ keel.StringCol }
+type DeviationStateCol struct{ keel.TypedStringCol }
 
-func (c DeviationStateCol) Eq(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DeviationStateCol) Ne(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DeviationStateCol) Gt(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c DeviationStateCol) Eq(v modeprofile.DeviationState) keel.Pred { return c.Text().Eq(string(v)) }
+func (c DeviationStateCol) Ne(v modeprofile.DeviationState) keel.Pred { return c.Text().Ne(string(v)) }
+func (c DeviationStateCol) Gt(v modeprofile.DeviationState) keel.Pred { return c.Text().Gt(string(v)) }
 func (c DeviationStateCol) Gte(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c DeviationStateCol) Lt(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c DeviationStateCol) Lt(v modeprofile.DeviationState) keel.Pred { return c.Text().Lt(string(v)) }
 func (c DeviationStateCol) Lte(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DeviationStateCol) IsDistinctFrom(v modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeviationStateCol) Between(lo, hi modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeviationStateCol) To(v modeprofile.DeviationState) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeviationStateCol) In(vs ...modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeviationStateCol) NotIn(vs ...modeprofile.DeviationState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EquipmentClassCol is a column of modeprofile.EquipmentClass values.
-type EquipmentClassCol struct{ keel.StringCol }
+type EquipmentClassCol struct{ keel.TypedStringCol }
 
-func (c EquipmentClassCol) Eq(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c EquipmentClassCol) Ne(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c EquipmentClassCol) Gt(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c EquipmentClassCol) Eq(v modeprofile.EquipmentClass) keel.Pred { return c.Text().Eq(string(v)) }
+func (c EquipmentClassCol) Ne(v modeprofile.EquipmentClass) keel.Pred { return c.Text().Ne(string(v)) }
+func (c EquipmentClassCol) Gt(v modeprofile.EquipmentClass) keel.Pred { return c.Text().Gt(string(v)) }
 func (c EquipmentClassCol) Gte(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c EquipmentClassCol) Lt(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c EquipmentClassCol) Lt(v modeprofile.EquipmentClass) keel.Pred { return c.Text().Lt(string(v)) }
 func (c EquipmentClassCol) Lte(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EquipmentClassCol) IsDistinctFrom(v modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EquipmentClassCol) Between(lo, hi modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EquipmentClassCol) To(v modeprofile.EquipmentClass) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EquipmentClassCol) In(vs ...modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EquipmentClassCol) NotIn(vs ...modeprofile.EquipmentClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExecutionPartyCol is a column of modeprofile.ExecutionParty values.
-type ExecutionPartyCol struct{ keel.StringCol }
+type ExecutionPartyCol struct{ keel.TypedStringCol }
 
-func (c ExecutionPartyCol) Eq(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ExecutionPartyCol) Ne(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ExecutionPartyCol) Gt(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c ExecutionPartyCol) Eq(v modeprofile.ExecutionParty) keel.Pred { return c.Text().Eq(string(v)) }
+func (c ExecutionPartyCol) Ne(v modeprofile.ExecutionParty) keel.Pred { return c.Text().Ne(string(v)) }
+func (c ExecutionPartyCol) Gt(v modeprofile.ExecutionParty) keel.Pred { return c.Text().Gt(string(v)) }
 func (c ExecutionPartyCol) Gte(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c ExecutionPartyCol) Lt(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c ExecutionPartyCol) Lt(v modeprofile.ExecutionParty) keel.Pred { return c.Text().Lt(string(v)) }
 func (c ExecutionPartyCol) Lte(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExecutionPartyCol) IsDistinctFrom(v modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExecutionPartyCol) Between(lo, hi modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExecutionPartyCol) To(v modeprofile.ExecutionParty) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExecutionPartyCol) In(vs ...modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExecutionPartyCol) NotIn(vs ...modeprofile.ExecutionParty) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProfileStatusCol is a column of modeprofile.ProfileStatus values.
-type ProfileStatusCol struct{ keel.StringCol }
+type ProfileStatusCol struct{ keel.TypedStringCol }
 
-func (c ProfileStatusCol) Eq(v modeprofile.ProfileStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ProfileStatusCol) Ne(v modeprofile.ProfileStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ProfileStatusCol) Gt(v modeprofile.ProfileStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ProfileStatusCol) Gte(v modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ProfileStatusCol) Lt(v modeprofile.ProfileStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ProfileStatusCol) Lte(v modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ProfileStatusCol) Eq(v modeprofile.ProfileStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProfileStatusCol) Ne(v modeprofile.ProfileStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProfileStatusCol) Gt(v modeprofile.ProfileStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProfileStatusCol) Gte(v modeprofile.ProfileStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProfileStatusCol) Lt(v modeprofile.ProfileStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProfileStatusCol) Lte(v modeprofile.ProfileStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProfileStatusCol) IsDistinctFrom(v modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProfileStatusCol) Between(lo, hi modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ProfileStatusCol) To(v modeprofile.ProfileStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ProfileStatusCol) In(vs ...modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProfileStatusCol) NotIn(vs ...modeprofile.ProfileStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RuleKeyCol is a column of modeprofile.RuleKey values.
-type RuleKeyCol struct{ keel.StringCol }
+type RuleKeyCol struct{ keel.TypedStringCol }
 
-func (c RuleKeyCol) Eq(v modeprofile.RuleKey) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RuleKeyCol) Ne(v modeprofile.RuleKey) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RuleKeyCol) Gt(v modeprofile.RuleKey) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RuleKeyCol) Gte(v modeprofile.RuleKey) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RuleKeyCol) Lt(v modeprofile.RuleKey) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RuleKeyCol) Lte(v modeprofile.RuleKey) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RuleKeyCol) Eq(v modeprofile.RuleKey) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RuleKeyCol) Ne(v modeprofile.RuleKey) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RuleKeyCol) Gt(v modeprofile.RuleKey) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RuleKeyCol) Gte(v modeprofile.RuleKey) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RuleKeyCol) Lt(v modeprofile.RuleKey) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RuleKeyCol) Lte(v modeprofile.RuleKey) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RuleKeyCol) IsDistinctFrom(v modeprofile.RuleKey) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RuleKeyCol) Between(lo, hi modeprofile.RuleKey) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RuleKeyCol) To(v modeprofile.RuleKey) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RuleKeyCol) To(v modeprofile.RuleKey) keel.Assignment { return c.Text().To(string(v)) }
 func (c RuleKeyCol) In(vs ...modeprofile.RuleKey) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RuleKeyCol) NotIn(vs ...modeprofile.RuleKey) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ServiceModelCol is a column of modeprofile.ServiceModel values.
-type ServiceModelCol struct{ keel.StringCol }
+type ServiceModelCol struct{ keel.TypedStringCol }
 
-func (c ServiceModelCol) Eq(v modeprofile.ServiceModel) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ServiceModelCol) Ne(v modeprofile.ServiceModel) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ServiceModelCol) Gt(v modeprofile.ServiceModel) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ServiceModelCol) Gte(v modeprofile.ServiceModel) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ServiceModelCol) Lt(v modeprofile.ServiceModel) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ServiceModelCol) Lte(v modeprofile.ServiceModel) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ServiceModelCol) Eq(v modeprofile.ServiceModel) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ServiceModelCol) Ne(v modeprofile.ServiceModel) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ServiceModelCol) Gt(v modeprofile.ServiceModel) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ServiceModelCol) Gte(v modeprofile.ServiceModel) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ServiceModelCol) Lt(v modeprofile.ServiceModel) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ServiceModelCol) Lte(v modeprofile.ServiceModel) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ServiceModelCol) IsDistinctFrom(v modeprofile.ServiceModel) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ServiceModelCol) Between(lo, hi modeprofile.ServiceModel) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ServiceModelCol) To(v modeprofile.ServiceModel) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ServiceModelCol) In(vs ...modeprofile.ServiceModel) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ServiceModelCol) NotIn(vs ...modeprofile.ServiceModel) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

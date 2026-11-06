@@ -162,9 +162,9 @@ type DispatchControlsTable struct {
 // DispatchControls references the dispatch_controls table.
 var DispatchControls = &DispatchControlsTable{
 	TableBase:                            keel.TableBase{Ref: &dispatchControlsRef},
-	ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 0}}},
-	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 1}}},
-	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 2}}},
+	ID:                                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 0}}},
+	BusinessUnitID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 1}}},
+	OrganizationID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 2}}},
 	EnableAutoAssignment:                 keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 3}},
 	AutoProposeCoverage:                  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 4}},
 	EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 5}},
@@ -183,7 +183,7 @@ var DispatchControls = &DispatchControlsTable{
 	AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 18}}},
 	AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 19}},
 	AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 20}},
-	PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 21}}},
+	PlanningMode:                         PlanningModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 21}}},
 	HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 22}},
 	HorizonSearchRounds:                  keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 23}},
 	CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 24}},
@@ -197,20 +197,20 @@ var DispatchControls = &DispatchControlsTable{
 	ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 32}},
 	ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 33}},
 	ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 34}},
-	ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 35}}},
-	ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 36}}},
+	ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 35}}},
+	ExceptionEscalationContactID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 36}}},
 	ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 37}},
 	ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 38}},
 	TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 39}},
 	TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 40}}},
 	TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 41}},
 	TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 42}},
-	TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 43}}},
+	TenderExhaustedAction:                TenderExhaustedActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 43}}},
 	TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 44}}},
 	TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 45}},
 	TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 46}},
-	ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 47}}},
-	RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 48}}},
+	ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 47}}},
+	RecordServiceFailures:                ServiceIncidentTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 48}}},
 	ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 49}},
 	ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 50}},
 	Version:                              keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 51}},
@@ -222,9 +222,9 @@ var DispatchControls = &DispatchControlsTable{
 func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 	return &DispatchControlsTable{
 		TableBase:                            keel.TableBase{Ref: r},
-		ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		EnableAutoAssignment:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
 		AutoProposeCoverage:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
 		EnforceWorkerAssign:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -243,7 +243,7 @@ func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 		AutoAssignConfidenceThreshold:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
 		AutoAssignMaxDeadheadMiles:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 19}},
 		AutoAssignPlanningHorizonHours:       keel.Int16Col{Col: keel.Col{Ref: r, Index: 20}},
-		PlanningMode:                         PlanningModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		PlanningMode:                         PlanningModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		HorizonMaxMovesPerDriver:             keel.Int16Col{Col: keel.Col{Ref: r, Index: 22}},
 		HorizonSearchRounds:                  keel.Int16Col{Col: keel.Col{Ref: r, Index: 23}},
 		CoverageRiskWindowHours:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 24}},
@@ -257,20 +257,20 @@ func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 		ExceptionDueCriticalMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 32}},
 		ExceptionEscalationMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 33}},
 		ExceptionMaxEscalations:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 34}},
-		ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		ExceptionEscalationContactID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		ExceptionDefaultAssigneeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		ExceptionEscalationContactID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
 		ExceptionMissedStopGraceMinutes:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 37}},
 		ExceptionPODGraceHours:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 38}},
 		TenderCounterOffersEnabled:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 39}},
 		TenderCounterMarginFloorPercent:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 40}}},
 		TenderAutoAcceptCounters:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
 		TenderCounterDecisionMinutes:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 42}},
-		TenderExhaustedAction:                TenderExhaustedActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
+		TenderExhaustedAction:                TenderExhaustedActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 43}}},
 		TenderEscalationRateIncreasePercent:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 44}}},
 		TenderEscalationOfferTTLMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 45}},
 		TenderMaxEscalations:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 46}},
-		ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
-		RecordServiceFailures:                ServiceIncidentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		ComplianceEnforcementLevel:           ComplianceEnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 47}}},
+		RecordServiceFailures:                ServiceIncidentTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
 		ServiceFailureTarget:                 keel.Float64Col{Col: keel.Col{Ref: r, Index: 49}},
 		ServiceFailureGracePeriod:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
 		Version:                              keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
@@ -294,8 +294,6 @@ func (t *DispatchControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // DispatchControlsQuery is a query over dispatchcontrol.DispatchControl.
 type DispatchControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dispatchcontrol.DispatchControl] = (*DispatchControlsTable)(nil)
 
 var _ keel.Query[*dispatchcontrol.DispatchControl] = (*DispatchControlsQuery)(nil)
 
@@ -411,42 +409,42 @@ func (t *DispatchControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *DispatchControlsTable) Create(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DispatchControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DispatchControlsTable) Save(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DispatchControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DispatchControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DispatchControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DispatchControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DispatchControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -618,37 +616,45 @@ func (q *DispatchControlsQuery) Clone() keel.Query[*dispatchcontrol.DispatchCont
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DispatchControlsQuery) One(ctx context.Context, db *keel.DB) (*dispatchcontrol.DispatchControl, error) {
-	return keel.One[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dispatchcontrol.DispatchControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DispatchControlsQuery) First(ctx context.Context, db *keel.DB) (*dispatchcontrol.DispatchControl, error) {
-	return keel.First[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dispatchcontrol.DispatchControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DispatchControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dispatchcontrol.DispatchControl, error) {
-	return keel.List[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dispatchcontrol.DispatchControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DispatchControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dispatchcontrol.DispatchControl, error) {
-	return keel.All[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dispatchcontrol.DispatchControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DispatchControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dispatchcontrol.DispatchControl, error) {
-	return keel.UpdateReturning[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dispatchcontrol.DispatchControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DispatchControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dispatchcontrol.DispatchControl], error) {
-	return keel.PageOf[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dispatchcontrol.DispatchControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DispatchControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dispatchcontrol.DispatchControl) error) error {
-	return keel.Each[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dispatchcontrol.DispatchControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDispatchControl() unsafe.Pointer { return unsafe.Pointer(new(dispatchcontrol.DispatchControl)) }
@@ -942,149 +948,141 @@ var enumTenderExhaustedAction = [...]schema.EnumValue{
 }
 
 // ComplianceEnforcementLevelCol is a column of dispatchcontrol.ComplianceEnforcementLevel values.
-type ComplianceEnforcementLevelCol struct{ keel.StringCol }
+type ComplianceEnforcementLevelCol struct{ keel.TypedStringCol }
 
 func (c ComplianceEnforcementLevelCol) Eq(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Ne(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Gt(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Gte(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Lt(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Lte(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ComplianceEnforcementLevelCol) IsDistinctFrom(v dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ComplianceEnforcementLevelCol) Between(lo, hi dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ComplianceEnforcementLevelCol) To(v dispatchcontrol.ComplianceEnforcementLevel) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ComplianceEnforcementLevelCol) In(vs ...dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ComplianceEnforcementLevelCol) NotIn(vs ...dispatchcontrol.ComplianceEnforcementLevel) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PlanningModeCol is a column of dispatchcontrol.PlanningMode values.
-type PlanningModeCol struct{ keel.StringCol }
+type PlanningModeCol struct{ keel.TypedStringCol }
 
-func (c PlanningModeCol) Eq(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PlanningModeCol) Ne(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PlanningModeCol) Gt(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PlanningModeCol) Eq(v dispatchcontrol.PlanningMode) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PlanningModeCol) Ne(v dispatchcontrol.PlanningMode) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PlanningModeCol) Gt(v dispatchcontrol.PlanningMode) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PlanningModeCol) Gte(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PlanningModeCol) Lt(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PlanningModeCol) Lt(v dispatchcontrol.PlanningMode) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PlanningModeCol) Lte(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PlanningModeCol) IsDistinctFrom(v dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PlanningModeCol) Between(lo, hi dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PlanningModeCol) To(v dispatchcontrol.PlanningMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PlanningModeCol) In(vs ...dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PlanningModeCol) NotIn(vs ...dispatchcontrol.PlanningMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ServiceIncidentTypeCol is a column of dispatchcontrol.ServiceIncidentType values.
-type ServiceIncidentTypeCol struct{ keel.StringCol }
+type ServiceIncidentTypeCol struct{ keel.TypedStringCol }
 
 func (c ServiceIncidentTypeCol) Eq(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ServiceIncidentTypeCol) Ne(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ServiceIncidentTypeCol) Gt(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ServiceIncidentTypeCol) Gte(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ServiceIncidentTypeCol) Lt(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ServiceIncidentTypeCol) Lte(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ServiceIncidentTypeCol) IsDistinctFrom(v dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ServiceIncidentTypeCol) Between(lo, hi dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ServiceIncidentTypeCol) To(v dispatchcontrol.ServiceIncidentType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ServiceIncidentTypeCol) In(vs ...dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ServiceIncidentTypeCol) NotIn(vs ...dispatchcontrol.ServiceIncidentType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TenderExhaustedActionCol is a column of dispatchcontrol.TenderExhaustedAction values.
-type TenderExhaustedActionCol struct{ keel.StringCol }
+type TenderExhaustedActionCol struct{ keel.TypedStringCol }
 
 func (c TenderExhaustedActionCol) Eq(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TenderExhaustedActionCol) Ne(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TenderExhaustedActionCol) Gt(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TenderExhaustedActionCol) Gte(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TenderExhaustedActionCol) Lt(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TenderExhaustedActionCol) Lte(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TenderExhaustedActionCol) IsDistinctFrom(v dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TenderExhaustedActionCol) Between(lo, hi dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TenderExhaustedActionCol) To(v dispatchcontrol.TenderExhaustedAction) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TenderExhaustedActionCol) In(vs ...dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TenderExhaustedActionCol) NotIn(vs ...dispatchcontrol.TenderExhaustedAction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

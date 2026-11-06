@@ -90,21 +90,21 @@ type DistanceControlsTable struct {
 // DistanceControls references the distance_controls table.
 var DistanceControls = &DistanceControlsTable{
 	TableBase:                      keel.TableBase{Ref: &distanceControlsRef},
-	ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 0}}},
-	BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 1}}},
-	OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 2}}},
+	ID:                             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 0}}},
+	BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 1}}},
+	OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 2}}},
 	StoreMileage:                   keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 3}},
 	StoredDistanceUnits:            keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 4}},
 	PostalCodeFallbackToCity:       keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 5}},
 	AutoCreateStoredMileage:        keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 6}},
-	LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 7}}},
-	EmptyMoveDistanceProfileID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 8}}},
-	PayDistanceProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 9}}},
-	BillingDistanceProfileID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 10}}},
-	FuelDistanceProfileID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 11}}},
-	EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 12}}},
-	DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 13}}},
-	DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 14}}},
+	LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 7}}},
+	EmptyMoveDistanceProfileID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 8}}},
+	PayDistanceProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 9}}},
+	BillingDistanceProfileID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 10}}},
+	FuelDistanceProfileID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 11}}},
+	EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 12}}},
+	DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 13}}},
+	DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 14}}},
 	CaptureJurisdictionMiles:                     keel.BoolCol{Col: keel.Col{Ref: &distanceControlsRef, Index: 15}},
 	Version:                                      keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 16}},
 	CreatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: &distanceControlsRef, Index: 17}},
@@ -115,21 +115,21 @@ var DistanceControls = &DistanceControlsTable{
 func BuildDistanceControls(r *keel.Ref) *DistanceControlsTable {
 	return &DistanceControlsTable{
 		TableBase:                      keel.TableBase{Ref: r},
-		ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		StoreMileage:                   keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
 		StoredDistanceUnits:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		PostalCodeFallbackToCity:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		AutoCreateStoredMileage:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
-		LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		EmptyMoveDistanceProfileID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		PayDistanceProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		BillingDistanceProfileID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		FuelDistanceProfileID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		LoadedMoveDistanceProfileID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		EmptyMoveDistanceProfileID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		PayDistanceProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		BillingDistanceProfileID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		FuelDistanceProfileID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		EtaOutOfRouteDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DistanceCalculatorShortestDistanceProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		DistanceCalculatorPracticalDistanceProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		CaptureJurisdictionMiles:                     keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		Version:                                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:                                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -152,8 +152,6 @@ func (t *DistanceControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // DistanceControlsQuery is a query over distancecontrol.DistanceControl.
 type DistanceControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*distancecontrol.DistanceControl] = (*DistanceControlsTable)(nil)
 
 var _ keel.Query[*distancecontrol.DistanceControl] = (*DistanceControlsQuery)(nil)
 
@@ -269,42 +267,42 @@ func (t *DistanceControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *DistanceControlsTable) Create(ctx context.Context, db *keel.DB, row *distancecontrol.DistanceControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DistanceControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distancecontrol.DistanceControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DistanceControlsTable) Save(ctx context.Context, db *keel.DB, row *distancecontrol.DistanceControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DistanceControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *distancecontrol.DistanceControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DistanceControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *distancecontrol.DistanceControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DistanceControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*distancecontrol.DistanceControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DistanceControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distancecontrol.DistanceControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DistanceControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*distancecontrol.DistanceControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -476,37 +474,45 @@ func (q *DistanceControlsQuery) Clone() keel.Query[*distancecontrol.DistanceCont
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DistanceControlsQuery) One(ctx context.Context, db *keel.DB) (*distancecontrol.DistanceControl, error) {
-	return keel.One[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*distancecontrol.DistanceControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DistanceControlsQuery) First(ctx context.Context, db *keel.DB) (*distancecontrol.DistanceControl, error) {
-	return keel.First[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*distancecontrol.DistanceControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DistanceControlsQuery) List(ctx context.Context, db *keel.DB) ([]*distancecontrol.DistanceControl, error) {
-	return keel.List[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distancecontrol.DistanceControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DistanceControlsQuery) All(ctx context.Context, db *keel.DB) ([]*distancecontrol.DistanceControl, error) {
-	return keel.All[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distancecontrol.DistanceControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DistanceControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distancecontrol.DistanceControl, error) {
-	return keel.UpdateReturning[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*distancecontrol.DistanceControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DistanceControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distancecontrol.DistanceControl], error) {
-	return keel.PageOf[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*distancecontrol.DistanceControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DistanceControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distancecontrol.DistanceControl) error) error {
-	return keel.Each[*distancecontrol.DistanceControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*distancecontrol.DistanceControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDistanceControl() unsafe.Pointer { return unsafe.Pointer(new(distancecontrol.DistanceControl)) }

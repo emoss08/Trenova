@@ -162,25 +162,25 @@ type DefinitionsTable struct {
 // Definitions references the agent_definitions table.
 var Definitions = &DefinitionsTable{
 	TableBase:              keel.TableBase{Ref: &definitionsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 2}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 2}}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 3}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 4}},
-	Template:               keelkinds.AgenttemplateTemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 5}}},
+	Template:               keelkinds.AgenttemplateTemplateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 5}}},
 	Instructions:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 6}},
 	Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 7}},
 	ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 8}},
 	ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 9}},
-	AutonomyCeiling:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 10}}},
-	DataAccessCeiling:      DataAccessCeilingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 11}}},
-	UnattendedRoleID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 12}}},
+	AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 10}}},
+	DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 11}}},
+	UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 12}}},
 	Enabled:                keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 13}},
 	DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 14}},
-	DisabledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 15}}},
+	DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 15}}},
 	ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: &definitionsRef, Index: 16}},
 	DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 17}},
-	TriggerMode:            TriggerModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 18}}},
+	TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 18}}},
 	CronExpression:         keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 19}},
 	CronTimezone:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 20}},
 	EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 21}},
@@ -198,8 +198,8 @@ var Definitions = &DefinitionsTable{
 	Icon:                   keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 33}},
 	Accent:                 keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 34}},
 	ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 35}},
-	OutputMode:             OutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 36}}},
-	PreferredProviderID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 37}}},
+	OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 36}}},
+	PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 37}}},
 	SystemKey:              keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 38}},
 	DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 39}},
 	DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: &definitionsRef, Index: 40}},
@@ -209,8 +209,8 @@ var Definitions = &DefinitionsTable{
 	BusinessHoursStart:     keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 44}},
 	BusinessHoursEnd:       keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 45}},
 	BusinessHoursTimezone:  keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 46}},
-	CreatedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 47}}},
-	AccessMode:             AccessModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 48}}},
+	CreatedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 47}}},
+	AccessMode:             AccessModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &definitionsRef, Index: 48}}},
 	LastRunAt:              keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 49}},
 	NextRunAt:              keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 50}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &definitionsRef, Index: 51}},
@@ -222,25 +222,25 @@ var Definitions = &DefinitionsTable{
 func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 	return &DefinitionsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Template:               keelkinds.AgenttemplateTemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Template:               keelkinds.AgenttemplateTemplateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Instructions:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 7}},
 		ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 8}},
 		ToolTiers:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		AutonomyCeiling:        agentdb.AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DataAccessCeiling:      DataAccessCeilingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		UnattendedRoleID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		AutonomyCeiling:        agentdb.AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DataAccessCeiling:      DataAccessCeilingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		UnattendedRoleID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Enabled:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
 		DisabledAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		DisabledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		DisabledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		ShadowMode:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
 		DecisionTimeoutSeconds: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		TriggerMode:            TriggerModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		TriggerMode:            TriggerModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CronExpression:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		CronTimezone:           keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		EventKinds:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 21}},
@@ -258,8 +258,8 @@ func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 		Icon:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
 		Accent:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
 		ContextProviders:       keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 35}},
-		OutputMode:             OutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
-		PreferredProviderID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		OutputMode:             OutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		PreferredProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
 		SystemKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
 		DelegateIDs:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 39}},
 		DelegateTopics:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 40}},
@@ -269,8 +269,8 @@ func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 		BusinessHoursStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
 		BusinessHoursEnd:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 		BusinessHoursTimezone:  keel.StringCol{Col: keel.Col{Ref: r, Index: 46}},
-		CreatedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
-		AccessMode:             AccessModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		CreatedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 47}}},
+		AccessMode:             AccessModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
 		LastRunAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
 		NextRunAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
@@ -294,8 +294,6 @@ func (t *DefinitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // DefinitionsQuery is a query over agentdefinition.Definition.
 type DefinitionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentdefinition.Definition] = (*DefinitionsTable)(nil)
 
 var _ keel.Query[*agentdefinition.Definition] = (*DefinitionsQuery)(nil)
 
@@ -411,42 +409,42 @@ func (t *DefinitionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*age
 
 // Create inserts row.
 func (t *DefinitionsTable) Create(ctx context.Context, db *keel.DB, row *agentdefinition.Definition) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DefinitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentdefinition.Definition) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DefinitionsTable) Save(ctx context.Context, db *keel.DB, row *agentdefinition.Definition, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DefinitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentdefinition.Definition, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DefinitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentdefinition.Definition) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DefinitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentdefinition.Definition, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DefinitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentdefinition.Definition, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DefinitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentdefinition.Definition) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -618,37 +616,45 @@ func (q *DefinitionsQuery) Clone() keel.Query[*agentdefinition.Definition] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DefinitionsQuery) One(ctx context.Context, db *keel.DB) (*agentdefinition.Definition, error) {
-	return keel.One[*agentdefinition.Definition](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentdefinition.Definition)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DefinitionsQuery) First(ctx context.Context, db *keel.DB) (*agentdefinition.Definition, error) {
-	return keel.First[*agentdefinition.Definition](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentdefinition.Definition)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DefinitionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentdefinition.Definition, error) {
-	return keel.List[*agentdefinition.Definition](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentdefinition.Definition)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DefinitionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentdefinition.Definition, error) {
-	return keel.All[*agentdefinition.Definition](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentdefinition.Definition)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DefinitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentdefinition.Definition, error) {
-	return keel.UpdateReturning[*agentdefinition.Definition](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentdefinition.Definition)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DefinitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentdefinition.Definition], error) {
-	return keel.PageOf[*agentdefinition.Definition](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentdefinition.Definition])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DefinitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentdefinition.Definition) error) error {
-	return keel.Each[*agentdefinition.Definition](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentdefinition.Definition)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDefinition() unsafe.Pointer { return unsafe.Pointer(new(agentdefinition.Definition)) }
@@ -1042,117 +1048,113 @@ var enumTriggerMode = [...]schema.EnumValue{
 }
 
 // AccessModeCol is a column of agentdefinition.AccessMode values.
-type AccessModeCol struct{ keel.StringCol }
+type AccessModeCol struct{ keel.TypedStringCol }
 
-func (c AccessModeCol) Eq(v agentdefinition.AccessMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AccessModeCol) Ne(v agentdefinition.AccessMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AccessModeCol) Gt(v agentdefinition.AccessMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AccessModeCol) Gte(v agentdefinition.AccessMode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AccessModeCol) Lt(v agentdefinition.AccessMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AccessModeCol) Lte(v agentdefinition.AccessMode) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AccessModeCol) Eq(v agentdefinition.AccessMode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AccessModeCol) Ne(v agentdefinition.AccessMode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AccessModeCol) Gt(v agentdefinition.AccessMode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AccessModeCol) Gte(v agentdefinition.AccessMode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AccessModeCol) Lt(v agentdefinition.AccessMode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AccessModeCol) Lte(v agentdefinition.AccessMode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AccessModeCol) IsDistinctFrom(v agentdefinition.AccessMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AccessModeCol) Between(lo, hi agentdefinition.AccessMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AccessModeCol) To(v agentdefinition.AccessMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AccessModeCol) In(vs ...agentdefinition.AccessMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AccessModeCol) NotIn(vs ...agentdefinition.AccessMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DataAccessCeilingCol is a column of agentdefinition.DataAccessCeiling values.
-type DataAccessCeilingCol struct{ keel.StringCol }
+type DataAccessCeilingCol struct{ keel.TypedStringCol }
 
 func (c DataAccessCeilingCol) Eq(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DataAccessCeilingCol) Ne(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DataAccessCeilingCol) Gt(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DataAccessCeilingCol) Gte(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DataAccessCeilingCol) Lt(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DataAccessCeilingCol) Lte(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DataAccessCeilingCol) IsDistinctFrom(v agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DataAccessCeilingCol) Between(lo, hi agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DataAccessCeilingCol) To(v agentdefinition.DataAccessCeiling) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DataAccessCeilingCol) In(vs ...agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DataAccessCeilingCol) NotIn(vs ...agentdefinition.DataAccessCeiling) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OutputModeCol is a column of agentdefinition.OutputMode values.
-type OutputModeCol struct{ keel.StringCol }
+type OutputModeCol struct{ keel.TypedStringCol }
 
-func (c OutputModeCol) Eq(v agentdefinition.OutputMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c OutputModeCol) Ne(v agentdefinition.OutputMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c OutputModeCol) Gt(v agentdefinition.OutputMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c OutputModeCol) Gte(v agentdefinition.OutputMode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c OutputModeCol) Lt(v agentdefinition.OutputMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c OutputModeCol) Lte(v agentdefinition.OutputMode) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c OutputModeCol) Eq(v agentdefinition.OutputMode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c OutputModeCol) Ne(v agentdefinition.OutputMode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c OutputModeCol) Gt(v agentdefinition.OutputMode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c OutputModeCol) Gte(v agentdefinition.OutputMode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c OutputModeCol) Lt(v agentdefinition.OutputMode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c OutputModeCol) Lte(v agentdefinition.OutputMode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c OutputModeCol) IsDistinctFrom(v agentdefinition.OutputMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OutputModeCol) Between(lo, hi agentdefinition.OutputMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OutputModeCol) To(v agentdefinition.OutputMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OutputModeCol) In(vs ...agentdefinition.OutputMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OutputModeCol) NotIn(vs ...agentdefinition.OutputMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TriggerModeCol is a column of agentdefinition.TriggerMode values.
-type TriggerModeCol struct{ keel.StringCol }
+type TriggerModeCol struct{ keel.TypedStringCol }
 
-func (c TriggerModeCol) Eq(v agentdefinition.TriggerMode) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c TriggerModeCol) Ne(v agentdefinition.TriggerMode) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c TriggerModeCol) Gt(v agentdefinition.TriggerMode) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c TriggerModeCol) Gte(v agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c TriggerModeCol) Lt(v agentdefinition.TriggerMode) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c TriggerModeCol) Lte(v agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c TriggerModeCol) Eq(v agentdefinition.TriggerMode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TriggerModeCol) Ne(v agentdefinition.TriggerMode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TriggerModeCol) Gt(v agentdefinition.TriggerMode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TriggerModeCol) Gte(v agentdefinition.TriggerMode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TriggerModeCol) Lt(v agentdefinition.TriggerMode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TriggerModeCol) Lte(v agentdefinition.TriggerMode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TriggerModeCol) IsDistinctFrom(v agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TriggerModeCol) Between(lo, hi agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TriggerModeCol) To(v agentdefinition.TriggerMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TriggerModeCol) In(vs ...agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TriggerModeCol) NotIn(vs ...agentdefinition.TriggerMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

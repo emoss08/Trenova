@@ -80,11 +80,11 @@ type RunsTable struct {
 // Runs references the distance_calculation_runs table.
 var Runs = &RunsTable{
 	TableBase:       keel.TableBase{Ref: &runsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 2}}},
-	ShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 3}}},
-	ShipmentMoveID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 4}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &runsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &runsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &runsRef, Index: 2}}},
+	ShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &runsRef, Index: 3}}},
+	ShipmentMoveID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &runsRef, Index: 4}}},
 	Provider:        keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 5}},
 	Source:          keel.StringCol{Col: keel.Col{Ref: &runsRef, Index: 6}},
 	RequestSummary:  keel.JSONBCol{Col: keel.Col{Ref: &runsRef, Index: 7}},
@@ -100,11 +100,11 @@ var Runs = &RunsTable{
 func BuildRuns(r *keel.Ref) *RunsTable {
 	return &RunsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Provider:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Source:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		RequestSummary:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -130,8 +130,6 @@ func (t *RunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*distan
 
 // RunsQuery is a query over distancecalculation.Run.
 type RunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*distancecalculation.Run] = (*RunsTable)(nil)
 
 var _ keel.Query[*distancecalculation.Run] = (*RunsQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *RunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceca
 
 // Create inserts row.
 func (t *RunsTable) Create(ctx context.Context, db *keel.DB, row *distancecalculation.Run) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distancecalculation.Run) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RunsTable) Save(ctx context.Context, db *keel.DB, row *distancecalculation.Run, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *distancecalculation.Run, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *distancecalculation.Run) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*distancecalculation.Run, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distancecalculation.Run, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RunsTable) Copy(ctx context.Context, db *keel.DB, rows []*distancecalculation.Run) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *RunsQuery) Clone() keel.Query[*distancecalculation.Run] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RunsQuery) One(ctx context.Context, db *keel.DB) (*distancecalculation.Run, error) {
-	return keel.One[*distancecalculation.Run](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*distancecalculation.Run)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RunsQuery) First(ctx context.Context, db *keel.DB) (*distancecalculation.Run, error) {
-	return keel.First[*distancecalculation.Run](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*distancecalculation.Run)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RunsQuery) List(ctx context.Context, db *keel.DB) ([]*distancecalculation.Run, error) {
-	return keel.List[*distancecalculation.Run](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distancecalculation.Run)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RunsQuery) All(ctx context.Context, db *keel.DB) ([]*distancecalculation.Run, error) {
-	return keel.All[*distancecalculation.Run](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distancecalculation.Run)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distancecalculation.Run, error) {
-	return keel.UpdateReturning[*distancecalculation.Run](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*distancecalculation.Run)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distancecalculation.Run], error) {
-	return keel.PageOf[*distancecalculation.Run](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*distancecalculation.Run])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distancecalculation.Run) error) error {
-	return keel.Each[*distancecalculation.Run](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*distancecalculation.Run)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRun() unsafe.Pointer { return unsafe.Pointer(new(distancecalculation.Run)) }

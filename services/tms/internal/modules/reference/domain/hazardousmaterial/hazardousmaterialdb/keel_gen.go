@@ -110,16 +110,16 @@ type HazardousMaterialsTable struct {
 // HazardousMaterials references the hazardous_materials table.
 var HazardousMaterials = &HazardousMaterialsTable{
 	TableBase:                   keel.TableBase{Ref: &hazardousMaterialsRef},
-	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 0}}},
-	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 1}}},
-	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 2}}},
-	Status:                      keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 3}}},
+	ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 0}}},
+	BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 1}}},
+	OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 2}}},
+	Status:                      keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 3}}},
 	Code:                        keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 4}},
 	Name:                        keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 5}},
 	Description:                 keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 6}},
-	Class:                       HazardousClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 7}}},
+	Class:                       HazardousClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 7}}},
 	UNNumber:                    keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 8}},
-	PackingGroup:                PackingGroupCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 9}}},
+	PackingGroup:                PackingGroupCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 9}}},
 	SubsidiaryHazardClass:       keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 10}},
 	ErgGuideNumber:              keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 11}},
 	LabelCodes:                  keel.StringCol{Col: keel.Col{Ref: &hazardousMaterialsRef, Index: 12}},
@@ -143,16 +143,16 @@ var HazardousMaterials = &HazardousMaterialsTable{
 func BuildHazardousMaterials(r *keel.Ref) *HazardousMaterialsTable {
 	return &HazardousMaterialsTable{
 		TableBase:                   keel.TableBase{Ref: r},
-		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:                      keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:                      keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Name:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Class:                       HazardousClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Class:                       HazardousClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		UNNumber:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		PackingGroup:                PackingGroupCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		PackingGroup:                PackingGroupCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		SubsidiaryHazardClass:       keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ErgGuideNumber:              keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		LabelCodes:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
@@ -188,8 +188,6 @@ func (t *HazardousMaterialsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // HazardousMaterialsQuery is a query over hazardousmaterial.HazardousMaterial.
 type HazardousMaterialsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*hazardousmaterial.HazardousMaterial] = (*HazardousMaterialsTable)(nil)
 
 var _ keel.Query[*hazardousmaterial.HazardousMaterial] = (*HazardousMaterialsQuery)(nil)
 
@@ -305,42 +303,42 @@ func (t *HazardousMaterialsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *HazardousMaterialsTable) Create(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *HazardousMaterialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *HazardousMaterialsTable) Save(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *HazardousMaterialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *HazardousMaterialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *hazardousmaterial.HazardousMaterial) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *HazardousMaterialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *HazardousMaterialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *HazardousMaterialsTable) Copy(ctx context.Context, db *keel.DB, rows []*hazardousmaterial.HazardousMaterial) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -512,37 +510,45 @@ func (q *HazardousMaterialsQuery) Clone() keel.Query[*hazardousmaterial.Hazardou
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *HazardousMaterialsQuery) One(ctx context.Context, db *keel.DB) (*hazardousmaterial.HazardousMaterial, error) {
-	return keel.One[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*hazardousmaterial.HazardousMaterial)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *HazardousMaterialsQuery) First(ctx context.Context, db *keel.DB) (*hazardousmaterial.HazardousMaterial, error) {
-	return keel.First[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*hazardousmaterial.HazardousMaterial)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *HazardousMaterialsQuery) List(ctx context.Context, db *keel.DB) ([]*hazardousmaterial.HazardousMaterial, error) {
-	return keel.List[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*hazardousmaterial.HazardousMaterial)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *HazardousMaterialsQuery) All(ctx context.Context, db *keel.DB) ([]*hazardousmaterial.HazardousMaterial, error) {
-	return keel.All[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*hazardousmaterial.HazardousMaterial)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *HazardousMaterialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*hazardousmaterial.HazardousMaterial, error) {
-	return keel.UpdateReturning[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*hazardousmaterial.HazardousMaterial)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *HazardousMaterialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*hazardousmaterial.HazardousMaterial], error) {
-	return keel.PageOf[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*hazardousmaterial.HazardousMaterial])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *HazardousMaterialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*hazardousmaterial.HazardousMaterial) error) error {
-	return keel.Each[*hazardousmaterial.HazardousMaterial](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*hazardousmaterial.HazardousMaterial)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newHazardousMaterial() unsafe.Pointer {
@@ -757,75 +763,75 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // HazardousClassCol is a column of hazardousmaterial.HazardousClass values.
-type HazardousClassCol struct{ keel.StringCol }
+type HazardousClassCol struct{ keel.TypedStringCol }
 
 func (c HazardousClassCol) Eq(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c HazardousClassCol) Ne(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c HazardousClassCol) Gt(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c HazardousClassCol) Gte(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c HazardousClassCol) Lt(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c HazardousClassCol) Lte(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c HazardousClassCol) IsDistinctFrom(v hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c HazardousClassCol) Between(lo, hi hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c HazardousClassCol) To(v hazardousmaterial.HazardousClass) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c HazardousClassCol) In(vs ...hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c HazardousClassCol) NotIn(vs ...hazardousmaterial.HazardousClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PackingGroupCol is a column of hazardousmaterial.PackingGroup values.
-type PackingGroupCol struct{ keel.StringCol }
+type PackingGroupCol struct{ keel.TypedStringCol }
 
 func (c PackingGroupCol) Eq(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PackingGroupCol) Ne(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PackingGroupCol) Gt(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PackingGroupCol) Gte(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PackingGroupCol) Lt(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PackingGroupCol) Lte(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PackingGroupCol) IsDistinctFrom(v hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PackingGroupCol) Between(lo, hi hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PackingGroupCol) To(v hazardousmaterial.PackingGroup) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PackingGroupCol) In(vs ...hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PackingGroupCol) NotIn(vs ...hazardousmaterial.PackingGroup) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

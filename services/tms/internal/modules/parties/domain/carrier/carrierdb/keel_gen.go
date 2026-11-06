@@ -156,28 +156,28 @@ type CarriersTable struct {
 // Carriers references the carriers table.
 var Carriers = &CarriersTable{
 	TableBase:           keel.TableBase{Ref: &carriersRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 2}}},
-	StateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 3}}},
-	RemitStateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 4}}},
-	Status:              StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 5}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 2}}},
+	StateID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 3}}},
+	RemitStateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 4}}},
+	Status:              StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 5}}},
 	Code:                keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 6}},
 	Name:                keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 7}},
 	DBAName:             keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 8}},
-	CarrierType:         TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 9}}},
+	CarrierType:         TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 9}}},
 	DOTNumber:           keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 10}},
 	MCNumber:            keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 11}},
 	SCAC:                keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 12}},
-	ComplianceStatus:    ComplianceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 13}}},
-	SafetyRating:        SafetyRatingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 14}}},
+	ComplianceStatus:    ComplianceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 13}}},
+	SafetyRating:        SafetyRatingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 14}}},
 	QualifiedAt:         keel.Int64Col{Col: keel.Col{Ref: &carriersRef, Index: 15}},
 	DisqualifiedReason:  keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 16}},
 	TaxID:               keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 17}},
-	TaxIDType:           TaxIDTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 18}}},
+	TaxIDType:           TaxIDTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 18}}},
 	W9OnFile:            keel.BoolCol{Col: keel.Col{Ref: &carriersRef, Index: 19}},
 	Is1099Eligible:      keel.BoolCol{Col: keel.Col{Ref: &carriersRef, Index: 20}},
-	PaymentMethod:       PaymentMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 21}}},
+	PaymentMethod:       PaymentMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carriersRef, Index: 21}}},
 	PaymentTermDays:     keel.Int64Col{Col: keel.Col{Ref: &carriersRef, Index: 22}},
 	RemitToName:         keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 23}},
 	RemitAddressLine1:   keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 24}},
@@ -206,28 +206,28 @@ var Carriers = &CarriersTable{
 func BuildCarriers(r *keel.Ref) *CarriersTable {
 	return &CarriersTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		StateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RemitStateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:              StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		StateID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RemitStateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:              StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Code:                keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Name:                keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		DBAName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		CarrierType:         TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CarrierType:         TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DOTNumber:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		MCNumber:            keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		SCAC:                keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ComplianceStatus:    ComplianceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		SafetyRating:        SafetyRatingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ComplianceStatus:    ComplianceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		SafetyRating:        SafetyRatingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		QualifiedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		DisqualifiedReason:  keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		TaxID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		TaxIDType:           TaxIDTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		TaxIDType:           TaxIDTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		W9OnFile:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
 		Is1099Eligible:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
-		PaymentMethod:       PaymentMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		PaymentMethod:       PaymentMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		PaymentTermDays:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		RemitToName:         keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		RemitAddressLine1:   keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
@@ -293,8 +293,6 @@ func (t *CarriersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ca
 
 // CarriersQuery is a query over carrier.Carrier.
 type CarriersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrier.Carrier] = (*CarriersTable)(nil)
 
 var _ keel.Query[*carrier.Carrier] = (*CarriersQuery)(nil)
 
@@ -410,42 +408,42 @@ func (t *CarriersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrie
 
 // Create inserts row.
 func (t *CarriersTable) Create(ctx context.Context, db *keel.DB, row *carrier.Carrier) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarriersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.Carrier) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarriersTable) Save(ctx context.Context, db *keel.DB, row *carrier.Carrier, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarriersTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.Carrier, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarriersTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.Carrier) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarriersTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.Carrier, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarriersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.Carrier, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarriersTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.Carrier) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -617,37 +615,45 @@ func (q *CarriersQuery) Clone() keel.Query[*carrier.Carrier] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarriersQuery) One(ctx context.Context, db *keel.DB) (*carrier.Carrier, error) {
-	return keel.One[*carrier.Carrier](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrier.Carrier)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarriersQuery) First(ctx context.Context, db *keel.DB) (*carrier.Carrier, error) {
-	return keel.First[*carrier.Carrier](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrier.Carrier)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarriersQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.Carrier, error) {
-	return keel.List[*carrier.Carrier](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.Carrier)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarriersQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.Carrier, error) {
-	return keel.All[*carrier.Carrier](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.Carrier)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarriersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.Carrier, error) {
-	return keel.UpdateReturning[*carrier.Carrier](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrier.Carrier)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarriersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.Carrier], error) {
-	return keel.PageOf[*carrier.Carrier](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrier.Carrier])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarriersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.Carrier) error) error {
-	return keel.Each[*carrier.Carrier](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrier.Carrier)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrier() unsafe.Pointer { return unsafe.Pointer(new(carrier.Carrier)) }
@@ -1006,10 +1012,10 @@ type CarrierContactsTable struct {
 // CarrierContacts references the carrier_contacts table.
 var CarrierContacts = &CarrierContactsTable{
 	TableBase:                 keel.TableBase{Ref: &carrierContactsRef},
-	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 0}}},
-	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 1}}},
-	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 2}}},
-	CarrierID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 3}}},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 0}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 1}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 2}}},
+	CarrierID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 3}}},
 	Name:                      keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 4}},
 	Title:                     keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 5}},
 	Email:                     keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 6}},
@@ -1025,10 +1031,10 @@ var CarrierContacts = &CarrierContactsTable{
 func BuildCarrierContacts(r *keel.Ref) *CarrierContactsTable {
 	return &CarrierContactsTable{
 		TableBase:                 keel.TableBase{Ref: r},
-		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Title:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Email:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -1059,8 +1065,6 @@ func (t *CarrierContactsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // CarrierContactsQuery is a query over carrier.CarrierContact.
 type CarrierContactsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrier.CarrierContact] = (*CarrierContactsTable)(nil)
 
 var _ keel.Query[*carrier.CarrierContact] = (*CarrierContactsQuery)(nil)
 
@@ -1176,42 +1180,42 @@ func (t *CarrierContactsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *CarrierContactsTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierContact) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierContactsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierContactsTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierContact, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierContactsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierContact, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierContactsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierContact) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierContactsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierContactsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierContactsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1383,37 +1387,45 @@ func (q *CarrierContactsQuery) Clone() keel.Query[*carrier.CarrierContact] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierContactsQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierContact, error) {
-	return keel.One[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierContact)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierContactsQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierContact, error) {
-	return keel.First[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierContact)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierContactsQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierContact, error) {
-	return keel.List[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierContact)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierContactsQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierContact, error) {
-	return keel.All[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierContact)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierContactsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierContact, error) {
-	return keel.UpdateReturning[*carrier.CarrierContact](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrier.CarrierContact)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierContactsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierContact], error) {
-	return keel.PageOf[*carrier.CarrierContact](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrier.CarrierContact])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierContactsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierContact) error) error {
-	return keel.Each[*carrier.CarrierContact](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrier.CarrierContact)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierContact() unsafe.Pointer { return unsafe.Pointer(new(carrier.CarrierContact)) }
@@ -1571,12 +1583,12 @@ type CarrierEDIChannelsTable struct {
 // CarrierEDIChannels references the carrier_edi_channels table.
 var CarrierEDIChannels = &CarrierEDIChannelsTable{
 	TableBase:              keel.TableBase{Ref: &carrierEDIChannelsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
-	CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 3}}},
-	EDIPartnerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 4}}},
-	CommunicationProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 5}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
+	CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 3}}},
+	EDIPartnerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 4}}},
+	CommunicationProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 5}}},
 	SCACOverride:           keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 6}},
 	IsDefault:              keel.BoolCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 7}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 8}},
@@ -1588,12 +1600,12 @@ var CarrierEDIChannels = &CarrierEDIChannelsTable{
 func BuildCarrierEDIChannels(r *keel.Ref) *CarrierEDIChannelsTable {
 	return &CarrierEDIChannelsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EDIPartnerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CommunicationProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EDIPartnerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CommunicationProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SCACOverride:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IsDefault:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1625,8 +1637,6 @@ func (t *CarrierEDIChannelsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // CarrierEDIChannelsQuery is a query over carrier.CarrierEDIChannel.
 type CarrierEDIChannelsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrier.CarrierEDIChannel] = (*CarrierEDIChannelsTable)(nil)
 
 var _ keel.Query[*carrier.CarrierEDIChannel] = (*CarrierEDIChannelsQuery)(nil)
 
@@ -1742,42 +1752,42 @@ func (t *CarrierEDIChannelsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *CarrierEDIChannelsTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierEDIChannelsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierEDIChannelsTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierEDIChannelsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierEDIChannelsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierEDIChannelsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierEDIChannelsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierEDIChannelsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1949,37 +1959,45 @@ func (q *CarrierEDIChannelsQuery) Clone() keel.Query[*carrier.CarrierEDIChannel]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierEDIChannelsQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierEDIChannel, error) {
-	return keel.One[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierEDIChannel)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierEDIChannelsQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierEDIChannel, error) {
-	return keel.First[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierEDIChannel)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierEDIChannelsQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierEDIChannel, error) {
-	return keel.List[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierEDIChannel)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierEDIChannelsQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierEDIChannel, error) {
-	return keel.All[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierEDIChannel)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierEDIChannelsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierEDIChannel, error) {
-	return keel.UpdateReturning[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrier.CarrierEDIChannel)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierEDIChannelsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierEDIChannel], error) {
-	return keel.PageOf[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrier.CarrierEDIChannel])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierEDIChannelsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierEDIChannel) error) error {
-	return keel.Each[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrier.CarrierEDIChannel)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierEDIChannel() unsafe.Pointer { return unsafe.Pointer(new(carrier.CarrierEDIChannel)) }
@@ -2132,11 +2150,11 @@ type CarrierInsurancePoliciesTable struct {
 // CarrierInsurancePolicies references the carrier_insurance_policies table.
 var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
 	TableBase:      keel.TableBase{Ref: &carrierInsurancePoliciesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 2}}},
-	CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 3}}},
-	PolicyType:     InsurancePolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 2}}},
+	CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 3}}},
+	PolicyType:     InsurancePolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 4}}},
 	PolicyNumber:   keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 5}},
 	ProviderName:   keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 6}},
 	CoverageAmount: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 7}}},
@@ -2152,11 +2170,11 @@ var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
 func BuildCarrierInsurancePolicies(r *keel.Ref) *CarrierInsurancePoliciesTable {
 	return &CarrierInsurancePoliciesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PolicyType:     InsurancePolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PolicyType:     InsurancePolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		PolicyNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ProviderName:   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		CoverageAmount: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
@@ -2189,8 +2207,6 @@ func (t *CarrierInsurancePoliciesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // CarrierInsurancePoliciesQuery is a query over carrier.CarrierInsurancePolicy.
 type CarrierInsurancePoliciesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrier.CarrierInsurancePolicy] = (*CarrierInsurancePoliciesTable)(nil)
 
 var _ keel.Query[*carrier.CarrierInsurancePolicy] = (*CarrierInsurancePoliciesQuery)(nil)
 
@@ -2306,42 +2322,42 @@ func (t *CarrierInsurancePoliciesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *CarrierInsurancePoliciesTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierInsurancePoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierInsurancePoliciesTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierInsurancePoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierInsurancePoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierInsurancePoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierInsurancePoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierInsurancePoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2513,37 +2529,45 @@ func (q *CarrierInsurancePoliciesQuery) Clone() keel.Query[*carrier.CarrierInsur
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierInsurancePoliciesQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierInsurancePolicy, error) {
-	return keel.One[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierInsurancePolicy)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierInsurancePoliciesQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierInsurancePolicy, error) {
-	return keel.First[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrier.CarrierInsurancePolicy)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierInsurancePoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierInsurancePolicy, error) {
-	return keel.List[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierInsurancePolicy)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierInsurancePoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierInsurancePolicy, error) {
-	return keel.All[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrier.CarrierInsurancePolicy)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierInsurancePoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierInsurancePolicy, error) {
-	return keel.UpdateReturning[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrier.CarrierInsurancePolicy)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierInsurancePoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierInsurancePolicy], error) {
-	return keel.PageOf[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrier.CarrierInsurancePolicy])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierInsurancePoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierInsurancePolicy) error) error {
-	return keel.Each[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrier.CarrierInsurancePolicy)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierInsurancePolicy() unsafe.Pointer {
@@ -2711,186 +2735,180 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ComplianceStatusCol is a column of carrier.ComplianceStatus values.
-type ComplianceStatusCol struct{ keel.StringCol }
+type ComplianceStatusCol struct{ keel.TypedStringCol }
 
-func (c ComplianceStatusCol) Eq(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ComplianceStatusCol) Ne(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ComplianceStatusCol) Gt(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c ComplianceStatusCol) Eq(v carrier.ComplianceStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c ComplianceStatusCol) Ne(v carrier.ComplianceStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c ComplianceStatusCol) Gt(v carrier.ComplianceStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c ComplianceStatusCol) Gte(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c ComplianceStatusCol) Lt(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c ComplianceStatusCol) Lt(v carrier.ComplianceStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c ComplianceStatusCol) Lte(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ComplianceStatusCol) IsDistinctFrom(v carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ComplianceStatusCol) Between(lo, hi carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ComplianceStatusCol) To(v carrier.ComplianceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ComplianceStatusCol) In(vs ...carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ComplianceStatusCol) NotIn(vs ...carrier.ComplianceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InsurancePolicyTypeCol is a column of carrier.InsurancePolicyType values.
-type InsurancePolicyTypeCol struct{ keel.StringCol }
+type InsurancePolicyTypeCol struct{ keel.TypedStringCol }
 
 func (c InsurancePolicyTypeCol) Eq(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InsurancePolicyTypeCol) Ne(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InsurancePolicyTypeCol) Gt(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InsurancePolicyTypeCol) Gte(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InsurancePolicyTypeCol) Lt(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InsurancePolicyTypeCol) Lte(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InsurancePolicyTypeCol) IsDistinctFrom(v carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InsurancePolicyTypeCol) Between(lo, hi carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InsurancePolicyTypeCol) To(v carrier.InsurancePolicyType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InsurancePolicyTypeCol) In(vs ...carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InsurancePolicyTypeCol) NotIn(vs ...carrier.InsurancePolicyType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PaymentMethodCol is a column of carrier.PaymentMethod values.
-type PaymentMethodCol struct{ keel.StringCol }
+type PaymentMethodCol struct{ keel.TypedStringCol }
 
-func (c PaymentMethodCol) Eq(v carrier.PaymentMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PaymentMethodCol) Ne(v carrier.PaymentMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PaymentMethodCol) Gt(v carrier.PaymentMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PaymentMethodCol) Gte(v carrier.PaymentMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PaymentMethodCol) Lt(v carrier.PaymentMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PaymentMethodCol) Lte(v carrier.PaymentMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PaymentMethodCol) Eq(v carrier.PaymentMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PaymentMethodCol) Ne(v carrier.PaymentMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PaymentMethodCol) Gt(v carrier.PaymentMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PaymentMethodCol) Gte(v carrier.PaymentMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PaymentMethodCol) Lt(v carrier.PaymentMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PaymentMethodCol) Lte(v carrier.PaymentMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PaymentMethodCol) IsDistinctFrom(v carrier.PaymentMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PaymentMethodCol) Between(lo, hi carrier.PaymentMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PaymentMethodCol) To(v carrier.PaymentMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PaymentMethodCol) To(v carrier.PaymentMethod) keel.Assignment { return c.Text().To(string(v)) }
 func (c PaymentMethodCol) In(vs ...carrier.PaymentMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PaymentMethodCol) NotIn(vs ...carrier.PaymentMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SafetyRatingCol is a column of carrier.SafetyRating values.
-type SafetyRatingCol struct{ keel.StringCol }
+type SafetyRatingCol struct{ keel.TypedStringCol }
 
-func (c SafetyRatingCol) Eq(v carrier.SafetyRating) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SafetyRatingCol) Ne(v carrier.SafetyRating) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SafetyRatingCol) Gt(v carrier.SafetyRating) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SafetyRatingCol) Gte(v carrier.SafetyRating) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SafetyRatingCol) Lt(v carrier.SafetyRating) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SafetyRatingCol) Lte(v carrier.SafetyRating) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SafetyRatingCol) Eq(v carrier.SafetyRating) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SafetyRatingCol) Ne(v carrier.SafetyRating) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SafetyRatingCol) Gt(v carrier.SafetyRating) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SafetyRatingCol) Gte(v carrier.SafetyRating) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SafetyRatingCol) Lt(v carrier.SafetyRating) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SafetyRatingCol) Lte(v carrier.SafetyRating) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SafetyRatingCol) IsDistinctFrom(v carrier.SafetyRating) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SafetyRatingCol) Between(lo, hi carrier.SafetyRating) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SafetyRatingCol) To(v carrier.SafetyRating) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SafetyRatingCol) To(v carrier.SafetyRating) keel.Assignment { return c.Text().To(string(v)) }
 func (c SafetyRatingCol) In(vs ...carrier.SafetyRating) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SafetyRatingCol) NotIn(vs ...carrier.SafetyRating) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of carrier.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v carrier.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v carrier.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v carrier.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v carrier.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v carrier.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v carrier.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v carrier.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v carrier.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v carrier.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v carrier.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v carrier.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v carrier.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v carrier.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi carrier.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v carrier.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...carrier.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v carrier.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...carrier.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...carrier.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TaxIDTypeCol is a column of carrier.TaxIDType values.
-type TaxIDTypeCol struct{ keel.StringCol }
+type TaxIDTypeCol struct{ keel.TypedStringCol }
 
-func (c TaxIDTypeCol) Eq(v carrier.TaxIDType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TaxIDTypeCol) Ne(v carrier.TaxIDType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TaxIDTypeCol) Gt(v carrier.TaxIDType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TaxIDTypeCol) Gte(v carrier.TaxIDType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TaxIDTypeCol) Lt(v carrier.TaxIDType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TaxIDTypeCol) Lte(v carrier.TaxIDType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TaxIDTypeCol) Eq(v carrier.TaxIDType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TaxIDTypeCol) Ne(v carrier.TaxIDType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TaxIDTypeCol) Gt(v carrier.TaxIDType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TaxIDTypeCol) Gte(v carrier.TaxIDType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TaxIDTypeCol) Lt(v carrier.TaxIDType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TaxIDTypeCol) Lte(v carrier.TaxIDType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TaxIDTypeCol) IsDistinctFrom(v carrier.TaxIDType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TaxIDTypeCol) Between(lo, hi carrier.TaxIDType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TaxIDTypeCol) To(v carrier.TaxIDType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c TaxIDTypeCol) To(v carrier.TaxIDType) keel.Assignment { return c.Text().To(string(v)) }
 func (c TaxIDTypeCol) In(vs ...carrier.TaxIDType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TaxIDTypeCol) NotIn(vs ...carrier.TaxIDType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TypeCol is a column of carrier.Type values.
-type TypeCol struct{ keel.StringCol }
+type TypeCol struct{ keel.TypedStringCol }
 
-func (c TypeCol) Eq(v carrier.Type) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TypeCol) Ne(v carrier.Type) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TypeCol) Gt(v carrier.Type) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TypeCol) Gte(v carrier.Type) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TypeCol) Lt(v carrier.Type) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TypeCol) Lte(v carrier.Type) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TypeCol) IsDistinctFrom(v carrier.Type) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
+func (c TypeCol) Eq(v carrier.Type) keel.Pred             { return c.Text().Eq(string(v)) }
+func (c TypeCol) Ne(v carrier.Type) keel.Pred             { return c.Text().Ne(string(v)) }
+func (c TypeCol) Gt(v carrier.Type) keel.Pred             { return c.Text().Gt(string(v)) }
+func (c TypeCol) Gte(v carrier.Type) keel.Pred            { return c.Text().Gte(string(v)) }
+func (c TypeCol) Lt(v carrier.Type) keel.Pred             { return c.Text().Lt(string(v)) }
+func (c TypeCol) Lte(v carrier.Type) keel.Pred            { return c.Text().Lte(string(v)) }
+func (c TypeCol) IsDistinctFrom(v carrier.Type) keel.Pred { return c.Text().IsDistinctFrom(string(v)) }
 func (c TypeCol) Between(lo, hi carrier.Type) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TypeCol) To(v carrier.Type) keel.Assignment  { return c.StringCol.To(string(v)) }
-func (c TypeCol) In(vs ...carrier.Type) keel.Pred    { return c.StringCol.In(keel.Strings(vs)...) }
-func (c TypeCol) NotIn(vs ...carrier.Type) keel.Pred { return c.StringCol.NotIn(keel.Strings(vs)...) }
+func (c TypeCol) To(v carrier.Type) keel.Assignment { return c.Text().To(string(v)) }
+func (c TypeCol) In(vs ...carrier.Type) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c TypeCol) NotIn(vs ...carrier.Type) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}

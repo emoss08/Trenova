@@ -114,13 +114,13 @@ type FiscalPeriodsTable struct {
 // FiscalPeriods references the fiscal_periods table.
 var FiscalPeriods = &FiscalPeriodsTable{
 	TableBase:             keel.TableBase{Ref: &fiscalPeriodsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 2}}},
-	FiscalYearID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 2}}},
+	FiscalYearID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 3}}},
 	PeriodNumber:          keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 4}},
-	PeriodType:            PeriodTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 5}}},
-	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 6}}},
+	PeriodType:            PeriodTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 5}}},
+	Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 6}}},
 	Name:                  keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 7}},
 	StartDate:             keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 8}},
 	EndDate:               keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 9}},
@@ -128,11 +128,11 @@ var FiscalPeriods = &FiscalPeriodsTable{
 	AllowAdjustingEntries: keel.BoolCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 11}},
 	AdjustmentDeadline:    keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 12}},
 	LockedAt:              keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 13}},
-	LockedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 14}}},
+	LockedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 14}}},
 	ClosedAt:              keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 15}},
-	ClosedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 16}}},
+	ClosedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 16}}},
 	ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 17}},
-	ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 18}}},
+	ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 18}}},
 	ReopenReason:          keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 19}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 20}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 21}},
@@ -145,13 +145,13 @@ var FiscalPeriods = &FiscalPeriodsTable{
 func BuildFiscalPeriods(r *keel.Ref) *FiscalPeriodsTable {
 	return &FiscalPeriodsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FiscalYearID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FiscalYearID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PeriodNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		PeriodType:            PeriodTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		PeriodType:            PeriodTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Name:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		StartDate:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		EndDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -159,11 +159,11 @@ func BuildFiscalPeriods(r *keel.Ref) *FiscalPeriodsTable {
 		AllowAdjustingEntries: keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
 		AdjustmentDeadline:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		LockedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		LockedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		LockedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ClosedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ClosedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ClosedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		ReopenReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -203,8 +203,6 @@ func (t *FiscalPeriodsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // FiscalPeriodsQuery is a query over fiscalperiod.FiscalPeriod.
 type FiscalPeriodsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fiscalperiod.FiscalPeriod] = (*FiscalPeriodsTable)(nil)
 
 var _ keel.Query[*fiscalperiod.FiscalPeriod] = (*FiscalPeriodsQuery)(nil)
 
@@ -320,42 +318,42 @@ func (t *FiscalPeriodsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*f
 
 // Create inserts row.
 func (t *FiscalPeriodsTable) Create(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FiscalPeriodsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FiscalPeriodsTable) Save(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FiscalPeriodsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FiscalPeriodsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FiscalPeriodsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FiscalPeriodsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FiscalPeriodsTable) Copy(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -527,37 +525,45 @@ func (q *FiscalPeriodsQuery) Clone() keel.Query[*fiscalperiod.FiscalPeriod] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FiscalPeriodsQuery) One(ctx context.Context, db *keel.DB) (*fiscalperiod.FiscalPeriod, error) {
-	return keel.One[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fiscalperiod.FiscalPeriod)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FiscalPeriodsQuery) First(ctx context.Context, db *keel.DB) (*fiscalperiod.FiscalPeriod, error) {
-	return keel.First[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fiscalperiod.FiscalPeriod)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FiscalPeriodsQuery) List(ctx context.Context, db *keel.DB) ([]*fiscalperiod.FiscalPeriod, error) {
-	return keel.List[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fiscalperiod.FiscalPeriod)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FiscalPeriodsQuery) All(ctx context.Context, db *keel.DB) ([]*fiscalperiod.FiscalPeriod, error) {
-	return keel.All[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fiscalperiod.FiscalPeriod)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FiscalPeriodsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fiscalperiod.FiscalPeriod, error) {
-	return keel.UpdateReturning[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fiscalperiod.FiscalPeriod)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FiscalPeriodsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fiscalperiod.FiscalPeriod], error) {
-	return keel.PageOf[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fiscalperiod.FiscalPeriod])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FiscalPeriodsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fiscalperiod.FiscalPeriod) error) error {
-	return keel.Each[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fiscalperiod.FiscalPeriod)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFiscalPeriod() unsafe.Pointer { return unsafe.Pointer(new(fiscalperiod.FiscalPeriod)) }
@@ -761,49 +767,47 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // PeriodTypeCol is a column of fiscalperiod.PeriodType values.
-type PeriodTypeCol struct{ keel.StringCol }
+type PeriodTypeCol struct{ keel.TypedStringCol }
 
-func (c PeriodTypeCol) Eq(v fiscalperiod.PeriodType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PeriodTypeCol) Ne(v fiscalperiod.PeriodType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PeriodTypeCol) Gt(v fiscalperiod.PeriodType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PeriodTypeCol) Gte(v fiscalperiod.PeriodType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PeriodTypeCol) Lt(v fiscalperiod.PeriodType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PeriodTypeCol) Lte(v fiscalperiod.PeriodType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PeriodTypeCol) Eq(v fiscalperiod.PeriodType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PeriodTypeCol) Ne(v fiscalperiod.PeriodType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PeriodTypeCol) Gt(v fiscalperiod.PeriodType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PeriodTypeCol) Gte(v fiscalperiod.PeriodType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PeriodTypeCol) Lt(v fiscalperiod.PeriodType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PeriodTypeCol) Lte(v fiscalperiod.PeriodType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PeriodTypeCol) IsDistinctFrom(v fiscalperiod.PeriodType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PeriodTypeCol) Between(lo, hi fiscalperiod.PeriodType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PeriodTypeCol) To(v fiscalperiod.PeriodType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PeriodTypeCol) To(v fiscalperiod.PeriodType) keel.Assignment { return c.Text().To(string(v)) }
 func (c PeriodTypeCol) In(vs ...fiscalperiod.PeriodType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PeriodTypeCol) NotIn(vs ...fiscalperiod.PeriodType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of fiscalperiod.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v fiscalperiod.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v fiscalperiod.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v fiscalperiod.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v fiscalperiod.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v fiscalperiod.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v fiscalperiod.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v fiscalperiod.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v fiscalperiod.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v fiscalperiod.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v fiscalperiod.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v fiscalperiod.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v fiscalperiod.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v fiscalperiod.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi fiscalperiod.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v fiscalperiod.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v fiscalperiod.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...fiscalperiod.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...fiscalperiod.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

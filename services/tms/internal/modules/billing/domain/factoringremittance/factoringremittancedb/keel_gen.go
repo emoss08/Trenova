@@ -126,17 +126,17 @@ type RemittancesTable struct {
 // Remittances references the factoring_remittances table.
 var Remittances = &RemittancesTable{
 	TableBase:          keel.TableBase{Ref: &remittancesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 2}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 3}}},
-	DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 2}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 3}}},
+	DocumentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 4}}},
 	FileName:           keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 5}},
-	Source:             RemittanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 6}}},
-	InboundMessageID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 7}}},
-	SourceFormat:       RemittanceFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 8}}},
-	Status:             RemittanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 9}}},
-	DefaultKind:        RemittanceLineKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 10}}},
+	Source:             RemittanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 6}}},
+	InboundMessageID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 7}}},
+	SourceFormat:       RemittanceFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 8}}},
+	Status:             RemittanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 9}}},
+	DefaultKind:        RemittanceLineKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 10}}},
 	RemittedOn:         keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 11}},
 	CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 12}},
 	Mapping:            keel.JSONBCol{Col: keel.Col{Ref: &remittancesRef, Index: 13}},
@@ -150,10 +150,10 @@ var Remittances = &RemittancesTable{
 	Error:              keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 21}},
 	StagedAt:           keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 22}},
 	AppliedAt:          keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 23}},
-	AppliedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 24}}},
+	AppliedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 24}}},
 	DiscardedAt:        keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 25}},
 	DiscardReason:      keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 26}},
-	CreatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 27}}},
+	CreatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittancesRef, Index: 27}}},
 	Version:            keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 28}},
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 29}},
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 30}},
@@ -163,17 +163,17 @@ var Remittances = &RemittancesTable{
 func BuildRemittances(r *keel.Ref) *RemittancesTable {
 	return &RemittancesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DocumentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		FileName:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Source:             RemittanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		InboundMessageID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SourceFormat:       RemittanceFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:             RemittanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		DefaultKind:        RemittanceLineKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Source:             RemittanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		InboundMessageID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SourceFormat:       RemittanceFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:             RemittanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		DefaultKind:        RemittanceLineKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		RemittedOn:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Mapping:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -187,10 +187,10 @@ func BuildRemittances(r *keel.Ref) *RemittancesTable {
 		Error:              keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		StagedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		AppliedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		AppliedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		AppliedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		DiscardedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		DiscardReason:      keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		CreatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		CreatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
@@ -222,8 +222,6 @@ func (t *RemittancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // RemittancesQuery is a query over factoringremittance.Remittance.
 type RemittancesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringremittance.Remittance] = (*RemittancesTable)(nil)
 
 var _ keel.Query[*factoringremittance.Remittance] = (*RemittancesQuery)(nil)
 
@@ -339,42 +337,42 @@ func (t *RemittancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fac
 
 // Create inserts row.
 func (t *RemittancesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RemittancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RemittancesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RemittancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RemittancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RemittancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RemittancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RemittancesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -546,37 +544,45 @@ func (q *RemittancesQuery) Clone() keel.Query[*factoringremittance.Remittance] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RemittancesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.Remittance, error) {
-	return keel.One[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.Remittance)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RemittancesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.Remittance, error) {
-	return keel.First[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.Remittance)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RemittancesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.Remittance, error) {
-	return keel.List[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.Remittance)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RemittancesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.Remittance, error) {
-	return keel.All[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.Remittance)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RemittancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.Remittance, error) {
-	return keel.UpdateReturning[*factoringremittance.Remittance](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringremittance.Remittance)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RemittancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.Remittance], error) {
-	return keel.PageOf[*factoringremittance.Remittance](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringremittance.Remittance])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RemittancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.Remittance) error) error {
-	return keel.Each[*factoringremittance.Remittance](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringremittance.Remittance)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRemittance() unsafe.Pointer { return unsafe.Pointer(new(factoringremittance.Remittance)) }
@@ -888,13 +894,13 @@ type RemittanceLinesTable struct {
 // RemittanceLines references the factoring_remittance_lines table.
 var RemittanceLines = &RemittanceLinesTable{
 	TableBase:         keel.TableBase{Ref: &remittanceLinesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 0}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 1}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 2}}},
-	RemittanceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 0}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 1}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 2}}},
+	RemittanceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 3}}},
 	RowNumber:         keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 4}},
 	Cells:             keel.JSONBCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 5}},
-	Kind:              RemittanceLineKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 6}}},
+	Kind:              RemittanceLineKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 6}}},
 	InvoiceNumber:     keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 7}},
 	NormalizedInvoice: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 8}},
 	FactorReference:   keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 9}},
@@ -905,17 +911,17 @@ var RemittanceLines = &RemittanceLinesTable{
 	ReserveMinor:      keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 14}},
 	CashMinor:         keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 15}},
 	OccurredOn:        keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 16}},
-	MatchStatus:       RemittanceMatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 17}}},
-	MatchedBy:         RemittanceMatchedByCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 18}}},
-	SubmissionItemID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 19}}},
+	MatchStatus:       RemittanceMatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 17}}},
+	MatchedBy:         RemittanceMatchedByCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 18}}},
+	SubmissionItemID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 19}}},
 	Score:             keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 20}},
-	Reason:            RemittanceMatchReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 21}}},
+	Reason:            RemittanceMatchReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 21}}},
 	Suggestions:       keel.JSONBCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 22}},
 	Error:             keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 23}},
 	IgnoredReason:     keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 24}},
-	ReserveEntryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 25}}},
+	ReserveEntryID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 25}}},
 	MatchedInvoice:    keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 26}},
-	MatchedSubmission: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 27}}},
+	MatchedSubmission: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 27}}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 28}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 29}},
 }
@@ -924,13 +930,13 @@ var RemittanceLines = &RemittanceLinesTable{
 func BuildRemittanceLines(r *keel.Ref) *RemittanceLinesTable {
 	return &RemittanceLinesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RemittanceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RemittanceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		RowNumber:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Cells:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:              RemittanceLineKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:              RemittanceLineKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		InvoiceNumber:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		NormalizedInvoice: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		FactorReference:   keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -941,17 +947,17 @@ func BuildRemittanceLines(r *keel.Ref) *RemittanceLinesTable {
 		ReserveMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CashMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		OccurredOn:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		MatchStatus:       RemittanceMatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		MatchedBy:         RemittanceMatchedByCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		SubmissionItemID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		MatchStatus:       RemittanceMatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		MatchedBy:         RemittanceMatchedByCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		SubmissionItemID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		Score:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		Reason:            RemittanceMatchReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		Reason:            RemittanceMatchReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		Suggestions:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
 		Error:             keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		IgnoredReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		ReserveEntryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ReserveEntryID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		MatchedInvoice:    keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		MatchedSubmission: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		MatchedSubmission: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 	}
@@ -977,8 +983,6 @@ func (t *RemittanceLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // RemittanceLinesQuery is a query over factoringremittance.RemittanceLine.
 type RemittanceLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringremittance.RemittanceLine] = (*RemittanceLinesTable)(nil)
 
 var _ keel.Query[*factoringremittance.RemittanceLine] = (*RemittanceLinesQuery)(nil)
 
@@ -1094,42 +1098,42 @@ func (t *RemittanceLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *RemittanceLinesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RemittanceLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RemittanceLinesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RemittanceLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RemittanceLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RemittanceLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RemittanceLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RemittanceLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1301,37 +1305,45 @@ func (q *RemittanceLinesQuery) Clone() keel.Query[*factoringremittance.Remittanc
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RemittanceLinesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceLine, error) {
-	return keel.One[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.RemittanceLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RemittanceLinesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceLine, error) {
-	return keel.First[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.RemittanceLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RemittanceLinesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceLine, error) {
-	return keel.List[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.RemittanceLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RemittanceLinesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceLine, error) {
-	return keel.All[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.RemittanceLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RemittanceLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.RemittanceLine, error) {
-	return keel.UpdateReturning[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringremittance.RemittanceLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RemittanceLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.RemittanceLine], error) {
-	return keel.PageOf[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringremittance.RemittanceLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RemittanceLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.RemittanceLine) error) error {
-	return keel.Each[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringremittance.RemittanceLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRemittanceLine() unsafe.Pointer {
@@ -1603,10 +1615,10 @@ type RemittanceProfilesTable struct {
 // RemittanceProfiles references the factoring_remittance_profiles table.
 var RemittanceProfiles = &RemittanceProfilesTable{
 	TableBase:          keel.TableBase{Ref: &remittanceProfilesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 2}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 2}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 3}}},
 	Mapping:            keel.JSONBCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 4}},
 	HeaderSignature:    keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 5}},
 	Version:            keel.Int64Col{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 6}},
@@ -1618,10 +1630,10 @@ var RemittanceProfiles = &RemittanceProfilesTable{
 func BuildRemittanceProfiles(r *keel.Ref) *RemittanceProfilesTable {
 	return &RemittanceProfilesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Mapping:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 4}},
 		HeaderSignature:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -1645,8 +1657,6 @@ func (t *RemittanceProfilesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // RemittanceProfilesQuery is a query over factoringremittance.RemittanceProfile.
 type RemittanceProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringremittance.RemittanceProfile] = (*RemittanceProfilesTable)(nil)
 
 var _ keel.Query[*factoringremittance.RemittanceProfile] = (*RemittanceProfilesQuery)(nil)
 
@@ -1762,42 +1772,42 @@ func (t *RemittanceProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *RemittanceProfilesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RemittanceProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RemittanceProfilesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RemittanceProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RemittanceProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RemittanceProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RemittanceProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RemittanceProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1969,37 +1979,45 @@ func (q *RemittanceProfilesQuery) Clone() keel.Query[*factoringremittance.Remitt
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RemittanceProfilesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceProfile, error) {
-	return keel.One[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.RemittanceProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RemittanceProfilesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceProfile, error) {
-	return keel.First[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringremittance.RemittanceProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RemittanceProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceProfile, error) {
-	return keel.List[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.RemittanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RemittanceProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceProfile, error) {
-	return keel.All[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringremittance.RemittanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RemittanceProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.RemittanceProfile, error) {
-	return keel.UpdateReturning[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringremittance.RemittanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RemittanceProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.RemittanceProfile], error) {
-	return keel.PageOf[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringremittance.RemittanceProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RemittanceProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.RemittanceProfile) error) error {
-	return keel.Each[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringremittance.RemittanceProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRemittanceProfile() unsafe.Pointer {
@@ -2153,260 +2171,260 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // RemittanceFormatCol is a column of factoringremittance.RemittanceFormat values.
-type RemittanceFormatCol struct{ keel.StringCol }
+type RemittanceFormatCol struct{ keel.TypedStringCol }
 
 func (c RemittanceFormatCol) Eq(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceFormatCol) Ne(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceFormatCol) Gt(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceFormatCol) Gte(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceFormatCol) Lt(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceFormatCol) Lte(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceFormatCol) IsDistinctFrom(v factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceFormatCol) Between(lo, hi factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceFormatCol) To(v factoringremittance.RemittanceFormat) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceFormatCol) In(vs ...factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceFormatCol) NotIn(vs ...factoringremittance.RemittanceFormat) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceLineKindCol is a column of factoringremittance.RemittanceLineKind values.
-type RemittanceLineKindCol struct{ keel.StringCol }
+type RemittanceLineKindCol struct{ keel.TypedStringCol }
 
 func (c RemittanceLineKindCol) Eq(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceLineKindCol) Ne(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceLineKindCol) Gt(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceLineKindCol) Gte(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceLineKindCol) Lt(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceLineKindCol) Lte(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceLineKindCol) IsDistinctFrom(v factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceLineKindCol) Between(lo, hi factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceLineKindCol) To(v factoringremittance.RemittanceLineKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceLineKindCol) In(vs ...factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceLineKindCol) NotIn(vs ...factoringremittance.RemittanceLineKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceMatchReasonCol is a column of factoringremittance.RemittanceMatchReason values.
-type RemittanceMatchReasonCol struct{ keel.StringCol }
+type RemittanceMatchReasonCol struct{ keel.TypedStringCol }
 
 func (c RemittanceMatchReasonCol) Eq(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceMatchReasonCol) Ne(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceMatchReasonCol) Gt(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceMatchReasonCol) Gte(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceMatchReasonCol) Lt(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceMatchReasonCol) Lte(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceMatchReasonCol) IsDistinctFrom(v factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceMatchReasonCol) Between(lo, hi factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceMatchReasonCol) To(v factoringremittance.RemittanceMatchReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceMatchReasonCol) In(vs ...factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceMatchReasonCol) NotIn(vs ...factoringremittance.RemittanceMatchReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceMatchStatusCol is a column of factoringremittance.RemittanceMatchStatus values.
-type RemittanceMatchStatusCol struct{ keel.StringCol }
+type RemittanceMatchStatusCol struct{ keel.TypedStringCol }
 
 func (c RemittanceMatchStatusCol) Eq(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceMatchStatusCol) Ne(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceMatchStatusCol) Gt(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceMatchStatusCol) Gte(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceMatchStatusCol) Lt(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceMatchStatusCol) Lte(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceMatchStatusCol) IsDistinctFrom(v factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceMatchStatusCol) Between(lo, hi factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceMatchStatusCol) To(v factoringremittance.RemittanceMatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceMatchStatusCol) In(vs ...factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceMatchStatusCol) NotIn(vs ...factoringremittance.RemittanceMatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceMatchedByCol is a column of factoringremittance.RemittanceMatchedBy values.
-type RemittanceMatchedByCol struct{ keel.StringCol }
+type RemittanceMatchedByCol struct{ keel.TypedStringCol }
 
 func (c RemittanceMatchedByCol) Eq(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceMatchedByCol) Ne(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceMatchedByCol) Gt(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceMatchedByCol) Gte(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceMatchedByCol) Lt(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceMatchedByCol) Lte(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceMatchedByCol) IsDistinctFrom(v factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceMatchedByCol) Between(lo, hi factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceMatchedByCol) To(v factoringremittance.RemittanceMatchedBy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceMatchedByCol) In(vs ...factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceMatchedByCol) NotIn(vs ...factoringremittance.RemittanceMatchedBy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceSourceCol is a column of factoringremittance.RemittanceSource values.
-type RemittanceSourceCol struct{ keel.StringCol }
+type RemittanceSourceCol struct{ keel.TypedStringCol }
 
 func (c RemittanceSourceCol) Eq(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceSourceCol) Ne(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceSourceCol) Gt(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceSourceCol) Gte(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceSourceCol) Lt(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceSourceCol) Lte(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceSourceCol) IsDistinctFrom(v factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceSourceCol) Between(lo, hi factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceSourceCol) To(v factoringremittance.RemittanceSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceSourceCol) In(vs ...factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceSourceCol) NotIn(vs ...factoringremittance.RemittanceSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RemittanceStatusCol is a column of factoringremittance.RemittanceStatus values.
-type RemittanceStatusCol struct{ keel.StringCol }
+type RemittanceStatusCol struct{ keel.TypedStringCol }
 
 func (c RemittanceStatusCol) Eq(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RemittanceStatusCol) Ne(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RemittanceStatusCol) Gt(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RemittanceStatusCol) Gte(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RemittanceStatusCol) Lt(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RemittanceStatusCol) Lte(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RemittanceStatusCol) IsDistinctFrom(v factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RemittanceStatusCol) Between(lo, hi factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RemittanceStatusCol) To(v factoringremittance.RemittanceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RemittanceStatusCol) In(vs ...factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RemittanceStatusCol) NotIn(vs ...factoringremittance.RemittanceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -80,18 +80,18 @@ type RemindersTable struct {
 // Reminders references the invoice_payment_reminders table.
 var Reminders = &RemindersTable{
 	TableBase:       keel.TableBase{Ref: &remindersRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 0}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 1}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 2}}},
-	InvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 3}}},
-	CustomerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 4}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 0}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 1}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 2}}},
+	InvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 3}}},
+	CustomerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 4}}},
 	Step:            keel.Int16Col{Col: keel.Col{Ref: &remindersRef, Index: 5}},
 	DaysPastDue:     keel.Int64Col{Col: keel.Col{Ref: &remindersRef, Index: 6}},
 	OpenAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &remindersRef, Index: 7}},
 	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 8}},
 	SentTo:          keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 9}},
 	Manual:          keel.BoolCol{Col: keel.Col{Ref: &remindersRef, Index: 10}},
-	SentByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 11}}},
+	SentByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &remindersRef, Index: 11}}},
 	SentAt:          keel.Int64Col{Col: keel.Col{Ref: &remindersRef, Index: 12}},
 }
 
@@ -99,18 +99,18 @@ var Reminders = &RemindersTable{
 func BuildReminders(r *keel.Ref) *RemindersTable {
 	return &RemindersTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		InvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Step:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
 		DaysPastDue:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		OpenAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		SentTo:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Manual:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		SentByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		SentByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		SentAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 	}
 }
@@ -130,8 +130,6 @@ func (t *RemindersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*p
 
 // RemindersQuery is a query over paymentreminder.Reminder.
 type RemindersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*paymentreminder.Reminder] = (*RemindersTable)(nil)
 
 var _ keel.Query[*paymentreminder.Reminder] = (*RemindersQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *RemindersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payme
 
 // Create inserts row.
 func (t *RemindersTable) Create(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RemindersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RemindersTable) Save(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RemindersTable) SaveExcept(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RemindersTable) DeleteRow(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RemindersTable) Upsert(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RemindersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RemindersTable) Copy(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *RemindersQuery) Clone() keel.Query[*paymentreminder.Reminder] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RemindersQuery) One(ctx context.Context, db *keel.DB) (*paymentreminder.Reminder, error) {
-	return keel.One[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*paymentreminder.Reminder)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RemindersQuery) First(ctx context.Context, db *keel.DB) (*paymentreminder.Reminder, error) {
-	return keel.First[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*paymentreminder.Reminder)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RemindersQuery) List(ctx context.Context, db *keel.DB) ([]*paymentreminder.Reminder, error) {
-	return keel.List[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paymentreminder.Reminder)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RemindersQuery) All(ctx context.Context, db *keel.DB) ([]*paymentreminder.Reminder, error) {
-	return keel.All[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paymentreminder.Reminder)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RemindersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paymentreminder.Reminder, error) {
-	return keel.UpdateReturning[*paymentreminder.Reminder](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*paymentreminder.Reminder)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RemindersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paymentreminder.Reminder], error) {
-	return keel.PageOf[*paymentreminder.Reminder](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*paymentreminder.Reminder])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RemindersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paymentreminder.Reminder) error) error {
-	return keel.Each[*paymentreminder.Reminder](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*paymentreminder.Reminder)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReminder() unsafe.Pointer { return unsafe.Pointer(new(paymentreminder.Reminder)) }

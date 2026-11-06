@@ -132,36 +132,36 @@ type BillingControlsTable struct {
 // BillingControls references the billing_controls table.
 var BillingControls = &BillingControlsTable{
 	TableBase:                             keel.TableBase{Ref: &billingControlsRef},
-	ID:                                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 0}}},
-	BusinessUnitID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 1}}},
-	OrganizationID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 2}}},
-	DefaultPaymentTerm:                    PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 3}}},
+	ID:                                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 0}}},
+	BusinessUnitID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 1}}},
+	OrganizationID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 2}}},
+	DefaultPaymentTerm:                    PaymentTermCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 3}}},
 	DefaultInvoiceTerms:                   keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 4}},
 	DefaultInvoiceFooter:                  keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 5}},
 	ShowDueDateOnInvoice:                  keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 6}},
 	ShowBalanceDueOnInvoice:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 7}},
-	ReadyToBillAssignmentMode:             ReadyToBillAssignmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 8}}},
-	BillingQueueTransferMode:              BillingQueueTransferModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 9}}},
-	BillingQueueTransferSchedule:          TransferScheduleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 10}}},
+	ReadyToBillAssignmentMode:             ReadyToBillAssignmentModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 8}}},
+	BillingQueueTransferMode:              BillingQueueTransferModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 9}}},
+	BillingQueueTransferSchedule:          TransferScheduleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 10}}},
 	BillingQueueTransferBatchSize:         keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 11}},
-	InvoiceDraftCreationMode:              InvoiceDraftCreationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 12}}},
-	InvoicePostingMode:                    InvoicePostingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 13}}},
+	InvoiceDraftCreationMode:              InvoiceDraftCreationModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 12}}},
+	InvoicePostingMode:                    InvoicePostingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 13}}},
 	AutoInvoiceBatchSize:                  keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 14}},
 	NotifyOnAutoInvoiceCreation:           keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 15}},
-	ShipmentBillingRequirementEnforcement: tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 16}}},
-	RateValidationEnforcement:             tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 17}}},
-	BillingExceptionDisposition:           BillingExceptionDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 18}}},
+	ShipmentBillingRequirementEnforcement: tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 16}}},
+	RateValidationEnforcement:             tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 17}}},
+	BillingExceptionDisposition:           BillingExceptionDispositionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 18}}},
 	NotifyOnBillingExceptions:             keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 19}},
 	RateVarianceTolerancePercent:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 20}}},
-	RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 21}}},
-	UnratedShipmentDisposition:            UnratedShipmentDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 22}}},
-	FallbackFormulaTemplateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 23}}},
+	RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 21}}},
+	UnratedShipmentDisposition:            UnratedShipmentDispositionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 22}}},
+	FallbackFormulaTemplateID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 23}}},
 	RequireRateOverrideReason:             keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 24}},
 	EnforceMarginFloor:                    keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 25}},
-	QueueAutoApproveMode:                  QueueAutoApproveModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 26}}},
+	QueueAutoApproveMode:                  QueueAutoApproveModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 26}}},
 	QueueAutoApproveMaxAmount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 27}}},
 	QueueAgentReviewEnabled:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 28}},
-	LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 29}}},
+	LateChargeAssessmentMode:              LateChargeAssessmentModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 29}}},
 	LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 30}}},
 	PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: &billingControlsRef, Index: 31}},
 	PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: &billingControlsRef, Index: 32}},
@@ -176,36 +176,36 @@ var BillingControls = &BillingControlsTable{
 func BuildBillingControls(r *keel.Ref) *BillingControlsTable {
 	return &BillingControlsTable{
 		TableBase:                             keel.TableBase{Ref: r},
-		ID:                                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefaultPaymentTerm:                    PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefaultPaymentTerm:                    PaymentTermCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DefaultInvoiceTerms:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		DefaultInvoiceFooter:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ShowDueDateOnInvoice:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		ShowBalanceDueOnInvoice:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		ReadyToBillAssignmentMode:             ReadyToBillAssignmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		BillingQueueTransferMode:              BillingQueueTransferModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		BillingQueueTransferSchedule:          TransferScheduleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ReadyToBillAssignmentMode:             ReadyToBillAssignmentModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		BillingQueueTransferMode:              BillingQueueTransferModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		BillingQueueTransferSchedule:          TransferScheduleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		BillingQueueTransferBatchSize:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		InvoiceDraftCreationMode:              InvoiceDraftCreationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		InvoicePostingMode:                    InvoicePostingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		InvoiceDraftCreationMode:              InvoiceDraftCreationModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		InvoicePostingMode:                    InvoicePostingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		AutoInvoiceBatchSize:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		NotifyOnAutoInvoiceCreation:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
-		ShipmentBillingRequirementEnforcement: tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		RateValidationEnforcement:             tenantdb.EnforcementLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		BillingExceptionDisposition:           BillingExceptionDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ShipmentBillingRequirementEnforcement: tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		RateValidationEnforcement:             tenantdb.EnforcementLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		BillingExceptionDisposition:           BillingExceptionDispositionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		NotifyOnBillingExceptions:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
 		RateVarianceTolerancePercent:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 20}}},
-		RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		UnratedShipmentDisposition:            UnratedShipmentDispositionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		FallbackFormulaTemplateID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		UnratedShipmentDisposition:            UnratedShipmentDispositionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		FallbackFormulaTemplateID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		RequireRateOverrideReason:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
 		EnforceMarginFloor:                    keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
-		QueueAutoApproveMode:                  QueueAutoApproveModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		QueueAutoApproveMode:                  QueueAutoApproveModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		QueueAutoApproveMaxAmount:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 27}}},
 		QueueAgentReviewEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
-		LateChargeAssessmentMode:              LateChargeAssessmentModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		LateChargeAssessmentMode:              LateChargeAssessmentModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		LateChargeMinimumAmount:               keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 30}}},
 		PaymentRemindersEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		PaymentReminderDays:                   keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}},
@@ -232,8 +232,6 @@ func (t *BillingControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // BillingControlsQuery is a query over billingcontrol.BillingControl.
 type BillingControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingcontrol.BillingControl] = (*BillingControlsTable)(nil)
 
 var _ keel.Query[*billingcontrol.BillingControl] = (*BillingControlsQuery)(nil)
 
@@ -349,42 +347,42 @@ func (t *BillingControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *BillingControlsTable) Create(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BillingControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BillingControlsTable) Save(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BillingControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BillingControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BillingControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BillingControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BillingControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -556,37 +554,45 @@ func (q *BillingControlsQuery) Clone() keel.Query[*billingcontrol.BillingControl
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BillingControlsQuery) One(ctx context.Context, db *keel.DB) (*billingcontrol.BillingControl, error) {
-	return keel.One[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingcontrol.BillingControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BillingControlsQuery) First(ctx context.Context, db *keel.DB) (*billingcontrol.BillingControl, error) {
-	return keel.First[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingcontrol.BillingControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BillingControlsQuery) List(ctx context.Context, db *keel.DB) ([]*billingcontrol.BillingControl, error) {
-	return keel.List[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingcontrol.BillingControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BillingControlsQuery) All(ctx context.Context, db *keel.DB) ([]*billingcontrol.BillingControl, error) {
-	return keel.All[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingcontrol.BillingControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BillingControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingcontrol.BillingControl, error) {
-	return keel.UpdateReturning[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingcontrol.BillingControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BillingControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingcontrol.BillingControl], error) {
-	return keel.PageOf[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingcontrol.BillingControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BillingControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingcontrol.BillingControl) error) error {
-	return keel.Each[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingcontrol.BillingControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBillingControl() unsafe.Pointer { return unsafe.Pointer(new(billingcontrol.BillingControl)) }
@@ -870,400 +876,396 @@ var enumUnratedShipmentDisposition = [...]schema.EnumValue{
 }
 
 // BillingExceptionDispositionCol is a column of billingcontrol.BillingExceptionDisposition values.
-type BillingExceptionDispositionCol struct{ keel.StringCol }
+type BillingExceptionDispositionCol struct{ keel.TypedStringCol }
 
 func (c BillingExceptionDispositionCol) Eq(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c BillingExceptionDispositionCol) Ne(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c BillingExceptionDispositionCol) Gt(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c BillingExceptionDispositionCol) Gte(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c BillingExceptionDispositionCol) Lt(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c BillingExceptionDispositionCol) Lte(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BillingExceptionDispositionCol) IsDistinctFrom(v billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BillingExceptionDispositionCol) Between(lo, hi billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BillingExceptionDispositionCol) To(v billingcontrol.BillingExceptionDisposition) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BillingExceptionDispositionCol) In(vs ...billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BillingExceptionDispositionCol) NotIn(vs ...billingcontrol.BillingExceptionDisposition) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // BillingQueueTransferModeCol is a column of billingcontrol.BillingQueueTransferMode values.
-type BillingQueueTransferModeCol struct{ keel.StringCol }
+type BillingQueueTransferModeCol struct{ keel.TypedStringCol }
 
 func (c BillingQueueTransferModeCol) Eq(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c BillingQueueTransferModeCol) Ne(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c BillingQueueTransferModeCol) Gt(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c BillingQueueTransferModeCol) Gte(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c BillingQueueTransferModeCol) Lt(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c BillingQueueTransferModeCol) Lte(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BillingQueueTransferModeCol) IsDistinctFrom(v billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BillingQueueTransferModeCol) Between(lo, hi billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BillingQueueTransferModeCol) To(v billingcontrol.BillingQueueTransferMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BillingQueueTransferModeCol) In(vs ...billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BillingQueueTransferModeCol) NotIn(vs ...billingcontrol.BillingQueueTransferMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceDraftCreationModeCol is a column of billingcontrol.InvoiceDraftCreationMode values.
-type InvoiceDraftCreationModeCol struct{ keel.StringCol }
+type InvoiceDraftCreationModeCol struct{ keel.TypedStringCol }
 
 func (c InvoiceDraftCreationModeCol) Eq(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Ne(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Gt(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Gte(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Lt(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Lte(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InvoiceDraftCreationModeCol) IsDistinctFrom(v billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceDraftCreationModeCol) Between(lo, hi billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceDraftCreationModeCol) To(v billingcontrol.InvoiceDraftCreationMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceDraftCreationModeCol) In(vs ...billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceDraftCreationModeCol) NotIn(vs ...billingcontrol.InvoiceDraftCreationMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoicePostingModeCol is a column of billingcontrol.InvoicePostingMode values.
-type InvoicePostingModeCol struct{ keel.StringCol }
+type InvoicePostingModeCol struct{ keel.TypedStringCol }
 
 func (c InvoicePostingModeCol) Eq(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InvoicePostingModeCol) Ne(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InvoicePostingModeCol) Gt(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InvoicePostingModeCol) Gte(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InvoicePostingModeCol) Lt(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InvoicePostingModeCol) Lte(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InvoicePostingModeCol) IsDistinctFrom(v billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoicePostingModeCol) Between(lo, hi billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoicePostingModeCol) To(v billingcontrol.InvoicePostingMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoicePostingModeCol) In(vs ...billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoicePostingModeCol) NotIn(vs ...billingcontrol.InvoicePostingMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LateChargeAssessmentModeCol is a column of billingcontrol.LateChargeAssessmentMode values.
-type LateChargeAssessmentModeCol struct{ keel.StringCol }
+type LateChargeAssessmentModeCol struct{ keel.TypedStringCol }
 
 func (c LateChargeAssessmentModeCol) Eq(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LateChargeAssessmentModeCol) Ne(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LateChargeAssessmentModeCol) Gt(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LateChargeAssessmentModeCol) Gte(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LateChargeAssessmentModeCol) Lt(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LateChargeAssessmentModeCol) Lte(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LateChargeAssessmentModeCol) IsDistinctFrom(v billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LateChargeAssessmentModeCol) Between(lo, hi billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LateChargeAssessmentModeCol) To(v billingcontrol.LateChargeAssessmentMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LateChargeAssessmentModeCol) In(vs ...billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LateChargeAssessmentModeCol) NotIn(vs ...billingcontrol.LateChargeAssessmentMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PaymentTermCol is a column of billingcontrol.PaymentTerm values.
-type PaymentTermCol struct{ keel.StringCol }
+type PaymentTermCol struct{ keel.TypedStringCol }
 
-func (c PaymentTermCol) Eq(v billingcontrol.PaymentTerm) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c PaymentTermCol) Ne(v billingcontrol.PaymentTerm) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c PaymentTermCol) Gt(v billingcontrol.PaymentTerm) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c PaymentTermCol) Gte(v billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c PaymentTermCol) Lt(v billingcontrol.PaymentTerm) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c PaymentTermCol) Lte(v billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c PaymentTermCol) Eq(v billingcontrol.PaymentTerm) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PaymentTermCol) Ne(v billingcontrol.PaymentTerm) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PaymentTermCol) Gt(v billingcontrol.PaymentTerm) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PaymentTermCol) Gte(v billingcontrol.PaymentTerm) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PaymentTermCol) Lt(v billingcontrol.PaymentTerm) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PaymentTermCol) Lte(v billingcontrol.PaymentTerm) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PaymentTermCol) IsDistinctFrom(v billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PaymentTermCol) Between(lo, hi billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PaymentTermCol) To(v billingcontrol.PaymentTerm) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PaymentTermCol) In(vs ...billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PaymentTermCol) NotIn(vs ...billingcontrol.PaymentTerm) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // QueueAutoApproveModeCol is a column of billingcontrol.QueueAutoApproveMode values.
-type QueueAutoApproveModeCol struct{ keel.StringCol }
+type QueueAutoApproveModeCol struct{ keel.TypedStringCol }
 
 func (c QueueAutoApproveModeCol) Eq(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c QueueAutoApproveModeCol) Ne(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c QueueAutoApproveModeCol) Gt(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c QueueAutoApproveModeCol) Gte(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c QueueAutoApproveModeCol) Lt(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c QueueAutoApproveModeCol) Lte(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c QueueAutoApproveModeCol) IsDistinctFrom(v billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c QueueAutoApproveModeCol) Between(lo, hi billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c QueueAutoApproveModeCol) To(v billingcontrol.QueueAutoApproveMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c QueueAutoApproveModeCol) In(vs ...billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c QueueAutoApproveModeCol) NotIn(vs ...billingcontrol.QueueAutoApproveMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateVarianceAutoResolutionModeCol is a column of billingcontrol.RateVarianceAutoResolutionMode values.
-type RateVarianceAutoResolutionModeCol struct{ keel.StringCol }
+type RateVarianceAutoResolutionModeCol struct{ keel.TypedStringCol }
 
 func (c RateVarianceAutoResolutionModeCol) Eq(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Ne(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Gt(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Gte(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Lt(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Lte(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) IsDistinctFrom(v billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) Between(lo, hi billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RateVarianceAutoResolutionModeCol) To(v billingcontrol.RateVarianceAutoResolutionMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RateVarianceAutoResolutionModeCol) In(vs ...billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateVarianceAutoResolutionModeCol) NotIn(vs ...billingcontrol.RateVarianceAutoResolutionMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReadyToBillAssignmentModeCol is a column of billingcontrol.ReadyToBillAssignmentMode values.
-type ReadyToBillAssignmentModeCol struct{ keel.StringCol }
+type ReadyToBillAssignmentModeCol struct{ keel.TypedStringCol }
 
 func (c ReadyToBillAssignmentModeCol) Eq(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Ne(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Gt(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Gte(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Lt(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Lte(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) IsDistinctFrom(v billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) Between(lo, hi billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReadyToBillAssignmentModeCol) To(v billingcontrol.ReadyToBillAssignmentMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReadyToBillAssignmentModeCol) In(vs ...billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReadyToBillAssignmentModeCol) NotIn(vs ...billingcontrol.ReadyToBillAssignmentMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransferScheduleCol is a column of billingcontrol.TransferSchedule values.
-type TransferScheduleCol struct{ keel.StringCol }
+type TransferScheduleCol struct{ keel.TypedStringCol }
 
 func (c TransferScheduleCol) Eq(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TransferScheduleCol) Ne(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TransferScheduleCol) Gt(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TransferScheduleCol) Gte(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TransferScheduleCol) Lt(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TransferScheduleCol) Lte(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransferScheduleCol) IsDistinctFrom(v billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransferScheduleCol) Between(lo, hi billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransferScheduleCol) To(v billingcontrol.TransferSchedule) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransferScheduleCol) In(vs ...billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransferScheduleCol) NotIn(vs ...billingcontrol.TransferSchedule) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // UnratedShipmentDispositionCol is a column of billingcontrol.UnratedShipmentDisposition values.
-type UnratedShipmentDispositionCol struct{ keel.StringCol }
+type UnratedShipmentDispositionCol struct{ keel.TypedStringCol }
 
 func (c UnratedShipmentDispositionCol) Eq(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c UnratedShipmentDispositionCol) Ne(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c UnratedShipmentDispositionCol) Gt(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c UnratedShipmentDispositionCol) Gte(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c UnratedShipmentDispositionCol) Lt(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c UnratedShipmentDispositionCol) Lte(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c UnratedShipmentDispositionCol) IsDistinctFrom(v billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c UnratedShipmentDispositionCol) Between(lo, hi billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c UnratedShipmentDispositionCol) To(v billingcontrol.UnratedShipmentDisposition) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c UnratedShipmentDispositionCol) In(vs ...billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c UnratedShipmentDispositionCol) NotIn(vs ...billingcontrol.UnratedShipmentDisposition) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

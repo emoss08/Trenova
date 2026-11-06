@@ -84,17 +84,17 @@ type LinesTable struct {
 // Lines references the manual_journal_request_lines table.
 var Lines = &LinesTable{
 	TableBase:              keel.TableBase{Ref: &linesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 0}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 1}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 2}}},
-	ManualJournalRequestID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 3}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 0}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 1}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 2}}},
+	ManualJournalRequestID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 3}}},
 	LineNumber:             keel.Int64Col{Col: keel.Col{Ref: &linesRef, Index: 4}},
-	GLAccountID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 5}}},
+	GLAccountID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 5}}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 6}},
 	DebitAmount:            keel.Int64Col{Col: keel.Col{Ref: &linesRef, Index: 7}},
 	CreditAmount:           keel.Int64Col{Col: keel.Col{Ref: &linesRef, Index: 8}},
-	CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 9}}},
-	LocationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linesRef, Index: 10}}},
+	CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 9}}},
+	LocationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linesRef, Index: 10}}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &linesRef, Index: 11}},
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &linesRef, Index: 12}},
 }
@@ -103,17 +103,17 @@ var Lines = &LinesTable{
 func BuildLines(r *keel.Ref) *LinesTable {
 	return &LinesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ManualJournalRequestID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ManualJournalRequestID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		LineNumber:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		GLAccountID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		GLAccountID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		DebitAmount:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreditAmount:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		LocationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		LocationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 	}
@@ -137,8 +137,6 @@ func (t *LinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*manua
 
 // LinesQuery is a query over manualjournal.Line.
 type LinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*manualjournal.Line] = (*LinesTable)(nil)
 
 var _ keel.Query[*manualjournal.Line] = (*LinesQuery)(nil)
 
@@ -254,42 +252,42 @@ func (t *LinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*manualjou
 
 // Create inserts row.
 func (t *LinesTable) Create(ctx context.Context, db *keel.DB, row *manualjournal.Line) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*manualjournal.Line) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LinesTable) Save(ctx context.Context, db *keel.DB, row *manualjournal.Line, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *manualjournal.Line, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *manualjournal.Line) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*manualjournal.Line, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*manualjournal.Line, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LinesTable) Copy(ctx context.Context, db *keel.DB, rows []*manualjournal.Line) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -461,37 +459,45 @@ func (q *LinesQuery) Clone() keel.Query[*manualjournal.Line] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LinesQuery) One(ctx context.Context, db *keel.DB) (*manualjournal.Line, error) {
-	return keel.One[*manualjournal.Line](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*manualjournal.Line)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LinesQuery) First(ctx context.Context, db *keel.DB) (*manualjournal.Line, error) {
-	return keel.First[*manualjournal.Line](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*manualjournal.Line)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LinesQuery) List(ctx context.Context, db *keel.DB) ([]*manualjournal.Line, error) {
-	return keel.List[*manualjournal.Line](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*manualjournal.Line)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LinesQuery) All(ctx context.Context, db *keel.DB) ([]*manualjournal.Line, error) {
-	return keel.All[*manualjournal.Line](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*manualjournal.Line)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*manualjournal.Line, error) {
-	return keel.UpdateReturning[*manualjournal.Line](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*manualjournal.Line)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*manualjournal.Line], error) {
-	return keel.PageOf[*manualjournal.Line](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*manualjournal.Line])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*manualjournal.Line) error) error {
-	return keel.Each[*manualjournal.Line](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*manualjournal.Line)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLine() unsafe.Pointer { return unsafe.Pointer(new(manualjournal.Line)) }
@@ -679,30 +685,30 @@ type RequestsTable struct {
 // Requests references the manual_journal_requests table.
 var Requests = &RequestsTable{
 	TableBase:               keel.TableBase{Ref: &requestsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 0}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 1}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 2}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 0}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 1}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 2}}},
 	RequestNumber:           keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 3}},
-	Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 4}}},
+	Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 4}}},
 	Description:             keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 5}},
 	Reason:                  keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 6}},
 	AccountingDate:          keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 7}},
-	RequestedFiscalYearID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 8}}},
-	RequestedFiscalPeriodID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 9}}},
+	RequestedFiscalYearID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 8}}},
+	RequestedFiscalPeriodID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 9}}},
 	CurrencyCode:            keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 10}},
 	TotalDebit:              keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 11}},
 	TotalCredit:             keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 12}},
 	ApprovedAt:              keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 13}},
-	ApprovedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 14}}},
+	ApprovedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 14}}},
 	RejectedAt:              keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 15}},
-	RejectedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 16}}},
+	RejectedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 16}}},
 	RejectionReason:         keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 17}},
 	CancelledAt:             keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 18}},
-	CancelledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 19}}},
+	CancelledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 19}}},
 	CancelReason:            keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 20}},
-	PostedBatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 21}}},
-	CreatedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 22}}},
-	UpdatedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 23}}},
+	PostedBatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 21}}},
+	CreatedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 22}}},
+	UpdatedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &requestsRef, Index: 23}}},
 	Rank:                    keel.StringCol{Col: keel.Col{Ref: &requestsRef, Index: 24}},
 	Version:                 keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 25}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &requestsRef, Index: 26}},
@@ -713,30 +719,30 @@ var Requests = &RequestsTable{
 func BuildRequests(r *keel.Ref) *RequestsTable {
 	return &RequestsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		RequestNumber:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Description:             keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Reason:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		AccountingDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		RequestedFiscalYearID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		RequestedFiscalPeriodID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RequestedFiscalYearID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		RequestedFiscalPeriodID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		CurrencyCode:            keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		TotalDebit:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		TotalCredit:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ApprovedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		ApprovedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ApprovedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		RejectedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		RejectedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		RejectedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		RejectionReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		CancelledAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		CancelledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		CancelledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		CancelReason:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		PostedBatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		CreatedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		UpdatedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		PostedBatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		CreatedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		UpdatedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		Rank:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
 		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
@@ -762,8 +768,6 @@ func (t *RequestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ma
 
 // RequestsQuery is a query over manualjournal.Request.
 type RequestsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*manualjournal.Request] = (*RequestsTable)(nil)
 
 var _ keel.Query[*manualjournal.Request] = (*RequestsQuery)(nil)
 
@@ -879,42 +883,42 @@ func (t *RequestsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*manual
 
 // Create inserts row.
 func (t *RequestsTable) Create(ctx context.Context, db *keel.DB, row *manualjournal.Request) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RequestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*manualjournal.Request) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RequestsTable) Save(ctx context.Context, db *keel.DB, row *manualjournal.Request, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RequestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *manualjournal.Request, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RequestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *manualjournal.Request) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RequestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*manualjournal.Request, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RequestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*manualjournal.Request, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RequestsTable) Copy(ctx context.Context, db *keel.DB, rows []*manualjournal.Request) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1086,37 +1090,45 @@ func (q *RequestsQuery) Clone() keel.Query[*manualjournal.Request] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RequestsQuery) One(ctx context.Context, db *keel.DB) (*manualjournal.Request, error) {
-	return keel.One[*manualjournal.Request](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*manualjournal.Request)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RequestsQuery) First(ctx context.Context, db *keel.DB) (*manualjournal.Request, error) {
-	return keel.First[*manualjournal.Request](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*manualjournal.Request)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RequestsQuery) List(ctx context.Context, db *keel.DB) ([]*manualjournal.Request, error) {
-	return keel.List[*manualjournal.Request](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*manualjournal.Request)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RequestsQuery) All(ctx context.Context, db *keel.DB) ([]*manualjournal.Request, error) {
-	return keel.All[*manualjournal.Request](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*manualjournal.Request)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RequestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*manualjournal.Request, error) {
-	return keel.UpdateReturning[*manualjournal.Request](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*manualjournal.Request)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RequestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*manualjournal.Request], error) {
-	return keel.PageOf[*manualjournal.Request](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*manualjournal.Request])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RequestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*manualjournal.Request) error) error {
-	return keel.Each[*manualjournal.Request](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*manualjournal.Request)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRequest() unsafe.Pointer { return unsafe.Pointer(new(manualjournal.Request)) }
@@ -1314,24 +1326,24 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of manualjournal.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v manualjournal.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v manualjournal.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v manualjournal.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v manualjournal.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v manualjournal.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v manualjournal.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v manualjournal.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v manualjournal.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v manualjournal.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v manualjournal.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v manualjournal.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v manualjournal.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v manualjournal.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi manualjournal.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v manualjournal.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v manualjournal.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...manualjournal.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...manualjournal.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

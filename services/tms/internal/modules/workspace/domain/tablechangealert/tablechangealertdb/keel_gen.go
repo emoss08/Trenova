@@ -70,9 +70,9 @@ type TCAAllowlistedTablesTable struct {
 // TCAAllowlistedTables references the tca_allowlisted_tables table.
 var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
 	TableBase:      keel.TableBase{Ref: &tCAAllowlistedTablesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 2}}},
 	TableName:      keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 3}},
 	DisplayName:    keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 4}},
 	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 5}},
@@ -84,9 +84,9 @@ var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
 func BuildTCAAllowlistedTables(r *keel.Ref) *TCAAllowlistedTablesTable {
 	return &TCAAllowlistedTablesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		TableName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		DisplayName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -110,8 +110,6 @@ func (t *TCAAllowlistedTablesTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // TCAAllowlistedTablesQuery is a query over tablechangealert.TCAAllowlistedTable.
 type TCAAllowlistedTablesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*tablechangealert.TCAAllowlistedTable] = (*TCAAllowlistedTablesTable)(nil)
 
 var _ keel.Query[*tablechangealert.TCAAllowlistedTable] = (*TCAAllowlistedTablesQuery)(nil)
 
@@ -227,42 +225,42 @@ func (t *TCAAllowlistedTablesTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *TCAAllowlistedTablesTable) Create(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TCAAllowlistedTablesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TCAAllowlistedTablesTable) Save(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TCAAllowlistedTablesTable) SaveExcept(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TCAAllowlistedTablesTable) DeleteRow(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TCAAllowlistedTablesTable) Upsert(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TCAAllowlistedTablesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TCAAllowlistedTablesTable) Copy(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -434,37 +432,45 @@ func (q *TCAAllowlistedTablesQuery) Clone() keel.Query[*tablechangealert.TCAAllo
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TCAAllowlistedTablesQuery) One(ctx context.Context, db *keel.DB) (*tablechangealert.TCAAllowlistedTable, error) {
-	return keel.One[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tablechangealert.TCAAllowlistedTable)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TCAAllowlistedTablesQuery) First(ctx context.Context, db *keel.DB) (*tablechangealert.TCAAllowlistedTable, error) {
-	return keel.First[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tablechangealert.TCAAllowlistedTable)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TCAAllowlistedTablesQuery) List(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCAAllowlistedTable, error) {
-	return keel.List[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablechangealert.TCAAllowlistedTable)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TCAAllowlistedTablesQuery) All(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCAAllowlistedTable, error) {
-	return keel.All[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablechangealert.TCAAllowlistedTable)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TCAAllowlistedTablesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tablechangealert.TCAAllowlistedTable, error) {
-	return keel.UpdateReturning[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tablechangealert.TCAAllowlistedTable)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TCAAllowlistedTablesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tablechangealert.TCAAllowlistedTable], error) {
-	return keel.PageOf[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tablechangealert.TCAAllowlistedTable])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TCAAllowlistedTablesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tablechangealert.TCAAllowlistedTable) error) error {
-	return keel.Each[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tablechangealert.TCAAllowlistedTable)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTCAAllowlistedTable() unsafe.Pointer {
@@ -602,10 +608,10 @@ type TCASubscriptionsTable struct {
 // TCASubscriptions references the tca_subscriptions table.
 var TCASubscriptions = &TCASubscriptionsTable{
 	TableBase:      keel.TableBase{Ref: &tCASubscriptionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 3}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 4}},
 	TableName:      keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 5}},
 	RecordID:       keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 6}},
@@ -617,7 +623,7 @@ var TCASubscriptions = &TCASubscriptionsTable{
 	CustomMessage:  keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 12}},
 	Topic:          keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 13}},
 	Priority:       keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 14}},
-	Status:         SubscriptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 15}}},
+	Status:         SubscriptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 15}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 16}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 17}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 18}},
@@ -627,10 +633,10 @@ var TCASubscriptions = &TCASubscriptionsTable{
 func BuildTCASubscriptions(r *keel.Ref) *TCASubscriptionsTable {
 	return &TCASubscriptionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		TableName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		RecordID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -642,7 +648,7 @@ func BuildTCASubscriptions(r *keel.Ref) *TCASubscriptionsTable {
 		CustomMessage:  keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Topic:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Priority:       keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		Status:         SubscriptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Status:         SubscriptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -669,8 +675,6 @@ func (t *TCASubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // TCASubscriptionsQuery is a query over tablechangealert.TCASubscription.
 type TCASubscriptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*tablechangealert.TCASubscription] = (*TCASubscriptionsTable)(nil)
 
 var _ keel.Query[*tablechangealert.TCASubscription] = (*TCASubscriptionsQuery)(nil)
 
@@ -786,42 +790,42 @@ func (t *TCASubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *TCASubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TCASubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TCASubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TCASubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TCASubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TCASubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TCASubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TCASubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -993,37 +997,45 @@ func (q *TCASubscriptionsQuery) Clone() keel.Query[*tablechangealert.TCASubscrip
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TCASubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*tablechangealert.TCASubscription, error) {
-	return keel.One[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tablechangealert.TCASubscription)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TCASubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*tablechangealert.TCASubscription, error) {
-	return keel.First[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tablechangealert.TCASubscription)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TCASubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCASubscription, error) {
-	return keel.List[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablechangealert.TCASubscription)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TCASubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCASubscription, error) {
-	return keel.All[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablechangealert.TCASubscription)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TCASubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tablechangealert.TCASubscription, error) {
-	return keel.UpdateReturning[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tablechangealert.TCASubscription)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TCASubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tablechangealert.TCASubscription], error) {
-	return keel.PageOf[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tablechangealert.TCASubscription])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TCASubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tablechangealert.TCASubscription) error) error {
-	return keel.Each[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tablechangealert.TCASubscription)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTCASubscription() unsafe.Pointer {
@@ -1158,38 +1170,38 @@ var enumSubscriptionStatus = [...]schema.EnumValue{
 }
 
 // SubscriptionStatusCol is a column of tablechangealert.SubscriptionStatus values.
-type SubscriptionStatusCol struct{ keel.StringCol }
+type SubscriptionStatusCol struct{ keel.TypedStringCol }
 
 func (c SubscriptionStatusCol) Eq(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SubscriptionStatusCol) Ne(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SubscriptionStatusCol) Gt(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SubscriptionStatusCol) Gte(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SubscriptionStatusCol) Lt(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SubscriptionStatusCol) Lte(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SubscriptionStatusCol) IsDistinctFrom(v tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubscriptionStatusCol) Between(lo, hi tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SubscriptionStatusCol) To(v tablechangealert.SubscriptionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SubscriptionStatusCol) In(vs ...tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubscriptionStatusCol) NotIn(vs ...tablechangealert.SubscriptionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

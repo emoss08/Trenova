@@ -86,18 +86,18 @@ type DispatchPlanPricesTable struct {
 // DispatchPlanPrices references the dispatch_plan_prices table.
 var DispatchPlanPrices = &DispatchPlanPricesTable{
 	TableBase:            keel.TableBase{Ref: &dispatchPlanPricesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 2}}},
-	MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 3}}},
-	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 2}}},
+	MoveID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 3}}},
+	WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 4}}},
 	WorkerName:           keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 5}},
 	CostCents:            keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 6}},
 	CostLines:            keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 7}},
 	PreferenceFloorCents: keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 8}},
 	CoveragePriceCents:   keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 9}},
 	DriverValueCents:     keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 10}},
-	UncoveredReason:      UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 11}}},
+	UncoveredReason:      UncoveredReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 11}}},
 	Alternatives:         keel.JSONBCol{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 12}},
 	GeneratedAt:          keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 13}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &dispatchPlanPricesRef, Index: 14}},
@@ -109,18 +109,18 @@ var DispatchPlanPrices = &DispatchPlanPricesTable{
 func BuildDispatchPlanPrices(r *keel.Ref) *DispatchPlanPricesTable {
 	return &DispatchPlanPricesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MoveID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		WorkerName:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		CostCents:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		CostLines:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		PreferenceFloorCents: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CoveragePriceCents:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		DriverValueCents:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		UncoveredReason:      UncoveredReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		UncoveredReason:      UncoveredReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Alternatives:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		GeneratedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -144,8 +144,6 @@ func (t *DispatchPlanPricesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // DispatchPlanPricesQuery is a query over dispatchplanprice.DispatchPlanPrice.
 type DispatchPlanPricesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dispatchplanprice.DispatchPlanPrice] = (*DispatchPlanPricesTable)(nil)
 
 var _ keel.Query[*dispatchplanprice.DispatchPlanPrice] = (*DispatchPlanPricesQuery)(nil)
 
@@ -261,42 +259,42 @@ func (t *DispatchPlanPricesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *DispatchPlanPricesTable) Create(ctx context.Context, db *keel.DB, row *dispatchplanprice.DispatchPlanPrice) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DispatchPlanPricesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dispatchplanprice.DispatchPlanPrice) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DispatchPlanPricesTable) Save(ctx context.Context, db *keel.DB, row *dispatchplanprice.DispatchPlanPrice, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DispatchPlanPricesTable) SaveExcept(ctx context.Context, db *keel.DB, row *dispatchplanprice.DispatchPlanPrice, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DispatchPlanPricesTable) DeleteRow(ctx context.Context, db *keel.DB, row *dispatchplanprice.DispatchPlanPrice) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DispatchPlanPricesTable) Upsert(ctx context.Context, db *keel.DB, rows []*dispatchplanprice.DispatchPlanPrice, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DispatchPlanPricesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dispatchplanprice.DispatchPlanPrice, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DispatchPlanPricesTable) Copy(ctx context.Context, db *keel.DB, rows []*dispatchplanprice.DispatchPlanPrice) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -468,37 +466,45 @@ func (q *DispatchPlanPricesQuery) Clone() keel.Query[*dispatchplanprice.Dispatch
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DispatchPlanPricesQuery) One(ctx context.Context, db *keel.DB) (*dispatchplanprice.DispatchPlanPrice, error) {
-	return keel.One[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dispatchplanprice.DispatchPlanPrice)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DispatchPlanPricesQuery) First(ctx context.Context, db *keel.DB) (*dispatchplanprice.DispatchPlanPrice, error) {
-	return keel.First[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dispatchplanprice.DispatchPlanPrice)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DispatchPlanPricesQuery) List(ctx context.Context, db *keel.DB) ([]*dispatchplanprice.DispatchPlanPrice, error) {
-	return keel.List[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dispatchplanprice.DispatchPlanPrice)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DispatchPlanPricesQuery) All(ctx context.Context, db *keel.DB) ([]*dispatchplanprice.DispatchPlanPrice, error) {
-	return keel.All[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dispatchplanprice.DispatchPlanPrice)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DispatchPlanPricesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dispatchplanprice.DispatchPlanPrice, error) {
-	return keel.UpdateReturning[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dispatchplanprice.DispatchPlanPrice)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DispatchPlanPricesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dispatchplanprice.DispatchPlanPrice], error) {
-	return keel.PageOf[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dispatchplanprice.DispatchPlanPrice])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DispatchPlanPricesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dispatchplanprice.DispatchPlanPrice) error) error {
-	return keel.Each[*dispatchplanprice.DispatchPlanPrice](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dispatchplanprice.DispatchPlanPrice)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDispatchPlanPrice() unsafe.Pointer {
@@ -610,38 +616,38 @@ var enumUncoveredReason = [...]schema.EnumValue{
 }
 
 // UncoveredReasonCol is a column of dispatchplanprice.UncoveredReason values.
-type UncoveredReasonCol struct{ keel.StringCol }
+type UncoveredReasonCol struct{ keel.TypedStringCol }
 
 func (c UncoveredReasonCol) Eq(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c UncoveredReasonCol) Ne(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c UncoveredReasonCol) Gt(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c UncoveredReasonCol) Gte(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c UncoveredReasonCol) Lt(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c UncoveredReasonCol) Lte(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c UncoveredReasonCol) IsDistinctFrom(v dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c UncoveredReasonCol) Between(lo, hi dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c UncoveredReasonCol) To(v dispatchplanprice.UncoveredReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c UncoveredReasonCol) In(vs ...dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c UncoveredReasonCol) NotIn(vs ...dispatchplanprice.UncoveredReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

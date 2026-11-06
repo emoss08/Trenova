@@ -322,7 +322,7 @@ func candidateInvoices(req *factoringports.ListCandidateInvoicesRequest) keel.Pr
 			Limit(limit),
 	))
 
-	return candidates.Query().
+	return keel.RowsOf(candidates.TableRef()).
 		With(candidates).
 		Pick(candidates.Col("id")).
 		Order(candidates.Col("id").Asc()).

@@ -80,7 +80,7 @@ func listActivitiesQuery(
 
 	return a.Where(
 		a.MessageID.In(req.MessageIDs...),
-		a.ID.InQuery(ranked.Query().
+		a.ID.InQuery(keel.RowsOf(ranked.TableRef()).
 			With(ranked).
 			Pick(ranked.Col("id")).
 			Where(ranked.Col("activity_rank").Lte(limit))),

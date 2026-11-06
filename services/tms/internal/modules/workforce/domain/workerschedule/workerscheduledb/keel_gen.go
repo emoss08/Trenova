@@ -94,19 +94,19 @@ type ShiftSwapRequestsTable struct {
 // ShiftSwapRequests references the shift_swap_requests table.
 var ShiftSwapRequests = &ShiftSwapRequestsTable{
 	TableBase:             keel.TableBase{Ref: &shiftSwapRequestsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 2}}},
-	RequestingWorkerID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 3}}},
-	CounterpartyWorkerID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 4}}},
-	Status:                ShiftSwapStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 5}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 2}}},
+	RequestingWorkerID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 3}}},
+	CounterpartyWorkerID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 4}}},
+	Status:                ShiftSwapStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 5}}},
 	ShiftDate:             keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 6}},
 	CounterpartyShiftDate: keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 7}},
 	Reason:                keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 8}},
 	ResponseNote:          keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 9}},
 	RespondedAt:           keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 10}},
 	DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 11}},
-	DecidedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 12}}},
+	DecidedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 12}}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 13}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 14}},
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &shiftSwapRequestsRef, Index: 15}},
@@ -116,19 +116,19 @@ var ShiftSwapRequests = &ShiftSwapRequestsTable{
 func BuildShiftSwapRequests(r *keel.Ref) *ShiftSwapRequestsTable {
 	return &ShiftSwapRequestsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RequestingWorkerID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CounterpartyWorkerID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                ShiftSwapStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RequestingWorkerID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CounterpartyWorkerID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                ShiftSwapStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ShiftDate:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		CounterpartyShiftDate: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Reason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		ResponseNote:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		RespondedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		DecidedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DecidedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -160,8 +160,6 @@ func (t *ShiftSwapRequestsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // ShiftSwapRequestsQuery is a query over workerschedule.ShiftSwapRequest.
 type ShiftSwapRequestsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerschedule.ShiftSwapRequest] = (*ShiftSwapRequestsTable)(nil)
 
 var _ keel.Query[*workerschedule.ShiftSwapRequest] = (*ShiftSwapRequestsQuery)(nil)
 
@@ -277,42 +275,42 @@ func (t *ShiftSwapRequestsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *ShiftSwapRequestsTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ShiftSwapRequestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ShiftSwapRequestsTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ShiftSwapRequestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ShiftSwapRequestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.ShiftSwapRequest) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ShiftSwapRequestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ShiftSwapRequestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ShiftSwapRequestsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftSwapRequest) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -484,37 +482,45 @@ func (q *ShiftSwapRequestsQuery) Clone() keel.Query[*workerschedule.ShiftSwapReq
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ShiftSwapRequestsQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.ShiftSwapRequest, error) {
-	return keel.One[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.ShiftSwapRequest)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ShiftSwapRequestsQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.ShiftSwapRequest, error) {
-	return keel.First[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.ShiftSwapRequest)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ShiftSwapRequestsQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftSwapRequest, error) {
-	return keel.List[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.ShiftSwapRequest)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ShiftSwapRequestsQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftSwapRequest, error) {
-	return keel.All[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.ShiftSwapRequest)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ShiftSwapRequestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.ShiftSwapRequest, error) {
-	return keel.UpdateReturning[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerschedule.ShiftSwapRequest)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ShiftSwapRequestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.ShiftSwapRequest], error) {
-	return keel.PageOf[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerschedule.ShiftSwapRequest])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ShiftSwapRequestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.ShiftSwapRequest) error) error {
-	return keel.Each[*workerschedule.ShiftSwapRequest](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerschedule.ShiftSwapRequest)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newShiftSwapRequest() unsafe.Pointer {
@@ -709,10 +715,10 @@ type ShiftTemplatesTable struct {
 // ShiftTemplates references the shift_templates table.
 var ShiftTemplates = &ShiftTemplatesTable{
 	TableBase:       keel.TableBase{Ref: &shiftTemplatesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 2}}},
-	Status:          keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 2}}},
+	Status:          keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 3}}},
 	Code:            keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 4}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 5}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &shiftTemplatesRef, Index: 6}},
@@ -730,10 +736,10 @@ var ShiftTemplates = &ShiftTemplatesTable{
 func BuildShiftTemplates(r *keel.Ref) *ShiftTemplatesTable {
 	return &ShiftTemplatesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:          keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:          keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -763,8 +769,6 @@ func (t *ShiftTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // ShiftTemplatesQuery is a query over workerschedule.ShiftTemplate.
 type ShiftTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerschedule.ShiftTemplate] = (*ShiftTemplatesTable)(nil)
 
 var _ keel.Query[*workerschedule.ShiftTemplate] = (*ShiftTemplatesQuery)(nil)
 
@@ -880,42 +884,42 @@ func (t *ShiftTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *ShiftTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ShiftTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ShiftTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ShiftTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ShiftTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.ShiftTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ShiftTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ShiftTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ShiftTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.ShiftTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1087,37 +1091,45 @@ func (q *ShiftTemplatesQuery) Clone() keel.Query[*workerschedule.ShiftTemplate] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ShiftTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.ShiftTemplate, error) {
-	return keel.One[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.ShiftTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ShiftTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.ShiftTemplate, error) {
-	return keel.First[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.ShiftTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ShiftTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftTemplate, error) {
-	return keel.List[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.ShiftTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ShiftTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.ShiftTemplate, error) {
-	return keel.All[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.ShiftTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ShiftTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.ShiftTemplate, error) {
-	return keel.UpdateReturning[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerschedule.ShiftTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ShiftTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.ShiftTemplate], error) {
-	return keel.PageOf[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerschedule.ShiftTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ShiftTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.ShiftTemplate) error) error {
-	return keel.Each[*workerschedule.ShiftTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerschedule.ShiftTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newShiftTemplate() unsafe.Pointer { return unsafe.Pointer(new(workerschedule.ShiftTemplate)) }
@@ -1271,12 +1283,12 @@ type WorkerAvailabilityPreferencesTable struct {
 // WorkerAvailabilityPreferences references the worker_availability_preferences table.
 var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
 	TableBase:      keel.TableBase{Ref: &workerAvailabilityPreferencesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 3}}},
 	DayOfWeek:      keel.Int16Col{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 4}},
-	Preference:     AvailabilityPreferenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 5}}},
+	Preference:     AvailabilityPreferenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 5}}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 6}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 7}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerAvailabilityPreferencesRef, Index: 8}},
@@ -1287,12 +1299,12 @@ var WorkerAvailabilityPreferences = &WorkerAvailabilityPreferencesTable{
 func BuildWorkerAvailabilityPreferences(r *keel.Ref) *WorkerAvailabilityPreferencesTable {
 	return &WorkerAvailabilityPreferencesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DayOfWeek:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 4}},
-		Preference:     AvailabilityPreferenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Preference:     AvailabilityPreferenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1315,8 +1327,6 @@ func (t *WorkerAvailabilityPreferencesTable) Get(ctx context.Context, db *keel.D
 
 // WorkerAvailabilityPreferencesQuery is a query over workerschedule.WorkerAvailabilityPreference.
 type WorkerAvailabilityPreferencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerschedule.WorkerAvailabilityPreference] = (*WorkerAvailabilityPreferencesTable)(nil)
 
 var _ keel.Query[*workerschedule.WorkerAvailabilityPreference] = (*WorkerAvailabilityPreferencesQuery)(nil)
 
@@ -1432,42 +1442,42 @@ func (t *WorkerAvailabilityPreferencesTable) Compute(col keel.Column, e keel.Exp
 
 // Create inserts row.
 func (t *WorkerAvailabilityPreferencesTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerAvailabilityPreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerAvailabilityPreferencesTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerAvailabilityPreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerAvailabilityPreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.WorkerAvailabilityPreference) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerAvailabilityPreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerAvailabilityPreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerAvailabilityPreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerAvailabilityPreference) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1639,37 +1649,45 @@ func (q *WorkerAvailabilityPreferencesQuery) Clone() keel.Query[*workerschedule.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerAvailabilityPreferencesQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.WorkerAvailabilityPreference, error) {
-	return keel.One[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.WorkerAvailabilityPreference)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerAvailabilityPreferencesQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.WorkerAvailabilityPreference, error) {
-	return keel.First[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.WorkerAvailabilityPreference)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerAvailabilityPreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerAvailabilityPreference, error) {
-	return keel.List[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.WorkerAvailabilityPreference)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerAvailabilityPreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerAvailabilityPreference, error) {
-	return keel.All[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.WorkerAvailabilityPreference)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerAvailabilityPreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.WorkerAvailabilityPreference, error) {
-	return keel.UpdateReturning[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerschedule.WorkerAvailabilityPreference)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerAvailabilityPreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.WorkerAvailabilityPreference], error) {
-	return keel.PageOf[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerschedule.WorkerAvailabilityPreference])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerAvailabilityPreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.WorkerAvailabilityPreference) error) error {
-	return keel.Each[*workerschedule.WorkerAvailabilityPreference](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerschedule.WorkerAvailabilityPreference)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerAvailabilityPreference() unsafe.Pointer {
@@ -1812,16 +1830,16 @@ type WorkerShiftAssignmentsTable struct {
 // WorkerShiftAssignments references the worker_shift_assignments table.
 var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
 	TableBase:        keel.TableBase{Ref: &workerShiftAssignmentsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 3}}},
-	ShiftTemplateID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 4}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 3}}},
+	ShiftTemplateID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 4}}},
 	EffectiveFrom:    keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 5}},
 	EffectiveTo:      keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 6}},
 	CycleOffsetWeeks: keel.Int16Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 7}},
 	Notes:            keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 8}},
-	AssignedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 9}}},
+	AssignedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 9}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 10}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 11}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerShiftAssignmentsRef, Index: 12}},
@@ -1831,16 +1849,16 @@ var WorkerShiftAssignments = &WorkerShiftAssignmentsTable{
 func BuildWorkerShiftAssignments(r *keel.Ref) *WorkerShiftAssignmentsTable {
 	return &WorkerShiftAssignmentsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShiftTemplateID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShiftTemplateID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		EffectiveFrom:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		EffectiveTo:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		CycleOffsetWeeks: keel.Int16Col{Col: keel.Col{Ref: r, Index: 7}},
 		Notes:            keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		AssignedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AssignedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -1872,8 +1890,6 @@ func (t *WorkerShiftAssignmentsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // WorkerShiftAssignmentsQuery is a query over workerschedule.WorkerShiftAssignment.
 type WorkerShiftAssignmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerschedule.WorkerShiftAssignment] = (*WorkerShiftAssignmentsTable)(nil)
 
 var _ keel.Query[*workerschedule.WorkerShiftAssignment] = (*WorkerShiftAssignmentsQuery)(nil)
 
@@ -1989,42 +2005,42 @@ func (t *WorkerShiftAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *WorkerShiftAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerShiftAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerShiftAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerShiftAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerShiftAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerschedule.WorkerShiftAssignment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerShiftAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerShiftAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerShiftAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerschedule.WorkerShiftAssignment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2196,37 +2212,45 @@ func (q *WorkerShiftAssignmentsQuery) Clone() keel.Query[*workerschedule.WorkerS
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerShiftAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*workerschedule.WorkerShiftAssignment, error) {
-	return keel.One[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.WorkerShiftAssignment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerShiftAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*workerschedule.WorkerShiftAssignment, error) {
-	return keel.First[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerschedule.WorkerShiftAssignment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerShiftAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerShiftAssignment, error) {
-	return keel.List[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.WorkerShiftAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerShiftAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*workerschedule.WorkerShiftAssignment, error) {
-	return keel.All[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerschedule.WorkerShiftAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerShiftAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerschedule.WorkerShiftAssignment, error) {
-	return keel.UpdateReturning[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerschedule.WorkerShiftAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerShiftAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerschedule.WorkerShiftAssignment], error) {
-	return keel.PageOf[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerschedule.WorkerShiftAssignment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerShiftAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerschedule.WorkerShiftAssignment) error) error {
-	return keel.Each[*workerschedule.WorkerShiftAssignment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerschedule.WorkerShiftAssignment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerShiftAssignment() unsafe.Pointer {
@@ -2350,75 +2374,75 @@ var enumShiftSwapStatus = [...]schema.EnumValue{
 }
 
 // AvailabilityPreferenceCol is a column of workerschedule.AvailabilityPreference values.
-type AvailabilityPreferenceCol struct{ keel.StringCol }
+type AvailabilityPreferenceCol struct{ keel.TypedStringCol }
 
 func (c AvailabilityPreferenceCol) Eq(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AvailabilityPreferenceCol) Ne(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AvailabilityPreferenceCol) Gt(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AvailabilityPreferenceCol) Gte(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AvailabilityPreferenceCol) Lt(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AvailabilityPreferenceCol) Lte(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AvailabilityPreferenceCol) IsDistinctFrom(v workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AvailabilityPreferenceCol) Between(lo, hi workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AvailabilityPreferenceCol) To(v workerschedule.AvailabilityPreference) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AvailabilityPreferenceCol) In(vs ...workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AvailabilityPreferenceCol) NotIn(vs ...workerschedule.AvailabilityPreference) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ShiftSwapStatusCol is a column of workerschedule.ShiftSwapStatus values.
-type ShiftSwapStatusCol struct{ keel.StringCol }
+type ShiftSwapStatusCol struct{ keel.TypedStringCol }
 
 func (c ShiftSwapStatusCol) Eq(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ShiftSwapStatusCol) Ne(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ShiftSwapStatusCol) Gt(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ShiftSwapStatusCol) Gte(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ShiftSwapStatusCol) Lt(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ShiftSwapStatusCol) Lte(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ShiftSwapStatusCol) IsDistinctFrom(v workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ShiftSwapStatusCol) Between(lo, hi workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ShiftSwapStatusCol) To(v workerschedule.ShiftSwapStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ShiftSwapStatusCol) In(vs ...workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ShiftSwapStatusCol) NotIn(vs ...workerschedule.ShiftSwapStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -317,7 +317,7 @@ func (r *intelligenceRepository) facilities(s span, limit int) keel.Projection {
 				bins(v, detentionrollup.DwellBin, len(detentionrollup.DwellBounds)),
 				bins(v, detentionrollup.FreeBin, len(detentionrollup.FreeBounds)),
 			).
-			Where(location.InQuery(ranked.Query().Pick(rankedAt))),
+			Where(location.InQuery(keel.RowsOf(ranked.TableRef()).Pick(rankedAt))),
 	)
 
 	loc := locationdb.Locations
@@ -333,7 +333,7 @@ func (r *intelligenceRepository) facilities(s span, limit int) keel.Projection {
 	}
 	picks = append(picks, histograms.Col("dwell_bins"), histograms.Col("free_bins"))
 
-	return ranked.Query().
+	return keel.RowsOf(ranked.TableRef()).
 		With(v.CTE(), ranked, histograms).
 		LeftJoin(histograms, histograms.Col(detentionrollup.Location).EqCol(rankedAt)).
 		LeftJoin(loc, loc.ID.EqCol(rankedAt)).

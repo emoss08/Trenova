@@ -94,17 +94,17 @@ type PayCodesTable struct {
 // PayCodes references the pay_codes table.
 var PayCodes = &PayCodesTable{
 	TableBase:             keel.TableBase{Ref: &payCodesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 2}}},
-	Status:                keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 3}}},
-	Direction:             PayCodeDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 4}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 2}}},
+	Status:                keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 3}}},
+	Direction:             PayCodeDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 4}}},
 	Code:                  keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 5}},
 	Name:                  keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 6}},
 	Description:           keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 7}},
 	Taxable:               keel.BoolCol{Col: keel.Col{Ref: &payCodesRef, Index: 8}},
 	CountsTowardGuarantee: keel.BoolCol{Col: keel.Col{Ref: &payCodesRef, Index: 9}},
-	GLAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 10}}},
+	GLAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payCodesRef, Index: 10}}},
 	DefaultAmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &payCodesRef, Index: 11}},
 	IsSystem:              keel.BoolCol{Col: keel.Col{Ref: &payCodesRef, Index: 12}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &payCodesRef, Index: 13}},
@@ -116,17 +116,17 @@ var PayCodes = &PayCodesTable{
 func BuildPayCodes(r *keel.Ref) *PayCodesTable {
 	return &PayCodesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:                keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Direction:             PayCodeDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:                keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Direction:             PayCodeDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Code:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Name:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Description:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Taxable:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		CountsTowardGuarantee: keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		GLAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		GLAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		DefaultAmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		IsSystem:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -155,8 +155,6 @@ func (t *PayCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pa
 
 // PayCodesQuery is a query over paycode.PayCode.
 type PayCodesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*paycode.PayCode] = (*PayCodesTable)(nil)
 
 var _ keel.Query[*paycode.PayCode] = (*PayCodesQuery)(nil)
 
@@ -272,42 +270,42 @@ func (t *PayCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*paycod
 
 // Create inserts row.
 func (t *PayCodesTable) Create(ctx context.Context, db *keel.DB, row *paycode.PayCode) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paycode.PayCode) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayCodesTable) Save(ctx context.Context, db *keel.DB, row *paycode.PayCode, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *paycode.PayCode, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *paycode.PayCode) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*paycode.PayCode, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paycode.PayCode, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*paycode.PayCode) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -479,37 +477,45 @@ func (q *PayCodesQuery) Clone() keel.Query[*paycode.PayCode] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayCodesQuery) One(ctx context.Context, db *keel.DB) (*paycode.PayCode, error) {
-	return keel.One[*paycode.PayCode](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*paycode.PayCode)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayCodesQuery) First(ctx context.Context, db *keel.DB) (*paycode.PayCode, error) {
-	return keel.First[*paycode.PayCode](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*paycode.PayCode)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayCodesQuery) List(ctx context.Context, db *keel.DB) ([]*paycode.PayCode, error) {
-	return keel.List[*paycode.PayCode](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paycode.PayCode)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayCodesQuery) All(ctx context.Context, db *keel.DB) ([]*paycode.PayCode, error) {
-	return keel.All[*paycode.PayCode](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paycode.PayCode)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paycode.PayCode, error) {
-	return keel.UpdateReturning[*paycode.PayCode](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*paycode.PayCode)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paycode.PayCode], error) {
-	return keel.PageOf[*paycode.PayCode](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*paycode.PayCode])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paycode.PayCode) error) error {
-	return keel.Each[*paycode.PayCode](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*paycode.PayCode)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayCode() unsafe.Pointer { return unsafe.Pointer(new(paycode.PayCode)) }
@@ -646,38 +652,30 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // PayCodeDirectionCol is a column of paycode.PayCodeDirection values.
-type PayCodeDirectionCol struct{ keel.StringCol }
+type PayCodeDirectionCol struct{ keel.TypedStringCol }
 
-func (c PayCodeDirectionCol) Eq(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PayCodeDirectionCol) Ne(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PayCodeDirectionCol) Gt(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PayCodeDirectionCol) Eq(v paycode.PayCodeDirection) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PayCodeDirectionCol) Ne(v paycode.PayCodeDirection) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PayCodeDirectionCol) Gt(v paycode.PayCodeDirection) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PayCodeDirectionCol) Gte(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PayCodeDirectionCol) Lt(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PayCodeDirectionCol) Lt(v paycode.PayCodeDirection) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PayCodeDirectionCol) Lte(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PayCodeDirectionCol) IsDistinctFrom(v paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayCodeDirectionCol) Between(lo, hi paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayCodeDirectionCol) To(v paycode.PayCodeDirection) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayCodeDirectionCol) In(vs ...paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayCodeDirectionCol) NotIn(vs ...paycode.PayCodeDirection) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -80,7 +80,7 @@ func transactionSetOptionsQuery(
 func transactionSetSearch(s string) keel.Pred {
 	ts := edidocumentdb.EDITransactionSets
 	return keel.Or(
-		ts.Code.ContainsFold(s),
+		ts.Code.Text().ContainsFold(s),
 		ts.Name.ContainsFold(s),
 		ts.DefaultVersion.ContainsFold(s),
 	)

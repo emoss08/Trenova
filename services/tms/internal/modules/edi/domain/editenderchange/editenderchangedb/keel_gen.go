@@ -117,13 +117,13 @@ type TenderChangesTable struct {
 // TenderChanges references the edi_tender_changes table.
 var TenderChanges = &TenderChangesTable{
 	TableBase:               keel.TableBase{Ref: &tenderChangesRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 1}}},
-	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 2}}},
-	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 3}}},
-	RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 4}}},
-	RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 5}}},
-	Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 6}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 1}}},
+	SourceOrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 2}}},
+	SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 3}}},
+	RecipientID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 4}}},
+	RecipientKind:           TenderRecipientKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 5}}},
+	Status:                  TenderChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 6}}},
 	ChangeType:              keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 7}},
 	IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 8}},
 	SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 9}},
@@ -133,12 +133,12 @@ var TenderChanges = &TenderChangesTable{
 	NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 13}},
 	DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 14}},
 	ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 15}},
-	InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 16}}},
-	ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 17}}},
-	OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 18}}},
-	ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 19}}},
+	InternalTransferID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 16}}},
+	ShipmentLinkID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 17}}},
+	OutboundMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 18}}},
+	ReviewedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 19}}},
 	ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 20}},
-	AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 21}}},
+	AppliedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 21}}},
 	AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 22}},
 	FailureReason:           keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 23}},
 	SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 24}},
@@ -152,13 +152,13 @@ var TenderChanges = &TenderChangesTable{
 func BuildTenderChanges(r *keel.Ref) *TenderChangesTable {
 	return &TenderChangesTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RecipientID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:                  TenderChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceOrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RecipientID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RecipientKind:           TenderRecipientKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                  TenderChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ChangeType:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		IdempotencyKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		SourceShipmentVersion:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -168,12 +168,12 @@ func BuildTenderChanges(r *keel.Ref) *TenderChangesTable {
 		NewPayloadHash:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		DiffSummary:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		ConflictMetadata:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		InternalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		OutboundMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		ReviewedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		InternalTransferID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ShipmentLinkID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		OutboundMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ReviewedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		AppliedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		AppliedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		AppliedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		FailureReason:           keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 24}},
@@ -204,8 +204,6 @@ func (t *TenderChangesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // TenderChangesQuery is a query over editenderchange.TenderChange.
 type TenderChangesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*editenderchange.TenderChange] = (*TenderChangesTable)(nil)
 
 var _ keel.Query[*editenderchange.TenderChange] = (*TenderChangesQuery)(nil)
 
@@ -321,42 +319,42 @@ func (t *TenderChangesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*e
 
 // Create inserts row.
 func (t *TenderChangesTable) Create(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TenderChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TenderChangesTable) Save(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TenderChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TenderChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TenderChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TenderChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TenderChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -528,37 +526,45 @@ func (q *TenderChangesQuery) Clone() keel.Query[*editenderchange.TenderChange] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TenderChangesQuery) One(ctx context.Context, db *keel.DB) (*editenderchange.TenderChange, error) {
-	return keel.One[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*editenderchange.TenderChange)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TenderChangesQuery) First(ctx context.Context, db *keel.DB) (*editenderchange.TenderChange, error) {
-	return keel.First[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*editenderchange.TenderChange)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TenderChangesQuery) List(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderChange, error) {
-	return keel.List[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editenderchange.TenderChange)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TenderChangesQuery) All(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderChange, error) {
-	return keel.All[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editenderchange.TenderChange)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TenderChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*editenderchange.TenderChange, error) {
-	return keel.UpdateReturning[*editenderchange.TenderChange](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*editenderchange.TenderChange)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TenderChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*editenderchange.TenderChange], error) {
-	return keel.PageOf[*editenderchange.TenderChange](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*editenderchange.TenderChange])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TenderChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*editenderchange.TenderChange) error) error {
-	return keel.Each[*editenderchange.TenderChange](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*editenderchange.TenderChange)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTenderChange() unsafe.Pointer { return unsafe.Pointer(new(editenderchange.TenderChange)) }
@@ -826,22 +832,22 @@ type TenderRecipientsTable struct {
 // TenderRecipients references the edi_tender_recipients table.
 var TenderRecipients = &TenderRecipientsTable{
 	TableBase:               keel.TableBase{Ref: &tenderRecipientsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
-	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
-	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
-	RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
-	RecipientOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
-	EDIPartnerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
-	CommunicationProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
-	OriginalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
-	ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
-	OriginalMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
+	SourceOrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
+	SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
+	RecipientKind:           TenderRecipientKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
+	RecipientOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
+	EDIPartnerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
+	CommunicationProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
+	OriginalTransferID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
+	ShipmentLinkID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
+	OriginalMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
 	LatestBaselinePayload:   keel.JSONBCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 11}},
 	LatestBaselineHash:      keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 12}},
 	BaselineRecordedAt:      keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 13}},
-	BaselineStatus:          TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}}},
-	Status:                  TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}}},
+	BaselineStatus:          TenderRecipientBaselineStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}}},
+	Status:                  TenderRecipientStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}}},
 	Version:                 keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 16}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 17}},
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}},
@@ -851,22 +857,22 @@ var TenderRecipients = &TenderRecipientsTable{
 func BuildTenderRecipients(r *keel.Ref) *TenderRecipientsTable {
 	return &TenderRecipientsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RecipientOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		EDIPartnerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		CommunicationProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		OriginalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		OriginalMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceOrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RecipientKind:           TenderRecipientKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RecipientOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EDIPartnerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CommunicationProfileID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		OriginalTransferID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ShipmentLinkID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		OriginalMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		LatestBaselinePayload:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		LatestBaselineHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		BaselineRecordedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		BaselineStatus:          TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		Status:                  TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		BaselineStatus:          TenderRecipientBaselineStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Status:                  TenderRecipientStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -888,8 +894,6 @@ func (t *TenderRecipientsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // TenderRecipientsQuery is a query over editenderchange.TenderRecipient.
 type TenderRecipientsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*editenderchange.TenderRecipient] = (*TenderRecipientsTable)(nil)
 
 var _ keel.Query[*editenderchange.TenderRecipient] = (*TenderRecipientsQuery)(nil)
 
@@ -1005,42 +1009,42 @@ func (t *TenderRecipientsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *TenderRecipientsTable) Create(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TenderRecipientsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TenderRecipientsTable) Save(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TenderRecipientsTable) SaveExcept(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TenderRecipientsTable) DeleteRow(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TenderRecipientsTable) Upsert(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TenderRecipientsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TenderRecipientsTable) Copy(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1212,37 +1216,45 @@ func (q *TenderRecipientsQuery) Clone() keel.Query[*editenderchange.TenderRecipi
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TenderRecipientsQuery) One(ctx context.Context, db *keel.DB) (*editenderchange.TenderRecipient, error) {
-	return keel.One[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*editenderchange.TenderRecipient)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TenderRecipientsQuery) First(ctx context.Context, db *keel.DB) (*editenderchange.TenderRecipient, error) {
-	return keel.First[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*editenderchange.TenderRecipient)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TenderRecipientsQuery) List(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderRecipient, error) {
-	return keel.List[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editenderchange.TenderRecipient)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TenderRecipientsQuery) All(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderRecipient, error) {
-	return keel.All[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*editenderchange.TenderRecipient)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TenderRecipientsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*editenderchange.TenderRecipient, error) {
-	return keel.UpdateReturning[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*editenderchange.TenderRecipient)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TenderRecipientsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*editenderchange.TenderRecipient], error) {
-	return keel.PageOf[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*editenderchange.TenderRecipient])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TenderRecipientsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*editenderchange.TenderRecipient) error) error {
-	return keel.Each[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*editenderchange.TenderRecipient)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTenderRecipient() unsafe.Pointer { return unsafe.Pointer(new(editenderchange.TenderRecipient)) }
@@ -1402,149 +1414,149 @@ var enumTenderRecipientStatus = [...]schema.EnumValue{
 }
 
 // TenderChangeStatusCol is a column of editenderchange.TenderChangeStatus values.
-type TenderChangeStatusCol struct{ keel.StringCol }
+type TenderChangeStatusCol struct{ keel.TypedStringCol }
 
 func (c TenderChangeStatusCol) Eq(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TenderChangeStatusCol) Ne(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TenderChangeStatusCol) Gt(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TenderChangeStatusCol) Gte(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TenderChangeStatusCol) Lt(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TenderChangeStatusCol) Lte(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TenderChangeStatusCol) IsDistinctFrom(v editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TenderChangeStatusCol) Between(lo, hi editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TenderChangeStatusCol) To(v editenderchange.TenderChangeStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TenderChangeStatusCol) In(vs ...editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TenderChangeStatusCol) NotIn(vs ...editenderchange.TenderChangeStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TenderRecipientBaselineStatusCol is a column of editenderchange.TenderRecipientBaselineStatus values.
-type TenderRecipientBaselineStatusCol struct{ keel.StringCol }
+type TenderRecipientBaselineStatusCol struct{ keel.TypedStringCol }
 
 func (c TenderRecipientBaselineStatusCol) Eq(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Ne(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Gt(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Gte(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Lt(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Lte(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) IsDistinctFrom(v editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) Between(lo, hi editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TenderRecipientBaselineStatusCol) To(v editenderchange.TenderRecipientBaselineStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TenderRecipientBaselineStatusCol) In(vs ...editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TenderRecipientBaselineStatusCol) NotIn(vs ...editenderchange.TenderRecipientBaselineStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TenderRecipientKindCol is a column of editenderchange.TenderRecipientKind values.
-type TenderRecipientKindCol struct{ keel.StringCol }
+type TenderRecipientKindCol struct{ keel.TypedStringCol }
 
 func (c TenderRecipientKindCol) Eq(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TenderRecipientKindCol) Ne(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TenderRecipientKindCol) Gt(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TenderRecipientKindCol) Gte(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TenderRecipientKindCol) Lt(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TenderRecipientKindCol) Lte(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TenderRecipientKindCol) IsDistinctFrom(v editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TenderRecipientKindCol) Between(lo, hi editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TenderRecipientKindCol) To(v editenderchange.TenderRecipientKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TenderRecipientKindCol) In(vs ...editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TenderRecipientKindCol) NotIn(vs ...editenderchange.TenderRecipientKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TenderRecipientStatusCol is a column of editenderchange.TenderRecipientStatus values.
-type TenderRecipientStatusCol struct{ keel.StringCol }
+type TenderRecipientStatusCol struct{ keel.TypedStringCol }
 
 func (c TenderRecipientStatusCol) Eq(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TenderRecipientStatusCol) Ne(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TenderRecipientStatusCol) Gt(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TenderRecipientStatusCol) Gte(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TenderRecipientStatusCol) Lt(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TenderRecipientStatusCol) Lte(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TenderRecipientStatusCol) IsDistinctFrom(v editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TenderRecipientStatusCol) Between(lo, hi editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TenderRecipientStatusCol) To(v editenderchange.TenderRecipientStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TenderRecipientStatusCol) In(vs ...editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TenderRecipientStatusCol) NotIn(vs ...editenderchange.TenderRecipientStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

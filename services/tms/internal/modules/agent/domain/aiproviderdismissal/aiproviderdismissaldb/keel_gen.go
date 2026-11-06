@@ -67,11 +67,11 @@ type FailureDismissalsTable struct {
 // FailureDismissals references the ai_provider_failure_dismissals table.
 var FailureDismissals = &FailureDismissalsTable{
 	TableBase:      keel.TableBase{Ref: &failureDismissalsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 3}}},
-	ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 3}}},
+	ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &failureDismissalsRef, Index: 4}}},
 	FailureAt:      keel.Int64Col{Col: keel.Col{Ref: &failureDismissalsRef, Index: 5}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &failureDismissalsRef, Index: 6}},
 }
@@ -80,11 +80,11 @@ var FailureDismissals = &FailureDismissalsTable{
 func BuildFailureDismissals(r *keel.Ref) *FailureDismissalsTable {
 	return &FailureDismissalsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		FailureAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
@@ -105,8 +105,6 @@ func (t *FailureDismissalsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // FailureDismissalsQuery is a query over aiproviderdismissal.FailureDismissal.
 type FailureDismissalsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*aiproviderdismissal.FailureDismissal] = (*FailureDismissalsTable)(nil)
 
 var _ keel.Query[*aiproviderdismissal.FailureDismissal] = (*FailureDismissalsQuery)(nil)
 
@@ -222,42 +220,42 @@ func (t *FailureDismissalsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *FailureDismissalsTable) Create(ctx context.Context, db *keel.DB, row *aiproviderdismissal.FailureDismissal) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FailureDismissalsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiproviderdismissal.FailureDismissal) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FailureDismissalsTable) Save(ctx context.Context, db *keel.DB, row *aiproviderdismissal.FailureDismissal, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FailureDismissalsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiproviderdismissal.FailureDismissal, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FailureDismissalsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiproviderdismissal.FailureDismissal) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FailureDismissalsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiproviderdismissal.FailureDismissal, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FailureDismissalsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiproviderdismissal.FailureDismissal, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FailureDismissalsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiproviderdismissal.FailureDismissal) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -429,37 +427,45 @@ func (q *FailureDismissalsQuery) Clone() keel.Query[*aiproviderdismissal.Failure
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FailureDismissalsQuery) One(ctx context.Context, db *keel.DB) (*aiproviderdismissal.FailureDismissal, error) {
-	return keel.One[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*aiproviderdismissal.FailureDismissal)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FailureDismissalsQuery) First(ctx context.Context, db *keel.DB) (*aiproviderdismissal.FailureDismissal, error) {
-	return keel.First[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*aiproviderdismissal.FailureDismissal)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FailureDismissalsQuery) List(ctx context.Context, db *keel.DB) ([]*aiproviderdismissal.FailureDismissal, error) {
-	return keel.List[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiproviderdismissal.FailureDismissal)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FailureDismissalsQuery) All(ctx context.Context, db *keel.DB) ([]*aiproviderdismissal.FailureDismissal, error) {
-	return keel.All[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiproviderdismissal.FailureDismissal)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FailureDismissalsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiproviderdismissal.FailureDismissal, error) {
-	return keel.UpdateReturning[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*aiproviderdismissal.FailureDismissal)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FailureDismissalsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiproviderdismissal.FailureDismissal], error) {
-	return keel.PageOf[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*aiproviderdismissal.FailureDismissal])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FailureDismissalsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiproviderdismissal.FailureDismissal) error) error {
-	return keel.Each[*aiproviderdismissal.FailureDismissal](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*aiproviderdismissal.FailureDismissal)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFailureDismissal() unsafe.Pointer {

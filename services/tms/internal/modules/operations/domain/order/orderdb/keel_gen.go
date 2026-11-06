@@ -108,13 +108,13 @@ type OrdersTable struct {
 // Orders references the orders table.
 var Orders = &OrdersTable{
 	TableBase:      keel.TableBase{Ref: &ordersRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 2}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 3}}},
-	OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 4}}},
-	EnteredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 5}}},
-	Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 2}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 3}}},
+	OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 4}}},
+	EnteredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 5}}},
+	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ordersRef, Index: 6}}},
 	OrderNumber:    keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 7}},
 	PONumber:       keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 8}},
 	BOL:            keel.StringCol{Col: keel.Col{Ref: &ordersRef, Index: 9}},
@@ -133,13 +133,13 @@ var Orders = &OrdersTable{
 func BuildOrders(r *keel.Ref) *OrdersTable {
 	return &OrdersTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EnteredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EnteredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		OrderNumber:    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		PONumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		BOL:            keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -189,8 +189,6 @@ func (t *OrdersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*orde
 
 // OrdersQuery is a query over order.Order.
 type OrdersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*order.Order] = (*OrdersTable)(nil)
 
 var _ keel.Query[*order.Order] = (*OrdersQuery)(nil)
 
@@ -306,42 +304,42 @@ func (t *OrdersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*order.Or
 
 // Create inserts row.
 func (t *OrdersTable) Create(ctx context.Context, db *keel.DB, row *order.Order) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *OrdersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*order.Order) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *OrdersTable) Save(ctx context.Context, db *keel.DB, row *order.Order, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *OrdersTable) SaveExcept(ctx context.Context, db *keel.DB, row *order.Order, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *OrdersTable) DeleteRow(ctx context.Context, db *keel.DB, row *order.Order) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *OrdersTable) Upsert(ctx context.Context, db *keel.DB, rows []*order.Order, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *OrdersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*order.Order, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *OrdersTable) Copy(ctx context.Context, db *keel.DB, rows []*order.Order) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -513,37 +511,45 @@ func (q *OrdersQuery) Clone() keel.Query[*order.Order] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *OrdersQuery) One(ctx context.Context, db *keel.DB) (*order.Order, error) {
-	return keel.One[*order.Order](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*order.Order)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *OrdersQuery) First(ctx context.Context, db *keel.DB) (*order.Order, error) {
-	return keel.First[*order.Order](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*order.Order)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *OrdersQuery) List(ctx context.Context, db *keel.DB) ([]*order.Order, error) {
-	return keel.List[*order.Order](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*order.Order)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *OrdersQuery) All(ctx context.Context, db *keel.DB) ([]*order.Order, error) {
-	return keel.All[*order.Order](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*order.Order)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *OrdersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*order.Order, error) {
-	return keel.UpdateReturning[*order.Order](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*order.Order)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *OrdersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*order.Order], error) {
-	return keel.PageOf[*order.Order](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*order.Order])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *OrdersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*order.Order) error) error {
-	return keel.Each[*order.Order](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*order.Order)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newOrder() unsafe.Pointer { return unsafe.Pointer(new(order.Order)) }
@@ -739,13 +745,13 @@ type OrderChargesTable struct {
 // OrderCharges references the order_charges table.
 var OrderCharges = &OrderChargesTable{
 	TableBase:      keel.TableBase{Ref: &orderChargesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 2}}},
-	OrderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 2}}},
+	OrderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 3}}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 4}},
 	Amount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &orderChargesRef, Index: 5}}},
-	InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 6}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orderChargesRef, Index: 6}}},
 	InvoicedAt:     keel.Int64Col{Col: keel.Col{Ref: &orderChargesRef, Index: 7}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &orderChargesRef, Index: 8}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &orderChargesRef, Index: 9}},
@@ -756,13 +762,13 @@ var OrderCharges = &OrderChargesTable{
 func BuildOrderCharges(r *keel.Ref) *OrderChargesTable {
 	return &OrderChargesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Amount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
-		InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		InvoicedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -793,8 +799,6 @@ func (t *OrderChargesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // OrderChargesQuery is a query over order.OrderCharge.
 type OrderChargesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*order.OrderCharge] = (*OrderChargesTable)(nil)
 
 var _ keel.Query[*order.OrderCharge] = (*OrderChargesQuery)(nil)
 
@@ -910,42 +914,42 @@ func (t *OrderChargesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*or
 
 // Create inserts row.
 func (t *OrderChargesTable) Create(ctx context.Context, db *keel.DB, row *order.OrderCharge) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *OrderChargesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*order.OrderCharge) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *OrderChargesTable) Save(ctx context.Context, db *keel.DB, row *order.OrderCharge, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *OrderChargesTable) SaveExcept(ctx context.Context, db *keel.DB, row *order.OrderCharge, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *OrderChargesTable) DeleteRow(ctx context.Context, db *keel.DB, row *order.OrderCharge) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *OrderChargesTable) Upsert(ctx context.Context, db *keel.DB, rows []*order.OrderCharge, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *OrderChargesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*order.OrderCharge, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *OrderChargesTable) Copy(ctx context.Context, db *keel.DB, rows []*order.OrderCharge) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1117,37 +1121,45 @@ func (q *OrderChargesQuery) Clone() keel.Query[*order.OrderCharge] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *OrderChargesQuery) One(ctx context.Context, db *keel.DB) (*order.OrderCharge, error) {
-	return keel.One[*order.OrderCharge](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*order.OrderCharge)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *OrderChargesQuery) First(ctx context.Context, db *keel.DB) (*order.OrderCharge, error) {
-	return keel.First[*order.OrderCharge](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*order.OrderCharge)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *OrderChargesQuery) List(ctx context.Context, db *keel.DB) ([]*order.OrderCharge, error) {
-	return keel.List[*order.OrderCharge](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*order.OrderCharge)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *OrderChargesQuery) All(ctx context.Context, db *keel.DB) ([]*order.OrderCharge, error) {
-	return keel.All[*order.OrderCharge](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*order.OrderCharge)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *OrderChargesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*order.OrderCharge, error) {
-	return keel.UpdateReturning[*order.OrderCharge](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*order.OrderCharge)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *OrderChargesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*order.OrderCharge], error) {
-	return keel.PageOf[*order.OrderCharge](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*order.OrderCharge])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *OrderChargesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*order.OrderCharge) error) error {
-	return keel.Each[*order.OrderCharge](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*order.OrderCharge)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newOrderCharge() unsafe.Pointer { return unsafe.Pointer(new(order.OrderCharge)) }
@@ -1265,20 +1277,24 @@ var reportMeasureDecimalMoney = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // StatusCol is a column of order.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v order.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v order.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v order.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v order.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v order.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v order.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v order.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v order.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v order.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v order.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v order.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v order.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v order.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi order.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v order.Status) keel.Assignment  { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...order.Status) keel.Pred    { return c.StringCol.In(keel.Strings(vs)...) }
-func (c StatusCol) NotIn(vs ...order.Status) keel.Pred { return c.StringCol.NotIn(keel.Strings(vs)...) }
+func (c StatusCol) To(v order.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...order.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c StatusCol) NotIn(vs ...order.Status) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}

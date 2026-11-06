@@ -375,7 +375,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) keel.Query[*keel.Row] 
 	u := aiusagedb.AIUsageRecords
 	calls := keel.CTE("calls", append([]string{"owner_id"}, callColumns...), u.
 		Pick(append([]keel.Expr{u.OwnerID}, callAggregates(u)...)...).
-		Where(u.OwnerKind.Eq(src.ownerKind), u.OwnerID.InQuery(owners.Query().Pick(owners.Col("id")))).
+		Where(u.OwnerKind.Eq(src.ownerKind), u.OwnerID.InQuery(keel.RowsOf(owners.TableRef()).Pick(owners.Col("id")))).
 		Group(u.OwnerID))
 
 	s := agentrunstepdb.AgentRunSteps
@@ -396,7 +396,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) keel.Query[*keel.Row] 
 		).
 		Where(
 			s.OwnerKind.Eq(string(src.ownerKind)),
-			s.OwnerID.InQuery(owners.Query().Pick(owners.Col("id"))),
+			s.OwnerID.InQuery(keel.RowsOf(owners.TableRef()).Pick(owners.Col("id"))),
 			s.Kind.Eq(string(agentruntimeports.RunStepTool)),
 			s.Status.Ne(string(agentruntimeports.RunStepStarted)),
 		).
@@ -406,7 +406,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) keel.Query[*keel.Row] 
 	decisionRun := owners.Col("decision_run_id")
 	handed := keel.CTE("handed", []string{"run_id"}, e.
 		Pick(e.RunID).
-		Where(e.RunID.InQuery(owners.Query().Pick(decisionRun).Where(decisionRun.IsNotNull()))).
+		Where(e.RunID.InQuery(keel.RowsOf(owners.TableRef()).Pick(decisionRun).Where(decisionRun.IsNotNull()))).
 		Distinct())
 
 	callEnd := calls.Col("last_end_ms")
@@ -456,7 +456,7 @@ func ownedUnitsSource(src *ownedSource, req *unitRefresh) keel.Query[*keel.Row] 
 		keel.Int64(req.stamp),
 	)
 
-	return owners.Query().
+	return keel.RowsOf(owners.TableRef()).
 		With(owners, calls, steps, handed).
 		LeftJoin(calls, calls.Col("owner_id").EqCol(owners.Col("id"))).
 		LeftJoin(steps, steps.Col("owner_id").EqCol(owners.Col("id"))).
@@ -491,7 +491,7 @@ func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 			aiusage.SurfaceIndexing,
 			aiusage.SurfaceRetrieval,
 		),
-		u.Feature.Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
+		u.Feature.Text().Coalesce("").Ne(string(aiusage.FeatureAgentEvaluation)),
 	}
 }
 
@@ -508,7 +508,7 @@ func callUnitsSource(req *unitRefresh) keel.Query[*keel.Row] {
 		Where(append(standaloneCalls(u),
 			u.CreatedAt.Gte(req.from-lookbackSeconds),
 			u.CreatedAt.Lt(req.to),
-			keel.Exists(touched.Query().Pick(touchedID).Where(touchedID.EqCol(key))),
+			keel.Exists(keel.RowsOf(touched.TableRef()).Pick(touchedID).Where(touchedID.EqCol(key))),
 		)...).
 		Group(key))
 	col := calls.Col
@@ -549,7 +549,7 @@ func callUnitsSource(req *unitRefresh) keel.Query[*keel.Row] {
 		keel.Int64(req.stamp),
 	)
 
-	return calls.Query().
+	return keel.RowsOf(calls.TableRef()).
 		With(touched, calls).
 		Pick(picks...).
 		Where(col("model").IsNotNull())
@@ -658,14 +658,14 @@ func providerHoursSource(fromHour, toHour int64) keel.Query[*keel.Row] {
 		))
 	call := calls.Col
 
-	rescued := keel.CTE("rescued", []string{"trace_id", "providers"}, calls.Query().
+	rescued := keel.CTE("rescued", []string{"trace_id", "providers"}, keel.RowsOf(calls.TableRef()).
 		Pick(call("trace_id"), keel.ArrayAgg(call("provider_id")).Distinct()).
 		Where(keel.BoolOf(call("succeeded")).IsTrue(), call("trace_id").IsNotNull()).
 		Group(call("trace_id")))
 
 	groupKeys := cteColumns(calls, append(append([]string{}, hourKeyColumns...), "error_class")...)
 	grouped := keel.CTE("grouped", append(append([]string{}, hourKeyColumns...),
-		"error_class", "calls", "fell_to_next"), calls.Query().
+		"error_class", "calls", "fell_to_next"), keel.RowsOf(calls.TableRef()).
 		LeftJoin(rescued, rescued.Col("trace_id").EqCol(call("trace_id"))).
 		Pick(append(append([]keel.Expr{}, groupKeys...),
 			keel.Count(),
@@ -681,12 +681,12 @@ func providerHoursSource(fromHour, toHour int64) keel.Query[*keel.Row] {
 	hourKeys := cteColumns(calls, hourKeyColumns...)
 	bucket := firstTokenBucket(call("first_token_ms"))
 	hist := keel.CTE("hist", append(append([]string{}, hourKeyColumns...), "bucket", "n"),
-		calls.Query().
+		keel.RowsOf(calls.TableRef()).
 			Pick(append(append([]keel.Expr{}, hourKeys...), bucket, keel.Count())...).
 			Where(keel.BoolOf(call("succeeded")).IsTrue(), call("first_token_ms").IsNotNull()).
 			Group(append(append([]keel.Expr{}, hourKeys...), bucket)...))
 
-	histKeys := keel.CTE("hist_keys", hourKeyColumns, hist.Query().
+	histKeys := keel.CTE("hist_keys", hourKeyColumns, keel.RowsOf(hist.TableRef()).
 		Pick(cteColumns(hist, hourKeyColumns...)...).
 		Distinct())
 	series := keel.Rows("b", []string{"i"}, keel.GenerateSeries(
@@ -695,7 +695,7 @@ func providerHoursSource(fromHour, toHour int64) keel.Query[*keel.Row] {
 	))
 	keyColumns := cteColumns(histKeys, hourKeyColumns...)
 	arrays := keel.CTE("arrays", append(append([]string{}, hourKeyColumns...), "first_token_hist"),
-		histKeys.Query().
+		keel.RowsOf(histKeys.TableRef()).
 			JoinLateral(series).
 			LeftJoin(hist, append(sameHourKey(hist, histKeys),
 				hist.Col("bucket").EqCol(series.Col("i")))...).
@@ -706,7 +706,7 @@ func providerHoursSource(fromHour, toHour int64) keel.Query[*keel.Row] {
 			Group(keyColumns...))
 
 	group := grouped.Col
-	return grouped.Query().
+	return keel.RowsOf(grouped.TableRef()).
 		With(calls, rescued, grouped, hist, histKeys, arrays).
 		LeftJoin(arrays, sameHourKey(arrays, grouped)...).
 		Pick(

@@ -176,41 +176,41 @@ type BillingQueueItemsTable struct {
 // BillingQueueItems references the billing_queue_items table.
 var BillingQueueItems = &BillingQueueItemsTable{
 	TableBase:                 keel.TableBase{Ref: &billingQueueItemsRef},
-	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 0}}},
-	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 1}}},
-	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 2}}},
-	ShipmentID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 3}}},
-	OrderID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 4}}},
-	BillToCustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 5}}},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 0}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 1}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 2}}},
+	ShipmentID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 3}}},
+	OrderID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 4}}},
+	BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 5}}},
 	AllocatedTotalAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 6}}},
 	AllocatedTotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 7}},
-	AssignedBillerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 8}}},
+	AssignedBillerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 8}}},
 	Number:                    keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 9}},
-	Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 10}}},
-	BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 11}}},
-	ExceptionReasonCode:       ExceptionReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 12}}},
+	Status:                    StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 10}}},
+	BillType:                  keelkinds.BillingvocabBillTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 11}}},
+	ExceptionReasonCode:       ExceptionReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 12}}},
 	ReviewNotes:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 13}},
 	ExceptionNotes:            keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 14}},
 	ReviewStartedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 15}},
 	ReviewCompletedAt:         keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 16}},
-	CanceledByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 17}}},
+	CanceledByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 17}}},
 	CanceledAt:                keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 18}},
 	CancelReason:              keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 19}},
-	HoldReasonCode:            HoldReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 20}}},
+	HoldReasonCode:            HoldReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 20}}},
 	HeldAt:                    keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 21}},
-	HeldByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 22}}},
-	StatusBeforeHold:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 23}}},
+	HeldByID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 22}}},
+	StatusBeforeHold:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 23}}},
 	IsAdjustmentOrigin:        keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 24}},
-	InvoiceID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 25}}},
-	SourceInvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 26}}},
-	SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 27}}},
-	SourceCreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 28}}},
-	CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 29}}},
+	InvoiceID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 25}}},
+	SourceInvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 26}}},
+	SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 27}}},
+	SourceCreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 28}}},
+	CorrectionGroupID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 29}}},
 	RebillStrategy:            keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 30}},
 	RequiresReplacementReview: keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 31}},
 	RerateVariancePercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 32}}},
 	AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 33}},
-	Lane:                      LaneCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 34}}},
+	Lane:                      LaneCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 34}}},
 	CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 35}},
 	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 36}},
 	InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 37}},
@@ -219,7 +219,7 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 40}},
 	PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 41}},
 	PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 42}},
-	AgentVerdict:              AgentVerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 43}}},
+	AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 43}}},
 	AgentSummary:              keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 44}},
 	AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 45}},
 	AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 46}},
@@ -228,7 +228,7 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 50}},
 	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 51}},
-	ShipmentCustomerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 52}}},
+	ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 52}}},
 	ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 53}},
 	ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 54}},
 }
@@ -237,41 +237,41 @@ var BillingQueueItems = &BillingQueueItemsTable{
 func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 	return &BillingQueueItemsTable{
 		TableBase:                 keel.TableBase{Ref: r},
-		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OrderID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		BillToCustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OrderID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		BillToCustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AllocatedTotalAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		AllocatedTotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		AssignedBillerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		AssignedBillerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Number:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Status:                    StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		BillType:                  keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ExceptionReasonCode:       ExceptionReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Status:                    StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		BillType:                  keelkinds.BillingvocabBillTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ExceptionReasonCode:       ExceptionReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ReviewNotes:               keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ExceptionNotes:            keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		ReviewStartedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ReviewCompletedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CanceledByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		CanceledByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		CanceledAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CancelReason:              keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		HoldReasonCode:            HoldReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		HoldReasonCode:            HoldReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		HeldAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		HeldByID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		StatusBeforeHold:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		HeldByID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		StatusBeforeHold:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		IsAdjustmentOrigin:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
-		InvoiceID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		SourceInvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
-		SourceCreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		CorrectionGroupID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		InvoiceID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		SourceInvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		SourceInvoiceAdjustmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		SourceCreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		CorrectionGroupID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		RebillStrategy:            keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
 		RequiresReplacementReview: keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		RerateVariancePercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
 		AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
-		Lane:                      LaneCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		Lane:                      LaneCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
 		InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
@@ -280,7 +280,7 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 40}},
 		PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
 		PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
-		AgentVerdict:              AgentVerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
+		AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 43}}},
 		AgentSummary:              keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
 		AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 		AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 46}},
@@ -289,7 +289,7 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
 		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 51}},
-		ShipmentCustomerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 52}}},
+		ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 52}}},
 		ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 53}},
 		ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
 	}
@@ -330,8 +330,6 @@ func (t *BillingQueueItemsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // BillingQueueItemsQuery is a query over billingqueue.BillingQueueItem.
 type BillingQueueItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingqueue.BillingQueueItem] = (*BillingQueueItemsTable)(nil)
 
 var _ keel.Query[*billingqueue.BillingQueueItem] = (*BillingQueueItemsQuery)(nil)
 
@@ -447,42 +445,42 @@ func (t *BillingQueueItemsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *BillingQueueItemsTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BillingQueueItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BillingQueueItemsTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BillingQueueItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BillingQueueItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BillingQueueItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BillingQueueItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BillingQueueItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -654,37 +652,45 @@ func (q *BillingQueueItemsQuery) Clone() keel.Query[*billingqueue.BillingQueueIt
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BillingQueueItemsQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.BillingQueueItem, error) {
-	return keel.One[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.BillingQueueItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BillingQueueItemsQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.BillingQueueItem, error) {
-	return keel.First[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.BillingQueueItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BillingQueueItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.BillingQueueItem, error) {
-	return keel.List[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.BillingQueueItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BillingQueueItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.BillingQueueItem, error) {
-	return keel.All[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.BillingQueueItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BillingQueueItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.BillingQueueItem, error) {
-	return keel.UpdateReturning[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingqueue.BillingQueueItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BillingQueueItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.BillingQueueItem], error) {
-	return keel.PageOf[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingqueue.BillingQueueItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BillingQueueItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.BillingQueueItem) error) error {
-	return keel.Each[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingqueue.BillingQueueItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBillingQueueItem() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.BillingQueueItem)) }
@@ -1142,26 +1148,26 @@ type IssuesTable struct {
 // Issues references the billing_queue_issues table.
 var Issues = &IssuesTable{
 	TableBase:       keel.TableBase{Ref: &issuesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 2}}},
-	ItemID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 3}}},
-	CheckKey:        CheckKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 4}}},
-	Code:            IssueCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 5}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 2}}},
+	ItemID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 3}}},
+	CheckKey:        CheckKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 4}}},
+	Code:            IssueCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 5}}},
 	SubjectKey:      keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 6}},
 	Summary:         keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 7}},
 	Reasoning:       keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 8}},
-	Source:          IssueSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 9}}},
-	AgentRunID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 10}}},
-	FlaggedChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 11}}},
+	Source:          IssueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 9}}},
+	AgentRunID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 10}}},
+	FlaggedChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 11}}},
 	Options:         keel.JSONBCol{Col: keel.Col{Ref: &issuesRef, Index: 12}},
 	ResolutionKey:   keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 13}},
 	ResolutionText:  keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 14}},
 	EffectSnapshot:  keel.JSONBCol{Col: keel.Col{Ref: &issuesRef, Index: 15}},
-	ResolvedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 16}}},
+	ResolvedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 16}}},
 	ResolvedAt:      keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 17}},
 	RequestedAt:     keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 18}},
-	RequestedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 19}}},
+	RequestedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &issuesRef, Index: 19}}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 20}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 21}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 22}},
@@ -1171,26 +1177,26 @@ var Issues = &IssuesTable{
 func BuildIssues(r *keel.Ref) *IssuesTable {
 	return &IssuesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ItemID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CheckKey:        CheckKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Code:            IssueCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ItemID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CheckKey:        CheckKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Code:            IssueCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SubjectKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Summary:         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Reasoning:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Source:          IssueSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		AgentRunID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		FlaggedChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Source:          IssueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AgentRunID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		FlaggedChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Options:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		ResolutionKey:   keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ResolutionText:  keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		EffectSnapshot:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		ResolvedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ResolvedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ResolvedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		RequestedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		RequestedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		RequestedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -1210,8 +1216,6 @@ func (t *IssuesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*bill
 
 // IssuesQuery is a query over billingqueue.Issue.
 type IssuesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingqueue.Issue] = (*IssuesTable)(nil)
 
 var _ keel.Query[*billingqueue.Issue] = (*IssuesQuery)(nil)
 
@@ -1327,42 +1331,42 @@ func (t *IssuesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingq
 
 // Create inserts row.
 func (t *IssuesTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.Issue) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *IssuesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *IssuesTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.Issue, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *IssuesTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.Issue, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *IssuesTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.Issue) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *IssuesTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *IssuesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *IssuesTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1534,37 +1538,45 @@ func (q *IssuesQuery) Clone() keel.Query[*billingqueue.Issue] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *IssuesQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.Issue, error) {
-	return keel.One[*billingqueue.Issue](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.Issue)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *IssuesQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.Issue, error) {
-	return keel.First[*billingqueue.Issue](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.Issue)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *IssuesQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.Issue, error) {
-	return keel.List[*billingqueue.Issue](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.Issue)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *IssuesQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.Issue, error) {
-	return keel.All[*billingqueue.Issue](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.Issue)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *IssuesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.Issue, error) {
-	return keel.UpdateReturning[*billingqueue.Issue](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingqueue.Issue)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *IssuesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.Issue], error) {
-	return keel.PageOf[*billingqueue.Issue](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingqueue.Issue])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *IssuesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.Issue) error) error {
-	return keel.Each[*billingqueue.Issue](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingqueue.Issue)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newIssue() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.Issue)) }
@@ -1772,9 +1784,9 @@ type QueueBriefsTable struct {
 // QueueBriefs references the billing_queue_briefs table.
 var QueueBriefs = &QueueBriefsTable{
 	TableBase:      keel.TableBase{Ref: &queueBriefsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 2}}},
 	Text:           keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 3}},
 	InputHash:      keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 4}},
 	GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 5}},
@@ -1787,9 +1799,9 @@ var QueueBriefs = &QueueBriefsTable{
 func BuildQueueBriefs(r *keel.Ref) *QueueBriefsTable {
 	return &QueueBriefsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Text:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		InputHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
@@ -1814,8 +1826,6 @@ func (t *QueueBriefsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // QueueBriefsQuery is a query over billingqueue.QueueBrief.
 type QueueBriefsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingqueue.QueueBrief] = (*QueueBriefsTable)(nil)
 
 var _ keel.Query[*billingqueue.QueueBrief] = (*QueueBriefsQuery)(nil)
 
@@ -1931,42 +1941,42 @@ func (t *QueueBriefsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bil
 
 // Create inserts row.
 func (t *QueueBriefsTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *QueueBriefsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *QueueBriefsTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *QueueBriefsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *QueueBriefsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *QueueBriefsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *QueueBriefsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *QueueBriefsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2138,37 +2148,45 @@ func (q *QueueBriefsQuery) Clone() keel.Query[*billingqueue.QueueBrief] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *QueueBriefsQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.QueueBrief, error) {
-	return keel.One[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.QueueBrief)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *QueueBriefsQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.QueueBrief, error) {
-	return keel.First[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingqueue.QueueBrief)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *QueueBriefsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.QueueBrief, error) {
-	return keel.List[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.QueueBrief)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *QueueBriefsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.QueueBrief, error) {
-	return keel.All[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueue.QueueBrief)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *QueueBriefsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.QueueBrief, error) {
-	return keel.UpdateReturning[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingqueue.QueueBrief)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *QueueBriefsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.QueueBrief], error) {
-	return keel.PageOf[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingqueue.QueueBrief])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *QueueBriefsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.QueueBrief) error) error {
-	return keel.Each[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingqueue.QueueBrief)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newQueueBrief() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.QueueBrief)) }
@@ -2314,219 +2332,207 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // AgentVerdictCol is a column of billingqueue.AgentVerdict values.
-type AgentVerdictCol struct{ keel.StringCol }
+type AgentVerdictCol struct{ keel.TypedStringCol }
 
-func (c AgentVerdictCol) Eq(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c AgentVerdictCol) Ne(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c AgentVerdictCol) Gt(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c AgentVerdictCol) Gte(v billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AgentVerdictCol) Lt(v billingqueue.AgentVerdict) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c AgentVerdictCol) Lte(v billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AgentVerdictCol) Eq(v billingqueue.AgentVerdict) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AgentVerdictCol) Ne(v billingqueue.AgentVerdict) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AgentVerdictCol) Gt(v billingqueue.AgentVerdict) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AgentVerdictCol) Gte(v billingqueue.AgentVerdict) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AgentVerdictCol) Lt(v billingqueue.AgentVerdict) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AgentVerdictCol) Lte(v billingqueue.AgentVerdict) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AgentVerdictCol) IsDistinctFrom(v billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AgentVerdictCol) Between(lo, hi billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AgentVerdictCol) To(v billingqueue.AgentVerdict) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AgentVerdictCol) In(vs ...billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AgentVerdictCol) NotIn(vs ...billingqueue.AgentVerdict) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CheckKeyCol is a column of billingqueue.CheckKey values.
-type CheckKeyCol struct{ keel.StringCol }
+type CheckKeyCol struct{ keel.TypedStringCol }
 
-func (c CheckKeyCol) Eq(v billingqueue.CheckKey) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CheckKeyCol) Ne(v billingqueue.CheckKey) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CheckKeyCol) Gt(v billingqueue.CheckKey) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CheckKeyCol) Gte(v billingqueue.CheckKey) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CheckKeyCol) Lt(v billingqueue.CheckKey) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CheckKeyCol) Lte(v billingqueue.CheckKey) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CheckKeyCol) Eq(v billingqueue.CheckKey) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CheckKeyCol) Ne(v billingqueue.CheckKey) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CheckKeyCol) Gt(v billingqueue.CheckKey) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CheckKeyCol) Gte(v billingqueue.CheckKey) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CheckKeyCol) Lt(v billingqueue.CheckKey) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CheckKeyCol) Lte(v billingqueue.CheckKey) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CheckKeyCol) IsDistinctFrom(v billingqueue.CheckKey) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CheckKeyCol) Between(lo, hi billingqueue.CheckKey) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CheckKeyCol) To(v billingqueue.CheckKey) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CheckKeyCol) To(v billingqueue.CheckKey) keel.Assignment { return c.Text().To(string(v)) }
 func (c CheckKeyCol) In(vs ...billingqueue.CheckKey) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CheckKeyCol) NotIn(vs ...billingqueue.CheckKey) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExceptionReasonCodeCol is a column of billingqueue.ExceptionReasonCode values.
-type ExceptionReasonCodeCol struct{ keel.StringCol }
+type ExceptionReasonCodeCol struct{ keel.TypedStringCol }
 
 func (c ExceptionReasonCodeCol) Eq(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExceptionReasonCodeCol) Ne(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExceptionReasonCodeCol) Gt(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExceptionReasonCodeCol) Gte(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExceptionReasonCodeCol) Lt(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExceptionReasonCodeCol) Lte(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExceptionReasonCodeCol) IsDistinctFrom(v billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExceptionReasonCodeCol) Between(lo, hi billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExceptionReasonCodeCol) To(v billingqueue.ExceptionReasonCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExceptionReasonCodeCol) In(vs ...billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExceptionReasonCodeCol) NotIn(vs ...billingqueue.ExceptionReasonCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // HoldReasonCodeCol is a column of billingqueue.HoldReasonCode values.
-type HoldReasonCodeCol struct{ keel.StringCol }
+type HoldReasonCodeCol struct{ keel.TypedStringCol }
 
-func (c HoldReasonCodeCol) Eq(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c HoldReasonCodeCol) Ne(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c HoldReasonCodeCol) Gt(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c HoldReasonCodeCol) Eq(v billingqueue.HoldReasonCode) keel.Pred { return c.Text().Eq(string(v)) }
+func (c HoldReasonCodeCol) Ne(v billingqueue.HoldReasonCode) keel.Pred { return c.Text().Ne(string(v)) }
+func (c HoldReasonCodeCol) Gt(v billingqueue.HoldReasonCode) keel.Pred { return c.Text().Gt(string(v)) }
 func (c HoldReasonCodeCol) Gte(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c HoldReasonCodeCol) Lt(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c HoldReasonCodeCol) Lt(v billingqueue.HoldReasonCode) keel.Pred { return c.Text().Lt(string(v)) }
 func (c HoldReasonCodeCol) Lte(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c HoldReasonCodeCol) IsDistinctFrom(v billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c HoldReasonCodeCol) Between(lo, hi billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c HoldReasonCodeCol) To(v billingqueue.HoldReasonCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c HoldReasonCodeCol) In(vs ...billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c HoldReasonCodeCol) NotIn(vs ...billingqueue.HoldReasonCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // IssueCodeCol is a column of billingqueue.IssueCode values.
-type IssueCodeCol struct{ keel.StringCol }
+type IssueCodeCol struct{ keel.TypedStringCol }
 
-func (c IssueCodeCol) Eq(v billingqueue.IssueCode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c IssueCodeCol) Ne(v billingqueue.IssueCode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c IssueCodeCol) Gt(v billingqueue.IssueCode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c IssueCodeCol) Gte(v billingqueue.IssueCode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c IssueCodeCol) Lt(v billingqueue.IssueCode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c IssueCodeCol) Lte(v billingqueue.IssueCode) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c IssueCodeCol) Eq(v billingqueue.IssueCode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c IssueCodeCol) Ne(v billingqueue.IssueCode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c IssueCodeCol) Gt(v billingqueue.IssueCode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c IssueCodeCol) Gte(v billingqueue.IssueCode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c IssueCodeCol) Lt(v billingqueue.IssueCode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c IssueCodeCol) Lte(v billingqueue.IssueCode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c IssueCodeCol) IsDistinctFrom(v billingqueue.IssueCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c IssueCodeCol) Between(lo, hi billingqueue.IssueCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c IssueCodeCol) To(v billingqueue.IssueCode) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c IssueCodeCol) To(v billingqueue.IssueCode) keel.Assignment { return c.Text().To(string(v)) }
 func (c IssueCodeCol) In(vs ...billingqueue.IssueCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c IssueCodeCol) NotIn(vs ...billingqueue.IssueCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // IssueSourceCol is a column of billingqueue.IssueSource values.
-type IssueSourceCol struct{ keel.StringCol }
+type IssueSourceCol struct{ keel.TypedStringCol }
 
-func (c IssueSourceCol) Eq(v billingqueue.IssueSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c IssueSourceCol) Ne(v billingqueue.IssueSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c IssueSourceCol) Gt(v billingqueue.IssueSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c IssueSourceCol) Gte(v billingqueue.IssueSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c IssueSourceCol) Lt(v billingqueue.IssueSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c IssueSourceCol) Lte(v billingqueue.IssueSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c IssueSourceCol) Eq(v billingqueue.IssueSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c IssueSourceCol) Ne(v billingqueue.IssueSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c IssueSourceCol) Gt(v billingqueue.IssueSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c IssueSourceCol) Gte(v billingqueue.IssueSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c IssueSourceCol) Lt(v billingqueue.IssueSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c IssueSourceCol) Lte(v billingqueue.IssueSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c IssueSourceCol) IsDistinctFrom(v billingqueue.IssueSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c IssueSourceCol) Between(lo, hi billingqueue.IssueSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c IssueSourceCol) To(v billingqueue.IssueSource) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c IssueSourceCol) To(v billingqueue.IssueSource) keel.Assignment { return c.Text().To(string(v)) }
 func (c IssueSourceCol) In(vs ...billingqueue.IssueSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c IssueSourceCol) NotIn(vs ...billingqueue.IssueSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LaneCol is a column of billingqueue.Lane values.
-type LaneCol struct{ keel.StringCol }
+type LaneCol struct{ keel.TypedStringCol }
 
-func (c LaneCol) Eq(v billingqueue.Lane) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c LaneCol) Ne(v billingqueue.Lane) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c LaneCol) Gt(v billingqueue.Lane) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c LaneCol) Gte(v billingqueue.Lane) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c LaneCol) Lt(v billingqueue.Lane) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c LaneCol) Lte(v billingqueue.Lane) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c LaneCol) Eq(v billingqueue.Lane) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c LaneCol) Ne(v billingqueue.Lane) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c LaneCol) Gt(v billingqueue.Lane) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c LaneCol) Gte(v billingqueue.Lane) keel.Pred { return c.Text().Gte(string(v)) }
+func (c LaneCol) Lt(v billingqueue.Lane) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c LaneCol) Lte(v billingqueue.Lane) keel.Pred { return c.Text().Lte(string(v)) }
 func (c LaneCol) IsDistinctFrom(v billingqueue.Lane) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LaneCol) Between(lo, hi billingqueue.Lane) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c LaneCol) To(v billingqueue.Lane) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c LaneCol) In(vs ...billingqueue.Lane) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c LaneCol) To(v billingqueue.Lane) keel.Assignment { return c.Text().To(string(v)) }
+func (c LaneCol) In(vs ...billingqueue.Lane) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c LaneCol) NotIn(vs ...billingqueue.Lane) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of billingqueue.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v billingqueue.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v billingqueue.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v billingqueue.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v billingqueue.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v billingqueue.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v billingqueue.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v billingqueue.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v billingqueue.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v billingqueue.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v billingqueue.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v billingqueue.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v billingqueue.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v billingqueue.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi billingqueue.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v billingqueue.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v billingqueue.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...billingqueue.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...billingqueue.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

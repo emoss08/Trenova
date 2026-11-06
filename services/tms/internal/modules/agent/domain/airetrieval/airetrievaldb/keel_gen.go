@@ -67,7 +67,7 @@ type CatalogEmbeddingsTable struct {
 var CatalogEmbeddings = &CatalogEmbeddingsTable{
 	TableBase:   keel.TableBase{Ref: &catalogEmbeddingsRef},
 	ModelKey:    keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 0}},
-	Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 1}}},
+	Corpus:      CatalogCorpusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 1}}},
 	ItemKey:     keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 2}},
 	ContentHash: keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 3}},
 	Dimensions:  keel.Int64Col{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 4}},
@@ -80,7 +80,7 @@ func BuildCatalogEmbeddings(r *keel.Ref) *CatalogEmbeddingsTable {
 	return &CatalogEmbeddingsTable{
 		TableBase:   keel.TableBase{Ref: r},
 		ModelKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
-		Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Corpus:      CatalogCorpusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ItemKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
 		ContentHash: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Dimensions:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
@@ -99,8 +99,6 @@ func (t *CatalogEmbeddingsTable) As(alias string) *CatalogEmbeddingsTable {
 
 // CatalogEmbeddingsQuery is a query over airetrieval.CatalogEmbedding.
 type CatalogEmbeddingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*airetrieval.CatalogEmbedding] = (*CatalogEmbeddingsTable)(nil)
 
 var _ keel.Query[*airetrieval.CatalogEmbedding] = (*CatalogEmbeddingsQuery)(nil)
 
@@ -216,42 +214,42 @@ func (t *CatalogEmbeddingsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *CatalogEmbeddingsTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CatalogEmbeddingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CatalogEmbeddingsTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CatalogEmbeddingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CatalogEmbeddingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CatalogEmbeddingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CatalogEmbeddingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CatalogEmbeddingsTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -423,37 +421,45 @@ func (q *CatalogEmbeddingsQuery) Clone() keel.Query[*airetrieval.CatalogEmbeddin
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CatalogEmbeddingsQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.CatalogEmbedding, error) {
-	return keel.One[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.CatalogEmbedding)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CatalogEmbeddingsQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.CatalogEmbedding, error) {
-	return keel.First[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.CatalogEmbedding)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CatalogEmbeddingsQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.CatalogEmbedding, error) {
-	return keel.List[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.CatalogEmbedding)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CatalogEmbeddingsQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.CatalogEmbedding, error) {
-	return keel.All[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.CatalogEmbedding)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CatalogEmbeddingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.CatalogEmbedding, error) {
-	return keel.UpdateReturning[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*airetrieval.CatalogEmbedding)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CatalogEmbeddingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.CatalogEmbedding], error) {
-	return keel.PageOf[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*airetrieval.CatalogEmbedding])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CatalogEmbeddingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.CatalogEmbedding) error) error {
-	return keel.Each[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*airetrieval.CatalogEmbedding)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCatalogEmbedding() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.CatalogEmbedding)) }
@@ -564,10 +570,10 @@ type EmbeddingsTable struct {
 // Embeddings references the ai_embeddings table.
 var Embeddings = &EmbeddingsTable{
 	TableBase:      keel.TableBase{Ref: &embeddingsRef},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 1}}},
-	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 2}}},
-	SourceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 3}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 1}}},
+	SourceType:     SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 2}}},
+	SourceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 3}}},
 	ChunkIndex:     keel.Int64Col{Col: keel.Col{Ref: &embeddingsRef, Index: 4}},
 	ModelKey:       keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 5}},
 	Dimensions:     keel.Int64Col{Col: keel.Col{Ref: &embeddingsRef, Index: 6}},
@@ -581,10 +587,10 @@ var Embeddings = &EmbeddingsTable{
 func BuildEmbeddings(r *keel.Ref) *EmbeddingsTable {
 	return &EmbeddingsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceType:     SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ChunkIndex:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		ModelKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Dimensions:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -605,8 +611,6 @@ func (t *EmbeddingsTable) As(alias string) *EmbeddingsTable {
 
 // EmbeddingsQuery is a query over airetrieval.Embedding.
 type EmbeddingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*airetrieval.Embedding] = (*EmbeddingsTable)(nil)
 
 var _ keel.Query[*airetrieval.Embedding] = (*EmbeddingsQuery)(nil)
 
@@ -722,42 +726,42 @@ func (t *EmbeddingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aire
 
 // Create inserts row.
 func (t *EmbeddingsTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.Embedding) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EmbeddingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EmbeddingsTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.Embedding, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EmbeddingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.Embedding, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EmbeddingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.Embedding) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EmbeddingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EmbeddingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EmbeddingsTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -929,37 +933,45 @@ func (q *EmbeddingsQuery) Clone() keel.Query[*airetrieval.Embedding] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EmbeddingsQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.Embedding, error) {
-	return keel.One[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.Embedding)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EmbeddingsQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.Embedding, error) {
-	return keel.First[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.Embedding)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EmbeddingsQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.Embedding, error) {
-	return keel.List[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.Embedding)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EmbeddingsQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.Embedding, error) {
-	return keel.All[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.Embedding)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EmbeddingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.Embedding, error) {
-	return keel.UpdateReturning[*airetrieval.Embedding](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*airetrieval.Embedding)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EmbeddingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.Embedding], error) {
-	return keel.PageOf[*airetrieval.Embedding](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*airetrieval.Embedding])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EmbeddingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.Embedding) error) error {
-	return keel.Each[*airetrieval.Embedding](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*airetrieval.Embedding)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEmbedding() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.Embedding)) }
@@ -1097,12 +1109,12 @@ type IndexEntriesTable struct {
 // IndexEntries references the ai_index_entries table.
 var IndexEntries = &IndexEntriesTable{
 	TableBase:      keel.TableBase{Ref: &indexEntriesRef},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 1}}},
-	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 2}}},
-	SourceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 3}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 1}}},
+	SourceType:     SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 2}}},
+	SourceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 3}}},
 	ModelKey:       keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 4}},
-	Status:         IndexStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 5}}},
+	Status:         IndexStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 5}}},
 	Generation:     keel.Int64Col{Col: keel.Col{Ref: &indexEntriesRef, Index: 6}},
 	Attempts:       keel.Int64Col{Col: keel.Col{Ref: &indexEntriesRef, Index: 7}},
 	ChunkCount:     keel.Int64Col{Col: keel.Col{Ref: &indexEntriesRef, Index: 8}},
@@ -1119,12 +1131,12 @@ var IndexEntries = &IndexEntriesTable{
 func BuildIndexEntries(r *keel.Ref) *IndexEntriesTable {
 	return &IndexEntriesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceType:     SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ModelKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Status:         IndexStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:         IndexStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Generation:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Attempts:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		ChunkCount:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1148,8 +1160,6 @@ func (t *IndexEntriesTable) As(alias string) *IndexEntriesTable {
 
 // IndexEntriesQuery is a query over airetrieval.IndexEntry.
 type IndexEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*airetrieval.IndexEntry] = (*IndexEntriesTable)(nil)
 
 var _ keel.Query[*airetrieval.IndexEntry] = (*IndexEntriesQuery)(nil)
 
@@ -1265,42 +1275,42 @@ func (t *IndexEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ai
 
 // Create inserts row.
 func (t *IndexEntriesTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *IndexEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *IndexEntriesTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *IndexEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *IndexEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *IndexEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *IndexEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *IndexEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1472,37 +1482,45 @@ func (q *IndexEntriesQuery) Clone() keel.Query[*airetrieval.IndexEntry] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *IndexEntriesQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.IndexEntry, error) {
-	return keel.One[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.IndexEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *IndexEntriesQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.IndexEntry, error) {
-	return keel.First[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.IndexEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *IndexEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.IndexEntry, error) {
-	return keel.List[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.IndexEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *IndexEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.IndexEntry, error) {
-	return keel.All[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.IndexEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *IndexEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.IndexEntry, error) {
-	return keel.UpdateReturning[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*airetrieval.IndexEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *IndexEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.IndexEntry], error) {
-	return keel.PageOf[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*airetrieval.IndexEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *IndexEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.IndexEntry) error) error {
-	return keel.Each[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*airetrieval.IndexEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newIndexEntry() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.IndexEntry)) }
@@ -1680,15 +1698,15 @@ type SettingsesTable struct {
 // Settingses references the ai_retrieval_settings table.
 var Settingses = &SettingsesTable{
 	TableBase:                keel.TableBase{Ref: &settingsesRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
 	MemoryEnabled:            keel.BoolCol{Col: keel.Col{Ref: &settingsesRef, Index: 3}},
 	DocumentsEnabled:         keel.BoolCol{Col: keel.Col{Ref: &settingsesRef, Index: 4}},
 	InboundMessagesEnabled:   keel.BoolCol{Col: keel.Col{Ref: &settingsesRef, Index: 5}},
 	MonthlyIndexingBudgetUSD: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settingsesRef, Index: 6}}},
 	Paused:                   keel.BoolCol{Col: keel.Col{Ref: &settingsesRef, Index: 7}},
-	PausedReason:             PauseReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 8}}},
+	PausedReason:             PauseReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingsesRef, Index: 8}}},
 	PausedAt:                 keel.Int64Col{Col: keel.Col{Ref: &settingsesRef, Index: 9}},
 	ActiveModelKey:           keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 10}},
 	Dimensions:               keel.Int64Col{Col: keel.Col{Ref: &settingsesRef, Index: 11}},
@@ -1703,15 +1721,15 @@ var Settingses = &SettingsesTable{
 func BuildSettingses(r *keel.Ref) *SettingsesTable {
 	return &SettingsesTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		MemoryEnabled:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 3}},
 		DocumentsEnabled:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
 		InboundMessagesEnabled:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		MonthlyIndexingBudgetUSD: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Paused:                   keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		PausedReason:             PauseReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		PausedReason:             PauseReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		PausedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ActiveModelKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Dimensions:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -1738,8 +1756,6 @@ func (t *SettingsesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // SettingsesQuery is a query over airetrieval.Settings.
 type SettingsesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*airetrieval.Settings] = (*SettingsesTable)(nil)
 
 var _ keel.Query[*airetrieval.Settings] = (*SettingsesQuery)(nil)
 
@@ -1855,42 +1871,42 @@ func (t *SettingsesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aire
 
 // Create inserts row.
 func (t *SettingsesTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.Settings) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettingsesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettingsesTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.Settings, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettingsesTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.Settings, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettingsesTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.Settings) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettingsesTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettingsesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettingsesTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2062,37 +2078,45 @@ func (q *SettingsesQuery) Clone() keel.Query[*airetrieval.Settings] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettingsesQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.Settings, error) {
-	return keel.One[*airetrieval.Settings](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.Settings)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettingsesQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.Settings, error) {
-	return keel.First[*airetrieval.Settings](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*airetrieval.Settings)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettingsesQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.Settings, error) {
-	return keel.List[*airetrieval.Settings](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.Settings)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettingsesQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.Settings, error) {
-	return keel.All[*airetrieval.Settings](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*airetrieval.Settings)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettingsesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.Settings, error) {
-	return keel.UpdateReturning[*airetrieval.Settings](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*airetrieval.Settings)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettingsesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.Settings], error) {
-	return keel.PageOf[*airetrieval.Settings](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*airetrieval.Settings])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettingsesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.Settings) error) error {
-	return keel.Each[*airetrieval.Settings](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*airetrieval.Settings)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettings() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.Settings)) }
@@ -2228,103 +2252,95 @@ var enumSourceType = [...]schema.EnumValue{
 }
 
 // CatalogCorpusCol is a column of airetrieval.CatalogCorpus values.
-type CatalogCorpusCol struct{ keel.StringCol }
+type CatalogCorpusCol struct{ keel.TypedStringCol }
 
-func (c CatalogCorpusCol) Eq(v airetrieval.CatalogCorpus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c CatalogCorpusCol) Ne(v airetrieval.CatalogCorpus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c CatalogCorpusCol) Gt(v airetrieval.CatalogCorpus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c CatalogCorpusCol) Gte(v airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CatalogCorpusCol) Lt(v airetrieval.CatalogCorpus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c CatalogCorpusCol) Lte(v airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c CatalogCorpusCol) Eq(v airetrieval.CatalogCorpus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CatalogCorpusCol) Ne(v airetrieval.CatalogCorpus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CatalogCorpusCol) Gt(v airetrieval.CatalogCorpus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CatalogCorpusCol) Gte(v airetrieval.CatalogCorpus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CatalogCorpusCol) Lt(v airetrieval.CatalogCorpus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CatalogCorpusCol) Lte(v airetrieval.CatalogCorpus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CatalogCorpusCol) IsDistinctFrom(v airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CatalogCorpusCol) Between(lo, hi airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CatalogCorpusCol) To(v airetrieval.CatalogCorpus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CatalogCorpusCol) In(vs ...airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CatalogCorpusCol) NotIn(vs ...airetrieval.CatalogCorpus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // IndexStatusCol is a column of airetrieval.IndexStatus values.
-type IndexStatusCol struct{ keel.StringCol }
+type IndexStatusCol struct{ keel.TypedStringCol }
 
-func (c IndexStatusCol) Eq(v airetrieval.IndexStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c IndexStatusCol) Ne(v airetrieval.IndexStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c IndexStatusCol) Gt(v airetrieval.IndexStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c IndexStatusCol) Gte(v airetrieval.IndexStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c IndexStatusCol) Lt(v airetrieval.IndexStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c IndexStatusCol) Lte(v airetrieval.IndexStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c IndexStatusCol) Eq(v airetrieval.IndexStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c IndexStatusCol) Ne(v airetrieval.IndexStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c IndexStatusCol) Gt(v airetrieval.IndexStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c IndexStatusCol) Gte(v airetrieval.IndexStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c IndexStatusCol) Lt(v airetrieval.IndexStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c IndexStatusCol) Lte(v airetrieval.IndexStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c IndexStatusCol) IsDistinctFrom(v airetrieval.IndexStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c IndexStatusCol) Between(lo, hi airetrieval.IndexStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c IndexStatusCol) To(v airetrieval.IndexStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c IndexStatusCol) To(v airetrieval.IndexStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c IndexStatusCol) In(vs ...airetrieval.IndexStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c IndexStatusCol) NotIn(vs ...airetrieval.IndexStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PauseReasonCol is a column of airetrieval.PauseReason values.
-type PauseReasonCol struct{ keel.StringCol }
+type PauseReasonCol struct{ keel.TypedStringCol }
 
-func (c PauseReasonCol) Eq(v airetrieval.PauseReason) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PauseReasonCol) Ne(v airetrieval.PauseReason) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PauseReasonCol) Gt(v airetrieval.PauseReason) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PauseReasonCol) Gte(v airetrieval.PauseReason) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PauseReasonCol) Lt(v airetrieval.PauseReason) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PauseReasonCol) Lte(v airetrieval.PauseReason) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PauseReasonCol) Eq(v airetrieval.PauseReason) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PauseReasonCol) Ne(v airetrieval.PauseReason) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PauseReasonCol) Gt(v airetrieval.PauseReason) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PauseReasonCol) Gte(v airetrieval.PauseReason) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PauseReasonCol) Lt(v airetrieval.PauseReason) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PauseReasonCol) Lte(v airetrieval.PauseReason) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PauseReasonCol) IsDistinctFrom(v airetrieval.PauseReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PauseReasonCol) Between(lo, hi airetrieval.PauseReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PauseReasonCol) To(v airetrieval.PauseReason) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PauseReasonCol) To(v airetrieval.PauseReason) keel.Assignment { return c.Text().To(string(v)) }
 func (c PauseReasonCol) In(vs ...airetrieval.PauseReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PauseReasonCol) NotIn(vs ...airetrieval.PauseReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceTypeCol is a column of airetrieval.SourceType values.
-type SourceTypeCol struct{ keel.StringCol }
+type SourceTypeCol struct{ keel.TypedStringCol }
 
-func (c SourceTypeCol) Eq(v airetrieval.SourceType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceTypeCol) Ne(v airetrieval.SourceType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceTypeCol) Gt(v airetrieval.SourceType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceTypeCol) Gte(v airetrieval.SourceType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceTypeCol) Lt(v airetrieval.SourceType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceTypeCol) Lte(v airetrieval.SourceType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceTypeCol) Eq(v airetrieval.SourceType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceTypeCol) Ne(v airetrieval.SourceType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceTypeCol) Gt(v airetrieval.SourceType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceTypeCol) Gte(v airetrieval.SourceType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceTypeCol) Lt(v airetrieval.SourceType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceTypeCol) Lte(v airetrieval.SourceType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceTypeCol) IsDistinctFrom(v airetrieval.SourceType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceTypeCol) Between(lo, hi airetrieval.SourceType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceTypeCol) To(v airetrieval.SourceType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SourceTypeCol) To(v airetrieval.SourceType) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceTypeCol) In(vs ...airetrieval.SourceType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceTypeCol) NotIn(vs ...airetrieval.SourceType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

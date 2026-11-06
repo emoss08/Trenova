@@ -114,10 +114,10 @@ type FiscalYearsTable struct {
 // FiscalYears references the fiscal_years table.
 var FiscalYears = &FiscalYearsTable{
 	TableBase:             keel.TableBase{Ref: &fiscalYearsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 2}}},
-	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 2}}},
+	Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 3}}},
 	Year:                  keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 4}},
 	Name:                  keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 5}},
 	Description:           keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 6}},
@@ -127,11 +127,11 @@ var FiscalYears = &FiscalYearsTable{
 	IsCalendarYear:        keel.BoolCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 10}},
 	AllowAdjustingEntries: keel.BoolCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 11}},
 	ClosedAt:              keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 12}},
-	ClosedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 13}}},
+	ClosedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 13}}},
 	LockedAt:              keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 14}},
-	LockedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 15}}},
+	LockedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 15}}},
 	ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 16}},
-	ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 17}}},
+	ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 17}}},
 	ReopenReason:          keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 18}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 19}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &fiscalYearsRef, Index: 20}},
@@ -144,10 +144,10 @@ var FiscalYears = &FiscalYearsTable{
 func BuildFiscalYears(r *keel.Ref) *FiscalYearsTable {
 	return &FiscalYearsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Year:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Name:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -157,11 +157,11 @@ func BuildFiscalYears(r *keel.Ref) *FiscalYearsTable {
 		IsCalendarYear:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		AllowAdjustingEntries: keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
 		ClosedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ClosedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ClosedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		LockedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		LockedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		LockedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		ReopenReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -206,8 +206,6 @@ func (t *FiscalYearsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // FiscalYearsQuery is a query over fiscalyear.FiscalYear.
 type FiscalYearsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fiscalyear.FiscalYear] = (*FiscalYearsTable)(nil)
 
 var _ keel.Query[*fiscalyear.FiscalYear] = (*FiscalYearsQuery)(nil)
 
@@ -323,42 +321,42 @@ func (t *FiscalYearsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fis
 
 // Create inserts row.
 func (t *FiscalYearsTable) Create(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FiscalYearsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FiscalYearsTable) Save(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FiscalYearsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FiscalYearsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FiscalYearsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FiscalYearsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FiscalYearsTable) Copy(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -530,37 +528,45 @@ func (q *FiscalYearsQuery) Clone() keel.Query[*fiscalyear.FiscalYear] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FiscalYearsQuery) One(ctx context.Context, db *keel.DB) (*fiscalyear.FiscalYear, error) {
-	return keel.One[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fiscalyear.FiscalYear)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FiscalYearsQuery) First(ctx context.Context, db *keel.DB) (*fiscalyear.FiscalYear, error) {
-	return keel.First[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fiscalyear.FiscalYear)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FiscalYearsQuery) List(ctx context.Context, db *keel.DB) ([]*fiscalyear.FiscalYear, error) {
-	return keel.List[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fiscalyear.FiscalYear)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FiscalYearsQuery) All(ctx context.Context, db *keel.DB) ([]*fiscalyear.FiscalYear, error) {
-	return keel.All[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fiscalyear.FiscalYear)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FiscalYearsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fiscalyear.FiscalYear, error) {
-	return keel.UpdateReturning[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fiscalyear.FiscalYear)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FiscalYearsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fiscalyear.FiscalYear], error) {
-	return keel.PageOf[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fiscalyear.FiscalYear])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FiscalYearsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fiscalyear.FiscalYear) error) error {
-	return keel.Each[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fiscalyear.FiscalYear)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFiscalYear() unsafe.Pointer { return unsafe.Pointer(new(fiscalyear.FiscalYear)) }
@@ -755,22 +761,24 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // StatusCol is a column of fiscalyear.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v fiscalyear.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v fiscalyear.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v fiscalyear.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v fiscalyear.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v fiscalyear.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v fiscalyear.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v fiscalyear.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v fiscalyear.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v fiscalyear.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v fiscalyear.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v fiscalyear.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v fiscalyear.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v fiscalyear.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi fiscalyear.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v fiscalyear.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...fiscalyear.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v fiscalyear.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...fiscalyear.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...fiscalyear.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

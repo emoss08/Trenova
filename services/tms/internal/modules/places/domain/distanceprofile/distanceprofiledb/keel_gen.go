@@ -96,14 +96,14 @@ type DistanceProfilesTable struct {
 // DistanceProfiles references the distance_profiles table.
 var DistanceProfiles = &DistanceProfilesTable{
 	TableBase:           keel.TableBase{Ref: &distanceProfilesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 2}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 2}}},
 	Name:                keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 3}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 4}},
 	Status:              keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 5}},
 	IsDefault:           keel.BoolCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 6}},
-	Provider:            integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 7}}},
+	Provider:            integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 7}}},
 	DataVersion:         keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 8}},
 	Region:              keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 9}},
 	RoutingType:         keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 10}},
@@ -123,14 +123,14 @@ var DistanceProfiles = &DistanceProfilesTable{
 func BuildDistanceProfiles(r *keel.Ref) *DistanceProfilesTable {
 	return &DistanceProfilesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Status:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		IsDefault:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
-		Provider:            integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Provider:            integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DataVersion:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Region:              keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		RoutingType:         keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -162,8 +162,6 @@ func (t *DistanceProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // DistanceProfilesQuery is a query over distanceprofile.DistanceProfile.
 type DistanceProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*distanceprofile.DistanceProfile] = (*DistanceProfilesTable)(nil)
 
 var _ keel.Query[*distanceprofile.DistanceProfile] = (*DistanceProfilesQuery)(nil)
 
@@ -279,42 +277,42 @@ func (t *DistanceProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *DistanceProfilesTable) Create(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DistanceProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DistanceProfilesTable) Save(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DistanceProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DistanceProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DistanceProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DistanceProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DistanceProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -486,37 +484,45 @@ func (q *DistanceProfilesQuery) Clone() keel.Query[*distanceprofile.DistanceProf
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DistanceProfilesQuery) One(ctx context.Context, db *keel.DB) (*distanceprofile.DistanceProfile, error) {
-	return keel.One[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*distanceprofile.DistanceProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DistanceProfilesQuery) First(ctx context.Context, db *keel.DB) (*distanceprofile.DistanceProfile, error) {
-	return keel.First[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*distanceprofile.DistanceProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DistanceProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*distanceprofile.DistanceProfile, error) {
-	return keel.List[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceprofile.DistanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DistanceProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*distanceprofile.DistanceProfile, error) {
-	return keel.All[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*distanceprofile.DistanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DistanceProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceprofile.DistanceProfile, error) {
-	return keel.UpdateReturning[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*distanceprofile.DistanceProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DistanceProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceprofile.DistanceProfile], error) {
-	return keel.PageOf[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*distanceprofile.DistanceProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DistanceProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceprofile.DistanceProfile) error) error {
-	return keel.Each[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*distanceprofile.DistanceProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDistanceProfile() unsafe.Pointer { return unsafe.Pointer(new(distanceprofile.DistanceProfile)) }

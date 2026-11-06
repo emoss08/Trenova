@@ -85,19 +85,19 @@ type WorkItemsTable struct {
 // WorkItems references the bank_receipt_work_items table.
 var WorkItems = &WorkItemsTable{
 	TableBase:        keel.TableBase{Ref: &workItemsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 2}}},
-	BankReceiptID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 3}}},
-	Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 4}}},
-	AssignedToUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 5}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 2}}},
+	BankReceiptID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 3}}},
+	Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 4}}},
+	AssignedToUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 5}}},
 	AssignedAt:       keel.Int64Col{Col: keel.Col{Ref: &workItemsRef, Index: 6}},
-	ResolutionType:   ResolutionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 7}}},
+	ResolutionType:   ResolutionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 7}}},
 	ResolutionNote:   keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 8}},
-	ResolvedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 9}}},
+	ResolvedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 9}}},
 	ResolvedAt:       keel.Int64Col{Col: keel.Col{Ref: &workItemsRef, Index: 10}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 11}}},
-	UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workItemsRef, Index: 12}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 11}}},
+	UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workItemsRef, Index: 12}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &workItemsRef, Index: 13}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workItemsRef, Index: 14}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workItemsRef, Index: 15}},
@@ -107,19 +107,19 @@ var WorkItems = &WorkItemsTable{
 func BuildWorkItems(r *keel.Ref) *WorkItemsTable {
 	return &WorkItemsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BankReceiptID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		AssignedToUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BankReceiptID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		AssignedToUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AssignedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		ResolutionType:   ResolutionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ResolutionType:   ResolutionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ResolutionNote:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		ResolvedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ResolvedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ResolvedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -141,8 +141,6 @@ func (t *WorkItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*b
 
 // WorkItemsQuery is a query over bankreceiptworkitem.WorkItem.
 type WorkItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*bankreceiptworkitem.WorkItem] = (*WorkItemsTable)(nil)
 
 var _ keel.Query[*bankreceiptworkitem.WorkItem] = (*WorkItemsQuery)(nil)
 
@@ -258,42 +256,42 @@ func (t *WorkItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bankr
 
 // Create inserts row.
 func (t *WorkItemsTable) Create(ctx context.Context, db *keel.DB, row *bankreceiptworkitem.WorkItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*bankreceiptworkitem.WorkItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkItemsTable) Save(ctx context.Context, db *keel.DB, row *bankreceiptworkitem.WorkItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *bankreceiptworkitem.WorkItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *bankreceiptworkitem.WorkItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*bankreceiptworkitem.WorkItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*bankreceiptworkitem.WorkItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*bankreceiptworkitem.WorkItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -465,37 +463,45 @@ func (q *WorkItemsQuery) Clone() keel.Query[*bankreceiptworkitem.WorkItem] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkItemsQuery) One(ctx context.Context, db *keel.DB) (*bankreceiptworkitem.WorkItem, error) {
-	return keel.One[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*bankreceiptworkitem.WorkItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkItemsQuery) First(ctx context.Context, db *keel.DB) (*bankreceiptworkitem.WorkItem, error) {
-	return keel.First[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*bankreceiptworkitem.WorkItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkItemsQuery) List(ctx context.Context, db *keel.DB) ([]*bankreceiptworkitem.WorkItem, error) {
-	return keel.List[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*bankreceiptworkitem.WorkItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkItemsQuery) All(ctx context.Context, db *keel.DB) ([]*bankreceiptworkitem.WorkItem, error) {
-	return keel.All[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*bankreceiptworkitem.WorkItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*bankreceiptworkitem.WorkItem, error) {
-	return keel.UpdateReturning[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*bankreceiptworkitem.WorkItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*bankreceiptworkitem.WorkItem], error) {
-	return keel.PageOf[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*bankreceiptworkitem.WorkItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*bankreceiptworkitem.WorkItem) error) error {
-	return keel.Each[*bankreceiptworkitem.WorkItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*bankreceiptworkitem.WorkItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkItem() unsafe.Pointer { return unsafe.Pointer(new(bankreceiptworkitem.WorkItem)) }
@@ -619,61 +625,61 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // ResolutionTypeCol is a column of bankreceiptworkitem.ResolutionType values.
-type ResolutionTypeCol struct{ keel.StringCol }
+type ResolutionTypeCol struct{ keel.TypedStringCol }
 
 func (c ResolutionTypeCol) Eq(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ResolutionTypeCol) Ne(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ResolutionTypeCol) Gt(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ResolutionTypeCol) Gte(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ResolutionTypeCol) Lt(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ResolutionTypeCol) Lte(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ResolutionTypeCol) IsDistinctFrom(v bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ResolutionTypeCol) Between(lo, hi bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ResolutionTypeCol) To(v bankreceiptworkitem.ResolutionType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ResolutionTypeCol) In(vs ...bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ResolutionTypeCol) NotIn(vs ...bankreceiptworkitem.ResolutionType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of bankreceiptworkitem.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v bankreceiptworkitem.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v bankreceiptworkitem.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v bankreceiptworkitem.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v bankreceiptworkitem.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v bankreceiptworkitem.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v bankreceiptworkitem.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v bankreceiptworkitem.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v bankreceiptworkitem.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v bankreceiptworkitem.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v bankreceiptworkitem.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v bankreceiptworkitem.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v bankreceiptworkitem.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v bankreceiptworkitem.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi bankreceiptworkitem.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v bankreceiptworkitem.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v bankreceiptworkitem.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...bankreceiptworkitem.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...bankreceiptworkitem.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

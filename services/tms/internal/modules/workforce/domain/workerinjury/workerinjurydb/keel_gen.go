@@ -109,11 +109,11 @@ type OSHAAnnualSummariesTable struct {
 // OSHAAnnualSummaries references the osha_annual_summaries table.
 var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
 	TableBase:           keel.TableBase{Ref: &oSHAAnnualSummariesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 2}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 2}}},
 	Year:                keel.Int16Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 3}},
-	Status:              OSHASummaryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 4}}},
+	Status:              OSHASummaryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 4}}},
 	NAICSCode:           keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 5}},
 	AverageEmployees:    keel.Int32Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 6}},
 	TotalHoursWorked:    keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 7}},
@@ -121,7 +121,7 @@ var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
 	ExecutiveTitle:      keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 9}},
 	ExecutivePhone:      keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 10}},
 	CertifiedAt:         keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 11}},
-	CertifiedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 12}}},
+	CertifiedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 12}}},
 	PostedFrom:          keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 13}},
 	PostedThrough:       keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 14}},
 	SubmittedAt:         keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 15}},
@@ -136,11 +136,11 @@ var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
 func BuildOSHAAnnualSummaries(r *keel.Ref) *OSHAAnnualSummariesTable {
 	return &OSHAAnnualSummariesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Year:                keel.Int16Col{Col: keel.Col{Ref: r, Index: 3}},
-		Status:              OSHASummaryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:              OSHASummaryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		NAICSCode:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		AverageEmployees:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 6}},
 		TotalHoursWorked:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -148,7 +148,7 @@ func BuildOSHAAnnualSummaries(r *keel.Ref) *OSHAAnnualSummariesTable {
 		ExecutiveTitle:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ExecutivePhone:      keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		CertifiedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CertifiedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CertifiedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		PostedFrom:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		PostedThrough:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		SubmittedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -180,8 +180,6 @@ func (t *OSHAAnnualSummariesTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // OSHAAnnualSummariesQuery is a query over workerinjury.OSHAAnnualSummary.
 type OSHAAnnualSummariesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerinjury.OSHAAnnualSummary] = (*OSHAAnnualSummariesTable)(nil)
 
 var _ keel.Query[*workerinjury.OSHAAnnualSummary] = (*OSHAAnnualSummariesQuery)(nil)
 
@@ -297,42 +295,42 @@ func (t *OSHAAnnualSummariesTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *OSHAAnnualSummariesTable) Create(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *OSHAAnnualSummariesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *OSHAAnnualSummariesTable) Save(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *OSHAAnnualSummariesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *OSHAAnnualSummariesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *OSHAAnnualSummariesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *OSHAAnnualSummariesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *OSHAAnnualSummariesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -504,37 +502,45 @@ func (q *OSHAAnnualSummariesQuery) Clone() keel.Query[*workerinjury.OSHAAnnualSu
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *OSHAAnnualSummariesQuery) One(ctx context.Context, db *keel.DB) (*workerinjury.OSHAAnnualSummary, error) {
-	return keel.One[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerinjury.OSHAAnnualSummary)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *OSHAAnnualSummariesQuery) First(ctx context.Context, db *keel.DB) (*workerinjury.OSHAAnnualSummary, error) {
-	return keel.First[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerinjury.OSHAAnnualSummary)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *OSHAAnnualSummariesQuery) List(ctx context.Context, db *keel.DB) ([]*workerinjury.OSHAAnnualSummary, error) {
-	return keel.List[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerinjury.OSHAAnnualSummary)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *OSHAAnnualSummariesQuery) All(ctx context.Context, db *keel.DB) ([]*workerinjury.OSHAAnnualSummary, error) {
-	return keel.All[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerinjury.OSHAAnnualSummary)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *OSHAAnnualSummariesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerinjury.OSHAAnnualSummary, error) {
-	return keel.UpdateReturning[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerinjury.OSHAAnnualSummary)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *OSHAAnnualSummariesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerinjury.OSHAAnnualSummary], error) {
-	return keel.PageOf[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerinjury.OSHAAnnualSummary])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *OSHAAnnualSummariesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerinjury.OSHAAnnualSummary) error) error {
-	return keel.Each[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerinjury.OSHAAnnualSummary)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newOSHAAnnualSummary() unsafe.Pointer {
@@ -800,16 +806,16 @@ type WorkerInjuriesTable struct {
 // WorkerInjuries references the worker_injuries table.
 var WorkerInjuries = &WorkerInjuriesTable{
 	TableBase:        keel.TableBase{Ref: &workerInjuriesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 3}}},
 	CaseNumber:       keel.Int32Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 4}},
 	CaseYear:         keel.Int16Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 5}},
-	Classification:   OSHACaseClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 6}}},
-	IllnessType:      OSHAIllnessTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 7}}},
-	Treatment:        InjuryTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 8}}},
-	Status:           InjuryCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 9}}},
+	Classification:   OSHACaseClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 6}}},
+	IllnessType:      OSHAIllnessTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 7}}},
+	Treatment:        InjuryTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 8}}},
+	Status:           InjuryCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 9}}},
 	OccurredAt:       keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 10}},
 	ReportedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 11}},
 	ReturnedToWorkAt: keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 12}},
@@ -820,15 +826,15 @@ var WorkerInjuries = &WorkerInjuriesTable{
 	DaysAway:         keel.Int32Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 17}},
 	DaysRestricted:   keel.Int32Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 18}},
 	PrivacyCase:      keel.BoolCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 19}},
-	ClaimStatus:      WorkersCompClaimStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 20}}},
+	ClaimStatus:      WorkersCompClaimStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 20}}},
 	ClaimNumber:      keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 21}},
 	ClaimCarrier:     keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 22}},
 	ClaimFiledAt:     keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 23}},
 	ClaimClosedAt:    keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 24}},
-	SafetyEventID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 25}}},
-	DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 26}}},
+	SafetyEventID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 25}}},
+	DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 26}}},
 	Notes:            keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 27}},
-	RecordedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 28}}},
+	RecordedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 28}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 29}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 30}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 31}},
@@ -838,16 +844,16 @@ var WorkerInjuries = &WorkerInjuriesTable{
 func BuildWorkerInjuries(r *keel.Ref) *WorkerInjuriesTable {
 	return &WorkerInjuriesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		CaseNumber:       keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
 		CaseYear:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
-		Classification:   OSHACaseClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		IllnessType:      OSHAIllnessTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Treatment:        InjuryTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:           InjuryCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Classification:   OSHACaseClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		IllnessType:      OSHAIllnessTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Treatment:        InjuryTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:           InjuryCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		OccurredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ReportedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ReturnedToWorkAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -858,15 +864,15 @@ func BuildWorkerInjuries(r *keel.Ref) *WorkerInjuriesTable {
 		DaysAway:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 17}},
 		DaysRestricted:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 18}},
 		PrivacyCase:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 19}},
-		ClaimStatus:      WorkersCompClaimStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ClaimStatus:      WorkersCompClaimStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		ClaimNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		ClaimCarrier:     keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		ClaimFiledAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		ClaimClosedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		SafetyEventID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		SafetyEventID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		Notes:            keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		RecordedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		RecordedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -908,8 +914,6 @@ func (t *WorkerInjuriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // WorkerInjuriesQuery is a query over workerinjury.WorkerInjury.
 type WorkerInjuriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerinjury.WorkerInjury] = (*WorkerInjuriesTable)(nil)
 
 var _ keel.Query[*workerinjury.WorkerInjury] = (*WorkerInjuriesQuery)(nil)
 
@@ -1025,42 +1029,42 @@ func (t *WorkerInjuriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *WorkerInjuriesTable) Create(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerInjuriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerInjuriesTable) Save(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerInjuriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerInjuriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerInjuriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerInjuriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerInjuriesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1232,37 +1236,45 @@ func (q *WorkerInjuriesQuery) Clone() keel.Query[*workerinjury.WorkerInjury] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerInjuriesQuery) One(ctx context.Context, db *keel.DB) (*workerinjury.WorkerInjury, error) {
-	return keel.One[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerinjury.WorkerInjury)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerInjuriesQuery) First(ctx context.Context, db *keel.DB) (*workerinjury.WorkerInjury, error) {
-	return keel.First[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerinjury.WorkerInjury)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerInjuriesQuery) List(ctx context.Context, db *keel.DB) ([]*workerinjury.WorkerInjury, error) {
-	return keel.List[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerinjury.WorkerInjury)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerInjuriesQuery) All(ctx context.Context, db *keel.DB) ([]*workerinjury.WorkerInjury, error) {
-	return keel.All[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerinjury.WorkerInjury)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerInjuriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerinjury.WorkerInjury, error) {
-	return keel.UpdateReturning[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerinjury.WorkerInjury)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerInjuriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerinjury.WorkerInjury], error) {
-	return keel.PageOf[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerinjury.WorkerInjury])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerInjuriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerinjury.WorkerInjury) error) error {
-	return keel.Each[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerinjury.WorkerInjury)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerInjury() unsafe.Pointer { return unsafe.Pointer(new(workerinjury.WorkerInjury)) }
@@ -1523,223 +1535,223 @@ var enumWorkersCompClaimStatus = [...]schema.EnumValue{
 }
 
 // InjuryCaseStatusCol is a column of workerinjury.InjuryCaseStatus values.
-type InjuryCaseStatusCol struct{ keel.StringCol }
+type InjuryCaseStatusCol struct{ keel.TypedStringCol }
 
 func (c InjuryCaseStatusCol) Eq(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InjuryCaseStatusCol) Ne(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InjuryCaseStatusCol) Gt(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InjuryCaseStatusCol) Gte(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InjuryCaseStatusCol) Lt(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InjuryCaseStatusCol) Lte(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InjuryCaseStatusCol) IsDistinctFrom(v workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InjuryCaseStatusCol) Between(lo, hi workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InjuryCaseStatusCol) To(v workerinjury.InjuryCaseStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InjuryCaseStatusCol) In(vs ...workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InjuryCaseStatusCol) NotIn(vs ...workerinjury.InjuryCaseStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InjuryTreatmentCol is a column of workerinjury.InjuryTreatment values.
-type InjuryTreatmentCol struct{ keel.StringCol }
+type InjuryTreatmentCol struct{ keel.TypedStringCol }
 
 func (c InjuryTreatmentCol) Eq(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InjuryTreatmentCol) Ne(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InjuryTreatmentCol) Gt(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InjuryTreatmentCol) Gte(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InjuryTreatmentCol) Lt(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InjuryTreatmentCol) Lte(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InjuryTreatmentCol) IsDistinctFrom(v workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InjuryTreatmentCol) Between(lo, hi workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InjuryTreatmentCol) To(v workerinjury.InjuryTreatment) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InjuryTreatmentCol) In(vs ...workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InjuryTreatmentCol) NotIn(vs ...workerinjury.InjuryTreatment) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OSHACaseClassificationCol is a column of workerinjury.OSHACaseClassification values.
-type OSHACaseClassificationCol struct{ keel.StringCol }
+type OSHACaseClassificationCol struct{ keel.TypedStringCol }
 
 func (c OSHACaseClassificationCol) Eq(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c OSHACaseClassificationCol) Ne(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c OSHACaseClassificationCol) Gt(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c OSHACaseClassificationCol) Gte(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c OSHACaseClassificationCol) Lt(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c OSHACaseClassificationCol) Lte(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c OSHACaseClassificationCol) IsDistinctFrom(v workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OSHACaseClassificationCol) Between(lo, hi workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OSHACaseClassificationCol) To(v workerinjury.OSHACaseClassification) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OSHACaseClassificationCol) In(vs ...workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OSHACaseClassificationCol) NotIn(vs ...workerinjury.OSHACaseClassification) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OSHAIllnessTypeCol is a column of workerinjury.OSHAIllnessType values.
-type OSHAIllnessTypeCol struct{ keel.StringCol }
+type OSHAIllnessTypeCol struct{ keel.TypedStringCol }
 
 func (c OSHAIllnessTypeCol) Eq(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c OSHAIllnessTypeCol) Ne(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c OSHAIllnessTypeCol) Gt(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c OSHAIllnessTypeCol) Gte(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c OSHAIllnessTypeCol) Lt(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c OSHAIllnessTypeCol) Lte(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c OSHAIllnessTypeCol) IsDistinctFrom(v workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OSHAIllnessTypeCol) Between(lo, hi workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OSHAIllnessTypeCol) To(v workerinjury.OSHAIllnessType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OSHAIllnessTypeCol) In(vs ...workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OSHAIllnessTypeCol) NotIn(vs ...workerinjury.OSHAIllnessType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OSHASummaryStatusCol is a column of workerinjury.OSHASummaryStatus values.
-type OSHASummaryStatusCol struct{ keel.StringCol }
+type OSHASummaryStatusCol struct{ keel.TypedStringCol }
 
 func (c OSHASummaryStatusCol) Eq(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c OSHASummaryStatusCol) Ne(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c OSHASummaryStatusCol) Gt(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c OSHASummaryStatusCol) Gte(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c OSHASummaryStatusCol) Lt(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c OSHASummaryStatusCol) Lte(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c OSHASummaryStatusCol) IsDistinctFrom(v workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OSHASummaryStatusCol) Between(lo, hi workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OSHASummaryStatusCol) To(v workerinjury.OSHASummaryStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OSHASummaryStatusCol) In(vs ...workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OSHASummaryStatusCol) NotIn(vs ...workerinjury.OSHASummaryStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // WorkersCompClaimStatusCol is a column of workerinjury.WorkersCompClaimStatus values.
-type WorkersCompClaimStatusCol struct{ keel.StringCol }
+type WorkersCompClaimStatusCol struct{ keel.TypedStringCol }
 
 func (c WorkersCompClaimStatusCol) Eq(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c WorkersCompClaimStatusCol) Ne(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c WorkersCompClaimStatusCol) Gt(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c WorkersCompClaimStatusCol) Gte(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c WorkersCompClaimStatusCol) Lt(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c WorkersCompClaimStatusCol) Lte(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c WorkersCompClaimStatusCol) IsDistinctFrom(v workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WorkersCompClaimStatusCol) Between(lo, hi workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c WorkersCompClaimStatusCol) To(v workerinjury.WorkersCompClaimStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c WorkersCompClaimStatusCol) In(vs ...workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WorkersCompClaimStatusCol) NotIn(vs ...workerinjury.WorkersCompClaimStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

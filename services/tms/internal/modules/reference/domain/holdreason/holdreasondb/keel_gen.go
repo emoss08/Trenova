@@ -92,15 +92,15 @@ type HoldReasonsTable struct {
 // HoldReasons references the hold_reasons table.
 var HoldReasons = &HoldReasonsTable{
 	TableBase:                keel.TableBase{Ref: &holdReasonsRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 2}}},
-	Type:                     HoldTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 3}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 2}}},
+	Type:                     HoldTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 3}}},
 	Code:                     keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 4}},
 	Label:                    keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 5}},
 	Description:              keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 6}},
 	Active:                   keel.BoolCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 7}},
-	DefaultSeverity:          HoldSeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 8}}},
+	DefaultSeverity:          HoldSeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 8}}},
 	DefaultBlocksDispatch:    keel.BoolCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 9}},
 	DefaultBlocksDelivery:    keel.BoolCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 10}},
 	DefaultBlocksBilling:     keel.BoolCol{Col: keel.Col{Ref: &holdReasonsRef, Index: 11}},
@@ -117,15 +117,15 @@ var HoldReasons = &HoldReasonsTable{
 func BuildHoldReasons(r *keel.Ref) *HoldReasonsTable {
 	return &HoldReasonsTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Type:                     HoldTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Type:                     HoldTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Label:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Active:                   keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		DefaultSeverity:          HoldSeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		DefaultSeverity:          HoldSeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		DefaultBlocksDispatch:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		DefaultBlocksDelivery:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		DefaultBlocksBilling:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
@@ -154,8 +154,6 @@ func (t *HoldReasonsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // HoldReasonsQuery is a query over holdreason.HoldReason.
 type HoldReasonsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*holdreason.HoldReason] = (*HoldReasonsTable)(nil)
 
 var _ keel.Query[*holdreason.HoldReason] = (*HoldReasonsQuery)(nil)
 
@@ -271,42 +269,42 @@ func (t *HoldReasonsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*hol
 
 // Create inserts row.
 func (t *HoldReasonsTable) Create(ctx context.Context, db *keel.DB, row *holdreason.HoldReason) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *HoldReasonsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *HoldReasonsTable) Save(ctx context.Context, db *keel.DB, row *holdreason.HoldReason, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *HoldReasonsTable) SaveExcept(ctx context.Context, db *keel.DB, row *holdreason.HoldReason, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *HoldReasonsTable) DeleteRow(ctx context.Context, db *keel.DB, row *holdreason.HoldReason) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *HoldReasonsTable) Upsert(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *HoldReasonsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *HoldReasonsTable) Copy(ctx context.Context, db *keel.DB, rows []*holdreason.HoldReason) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -478,37 +476,45 @@ func (q *HoldReasonsQuery) Clone() keel.Query[*holdreason.HoldReason] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *HoldReasonsQuery) One(ctx context.Context, db *keel.DB) (*holdreason.HoldReason, error) {
-	return keel.One[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*holdreason.HoldReason)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *HoldReasonsQuery) First(ctx context.Context, db *keel.DB) (*holdreason.HoldReason, error) {
-	return keel.First[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*holdreason.HoldReason)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *HoldReasonsQuery) List(ctx context.Context, db *keel.DB) ([]*holdreason.HoldReason, error) {
-	return keel.List[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*holdreason.HoldReason)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *HoldReasonsQuery) All(ctx context.Context, db *keel.DB) ([]*holdreason.HoldReason, error) {
-	return keel.All[*holdreason.HoldReason](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*holdreason.HoldReason)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *HoldReasonsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*holdreason.HoldReason, error) {
-	return keel.UpdateReturning[*holdreason.HoldReason](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*holdreason.HoldReason)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *HoldReasonsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*holdreason.HoldReason], error) {
-	return keel.PageOf[*holdreason.HoldReason](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*holdreason.HoldReason])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *HoldReasonsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*holdreason.HoldReason) error) error {
-	return keel.Each[*holdreason.HoldReason](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*holdreason.HoldReason)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newHoldReason() unsafe.Pointer { return unsafe.Pointer(new(holdreason.HoldReason)) }
@@ -631,49 +637,47 @@ var enumHoldType = [...]schema.EnumValue{
 }
 
 // HoldSeverityCol is a column of holdreason.HoldSeverity values.
-type HoldSeverityCol struct{ keel.StringCol }
+type HoldSeverityCol struct{ keel.TypedStringCol }
 
-func (c HoldSeverityCol) Eq(v holdreason.HoldSeverity) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c HoldSeverityCol) Ne(v holdreason.HoldSeverity) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c HoldSeverityCol) Gt(v holdreason.HoldSeverity) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c HoldSeverityCol) Gte(v holdreason.HoldSeverity) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c HoldSeverityCol) Lt(v holdreason.HoldSeverity) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c HoldSeverityCol) Lte(v holdreason.HoldSeverity) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c HoldSeverityCol) Eq(v holdreason.HoldSeverity) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c HoldSeverityCol) Ne(v holdreason.HoldSeverity) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c HoldSeverityCol) Gt(v holdreason.HoldSeverity) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c HoldSeverityCol) Gte(v holdreason.HoldSeverity) keel.Pred { return c.Text().Gte(string(v)) }
+func (c HoldSeverityCol) Lt(v holdreason.HoldSeverity) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c HoldSeverityCol) Lte(v holdreason.HoldSeverity) keel.Pred { return c.Text().Lte(string(v)) }
 func (c HoldSeverityCol) IsDistinctFrom(v holdreason.HoldSeverity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c HoldSeverityCol) Between(lo, hi holdreason.HoldSeverity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c HoldSeverityCol) To(v holdreason.HoldSeverity) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c HoldSeverityCol) To(v holdreason.HoldSeverity) keel.Assignment { return c.Text().To(string(v)) }
 func (c HoldSeverityCol) In(vs ...holdreason.HoldSeverity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c HoldSeverityCol) NotIn(vs ...holdreason.HoldSeverity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // HoldTypeCol is a column of holdreason.HoldType values.
-type HoldTypeCol struct{ keel.StringCol }
+type HoldTypeCol struct{ keel.TypedStringCol }
 
-func (c HoldTypeCol) Eq(v holdreason.HoldType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c HoldTypeCol) Ne(v holdreason.HoldType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c HoldTypeCol) Gt(v holdreason.HoldType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c HoldTypeCol) Gte(v holdreason.HoldType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c HoldTypeCol) Lt(v holdreason.HoldType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c HoldTypeCol) Lte(v holdreason.HoldType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c HoldTypeCol) Eq(v holdreason.HoldType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c HoldTypeCol) Ne(v holdreason.HoldType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c HoldTypeCol) Gt(v holdreason.HoldType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c HoldTypeCol) Gte(v holdreason.HoldType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c HoldTypeCol) Lt(v holdreason.HoldType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c HoldTypeCol) Lte(v holdreason.HoldType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c HoldTypeCol) IsDistinctFrom(v holdreason.HoldType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c HoldTypeCol) Between(lo, hi holdreason.HoldType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c HoldTypeCol) To(v holdreason.HoldType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c HoldTypeCol) To(v holdreason.HoldType) keel.Assignment { return c.Text().To(string(v)) }
 func (c HoldTypeCol) In(vs ...holdreason.HoldType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c HoldTypeCol) NotIn(vs ...holdreason.HoldType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

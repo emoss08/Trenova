@@ -366,7 +366,7 @@ func (r *connectionRepository) SaveChangeFeed(
 		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
-			keelassign.StringOrNull(ac.ChangesErrorCategory.StringCol, string(req.ErrorCategory)),
+			keelassign.StringOrNull(ac.ChangesErrorCategory.Text(), string(req.ErrorCategory)),
 			keelassign.StringOrNull(ac.ChangesErrorMessage, req.ErrorMessage),
 		}
 		if req.Cursor != "" {
@@ -396,7 +396,7 @@ func (r *connectionRepository) SaveDriftCheck(
 		ac := accountingconnectiondb.AccountingConnections
 		sets := []keel.Assignment{
 			keepConnectionVersion(),
-			keelassign.StringOrNull(ac.DriftErrorCategory.StringCol, string(req.ErrorCategory)),
+			keelassign.StringOrNull(ac.DriftErrorCategory.Text(), string(req.ErrorCategory)),
 			keelassign.StringOrNull(ac.DriftErrorMessage, req.ErrorMessage),
 		}
 		if req.CheckedAt != nil {

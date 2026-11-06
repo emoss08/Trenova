@@ -93,17 +93,17 @@ type JobPositionsTable struct {
 // JobPositions references the job_positions table.
 var JobPositions = &JobPositionsTable{
 	TableBase:           keel.TableBase{Ref: &jobPositionsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 2}}},
-	Status:              keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 3}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 2}}},
+	Status:              keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 3}}},
 	Code:                keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 4}},
 	Title:               keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 5}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 6}},
-	Department:          JobDepartmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 7}}},
+	Department:          JobDepartmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 7}}},
 	FLSAExempt:          keel.BoolCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 8}},
 	IsDrivingPosition:   keel.BoolCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 9}},
-	ReportsToPositionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 10}}},
+	ReportsToPositionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jobPositionsRef, Index: 10}}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &jobPositionsRef, Index: 11}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &jobPositionsRef, Index: 12}},
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &jobPositionsRef, Index: 13}},
@@ -113,17 +113,17 @@ var JobPositions = &JobPositionsTable{
 func BuildJobPositions(r *keel.Ref) *JobPositionsTable {
 	return &JobPositionsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:              keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:              keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:                keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Title:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Department:          JobDepartmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Department:          JobDepartmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		FLSAExempt:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		IsDrivingPosition:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		ReportsToPositionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ReportsToPositionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -150,8 +150,6 @@ func (t *JobPositionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // JobPositionsQuery is a query over worker.JobPosition.
 type JobPositionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*worker.JobPosition] = (*JobPositionsTable)(nil)
 
 var _ keel.Query[*worker.JobPosition] = (*JobPositionsQuery)(nil)
 
@@ -267,42 +265,42 @@ func (t *JobPositionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*wo
 
 // Create inserts row.
 func (t *JobPositionsTable) Create(ctx context.Context, db *keel.DB, row *worker.JobPosition) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JobPositionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*worker.JobPosition) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JobPositionsTable) Save(ctx context.Context, db *keel.DB, row *worker.JobPosition, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JobPositionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *worker.JobPosition, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JobPositionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *worker.JobPosition) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JobPositionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*worker.JobPosition, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JobPositionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*worker.JobPosition, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JobPositionsTable) Copy(ctx context.Context, db *keel.DB, rows []*worker.JobPosition) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -474,37 +472,45 @@ func (q *JobPositionsQuery) Clone() keel.Query[*worker.JobPosition] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JobPositionsQuery) One(ctx context.Context, db *keel.DB) (*worker.JobPosition, error) {
-	return keel.One[*worker.JobPosition](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*worker.JobPosition)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JobPositionsQuery) First(ctx context.Context, db *keel.DB) (*worker.JobPosition, error) {
-	return keel.First[*worker.JobPosition](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*worker.JobPosition)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JobPositionsQuery) List(ctx context.Context, db *keel.DB) ([]*worker.JobPosition, error) {
-	return keel.List[*worker.JobPosition](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.JobPosition)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JobPositionsQuery) All(ctx context.Context, db *keel.DB) ([]*worker.JobPosition, error) {
-	return keel.All[*worker.JobPosition](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.JobPosition)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JobPositionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*worker.JobPosition, error) {
-	return keel.UpdateReturning[*worker.JobPosition](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*worker.JobPosition)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JobPositionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*worker.JobPosition], error) {
-	return keel.PageOf[*worker.JobPosition](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*worker.JobPosition])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JobPositionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*worker.JobPosition) error) error {
-	return keel.Each[*worker.JobPosition](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*worker.JobPosition)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJobPosition() unsafe.Pointer { return unsafe.Pointer(new(worker.JobPosition)) }
@@ -732,18 +738,18 @@ type WorkersTable struct {
 // Workers references the workers table.
 var Workers = &WorkersTable{
 	TableBase:             keel.TableBase{Ref: &workersRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 2}}},
-	StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 3}}},
-	FleetCodeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 4}}},
-	ManagerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 5}}},
-	PositionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 6}}},
-	UserID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 7}}},
-	Status:                keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 8}}},
-	Type:                  WorkerTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 9}}},
-	DriverType:            DriverTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 10}}},
-	LeaveType:             LeaveTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 11}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 2}}},
+	StateID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 3}}},
+	FleetCodeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 4}}},
+	ManagerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 5}}},
+	PositionID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 6}}},
+	UserID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 7}}},
+	Status:                keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 8}}},
+	Type:                  WorkerTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 9}}},
+	DriverType:            DriverTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 10}}},
+	LeaveType:             LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 11}}},
 	ProfilePicURL:         keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 12}},
 	FirstName:             keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 13}},
 	LastName:              keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 14}},
@@ -760,7 +766,7 @@ var Workers = &WorkersTable{
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &workersRef, Index: 25}},
 	Rank:                  keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 26}},
 	AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 27}},
-	Gender:                GenderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 28}}},
+	Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workersRef, Index: 28}}},
 	CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 29}},
 	AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 30}},
 	HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 31}},
@@ -776,18 +782,18 @@ var Workers = &WorkersTable{
 func BuildWorkers(r *keel.Ref) *WorkersTable {
 	return &WorkersTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		FleetCodeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ManagerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		PositionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		UserID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Status:                keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Type:                  WorkerTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		DriverType:            DriverTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		LeaveType:             LeaveTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		StateID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		FleetCodeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ManagerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		PositionID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		UserID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:                keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Type:                  WorkerTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		DriverType:            DriverTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		LeaveType:             LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ProfilePicURL:         keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		FirstName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		LastName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -804,7 +810,7 @@ func BuildWorkers(r *keel.Ref) *WorkersTable {
 		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 25}},
 		Rank:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		AssignmentBlocked:     keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		Gender:                GenderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		Gender:                GenderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 29}},
 		AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
 		HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -871,8 +877,6 @@ func (t *WorkersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*wor
 
 // WorkersQuery is a query over worker.Worker.
 type WorkersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*worker.Worker] = (*WorkersTable)(nil)
 
 var _ keel.Query[*worker.Worker] = (*WorkersQuery)(nil)
 
@@ -988,42 +992,42 @@ func (t *WorkersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*worker.
 
 // Create inserts row.
 func (t *WorkersTable) Create(ctx context.Context, db *keel.DB, row *worker.Worker) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*worker.Worker) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkersTable) Save(ctx context.Context, db *keel.DB, row *worker.Worker, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkersTable) SaveExcept(ctx context.Context, db *keel.DB, row *worker.Worker, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkersTable) DeleteRow(ctx context.Context, db *keel.DB, row *worker.Worker) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkersTable) Upsert(ctx context.Context, db *keel.DB, rows []*worker.Worker, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*worker.Worker, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkersTable) Copy(ctx context.Context, db *keel.DB, rows []*worker.Worker) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1195,37 +1199,45 @@ func (q *WorkersQuery) Clone() keel.Query[*worker.Worker] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkersQuery) One(ctx context.Context, db *keel.DB) (*worker.Worker, error) {
-	return keel.One[*worker.Worker](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*worker.Worker)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkersQuery) First(ctx context.Context, db *keel.DB) (*worker.Worker, error) {
-	return keel.First[*worker.Worker](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*worker.Worker)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkersQuery) List(ctx context.Context, db *keel.DB) ([]*worker.Worker, error) {
-	return keel.List[*worker.Worker](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.Worker)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkersQuery) All(ctx context.Context, db *keel.DB) ([]*worker.Worker, error) {
-	return keel.All[*worker.Worker](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.Worker)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*worker.Worker, error) {
-	return keel.UpdateReturning[*worker.Worker](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*worker.Worker)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*worker.Worker], error) {
-	return keel.PageOf[*worker.Worker](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*worker.Worker])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*worker.Worker) error) error {
-	return keel.Each[*worker.Worker](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*worker.Worker)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorker() unsafe.Pointer { return unsafe.Pointer(new(worker.Worker)) }
@@ -1574,15 +1586,15 @@ type WorkerPTOsTable struct {
 // WorkerPTOs references the worker_pto table.
 var WorkerPTOs = &WorkerPTOsTable{
 	TableBase:          keel.TableBase{Ref: &workerPTOsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 0}}},
-	WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 2}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 3}}},
-	ApproverID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 4}}},
-	RejectorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 5}}},
-	CancelledByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 6}}},
-	Status:             PTOStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 7}}},
-	Type:               PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 8}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 0}}},
+	WorkerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 2}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 3}}},
+	ApproverID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 4}}},
+	RejectorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 5}}},
+	CancelledByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 6}}},
+	Status:             PTOStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 7}}},
+	Type:               PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 8}}},
 	StartDate:          keel.Int64Col{Col: keel.Col{Ref: &workerPTOsRef, Index: 9}},
 	EndDate:            keel.Int64Col{Col: keel.Col{Ref: &workerPTOsRef, Index: 10}},
 	Reason:             keel.StringCol{Col: keel.Col{Ref: &workerPTOsRef, Index: 11}},
@@ -1601,15 +1613,15 @@ var WorkerPTOs = &WorkerPTOsTable{
 func BuildWorkerPTOs(r *keel.Ref) *WorkerPTOsTable {
 	return &WorkerPTOsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ApproverID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RejectorID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CancelledByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:             PTOStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Type:               PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		WorkerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ApproverID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RejectorID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CancelledByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:             PTOStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Type:               PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		StartDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		EndDate:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		Reason:             keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
@@ -1658,8 +1670,6 @@ func (t *WorkerPTOsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // WorkerPTOsQuery is a query over worker.WorkerPTO.
 type WorkerPTOsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*worker.WorkerPTO] = (*WorkerPTOsTable)(nil)
 
 var _ keel.Query[*worker.WorkerPTO] = (*WorkerPTOsQuery)(nil)
 
@@ -1775,42 +1785,42 @@ func (t *WorkerPTOsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*work
 
 // Create inserts row.
 func (t *WorkerPTOsTable) Create(ctx context.Context, db *keel.DB, row *worker.WorkerPTO) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPTOsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*worker.WorkerPTO) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPTOsTable) Save(ctx context.Context, db *keel.DB, row *worker.WorkerPTO, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPTOsTable) SaveExcept(ctx context.Context, db *keel.DB, row *worker.WorkerPTO, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPTOsTable) DeleteRow(ctx context.Context, db *keel.DB, row *worker.WorkerPTO) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPTOsTable) Upsert(ctx context.Context, db *keel.DB, rows []*worker.WorkerPTO, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPTOsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*worker.WorkerPTO, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPTOsTable) Copy(ctx context.Context, db *keel.DB, rows []*worker.WorkerPTO) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1982,37 +1992,45 @@ func (q *WorkerPTOsQuery) Clone() keel.Query[*worker.WorkerPTO] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPTOsQuery) One(ctx context.Context, db *keel.DB) (*worker.WorkerPTO, error) {
-	return keel.One[*worker.WorkerPTO](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*worker.WorkerPTO)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPTOsQuery) First(ctx context.Context, db *keel.DB) (*worker.WorkerPTO, error) {
-	return keel.First[*worker.WorkerPTO](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*worker.WorkerPTO)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPTOsQuery) List(ctx context.Context, db *keel.DB) ([]*worker.WorkerPTO, error) {
-	return keel.List[*worker.WorkerPTO](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.WorkerPTO)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPTOsQuery) All(ctx context.Context, db *keel.DB) ([]*worker.WorkerPTO, error) {
-	return keel.All[*worker.WorkerPTO](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.WorkerPTO)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPTOsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*worker.WorkerPTO, error) {
-	return keel.UpdateReturning[*worker.WorkerPTO](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*worker.WorkerPTO)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPTOsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*worker.WorkerPTO], error) {
-	return keel.PageOf[*worker.WorkerPTO](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*worker.WorkerPTO])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPTOsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*worker.WorkerPTO) error) error {
-	return keel.Each[*worker.WorkerPTO](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*worker.WorkerPTO)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPTO() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerPTO)) }
@@ -2280,16 +2298,16 @@ type WorkerProfilesTable struct {
 // WorkerProfiles references the worker_profiles table.
 var WorkerProfiles = &WorkerProfilesTable{
 	TableBase:                 keel.TableBase{Ref: &workerProfilesRef},
-	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 0}}},
-	WorkerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 1}}},
-	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 2}}},
-	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 3}}},
-	LicenseStateID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 4}}},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 0}}},
+	WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 1}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 2}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 3}}},
+	LicenseStateID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 4}}},
 	DOB:                       keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 5}},
 	LicenseNumber:             keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 6}},
-	CDLClass:                  CDLClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 7}}},
+	CDLClass:                  CDLClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 7}}},
 	CDLRestrictions:           keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 8}},
-	Endorsement:               EndorsementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 9}}},
+	Endorsement:               EndorsementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 9}}},
 	HazmatExpiry:              keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 10}},
 	LicenseExpiry:             keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 11}},
 	MedicalCardExpiry:         keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 12}},
@@ -2301,9 +2319,9 @@ var WorkerProfiles = &WorkerProfilesTable{
 	TerminationDate:           keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 18}},
 	PhysicalDueDate:           keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 19}},
 	MVRDueDate:                keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 20}},
-	ComplianceStatus:          ComplianceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 21}}},
-	TrainingHealth:            TrainingHealthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 22}}},
-	SafetyRating:              SafetyRatingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 23}}},
+	ComplianceStatus:          ComplianceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 21}}},
+	TrainingHealth:            TrainingHealthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 22}}},
+	SafetyRating:              SafetyRatingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 23}}},
 	SafetyScore:               keel.Int16Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 24}},
 	NextCredentialExpiry:      keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 25}},
 	NextTrainingDue:           keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 26}},
@@ -2312,8 +2330,8 @@ var WorkerProfiles = &WorkerProfilesTable{
 	LastComplianceCheck:       keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 29}},
 	LastMVRCheck:              keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 30}},
 	LastDrugTest:              keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 31}},
-	DrugAlcoholStatus:         DrugAlcoholStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 32}}},
-	ReturnToDutyStatus:        ReturnToDutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 33}}},
+	DrugAlcoholStatus:         DrugAlcoholStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 32}}},
+	ReturnToDutyStatus:        ReturnToDutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 33}}},
 	LastClearinghouseQueryAt:  keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 34}},
 	NextClearinghouseQueryDue: keel.Int64Col{Col: keel.Col{Ref: &workerProfilesRef, Index: 35}},
 	ELDExempt:                 keel.BoolCol{Col: keel.Col{Ref: &workerProfilesRef, Index: 36}},
@@ -2327,16 +2345,16 @@ var WorkerProfiles = &WorkerProfilesTable{
 func BuildWorkerProfiles(r *keel.Ref) *WorkerProfilesTable {
 	return &WorkerProfilesTable{
 		TableBase:                 keel.TableBase{Ref: r},
-		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		WorkerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		LicenseStateID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		LicenseStateID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		DOB:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		LicenseNumber:             keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		CDLClass:                  CDLClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CDLClass:                  CDLClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CDLRestrictions:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Endorsement:               EndorsementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Endorsement:               EndorsementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		HazmatExpiry:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		LicenseExpiry:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		MedicalCardExpiry:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -2348,9 +2366,9 @@ func BuildWorkerProfiles(r *keel.Ref) *WorkerProfilesTable {
 		TerminationDate:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		PhysicalDueDate:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		MVRDueDate:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		ComplianceStatus:          ComplianceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		TrainingHealth:            TrainingHealthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		SafetyRating:              SafetyRatingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ComplianceStatus:          ComplianceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		TrainingHealth:            TrainingHealthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		SafetyRating:              SafetyRatingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		SafetyScore:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 24}},
 		NextCredentialExpiry:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		NextTrainingDue:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
@@ -2359,8 +2377,8 @@ func BuildWorkerProfiles(r *keel.Ref) *WorkerProfilesTable {
 		LastComplianceCheck:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		LastMVRCheck:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		LastDrugTest:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		DrugAlcoholStatus:         DrugAlcoholStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 32}}},
-		ReturnToDutyStatus:        ReturnToDutyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		DrugAlcoholStatus:         DrugAlcoholStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
+		ReturnToDutyStatus:        ReturnToDutyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		LastClearinghouseQueryAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
 		NextClearinghouseQueryDue: keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		ELDExempt:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 36}},
@@ -2391,8 +2409,6 @@ func (t *WorkerProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // WorkerProfilesQuery is a query over worker.WorkerProfile.
 type WorkerProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*worker.WorkerProfile] = (*WorkerProfilesTable)(nil)
 
 var _ keel.Query[*worker.WorkerProfile] = (*WorkerProfilesQuery)(nil)
 
@@ -2508,42 +2524,42 @@ func (t *WorkerProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *WorkerProfilesTable) Create(ctx context.Context, db *keel.DB, row *worker.WorkerProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*worker.WorkerProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerProfilesTable) Save(ctx context.Context, db *keel.DB, row *worker.WorkerProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *worker.WorkerProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *worker.WorkerProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*worker.WorkerProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*worker.WorkerProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*worker.WorkerProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2715,37 +2731,45 @@ func (q *WorkerProfilesQuery) Clone() keel.Query[*worker.WorkerProfile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerProfilesQuery) One(ctx context.Context, db *keel.DB) (*worker.WorkerProfile, error) {
-	return keel.One[*worker.WorkerProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*worker.WorkerProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerProfilesQuery) First(ctx context.Context, db *keel.DB) (*worker.WorkerProfile, error) {
-	return keel.First[*worker.WorkerProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*worker.WorkerProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*worker.WorkerProfile, error) {
-	return keel.List[*worker.WorkerProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.WorkerProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*worker.WorkerProfile, error) {
-	return keel.All[*worker.WorkerProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*worker.WorkerProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*worker.WorkerProfile, error) {
-	return keel.UpdateReturning[*worker.WorkerProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*worker.WorkerProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*worker.WorkerProfile], error) {
-	return keel.PageOf[*worker.WorkerProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*worker.WorkerProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*worker.WorkerProfile) error) error {
-	return keel.Each[*worker.WorkerProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*worker.WorkerProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerProfile() unsafe.Pointer { return unsafe.Pointer(new(worker.WorkerProfile)) }
@@ -3145,369 +3169,347 @@ var reportMeasureFloatHidden = schema.ReportInfo{Kind: schema.Measure, Type: sch
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CDLClassCol is a column of worker.CDLClass values.
-type CDLClassCol struct{ keel.StringCol }
+type CDLClassCol struct{ keel.TypedStringCol }
 
-func (c CDLClassCol) Eq(v worker.CDLClass) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CDLClassCol) Ne(v worker.CDLClass) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CDLClassCol) Gt(v worker.CDLClass) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CDLClassCol) Gte(v worker.CDLClass) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CDLClassCol) Lt(v worker.CDLClass) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CDLClassCol) Lte(v worker.CDLClass) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CDLClassCol) Eq(v worker.CDLClass) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CDLClassCol) Ne(v worker.CDLClass) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CDLClassCol) Gt(v worker.CDLClass) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CDLClassCol) Gte(v worker.CDLClass) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CDLClassCol) Lt(v worker.CDLClass) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CDLClassCol) Lte(v worker.CDLClass) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CDLClassCol) IsDistinctFrom(v worker.CDLClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CDLClassCol) Between(lo, hi worker.CDLClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CDLClassCol) To(v worker.CDLClass) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c CDLClassCol) In(vs ...worker.CDLClass) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c CDLClassCol) To(v worker.CDLClass) keel.Assignment { return c.Text().To(string(v)) }
+func (c CDLClassCol) In(vs ...worker.CDLClass) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c CDLClassCol) NotIn(vs ...worker.CDLClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ComplianceStatusCol is a column of worker.ComplianceStatus values.
-type ComplianceStatusCol struct{ keel.StringCol }
+type ComplianceStatusCol struct{ keel.TypedStringCol }
 
-func (c ComplianceStatusCol) Eq(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ComplianceStatusCol) Ne(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ComplianceStatusCol) Gt(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ComplianceStatusCol) Gte(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ComplianceStatusCol) Lt(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ComplianceStatusCol) Lte(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ComplianceStatusCol) Eq(v worker.ComplianceStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ComplianceStatusCol) Ne(v worker.ComplianceStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ComplianceStatusCol) Gt(v worker.ComplianceStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ComplianceStatusCol) Gte(v worker.ComplianceStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ComplianceStatusCol) Lt(v worker.ComplianceStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ComplianceStatusCol) Lte(v worker.ComplianceStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ComplianceStatusCol) IsDistinctFrom(v worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ComplianceStatusCol) Between(lo, hi worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ComplianceStatusCol) To(v worker.ComplianceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ComplianceStatusCol) In(vs ...worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ComplianceStatusCol) NotIn(vs ...worker.ComplianceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DriverTypeCol is a column of worker.DriverType values.
-type DriverTypeCol struct{ keel.StringCol }
+type DriverTypeCol struct{ keel.TypedStringCol }
 
-func (c DriverTypeCol) Eq(v worker.DriverType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DriverTypeCol) Ne(v worker.DriverType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DriverTypeCol) Gt(v worker.DriverType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DriverTypeCol) Gte(v worker.DriverType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DriverTypeCol) Lt(v worker.DriverType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DriverTypeCol) Lte(v worker.DriverType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DriverTypeCol) Eq(v worker.DriverType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DriverTypeCol) Ne(v worker.DriverType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DriverTypeCol) Gt(v worker.DriverType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DriverTypeCol) Gte(v worker.DriverType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DriverTypeCol) Lt(v worker.DriverType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DriverTypeCol) Lte(v worker.DriverType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DriverTypeCol) IsDistinctFrom(v worker.DriverType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriverTypeCol) Between(lo, hi worker.DriverType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DriverTypeCol) To(v worker.DriverType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DriverTypeCol) To(v worker.DriverType) keel.Assignment { return c.Text().To(string(v)) }
 func (c DriverTypeCol) In(vs ...worker.DriverType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriverTypeCol) NotIn(vs ...worker.DriverType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DrugAlcoholStatusCol is a column of worker.DrugAlcoholStatus values.
-type DrugAlcoholStatusCol struct{ keel.StringCol }
+type DrugAlcoholStatusCol struct{ keel.TypedStringCol }
 
-func (c DrugAlcoholStatusCol) Eq(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DrugAlcoholStatusCol) Ne(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DrugAlcoholStatusCol) Gt(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c DrugAlcoholStatusCol) Eq(v worker.DrugAlcoholStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c DrugAlcoholStatusCol) Ne(v worker.DrugAlcoholStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c DrugAlcoholStatusCol) Gt(v worker.DrugAlcoholStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c DrugAlcoholStatusCol) Gte(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c DrugAlcoholStatusCol) Lt(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c DrugAlcoholStatusCol) Lt(v worker.DrugAlcoholStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c DrugAlcoholStatusCol) Lte(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DrugAlcoholStatusCol) IsDistinctFrom(v worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DrugAlcoholStatusCol) Between(lo, hi worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DrugAlcoholStatusCol) To(v worker.DrugAlcoholStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DrugAlcoholStatusCol) In(vs ...worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DrugAlcoholStatusCol) NotIn(vs ...worker.DrugAlcoholStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EndorsementTypeCol is a column of worker.EndorsementType values.
-type EndorsementTypeCol struct{ keel.StringCol }
+type EndorsementTypeCol struct{ keel.TypedStringCol }
 
-func (c EndorsementTypeCol) Eq(v worker.EndorsementType) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c EndorsementTypeCol) Ne(v worker.EndorsementType) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c EndorsementTypeCol) Gt(v worker.EndorsementType) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c EndorsementTypeCol) Gte(v worker.EndorsementType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c EndorsementTypeCol) Lt(v worker.EndorsementType) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c EndorsementTypeCol) Lte(v worker.EndorsementType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c EndorsementTypeCol) Eq(v worker.EndorsementType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EndorsementTypeCol) Ne(v worker.EndorsementType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EndorsementTypeCol) Gt(v worker.EndorsementType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EndorsementTypeCol) Gte(v worker.EndorsementType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EndorsementTypeCol) Lt(v worker.EndorsementType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EndorsementTypeCol) Lte(v worker.EndorsementType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EndorsementTypeCol) IsDistinctFrom(v worker.EndorsementType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EndorsementTypeCol) Between(lo, hi worker.EndorsementType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EndorsementTypeCol) To(v worker.EndorsementType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EndorsementTypeCol) In(vs ...worker.EndorsementType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EndorsementTypeCol) NotIn(vs ...worker.EndorsementType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // GenderCol is a column of worker.Gender values.
-type GenderCol struct{ keel.StringCol }
+type GenderCol struct{ keel.TypedStringCol }
 
-func (c GenderCol) Eq(v worker.Gender) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c GenderCol) Ne(v worker.Gender) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c GenderCol) Gt(v worker.Gender) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c GenderCol) Gte(v worker.Gender) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c GenderCol) Lt(v worker.Gender) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c GenderCol) Lte(v worker.Gender) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c GenderCol) Eq(v worker.Gender) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c GenderCol) Ne(v worker.Gender) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c GenderCol) Gt(v worker.Gender) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c GenderCol) Gte(v worker.Gender) keel.Pred { return c.Text().Gte(string(v)) }
+func (c GenderCol) Lt(v worker.Gender) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c GenderCol) Lte(v worker.Gender) keel.Pred { return c.Text().Lte(string(v)) }
 func (c GenderCol) IsDistinctFrom(v worker.Gender) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c GenderCol) Between(lo, hi worker.Gender) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c GenderCol) To(v worker.Gender) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c GenderCol) In(vs ...worker.Gender) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c GenderCol) To(v worker.Gender) keel.Assignment { return c.Text().To(string(v)) }
+func (c GenderCol) In(vs ...worker.Gender) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c GenderCol) NotIn(vs ...worker.Gender) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // JobDepartmentCol is a column of worker.JobDepartment values.
-type JobDepartmentCol struct{ keel.StringCol }
+type JobDepartmentCol struct{ keel.TypedStringCol }
 
-func (c JobDepartmentCol) Eq(v worker.JobDepartment) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c JobDepartmentCol) Ne(v worker.JobDepartment) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c JobDepartmentCol) Gt(v worker.JobDepartment) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c JobDepartmentCol) Gte(v worker.JobDepartment) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c JobDepartmentCol) Lt(v worker.JobDepartment) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c JobDepartmentCol) Lte(v worker.JobDepartment) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c JobDepartmentCol) Eq(v worker.JobDepartment) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c JobDepartmentCol) Ne(v worker.JobDepartment) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c JobDepartmentCol) Gt(v worker.JobDepartment) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c JobDepartmentCol) Gte(v worker.JobDepartment) keel.Pred { return c.Text().Gte(string(v)) }
+func (c JobDepartmentCol) Lt(v worker.JobDepartment) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c JobDepartmentCol) Lte(v worker.JobDepartment) keel.Pred { return c.Text().Lte(string(v)) }
 func (c JobDepartmentCol) IsDistinctFrom(v worker.JobDepartment) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c JobDepartmentCol) Between(lo, hi worker.JobDepartment) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c JobDepartmentCol) To(v worker.JobDepartment) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c JobDepartmentCol) To(v worker.JobDepartment) keel.Assignment { return c.Text().To(string(v)) }
 func (c JobDepartmentCol) In(vs ...worker.JobDepartment) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c JobDepartmentCol) NotIn(vs ...worker.JobDepartment) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LeaveTypeCol is a column of worker.LeaveType values.
-type LeaveTypeCol struct{ keel.StringCol }
+type LeaveTypeCol struct{ keel.TypedStringCol }
 
-func (c LeaveTypeCol) Eq(v worker.LeaveType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c LeaveTypeCol) Ne(v worker.LeaveType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c LeaveTypeCol) Gt(v worker.LeaveType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c LeaveTypeCol) Gte(v worker.LeaveType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c LeaveTypeCol) Lt(v worker.LeaveType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c LeaveTypeCol) Lte(v worker.LeaveType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c LeaveTypeCol) Eq(v worker.LeaveType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c LeaveTypeCol) Ne(v worker.LeaveType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c LeaveTypeCol) Gt(v worker.LeaveType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c LeaveTypeCol) Gte(v worker.LeaveType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c LeaveTypeCol) Lt(v worker.LeaveType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c LeaveTypeCol) Lte(v worker.LeaveType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c LeaveTypeCol) IsDistinctFrom(v worker.LeaveType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LeaveTypeCol) Between(lo, hi worker.LeaveType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c LeaveTypeCol) To(v worker.LeaveType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c LeaveTypeCol) To(v worker.LeaveType) keel.Assignment { return c.Text().To(string(v)) }
 func (c LeaveTypeCol) In(vs ...worker.LeaveType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LeaveTypeCol) NotIn(vs ...worker.LeaveType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOStatusCol is a column of worker.PTOStatus values.
-type PTOStatusCol struct{ keel.StringCol }
+type PTOStatusCol struct{ keel.TypedStringCol }
 
-func (c PTOStatusCol) Eq(v worker.PTOStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOStatusCol) Ne(v worker.PTOStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOStatusCol) Gt(v worker.PTOStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOStatusCol) Gte(v worker.PTOStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOStatusCol) Lt(v worker.PTOStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOStatusCol) Lte(v worker.PTOStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOStatusCol) Eq(v worker.PTOStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PTOStatusCol) Ne(v worker.PTOStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PTOStatusCol) Gt(v worker.PTOStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PTOStatusCol) Gte(v worker.PTOStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PTOStatusCol) Lt(v worker.PTOStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PTOStatusCol) Lte(v worker.PTOStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PTOStatusCol) IsDistinctFrom(v worker.PTOStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOStatusCol) Between(lo, hi worker.PTOStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PTOStatusCol) To(v worker.PTOStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PTOStatusCol) To(v worker.PTOStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c PTOStatusCol) In(vs ...worker.PTOStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOStatusCol) NotIn(vs ...worker.PTOStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOTypeCol is a column of worker.PTOType values.
-type PTOTypeCol struct{ keel.StringCol }
+type PTOTypeCol struct{ keel.TypedStringCol }
 
-func (c PTOTypeCol) Eq(v worker.PTOType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOTypeCol) Ne(v worker.PTOType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOTypeCol) Gt(v worker.PTOType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOTypeCol) Gte(v worker.PTOType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOTypeCol) Lt(v worker.PTOType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOTypeCol) Lte(v worker.PTOType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOTypeCol) Eq(v worker.PTOType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PTOTypeCol) Ne(v worker.PTOType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PTOTypeCol) Gt(v worker.PTOType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PTOTypeCol) Gte(v worker.PTOType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PTOTypeCol) Lt(v worker.PTOType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PTOTypeCol) Lte(v worker.PTOType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PTOTypeCol) IsDistinctFrom(v worker.PTOType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOTypeCol) Between(lo, hi worker.PTOType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PTOTypeCol) To(v worker.PTOType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c PTOTypeCol) In(vs ...worker.PTOType) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c PTOTypeCol) To(v worker.PTOType) keel.Assignment { return c.Text().To(string(v)) }
+func (c PTOTypeCol) In(vs ...worker.PTOType) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c PTOTypeCol) NotIn(vs ...worker.PTOType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReturnToDutyStatusCol is a column of worker.ReturnToDutyStatus values.
-type ReturnToDutyStatusCol struct{ keel.StringCol }
+type ReturnToDutyStatusCol struct{ keel.TypedStringCol }
 
 func (c ReturnToDutyStatusCol) Eq(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReturnToDutyStatusCol) Ne(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReturnToDutyStatusCol) Gt(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReturnToDutyStatusCol) Gte(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReturnToDutyStatusCol) Lt(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReturnToDutyStatusCol) Lte(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReturnToDutyStatusCol) IsDistinctFrom(v worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReturnToDutyStatusCol) Between(lo, hi worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReturnToDutyStatusCol) To(v worker.ReturnToDutyStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReturnToDutyStatusCol) In(vs ...worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReturnToDutyStatusCol) NotIn(vs ...worker.ReturnToDutyStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SafetyRatingCol is a column of worker.SafetyRating values.
-type SafetyRatingCol struct{ keel.StringCol }
+type SafetyRatingCol struct{ keel.TypedStringCol }
 
-func (c SafetyRatingCol) Eq(v worker.SafetyRating) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SafetyRatingCol) Ne(v worker.SafetyRating) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SafetyRatingCol) Gt(v worker.SafetyRating) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SafetyRatingCol) Gte(v worker.SafetyRating) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SafetyRatingCol) Lt(v worker.SafetyRating) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SafetyRatingCol) Lte(v worker.SafetyRating) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SafetyRatingCol) Eq(v worker.SafetyRating) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SafetyRatingCol) Ne(v worker.SafetyRating) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SafetyRatingCol) Gt(v worker.SafetyRating) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SafetyRatingCol) Gte(v worker.SafetyRating) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SafetyRatingCol) Lt(v worker.SafetyRating) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SafetyRatingCol) Lte(v worker.SafetyRating) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SafetyRatingCol) IsDistinctFrom(v worker.SafetyRating) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SafetyRatingCol) Between(lo, hi worker.SafetyRating) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SafetyRatingCol) To(v worker.SafetyRating) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SafetyRatingCol) To(v worker.SafetyRating) keel.Assignment { return c.Text().To(string(v)) }
 func (c SafetyRatingCol) In(vs ...worker.SafetyRating) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SafetyRatingCol) NotIn(vs ...worker.SafetyRating) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TrainingHealthCol is a column of worker.TrainingHealth values.
-type TrainingHealthCol struct{ keel.StringCol }
+type TrainingHealthCol struct{ keel.TypedStringCol }
 
-func (c TrainingHealthCol) Eq(v worker.TrainingHealth) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TrainingHealthCol) Ne(v worker.TrainingHealth) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TrainingHealthCol) Gt(v worker.TrainingHealth) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TrainingHealthCol) Gte(v worker.TrainingHealth) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TrainingHealthCol) Lt(v worker.TrainingHealth) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TrainingHealthCol) Lte(v worker.TrainingHealth) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TrainingHealthCol) Eq(v worker.TrainingHealth) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TrainingHealthCol) Ne(v worker.TrainingHealth) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TrainingHealthCol) Gt(v worker.TrainingHealth) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TrainingHealthCol) Gte(v worker.TrainingHealth) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TrainingHealthCol) Lt(v worker.TrainingHealth) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TrainingHealthCol) Lte(v worker.TrainingHealth) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TrainingHealthCol) IsDistinctFrom(v worker.TrainingHealth) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TrainingHealthCol) Between(lo, hi worker.TrainingHealth) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TrainingHealthCol) To(v worker.TrainingHealth) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c TrainingHealthCol) To(v worker.TrainingHealth) keel.Assignment { return c.Text().To(string(v)) }
 func (c TrainingHealthCol) In(vs ...worker.TrainingHealth) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TrainingHealthCol) NotIn(vs ...worker.TrainingHealth) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // WorkerTypeCol is a column of worker.WorkerType values.
-type WorkerTypeCol struct{ keel.StringCol }
+type WorkerTypeCol struct{ keel.TypedStringCol }
 
-func (c WorkerTypeCol) Eq(v worker.WorkerType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c WorkerTypeCol) Ne(v worker.WorkerType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c WorkerTypeCol) Gt(v worker.WorkerType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c WorkerTypeCol) Gte(v worker.WorkerType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c WorkerTypeCol) Lt(v worker.WorkerType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c WorkerTypeCol) Lte(v worker.WorkerType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c WorkerTypeCol) Eq(v worker.WorkerType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c WorkerTypeCol) Ne(v worker.WorkerType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c WorkerTypeCol) Gt(v worker.WorkerType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c WorkerTypeCol) Gte(v worker.WorkerType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c WorkerTypeCol) Lt(v worker.WorkerType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c WorkerTypeCol) Lte(v worker.WorkerType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c WorkerTypeCol) IsDistinctFrom(v worker.WorkerType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WorkerTypeCol) Between(lo, hi worker.WorkerType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c WorkerTypeCol) To(v worker.WorkerType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c WorkerTypeCol) To(v worker.WorkerType) keel.Assignment { return c.Text().To(string(v)) }
 func (c WorkerTypeCol) In(vs ...worker.WorkerType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WorkerTypeCol) NotIn(vs ...worker.WorkerType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

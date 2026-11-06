@@ -118,26 +118,26 @@ type AgreementsTable struct {
 // Agreements references the factoring_agreements table.
 var Agreements = &AgreementsTable{
 	TableBase:              keel.TableBase{Ref: &agreementsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 0}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 1}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 2}}},
-	FactoringCompanyID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 3}}},
-	Status:                 AgreementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 0}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 1}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 2}}},
+	FactoringCompanyID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 3}}},
+	Status:                 AgreementStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 4}}},
 	EffectiveFrom:          keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 5}},
 	EffectiveTo:            keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 6}},
 	AdvanceRateBP:          keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 7}},
 	ReserveRateBP:          keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 8}},
 	MinimumFeeMinor:        keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 9}},
 	ChargebackWindowDays:   keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 10}},
-	Recourse:               RecourseCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 11}}},
-	AccountingTreatment:    AccountingTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 12}}},
+	Recourse:               RecourseCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 11}}},
+	AccountingTreatment:    AccountingTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 12}}},
 	FundingDays:            keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 13}},
 	SubmissionTime:         keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 14}},
 	Notes:                  keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 15}},
-	DueFromFactorAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 16}}},
-	FeeExpenseAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 17}}},
-	LiabilityAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 18}}},
-	CashAccountID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 19}}},
+	DueFromFactorAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 16}}},
+	FeeExpenseAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 17}}},
+	LiabilityAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 18}}},
+	CashAccountID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementsRef, Index: 19}}},
 	ActivatedAt:            keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 20}},
 	EndedAt:                keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 21}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 22}},
@@ -149,26 +149,26 @@ var Agreements = &AgreementsTable{
 func BuildAgreements(r *keel.Ref) *AgreementsTable {
 	return &AgreementsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                 AgreementStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                 AgreementStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		EffectiveFrom:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		EffectiveTo:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		AdvanceRateBP:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		ReserveRateBP:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		MinimumFeeMinor:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ChargebackWindowDays:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		Recourse:               RecourseCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		AccountingTreatment:    AccountingTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Recourse:               RecourseCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		AccountingTreatment:    AccountingTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		FundingDays:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		SubmissionTime:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		Notes:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		DueFromFactorAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		FeeExpenseAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		LiabilityAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		CashAccountID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		DueFromFactorAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		FeeExpenseAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		LiabilityAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		CashAccountID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		ActivatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		EndedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -205,8 +205,6 @@ func (t *AgreementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // AgreementsQuery is a query over factoring.Agreement.
 type AgreementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoring.Agreement] = (*AgreementsTable)(nil)
 
 var _ keel.Query[*factoring.Agreement] = (*AgreementsQuery)(nil)
 
@@ -322,42 +320,42 @@ func (t *AgreementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fact
 
 // Create inserts row.
 func (t *AgreementsTable) Create(ctx context.Context, db *keel.DB, row *factoring.Agreement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgreementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.Agreement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgreementsTable) Save(ctx context.Context, db *keel.DB, row *factoring.Agreement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgreementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.Agreement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgreementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.Agreement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgreementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.Agreement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgreementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.Agreement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgreementsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.Agreement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -529,37 +527,45 @@ func (q *AgreementsQuery) Clone() keel.Query[*factoring.Agreement] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgreementsQuery) One(ctx context.Context, db *keel.DB) (*factoring.Agreement, error) {
-	return keel.One[*factoring.Agreement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoring.Agreement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgreementsQuery) First(ctx context.Context, db *keel.DB) (*factoring.Agreement, error) {
-	return keel.First[*factoring.Agreement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoring.Agreement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgreementsQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.Agreement, error) {
-	return keel.List[*factoring.Agreement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.Agreement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgreementsQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.Agreement, error) {
-	return keel.All[*factoring.Agreement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.Agreement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgreementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.Agreement, error) {
-	return keel.UpdateReturning[*factoring.Agreement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoring.Agreement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgreementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.Agreement], error) {
-	return keel.PageOf[*factoring.Agreement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoring.Agreement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgreementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.Agreement) error) error {
-	return keel.Each[*factoring.Agreement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoring.Agreement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgreement() unsafe.Pointer { return unsafe.Pointer(new(factoring.Agreement)) }
@@ -773,20 +779,20 @@ type AgreementDocumentTypesTable struct {
 // AgreementDocumentTypes references the factoring_agreement_document_types table.
 var AgreementDocumentTypes = &AgreementDocumentTypesTable{
 	TableBase:      keel.TableBase{Ref: &agreementDocumentTypesRef},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 1}}},
-	AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 2}}},
-	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 3}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 1}}},
+	AgreementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 2}}},
+	DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 3}}},
 }
 
 // BuildAgreementDocumentTypes builds the table of factoring_agreement_document_types for ref. Generated relation and alias methods call it.
 func BuildAgreementDocumentTypes(r *keel.Ref) *AgreementDocumentTypesTable {
 	return &AgreementDocumentTypesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		AgreementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 	}
 }
 
@@ -810,8 +816,6 @@ func (t *AgreementDocumentTypesTable) DocumentType() *documenttypedb.DocumentTyp
 
 // AgreementDocumentTypesQuery is a query over factoring.AgreementDocumentType.
 type AgreementDocumentTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoring.AgreementDocumentType] = (*AgreementDocumentTypesTable)(nil)
 
 var _ keel.Query[*factoring.AgreementDocumentType] = (*AgreementDocumentTypesQuery)(nil)
 
@@ -927,42 +931,42 @@ func (t *AgreementDocumentTypesTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *AgreementDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgreementDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgreementDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgreementDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgreementDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgreementDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgreementDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgreementDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1134,37 +1138,45 @@ func (q *AgreementDocumentTypesQuery) Clone() keel.Query[*factoring.AgreementDoc
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgreementDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*factoring.AgreementDocumentType, error) {
-	return keel.One[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoring.AgreementDocumentType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgreementDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*factoring.AgreementDocumentType, error) {
-	return keel.First[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoring.AgreementDocumentType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgreementDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.AgreementDocumentType, error) {
-	return keel.List[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.AgreementDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgreementDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.AgreementDocumentType, error) {
-	return keel.All[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.AgreementDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgreementDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.AgreementDocumentType, error) {
-	return keel.UpdateReturning[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoring.AgreementDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgreementDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.AgreementDocumentType], error) {
-	return keel.PageOf[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoring.AgreementDocumentType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgreementDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.AgreementDocumentType) error) error {
-	return keel.Each[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoring.AgreementDocumentType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgreementDocumentType() unsafe.Pointer {
@@ -1269,10 +1281,10 @@ type FeeTiersTable struct {
 // FeeTiers references the factoring_fee_tiers table.
 var FeeTiers = &FeeTiersTable{
 	TableBase:      keel.TableBase{Ref: &feeTiersRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 2}}},
-	AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 2}}},
+	AgreementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 3}}},
 	DaysFrom:       keel.Int64Col{Col: keel.Col{Ref: &feeTiersRef, Index: 4}},
 	DaysTo:         keel.Int64Col{Col: keel.Col{Ref: &feeTiersRef, Index: 5}},
 	RateBP:         keel.Int64Col{Col: keel.Col{Ref: &feeTiersRef, Index: 6}},
@@ -1283,10 +1295,10 @@ var FeeTiers = &FeeTiersTable{
 func BuildFeeTiers(r *keel.Ref) *FeeTiersTable {
 	return &FeeTiersTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgreementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DaysFrom:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		DaysTo:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		RateBP:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -1309,8 +1321,6 @@ func (t *FeeTiersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fa
 
 // FeeTiersQuery is a query over factoring.FeeTier.
 type FeeTiersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoring.FeeTier] = (*FeeTiersTable)(nil)
 
 var _ keel.Query[*factoring.FeeTier] = (*FeeTiersQuery)(nil)
 
@@ -1426,42 +1436,42 @@ func (t *FeeTiersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factor
 
 // Create inserts row.
 func (t *FeeTiersTable) Create(ctx context.Context, db *keel.DB, row *factoring.FeeTier) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FeeTiersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FeeTiersTable) Save(ctx context.Context, db *keel.DB, row *factoring.FeeTier, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FeeTiersTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.FeeTier, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FeeTiersTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.FeeTier) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FeeTiersTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FeeTiersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FeeTiersTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1633,37 +1643,45 @@ func (q *FeeTiersQuery) Clone() keel.Query[*factoring.FeeTier] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FeeTiersQuery) One(ctx context.Context, db *keel.DB) (*factoring.FeeTier, error) {
-	return keel.One[*factoring.FeeTier](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoring.FeeTier)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FeeTiersQuery) First(ctx context.Context, db *keel.DB) (*factoring.FeeTier, error) {
-	return keel.First[*factoring.FeeTier](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoring.FeeTier)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FeeTiersQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.FeeTier, error) {
-	return keel.List[*factoring.FeeTier](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.FeeTier)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FeeTiersQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.FeeTier, error) {
-	return keel.All[*factoring.FeeTier](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.FeeTier)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FeeTiersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.FeeTier, error) {
-	return keel.UpdateReturning[*factoring.FeeTier](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoring.FeeTier)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FeeTiersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.FeeTier], error) {
-	return keel.PageOf[*factoring.FeeTier](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoring.FeeTier])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FeeTiersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.FeeTier) error) error {
-	return keel.Each[*factoring.FeeTier](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoring.FeeTier)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFeeTier() unsafe.Pointer { return unsafe.Pointer(new(factoring.FeeTier)) }
@@ -1804,16 +1822,16 @@ type NoasTable struct {
 // Noas references the factoring_noas table.
 var Noas = &NoasTable{
 	TableBase:          keel.TableBase{Ref: &noasRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 2}}},
-	CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 3}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 4}}},
-	Status:             NoaStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 5}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 2}}},
+	CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 3}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 4}}},
+	Status:             NoaStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 5}}},
 	SentAt:             keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 6}},
 	SentTo:             keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 7}},
 	AcknowledgedAt:     keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 8}},
-	SignedDocumentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 9}}},
+	SignedDocumentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &noasRef, Index: 9}}},
 	ExpiresAt:          keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 10}},
 	ExpiryWarnedAt:     keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 11}},
 	ReleasedAt:         keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 12}},
@@ -1828,16 +1846,16 @@ var Noas = &NoasTable{
 func BuildNoas(r *keel.Ref) *NoasTable {
 	return &NoasTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:             NoaStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:             NoaStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SentAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		SentTo:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		AcknowledgedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		SignedDocumentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SignedDocumentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ExpiresAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ExpiryWarnedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ReleasedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -1872,8 +1890,6 @@ func (t *NoasTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factor
 
 // NoasQuery is a query over factoring.Noa.
 type NoasQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoring.Noa] = (*NoasTable)(nil)
 
 var _ keel.Query[*factoring.Noa] = (*NoasQuery)(nil)
 
@@ -1989,42 +2005,42 @@ func (t *NoasTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.
 
 // Create inserts row.
 func (t *NoasTable) Create(ctx context.Context, db *keel.DB, row *factoring.Noa) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *NoasTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.Noa) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *NoasTable) Save(ctx context.Context, db *keel.DB, row *factoring.Noa, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *NoasTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.Noa, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *NoasTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.Noa) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *NoasTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.Noa, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *NoasTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.Noa, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *NoasTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.Noa) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2196,37 +2212,45 @@ func (q *NoasQuery) Clone() keel.Query[*factoring.Noa] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *NoasQuery) One(ctx context.Context, db *keel.DB) (*factoring.Noa, error) {
-	return keel.One[*factoring.Noa](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoring.Noa)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *NoasQuery) First(ctx context.Context, db *keel.DB) (*factoring.Noa, error) {
-	return keel.First[*factoring.Noa](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoring.Noa)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *NoasQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.Noa, error) {
-	return keel.List[*factoring.Noa](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.Noa)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *NoasQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.Noa, error) {
-	return keel.All[*factoring.Noa](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoring.Noa)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *NoasQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.Noa, error) {
-	return keel.UpdateReturning[*factoring.Noa](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoring.Noa)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *NoasQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.Noa], error) {
-	return keel.PageOf[*factoring.Noa](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoring.Noa])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *NoasQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.Noa) error) error {
-	return keel.Each[*factoring.Noa](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoring.Noa)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newNoa() unsafe.Pointer { return unsafe.Pointer(new(factoring.Noa)) }
@@ -2413,121 +2437,113 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // AccountingTreatmentCol is a column of factoring.AccountingTreatment values.
-type AccountingTreatmentCol struct{ keel.StringCol }
+type AccountingTreatmentCol struct{ keel.TypedStringCol }
 
 func (c AccountingTreatmentCol) Eq(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AccountingTreatmentCol) Ne(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AccountingTreatmentCol) Gt(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AccountingTreatmentCol) Gte(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AccountingTreatmentCol) Lt(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AccountingTreatmentCol) Lte(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AccountingTreatmentCol) IsDistinctFrom(v factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AccountingTreatmentCol) Between(lo, hi factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AccountingTreatmentCol) To(v factoring.AccountingTreatment) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AccountingTreatmentCol) In(vs ...factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AccountingTreatmentCol) NotIn(vs ...factoring.AccountingTreatment) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AgreementStatusCol is a column of factoring.AgreementStatus values.
-type AgreementStatusCol struct{ keel.StringCol }
+type AgreementStatusCol struct{ keel.TypedStringCol }
 
-func (c AgreementStatusCol) Eq(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AgreementStatusCol) Ne(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AgreementStatusCol) Gt(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c AgreementStatusCol) Eq(v factoring.AgreementStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c AgreementStatusCol) Ne(v factoring.AgreementStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c AgreementStatusCol) Gt(v factoring.AgreementStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c AgreementStatusCol) Gte(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c AgreementStatusCol) Lt(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c AgreementStatusCol) Lt(v factoring.AgreementStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c AgreementStatusCol) Lte(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AgreementStatusCol) IsDistinctFrom(v factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AgreementStatusCol) Between(lo, hi factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AgreementStatusCol) To(v factoring.AgreementStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AgreementStatusCol) In(vs ...factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AgreementStatusCol) NotIn(vs ...factoring.AgreementStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // NoaStatusCol is a column of factoring.NoaStatus values.
-type NoaStatusCol struct{ keel.StringCol }
+type NoaStatusCol struct{ keel.TypedStringCol }
 
-func (c NoaStatusCol) Eq(v factoring.NoaStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c NoaStatusCol) Ne(v factoring.NoaStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c NoaStatusCol) Gt(v factoring.NoaStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c NoaStatusCol) Gte(v factoring.NoaStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c NoaStatusCol) Lt(v factoring.NoaStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c NoaStatusCol) Lte(v factoring.NoaStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c NoaStatusCol) Eq(v factoring.NoaStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c NoaStatusCol) Ne(v factoring.NoaStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c NoaStatusCol) Gt(v factoring.NoaStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c NoaStatusCol) Gte(v factoring.NoaStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c NoaStatusCol) Lt(v factoring.NoaStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c NoaStatusCol) Lte(v factoring.NoaStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c NoaStatusCol) IsDistinctFrom(v factoring.NoaStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c NoaStatusCol) Between(lo, hi factoring.NoaStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c NoaStatusCol) To(v factoring.NoaStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c NoaStatusCol) To(v factoring.NoaStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c NoaStatusCol) In(vs ...factoring.NoaStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c NoaStatusCol) NotIn(vs ...factoring.NoaStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RecourseCol is a column of factoring.Recourse values.
-type RecourseCol struct{ keel.StringCol }
+type RecourseCol struct{ keel.TypedStringCol }
 
-func (c RecourseCol) Eq(v factoring.Recourse) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RecourseCol) Ne(v factoring.Recourse) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RecourseCol) Gt(v factoring.Recourse) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RecourseCol) Gte(v factoring.Recourse) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RecourseCol) Lt(v factoring.Recourse) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RecourseCol) Lte(v factoring.Recourse) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RecourseCol) Eq(v factoring.Recourse) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RecourseCol) Ne(v factoring.Recourse) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RecourseCol) Gt(v factoring.Recourse) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RecourseCol) Gte(v factoring.Recourse) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RecourseCol) Lt(v factoring.Recourse) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RecourseCol) Lte(v factoring.Recourse) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RecourseCol) IsDistinctFrom(v factoring.Recourse) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RecourseCol) Between(lo, hi factoring.Recourse) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RecourseCol) To(v factoring.Recourse) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RecourseCol) To(v factoring.Recourse) keel.Assignment { return c.Text().To(string(v)) }
 func (c RecourseCol) In(vs ...factoring.Recourse) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RecourseCol) NotIn(vs ...factoring.Recourse) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

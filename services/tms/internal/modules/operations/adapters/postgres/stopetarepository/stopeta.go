@@ -122,8 +122,8 @@ func newerETA() keel.Conflict {
 	}
 
 	return keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.StopID).Set(
-		text(e.ShipmentID.StringCol),
-		text(e.ShipmentMoveID.StringCol),
+		text(e.ShipmentID.Text()),
+		text(e.ShipmentMoveID.Text()),
 		bigint(e.MoveSequence),
 		bigint(e.StopSequence),
 		boolean(e.Arrived),
@@ -131,9 +131,9 @@ func newerETA() keel.Conflict {
 		bigint(e.EstimatedDeparture),
 		bigint(e.WindowEnd),
 		bigint(e.SlackMinutes),
-		text(e.Verdict.StringCol),
-		text(e.Basis.StringCol),
-		text(e.DriveMethod.StringCol),
+		text(e.Verdict.Text()),
+		text(e.Basis.Text()),
+		text(e.DriveMethod.Text()),
 		float(e.MilesRemaining),
 		bigint(e.DriveMinutes),
 		bigint(e.RestMinutes),

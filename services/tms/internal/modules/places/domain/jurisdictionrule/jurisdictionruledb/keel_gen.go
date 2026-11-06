@@ -77,10 +77,10 @@ type EscortThresholdsTable struct {
 // EscortThresholds references the jurisdiction_escort_thresholds table.
 var EscortThresholds = &EscortThresholdsTable{
 	TableBase:          keel.TableBase{Ref: &escortThresholdsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 0}}},
-	JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 1}}},
-	Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 2}}},
-	Trigger:            TriggerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 0}}},
+	JurisdictionRuleID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 1}}},
+	Role:               EscortRoleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 2}}},
+	Trigger:            TriggerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 3}}},
 	ThresholdValue:     keel.Float64Col{Col: keel.Col{Ref: &escortThresholdsRef, Index: 4}},
 	Note:               keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 5}},
 	Version:            keel.Int64Col{Col: keel.Col{Ref: &escortThresholdsRef, Index: 6}},
@@ -92,10 +92,10 @@ var EscortThresholds = &EscortThresholdsTable{
 func BuildEscortThresholds(r *keel.Ref) *EscortThresholdsTable {
 	return &EscortThresholdsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Trigger:            TriggerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		JurisdictionRuleID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Role:               EscortRoleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Trigger:            TriggerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ThresholdValue:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Note:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -124,8 +124,6 @@ func (t *EscortThresholdsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // EscortThresholdsQuery is a query over jurisdictionrule.EscortThreshold.
 type EscortThresholdsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*jurisdictionrule.EscortThreshold] = (*EscortThresholdsTable)(nil)
 
 var _ keel.Query[*jurisdictionrule.EscortThreshold] = (*EscortThresholdsQuery)(nil)
 
@@ -241,42 +239,42 @@ func (t *EscortThresholdsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *EscortThresholdsTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EscortThresholdsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EscortThresholdsTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EscortThresholdsTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EscortThresholdsTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EscortThresholdsTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EscortThresholdsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EscortThresholdsTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -448,37 +446,45 @@ func (q *EscortThresholdsQuery) Clone() keel.Query[*jurisdictionrule.EscortThres
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EscortThresholdsQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.EscortThreshold, error) {
-	return keel.One[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.EscortThreshold)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EscortThresholdsQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.EscortThreshold, error) {
-	return keel.First[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.EscortThreshold)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EscortThresholdsQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.EscortThreshold, error) {
-	return keel.List[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.EscortThreshold)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EscortThresholdsQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.EscortThreshold, error) {
-	return keel.All[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.EscortThreshold)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EscortThresholdsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.EscortThreshold, error) {
-	return keel.UpdateReturning[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*jurisdictionrule.EscortThreshold)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EscortThresholdsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.EscortThreshold], error) {
-	return keel.PageOf[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*jurisdictionrule.EscortThreshold])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EscortThresholdsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.EscortThreshold) error) error {
-	return keel.Each[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*jurisdictionrule.EscortThreshold)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEscortThreshold() unsafe.Pointer {
@@ -648,9 +654,9 @@ type JurisdictionRulesTable struct {
 // JurisdictionRules references the jurisdiction_rules table.
 var JurisdictionRules = &JurisdictionRulesTable{
 	TableBase:             keel.TableBase{Ref: &jurisdictionRulesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 0}}},
-	StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 1}}},
-	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 2}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 0}}},
+	StateID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 1}}},
+	Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 2}}},
 	MaxWidthFeet:          keel.Float64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 3}},
 	MaxHeightFeet:         keel.Float64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 4}},
 	MaxLengthFeet:         keel.Float64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 5}},
@@ -667,7 +673,7 @@ var JurisdictionRules = &JurisdictionRulesTable{
 	PermitPerMileFee:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 16}}},
 	SourceNote:            keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 17}},
 	SourceURL:             keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 18}},
-	VerificationState:     VerificationStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 19}}},
+	VerificationState:     VerificationStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 19}}},
 	VerifiedAt:            keel.Int64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 20}},
 	EffectiveStartDate:    keel.Int64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 21}},
 	EffectiveEndDate:      keel.Int64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 22}},
@@ -680,9 +686,9 @@ var JurisdictionRules = &JurisdictionRulesTable{
 func BuildJurisdictionRules(r *keel.Ref) *JurisdictionRulesTable {
 	return &JurisdictionRulesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		StateID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Status:                StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		MaxWidthFeet:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 3}},
 		MaxHeightFeet:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 4}},
 		MaxLengthFeet:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 5}},
@@ -699,7 +705,7 @@ func BuildJurisdictionRules(r *keel.Ref) *JurisdictionRulesTable {
 		PermitPerMileFee:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 16}}},
 		SourceNote:            keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		SourceURL:             keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		VerificationState:     VerificationStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		VerificationState:     VerificationStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		VerifiedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		EffectiveStartDate:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		EffectiveEndDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -734,8 +740,6 @@ func (t *JurisdictionRulesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // JurisdictionRulesQuery is a query over jurisdictionrule.JurisdictionRule.
 type JurisdictionRulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*jurisdictionrule.JurisdictionRule] = (*JurisdictionRulesTable)(nil)
 
 var _ keel.Query[*jurisdictionrule.JurisdictionRule] = (*JurisdictionRulesQuery)(nil)
 
@@ -851,42 +855,42 @@ func (t *JurisdictionRulesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *JurisdictionRulesTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JurisdictionRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JurisdictionRulesTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JurisdictionRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JurisdictionRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JurisdictionRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JurisdictionRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JurisdictionRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1058,37 +1062,45 @@ func (q *JurisdictionRulesQuery) Clone() keel.Query[*jurisdictionrule.Jurisdicti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JurisdictionRulesQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.JurisdictionRule, error) {
-	return keel.One[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.JurisdictionRule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JurisdictionRulesQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.JurisdictionRule, error) {
-	return keel.First[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.JurisdictionRule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JurisdictionRulesQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.JurisdictionRule, error) {
-	return keel.List[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.JurisdictionRule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JurisdictionRulesQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.JurisdictionRule, error) {
-	return keel.All[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.JurisdictionRule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JurisdictionRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.JurisdictionRule, error) {
-	return keel.UpdateReturning[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*jurisdictionrule.JurisdictionRule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JurisdictionRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.JurisdictionRule], error) {
-	return keel.PageOf[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*jurisdictionrule.JurisdictionRule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JurisdictionRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.JurisdictionRule) error) error {
-	return keel.Each[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*jurisdictionrule.JurisdictionRule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJurisdictionRule() unsafe.Pointer {
@@ -1330,10 +1342,10 @@ type OverridesTable struct {
 // Overrides references the jurisdiction_rule_overrides table.
 var Overrides = &OverridesTable{
 	TableBase:          keel.TableBase{Ref: &overridesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 2}}},
-	StateID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &overridesRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &overridesRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &overridesRef, Index: 2}}},
+	StateID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &overridesRef, Index: 3}}},
 	MaxWidthFeet:       keel.Float64Col{Col: keel.Col{Ref: &overridesRef, Index: 4}},
 	MaxHeightFeet:      keel.Float64Col{Col: keel.Col{Ref: &overridesRef, Index: 5}},
 	MaxLengthFeet:      keel.Float64Col{Col: keel.Col{Ref: &overridesRef, Index: 6}},
@@ -1351,10 +1363,10 @@ var Overrides = &OverridesTable{
 func BuildOverrides(r *keel.Ref) *OverridesTable {
 	return &OverridesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		StateID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		StateID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		MaxWidthFeet:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 4}},
 		MaxHeightFeet:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 5}},
 		MaxLengthFeet:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -1389,8 +1401,6 @@ func (t *OverridesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*j
 
 // OverridesQuery is a query over jurisdictionrule.Override.
 type OverridesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*jurisdictionrule.Override] = (*OverridesTable)(nil)
 
 var _ keel.Query[*jurisdictionrule.Override] = (*OverridesQuery)(nil)
 
@@ -1506,42 +1516,42 @@ func (t *OverridesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*juris
 
 // Create inserts row.
 func (t *OverridesTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *OverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *OverridesTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *OverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *OverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *OverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *OverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *OverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1713,37 +1723,45 @@ func (q *OverridesQuery) Clone() keel.Query[*jurisdictionrule.Override] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *OverridesQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.Override, error) {
-	return keel.One[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.Override)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *OverridesQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.Override, error) {
-	return keel.First[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*jurisdictionrule.Override)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *OverridesQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.Override, error) {
-	return keel.List[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.Override)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *OverridesQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.Override, error) {
-	return keel.All[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*jurisdictionrule.Override)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *OverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.Override, error) {
-	return keel.UpdateReturning[*jurisdictionrule.Override](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*jurisdictionrule.Override)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *OverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.Override], error) {
-	return keel.PageOf[*jurisdictionrule.Override](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*jurisdictionrule.Override])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *OverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.Override) error) error {
-	return keel.Each[*jurisdictionrule.Override](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*jurisdictionrule.Override)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newOverride() unsafe.Pointer { return unsafe.Pointer(new(jurisdictionrule.Override)) }
@@ -1890,127 +1908,111 @@ var enumVerificationState = [...]schema.EnumValue{
 }
 
 // EscortRoleCol is a column of jurisdictionrule.EscortRole values.
-type EscortRoleCol struct{ keel.StringCol }
+type EscortRoleCol struct{ keel.TypedStringCol }
 
-func (c EscortRoleCol) Eq(v jurisdictionrule.EscortRole) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c EscortRoleCol) Ne(v jurisdictionrule.EscortRole) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c EscortRoleCol) Gt(v jurisdictionrule.EscortRole) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c EscortRoleCol) Gte(v jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c EscortRoleCol) Lt(v jurisdictionrule.EscortRole) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c EscortRoleCol) Lte(v jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c EscortRoleCol) Eq(v jurisdictionrule.EscortRole) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EscortRoleCol) Ne(v jurisdictionrule.EscortRole) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EscortRoleCol) Gt(v jurisdictionrule.EscortRole) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EscortRoleCol) Gte(v jurisdictionrule.EscortRole) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EscortRoleCol) Lt(v jurisdictionrule.EscortRole) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EscortRoleCol) Lte(v jurisdictionrule.EscortRole) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EscortRoleCol) IsDistinctFrom(v jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EscortRoleCol) Between(lo, hi jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EscortRoleCol) To(v jurisdictionrule.EscortRole) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EscortRoleCol) In(vs ...jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EscortRoleCol) NotIn(vs ...jurisdictionrule.EscortRole) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of jurisdictionrule.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v jurisdictionrule.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v jurisdictionrule.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v jurisdictionrule.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v jurisdictionrule.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v jurisdictionrule.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v jurisdictionrule.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v jurisdictionrule.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v jurisdictionrule.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v jurisdictionrule.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v jurisdictionrule.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v jurisdictionrule.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v jurisdictionrule.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v jurisdictionrule.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi jurisdictionrule.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v jurisdictionrule.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v jurisdictionrule.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...jurisdictionrule.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...jurisdictionrule.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TriggerKindCol is a column of jurisdictionrule.TriggerKind values.
-type TriggerKindCol struct{ keel.StringCol }
+type TriggerKindCol struct{ keel.TypedStringCol }
 
-func (c TriggerKindCol) Eq(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TriggerKindCol) Ne(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TriggerKindCol) Gt(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c TriggerKindCol) Gte(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c TriggerKindCol) Lt(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c TriggerKindCol) Lte(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c TriggerKindCol) Eq(v jurisdictionrule.TriggerKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TriggerKindCol) Ne(v jurisdictionrule.TriggerKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TriggerKindCol) Gt(v jurisdictionrule.TriggerKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TriggerKindCol) Gte(v jurisdictionrule.TriggerKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TriggerKindCol) Lt(v jurisdictionrule.TriggerKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TriggerKindCol) Lte(v jurisdictionrule.TriggerKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TriggerKindCol) IsDistinctFrom(v jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TriggerKindCol) Between(lo, hi jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TriggerKindCol) To(v jurisdictionrule.TriggerKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TriggerKindCol) In(vs ...jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TriggerKindCol) NotIn(vs ...jurisdictionrule.TriggerKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // VerificationStateCol is a column of jurisdictionrule.VerificationState values.
-type VerificationStateCol struct{ keel.StringCol }
+type VerificationStateCol struct{ keel.TypedStringCol }
 
 func (c VerificationStateCol) Eq(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c VerificationStateCol) Ne(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c VerificationStateCol) Gt(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c VerificationStateCol) Gte(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c VerificationStateCol) Lt(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c VerificationStateCol) Lte(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c VerificationStateCol) IsDistinctFrom(v jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VerificationStateCol) Between(lo, hi jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c VerificationStateCol) To(v jurisdictionrule.VerificationState) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c VerificationStateCol) In(vs ...jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VerificationStateCol) NotIn(vs ...jurisdictionrule.VerificationState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

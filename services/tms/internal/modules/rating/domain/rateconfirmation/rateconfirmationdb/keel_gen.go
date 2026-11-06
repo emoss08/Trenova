@@ -113,16 +113,16 @@ type RateConfirmationsTable struct {
 // RateConfirmations references the rate_confirmations table.
 var RateConfirmations = &RateConfirmationsTable{
 	TableBase:           keel.TableBase{Ref: &rateConfirmationsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 2}}},
-	CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 3}}},
-	CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 4}}},
-	ShipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 5}}},
-	ShipmentMoveID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 6}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 2}}},
+	CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 3}}},
+	CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 4}}},
+	ShipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 5}}},
+	ShipmentMoveID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 6}}},
 	Revision:            keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 7}},
-	Status:              StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 8}}},
-	DocumentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 9}}},
+	Status:              StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 8}}},
+	DocumentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 9}}},
 	SentAt:              keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 10}},
 	SentToEmails:        keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 11}},
 	ConfirmedAt:         keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 12}},
@@ -130,10 +130,10 @@ var RateConfirmations = &RateConfirmationsTable{
 	VoidedAt:            keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 14}},
 	VoidReason:          keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 15}},
 	PayloadSnapshot:     keel.JSONBCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 16}},
-	GeneratedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 17}}},
-	GeneratedVia:        ViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 18}}},
-	SourceTenderOfferID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 19}}},
-	ConfirmedVia:        ViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 20}}},
+	GeneratedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 17}}},
+	GeneratedVia:        ViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 18}}},
+	SourceTenderOfferID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 19}}},
+	ConfirmedVia:        ViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 20}}},
 	ConfirmedByTitle:    keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 21}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 22}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 23}},
@@ -144,16 +144,16 @@ var RateConfirmations = &RateConfirmationsTable{
 func BuildRateConfirmations(r *keel.Ref) *RateConfirmationsTable {
 	return &RateConfirmationsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ShipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ShipmentMoveID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ShipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ShipmentMoveID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Revision:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		Status:              StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		DocumentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:              StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		DocumentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		SentAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		SentToEmails:        keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		ConfirmedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -161,10 +161,10 @@ func BuildRateConfirmations(r *keel.Ref) *RateConfirmationsTable {
 		VoidedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		VoidReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		PayloadSnapshot:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		GeneratedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		GeneratedVia:        ViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		SourceTenderOfferID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ConfirmedVia:        ViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		GeneratedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		GeneratedVia:        ViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		SourceTenderOfferID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ConfirmedVia:        ViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		ConfirmedByTitle:    keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -202,8 +202,6 @@ func (t *RateConfirmationsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // RateConfirmationsQuery is a query over rateconfirmation.RateConfirmation.
 type RateConfirmationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateconfirmation.RateConfirmation] = (*RateConfirmationsTable)(nil)
 
 var _ keel.Query[*rateconfirmation.RateConfirmation] = (*RateConfirmationsQuery)(nil)
 
@@ -319,42 +317,42 @@ func (t *RateConfirmationsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *RateConfirmationsTable) Create(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateConfirmationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateConfirmationsTable) Save(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateConfirmationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateConfirmationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateConfirmationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateConfirmationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateConfirmationsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -526,37 +524,45 @@ func (q *RateConfirmationsQuery) Clone() keel.Query[*rateconfirmation.RateConfir
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateConfirmationsQuery) One(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmation, error) {
-	return keel.One[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateconfirmation.RateConfirmation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateConfirmationsQuery) First(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmation, error) {
-	return keel.First[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateconfirmation.RateConfirmation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateConfirmationsQuery) List(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmation, error) {
-	return keel.List[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateconfirmation.RateConfirmation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateConfirmationsQuery) All(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmation, error) {
-	return keel.All[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateconfirmation.RateConfirmation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateConfirmationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateconfirmation.RateConfirmation, error) {
-	return keel.UpdateReturning[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateconfirmation.RateConfirmation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateConfirmationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateconfirmation.RateConfirmation], error) {
-	return keel.PageOf[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateconfirmation.RateConfirmation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateConfirmationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateconfirmation.RateConfirmation) error) error {
-	return keel.Each[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateconfirmation.RateConfirmation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateConfirmation() unsafe.Pointer {
@@ -797,10 +803,10 @@ type RateConfirmationTokensTable struct {
 // RateConfirmationTokens references the rate_confirmation_tokens table.
 var RateConfirmationTokens = &RateConfirmationTokensTable{
 	TableBase:          keel.TableBase{Ref: &rateConfirmationTokensRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 2}}},
-	RateConfirmationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 2}}},
+	RateConfirmationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 3}}},
 	TokenHash:          keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 4}},
 	Email:              keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 5}},
 	ExpiresAt:          keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 6}},
@@ -814,10 +820,10 @@ var RateConfirmationTokens = &RateConfirmationTokensTable{
 func BuildRateConfirmationTokens(r *keel.Ref) *RateConfirmationTokensTable {
 	return &RateConfirmationTokensTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateConfirmationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateConfirmationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		TokenHash:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Email:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ExpiresAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -848,8 +854,6 @@ func (t *RateConfirmationTokensTable) Get(ctx context.Context, db *keel.DB, key 
 
 // RateConfirmationTokensQuery is a query over rateconfirmation.RateConfirmationToken.
 type RateConfirmationTokensQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateconfirmation.RateConfirmationToken] = (*RateConfirmationTokensTable)(nil)
 
 var _ keel.Query[*rateconfirmation.RateConfirmationToken] = (*RateConfirmationTokensQuery)(nil)
 
@@ -965,42 +969,42 @@ func (t *RateConfirmationTokensTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *RateConfirmationTokensTable) Create(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateConfirmationTokensTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateConfirmationTokensTable) Save(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateConfirmationTokensTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateConfirmationTokensTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateConfirmationTokensTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateConfirmationTokensTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateConfirmationTokensTable) Copy(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1172,37 +1176,45 @@ func (q *RateConfirmationTokensQuery) Clone() keel.Query[*rateconfirmation.RateC
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateConfirmationTokensQuery) One(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmationToken, error) {
-	return keel.One[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateconfirmation.RateConfirmationToken)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateConfirmationTokensQuery) First(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmationToken, error) {
-	return keel.First[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateconfirmation.RateConfirmationToken)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateConfirmationTokensQuery) List(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmationToken, error) {
-	return keel.List[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateconfirmation.RateConfirmationToken)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateConfirmationTokensQuery) All(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmationToken, error) {
-	return keel.All[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateconfirmation.RateConfirmationToken)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateConfirmationTokensQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateconfirmation.RateConfirmationToken, error) {
-	return keel.UpdateReturning[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateconfirmation.RateConfirmationToken)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateConfirmationTokensQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateconfirmation.RateConfirmationToken], error) {
-	return keel.PageOf[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateconfirmation.RateConfirmationToken])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateConfirmationTokensQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateconfirmation.RateConfirmationToken) error) error {
-	return keel.Each[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateconfirmation.RateConfirmationToken)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateConfirmationToken() unsafe.Pointer {
@@ -1306,45 +1318,47 @@ var enumVia = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of rateconfirmation.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v rateconfirmation.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v rateconfirmation.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v rateconfirmation.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v rateconfirmation.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v rateconfirmation.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v rateconfirmation.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v rateconfirmation.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v rateconfirmation.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v rateconfirmation.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v rateconfirmation.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v rateconfirmation.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v rateconfirmation.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v rateconfirmation.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi rateconfirmation.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v rateconfirmation.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v rateconfirmation.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...rateconfirmation.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...rateconfirmation.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ViaCol is a column of rateconfirmation.Via values.
-type ViaCol struct{ keel.StringCol }
+type ViaCol struct{ keel.TypedStringCol }
 
-func (c ViaCol) Eq(v rateconfirmation.Via) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ViaCol) Ne(v rateconfirmation.Via) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ViaCol) Gt(v rateconfirmation.Via) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ViaCol) Gte(v rateconfirmation.Via) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ViaCol) Lt(v rateconfirmation.Via) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ViaCol) Lte(v rateconfirmation.Via) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ViaCol) Eq(v rateconfirmation.Via) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ViaCol) Ne(v rateconfirmation.Via) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ViaCol) Gt(v rateconfirmation.Via) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ViaCol) Gte(v rateconfirmation.Via) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ViaCol) Lt(v rateconfirmation.Via) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ViaCol) Lte(v rateconfirmation.Via) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ViaCol) IsDistinctFrom(v rateconfirmation.Via) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ViaCol) Between(lo, hi rateconfirmation.Via) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ViaCol) To(v rateconfirmation.Via) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ViaCol) In(vs ...rateconfirmation.Via) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c ViaCol) To(v rateconfirmation.Via) keel.Assignment { return c.Text().To(string(v)) }
+func (c ViaCol) In(vs ...rateconfirmation.Via) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c ViaCol) NotIn(vs ...rateconfirmation.Via) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

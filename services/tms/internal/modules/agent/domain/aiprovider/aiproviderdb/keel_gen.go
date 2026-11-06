@@ -153,22 +153,22 @@ type ProvidersTable struct {
 // Providers references the ai_providers table.
 var Providers = &ProvidersTable{
 	TableBase:                keel.TableBase{Ref: &providersRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 2}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 2}}},
 	Name:                     keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 3}},
 	Description:              keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 4}},
-	Kind:                     KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 5}}},
+	Kind:                     KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 5}}},
 	BaseURL:                  keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 6}},
 	Model:                    keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 7}},
 	APIKey:                   keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 8}},
 	AllowPrivateNetwork:      keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 9}},
-	StructuredOutputMode:     StructuredOutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 10}}},
+	StructuredOutputMode:     StructuredOutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 10}}},
 	MaxTokens:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 11}},
 	ContextWindowTokens:      keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 12}},
-	ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 13}}},
-	ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 14}}},
-	Platform:                 keelkinds.AiplatformPlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 15}}},
+	ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 13}}},
+	ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 14}}},
+	Platform:                 keelkinds.AiplatformPlatformCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 15}}},
 	PlatformSettings:         keel.JSONBCol{Col: keel.Col{Ref: &providersRef, Index: 16}},
 	AdvisorEnabled:           keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 17}},
 	AdvisorModel:             keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 18}},
@@ -183,7 +183,7 @@ var Providers = &ProvidersTable{
 	Tasks:                    keel.StringArrayCol{Col: keel.Col{Ref: &providersRef, Index: 27}},
 	Priority:                 keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 28}},
 	EmbeddingDimensions:      keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 29}},
-	EmbeddingInputStyle:      EmbeddingInputStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 30}}},
+	EmbeddingInputStyle:      EmbeddingInputStyleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 30}}},
 	Trusted:                  keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 31}},
 	Enabled:                  keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 32}},
 	Nova:                     keel.BoolCol{Col: keel.Col{Ref: &providersRef, Index: 33}},
@@ -191,11 +191,11 @@ var Providers = &ProvidersTable{
 	TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 35}},
 	MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 36}},
 	MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &providersRef, Index: 37}}},
-	OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 38}}},
+	OnCap:                    CapActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 38}}},
 	APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 39}},
 	APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 40}},
 	APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 41}},
-	APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 42}}},
+	APIKeyAddedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &providersRef, Index: 42}}},
 	APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 43}},
 	PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 44}},
 	RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 45}},
@@ -208,22 +208,22 @@ var Providers = &ProvidersTable{
 func BuildProviders(r *keel.Ref) *ProvidersTable {
 	return &ProvidersTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Kind:                     KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Kind:                     KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		BaseURL:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Model:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		APIKey:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		AllowPrivateNetwork:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		StructuredOutputMode:     StructuredOutputModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		StructuredOutputMode:     StructuredOutputModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		MaxTokens:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ContextWindowTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		Platform:                 keelkinds.AiplatformPlatformCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		ReasoningEffort:          keelkinds.AireasoningReasoningEffortCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ThinkingStyle:            keelkinds.AireasoningThinkingStyleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Platform:                 keelkinds.AiplatformPlatformCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		PlatformSettings:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		AdvisorEnabled:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		AdvisorModel:             keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
@@ -238,7 +238,7 @@ func BuildProviders(r *keel.Ref) *ProvidersTable {
 		Tasks:                    keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 27}},
 		Priority:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		EmbeddingDimensions:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		EmbeddingInputStyle:      EmbeddingInputStyleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		EmbeddingInputStyle:      EmbeddingInputStyleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		Trusted:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		Enabled:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 32}},
 		Nova:                     keel.BoolCol{Col: keel.Col{Ref: r, Index: 33}},
@@ -246,11 +246,11 @@ func BuildProviders(r *keel.Ref) *ProvidersTable {
 		TimeoutSeconds:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		MaxConcurrent:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
 		MonthlyCapUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 37}}},
-		OnCap:                    CapActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		OnCap:                    CapActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
 		APIKeyPrefix:             keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
 		APIKeyLastFour:           keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
 		APIKeyAddedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		APIKeyAddedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		APIKeyAddedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 42}}},
 		APIKeyLastUsedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
 		PreviousAPIKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
 		RotationExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
@@ -275,8 +275,6 @@ func (t *ProvidersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*a
 
 // ProvidersQuery is a query over aiprovider.Provider.
 type ProvidersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*aiprovider.Provider] = (*ProvidersTable)(nil)
 
 var _ keel.Query[*aiprovider.Provider] = (*ProvidersQuery)(nil)
 
@@ -392,42 +390,42 @@ func (t *ProvidersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aipro
 
 // Create inserts row.
 func (t *ProvidersTable) Create(ctx context.Context, db *keel.DB, row *aiprovider.Provider) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ProvidersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ProvidersTable) Save(ctx context.Context, db *keel.DB, row *aiprovider.Provider, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ProvidersTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiprovider.Provider, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ProvidersTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiprovider.Provider) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ProvidersTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ProvidersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ProvidersTable) Copy(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -599,37 +597,45 @@ func (q *ProvidersQuery) Clone() keel.Query[*aiprovider.Provider] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ProvidersQuery) One(ctx context.Context, db *keel.DB) (*aiprovider.Provider, error) {
-	return keel.One[*aiprovider.Provider](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*aiprovider.Provider)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ProvidersQuery) First(ctx context.Context, db *keel.DB) (*aiprovider.Provider, error) {
-	return keel.First[*aiprovider.Provider](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*aiprovider.Provider)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ProvidersQuery) List(ctx context.Context, db *keel.DB) ([]*aiprovider.Provider, error) {
-	return keel.List[*aiprovider.Provider](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiprovider.Provider)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ProvidersQuery) All(ctx context.Context, db *keel.DB) ([]*aiprovider.Provider, error) {
-	return keel.All[*aiprovider.Provider](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiprovider.Provider)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ProvidersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiprovider.Provider, error) {
-	return keel.UpdateReturning[*aiprovider.Provider](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*aiprovider.Provider)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ProvidersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiprovider.Provider], error) {
-	return keel.PageOf[*aiprovider.Provider](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*aiprovider.Provider])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ProvidersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiprovider.Provider) error) error {
-	return keel.Each[*aiprovider.Provider](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*aiprovider.Provider)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newProvider() unsafe.Pointer { return unsafe.Pointer(new(aiprovider.Provider)) }
@@ -990,119 +996,121 @@ var enumStructuredOutputMode = [...]schema.EnumValue{
 }
 
 // CapActionCol is a column of aiprovider.CapAction values.
-type CapActionCol struct{ keel.StringCol }
+type CapActionCol struct{ keel.TypedStringCol }
 
-func (c CapActionCol) Eq(v aiprovider.CapAction) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CapActionCol) Ne(v aiprovider.CapAction) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CapActionCol) Gt(v aiprovider.CapAction) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CapActionCol) Gte(v aiprovider.CapAction) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CapActionCol) Lt(v aiprovider.CapAction) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CapActionCol) Lte(v aiprovider.CapAction) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CapActionCol) Eq(v aiprovider.CapAction) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CapActionCol) Ne(v aiprovider.CapAction) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CapActionCol) Gt(v aiprovider.CapAction) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CapActionCol) Gte(v aiprovider.CapAction) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CapActionCol) Lt(v aiprovider.CapAction) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CapActionCol) Lte(v aiprovider.CapAction) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CapActionCol) IsDistinctFrom(v aiprovider.CapAction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CapActionCol) Between(lo, hi aiprovider.CapAction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CapActionCol) To(v aiprovider.CapAction) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CapActionCol) To(v aiprovider.CapAction) keel.Assignment { return c.Text().To(string(v)) }
 func (c CapActionCol) In(vs ...aiprovider.CapAction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CapActionCol) NotIn(vs ...aiprovider.CapAction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EmbeddingInputStyleCol is a column of aiprovider.EmbeddingInputStyle values.
-type EmbeddingInputStyleCol struct{ keel.StringCol }
+type EmbeddingInputStyleCol struct{ keel.TypedStringCol }
 
 func (c EmbeddingInputStyleCol) Eq(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EmbeddingInputStyleCol) Ne(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EmbeddingInputStyleCol) Gt(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EmbeddingInputStyleCol) Gte(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EmbeddingInputStyleCol) Lt(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EmbeddingInputStyleCol) Lte(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EmbeddingInputStyleCol) IsDistinctFrom(v aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EmbeddingInputStyleCol) Between(lo, hi aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EmbeddingInputStyleCol) To(v aiprovider.EmbeddingInputStyle) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EmbeddingInputStyleCol) In(vs ...aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EmbeddingInputStyleCol) NotIn(vs ...aiprovider.EmbeddingInputStyle) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // KindCol is a column of aiprovider.Kind values.
-type KindCol struct{ keel.StringCol }
+type KindCol struct{ keel.TypedStringCol }
 
-func (c KindCol) Eq(v aiprovider.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c KindCol) Ne(v aiprovider.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c KindCol) Gt(v aiprovider.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c KindCol) Gte(v aiprovider.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c KindCol) Lt(v aiprovider.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c KindCol) Lte(v aiprovider.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c KindCol) Eq(v aiprovider.Kind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v aiprovider.Kind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v aiprovider.Kind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v aiprovider.Kind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v aiprovider.Kind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v aiprovider.Kind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c KindCol) IsDistinctFrom(v aiprovider.Kind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KindCol) Between(lo, hi aiprovider.Kind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c KindCol) To(v aiprovider.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c KindCol) In(vs ...aiprovider.Kind) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c KindCol) To(v aiprovider.Kind) keel.Assignment { return c.Text().To(string(v)) }
+func (c KindCol) In(vs ...aiprovider.Kind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c KindCol) NotIn(vs ...aiprovider.Kind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StructuredOutputModeCol is a column of aiprovider.StructuredOutputMode values.
-type StructuredOutputModeCol struct{ keel.StringCol }
+type StructuredOutputModeCol struct{ keel.TypedStringCol }
 
 func (c StructuredOutputModeCol) Eq(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c StructuredOutputModeCol) Ne(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c StructuredOutputModeCol) Gt(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c StructuredOutputModeCol) Gte(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c StructuredOutputModeCol) Lt(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c StructuredOutputModeCol) Lte(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c StructuredOutputModeCol) IsDistinctFrom(v aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StructuredOutputModeCol) Between(lo, hi aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c StructuredOutputModeCol) To(v aiprovider.StructuredOutputMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c StructuredOutputModeCol) In(vs ...aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StructuredOutputModeCol) NotIn(vs ...aiprovider.StructuredOutputMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

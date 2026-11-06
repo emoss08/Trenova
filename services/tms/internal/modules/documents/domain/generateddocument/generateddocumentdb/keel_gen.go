@@ -120,15 +120,15 @@ type GeneratedDocumentsTable struct {
 // GeneratedDocuments references the generated_documents table.
 var GeneratedDocuments = &GeneratedDocumentsTable{
 	TableBase:         keel.TableBase{Ref: &generatedDocumentsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 2}}},
-	Kind:              documenttemplatedb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 3}}},
-	TemplateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 4}}},
-	TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 5}}},
-	DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 6}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 2}}},
+	Kind:              documenttemplatedb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 3}}},
+	TemplateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 4}}},
+	TemplateVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 5}}},
+	DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 6}}},
 	ReferenceType:     keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 7}},
-	ReferenceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 8}}},
+	ReferenceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 8}}},
 	FileName:          keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 9}},
 	FilePath:          keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 10}},
 	FileSize:          keel.Int64Col{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 11}},
@@ -136,11 +136,11 @@ var GeneratedDocuments = &GeneratedDocumentsTable{
 	Checksum:          keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 13}},
 	ContentHash:       keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 14}},
 	Warnings:          keel.JSONBCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 15}},
-	Status:            GenerationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 16}}},
+	Status:            GenerationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 16}}},
 	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 17}},
 	GeneratedAt:       keel.Int64Col{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 18}},
-	GeneratedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 19}}},
-	DeliveryMethod:    DeliveryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 20}}},
+	GeneratedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 19}}},
+	DeliveryMethod:    DeliveryMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 20}}},
 	DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 21}},
 	DeliveredTo:       keel.StringCol{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 22}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &generatedDocumentsRef, Index: 23}},
@@ -154,15 +154,15 @@ var GeneratedDocuments = &GeneratedDocumentsTable{
 func BuildGeneratedDocuments(r *keel.Ref) *GeneratedDocumentsTable {
 	return &GeneratedDocumentsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:              documenttemplatedb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:              documenttemplatedb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TemplateVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ReferenceType:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		ReferenceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ReferenceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		FileName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		FilePath:          keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		FileSize:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -170,11 +170,11 @@ func BuildGeneratedDocuments(r *keel.Ref) *GeneratedDocumentsTable {
 		Checksum:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ContentHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Warnings:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		Status:            GenerationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		Status:            GenerationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		GeneratedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		GeneratedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		DeliveryMethod:    DeliveryMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		GeneratedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		DeliveryMethod:    DeliveryMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		DeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		DeliveredTo:       keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -210,8 +210,6 @@ func (t *GeneratedDocumentsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // GeneratedDocumentsQuery is a query over generateddocument.GeneratedDocument.
 type GeneratedDocumentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*generateddocument.GeneratedDocument] = (*GeneratedDocumentsTable)(nil)
 
 var _ keel.Query[*generateddocument.GeneratedDocument] = (*GeneratedDocumentsQuery)(nil)
 
@@ -327,42 +325,42 @@ func (t *GeneratedDocumentsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *GeneratedDocumentsTable) Create(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *GeneratedDocumentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *GeneratedDocumentsTable) Save(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *GeneratedDocumentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *GeneratedDocumentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *generateddocument.GeneratedDocument) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *GeneratedDocumentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *GeneratedDocumentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *GeneratedDocumentsTable) Copy(ctx context.Context, db *keel.DB, rows []*generateddocument.GeneratedDocument) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -534,37 +532,45 @@ func (q *GeneratedDocumentsQuery) Clone() keel.Query[*generateddocument.Generate
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *GeneratedDocumentsQuery) One(ctx context.Context, db *keel.DB) (*generateddocument.GeneratedDocument, error) {
-	return keel.One[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*generateddocument.GeneratedDocument)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *GeneratedDocumentsQuery) First(ctx context.Context, db *keel.DB) (*generateddocument.GeneratedDocument, error) {
-	return keel.First[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*generateddocument.GeneratedDocument)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *GeneratedDocumentsQuery) List(ctx context.Context, db *keel.DB) ([]*generateddocument.GeneratedDocument, error) {
-	return keel.List[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*generateddocument.GeneratedDocument)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *GeneratedDocumentsQuery) All(ctx context.Context, db *keel.DB) ([]*generateddocument.GeneratedDocument, error) {
-	return keel.All[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*generateddocument.GeneratedDocument)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *GeneratedDocumentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*generateddocument.GeneratedDocument, error) {
-	return keel.UpdateReturning[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*generateddocument.GeneratedDocument)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *GeneratedDocumentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*generateddocument.GeneratedDocument], error) {
-	return keel.PageOf[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*generateddocument.GeneratedDocument])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *GeneratedDocumentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*generateddocument.GeneratedDocument) error) error {
-	return keel.Each[*generateddocument.GeneratedDocument](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*generateddocument.GeneratedDocument)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newGeneratedDocument() unsafe.Pointer {
@@ -838,75 +844,75 @@ var enumGenerationStatus = [...]schema.EnumValue{
 }
 
 // DeliveryMethodCol is a column of generateddocument.DeliveryMethod values.
-type DeliveryMethodCol struct{ keel.StringCol }
+type DeliveryMethodCol struct{ keel.TypedStringCol }
 
 func (c DeliveryMethodCol) Eq(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DeliveryMethodCol) Ne(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DeliveryMethodCol) Gt(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DeliveryMethodCol) Gte(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DeliveryMethodCol) Lt(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DeliveryMethodCol) Lte(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DeliveryMethodCol) IsDistinctFrom(v generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeliveryMethodCol) Between(lo, hi generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeliveryMethodCol) To(v generateddocument.DeliveryMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeliveryMethodCol) In(vs ...generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeliveryMethodCol) NotIn(vs ...generateddocument.DeliveryMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // GenerationStatusCol is a column of generateddocument.GenerationStatus values.
-type GenerationStatusCol struct{ keel.StringCol }
+type GenerationStatusCol struct{ keel.TypedStringCol }
 
 func (c GenerationStatusCol) Eq(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c GenerationStatusCol) Ne(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c GenerationStatusCol) Gt(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c GenerationStatusCol) Gte(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c GenerationStatusCol) Lt(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c GenerationStatusCol) Lte(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c GenerationStatusCol) IsDistinctFrom(v generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c GenerationStatusCol) Between(lo, hi generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c GenerationStatusCol) To(v generateddocument.GenerationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c GenerationStatusCol) In(vs ...generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c GenerationStatusCol) NotIn(vs ...generateddocument.GenerationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

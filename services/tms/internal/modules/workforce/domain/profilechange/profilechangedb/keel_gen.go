@@ -89,16 +89,16 @@ type WorkerProfileChangeRequestsTable struct {
 // WorkerProfileChangeRequests references the worker_profile_change_requests table.
 var WorkerProfileChangeRequests = &WorkerProfileChangeRequestsTable{
 	TableBase:      keel.TableBase{Ref: &workerProfileChangeRequestsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 3}}},
-	Status:         ProfileChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 3}}},
+	Status:         ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 4}}},
 	Changes:        keel.JSONBCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 5}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 6}},
 	SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 7}},
 	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 8}},
-	DecidedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 9}}},
+	DecidedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 9}}},
 	DecisionNote:   keel.StringCol{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 10}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 11}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerProfileChangeRequestsRef, Index: 12}},
@@ -109,16 +109,16 @@ var WorkerProfileChangeRequests = &WorkerProfileChangeRequestsTable{
 func BuildWorkerProfileChangeRequests(r *keel.Ref) *WorkerProfileChangeRequestsTable {
 	return &WorkerProfileChangeRequestsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:         ProfileChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:         ProfileChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Changes:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SubmittedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		DecidedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		DecidedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DecisionNote:   keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -146,8 +146,6 @@ func (t *WorkerProfileChangeRequestsTable) Get(ctx context.Context, db *keel.DB,
 
 // WorkerProfileChangeRequestsQuery is a query over profilechange.WorkerProfileChangeRequest.
 type WorkerProfileChangeRequestsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*profilechange.WorkerProfileChangeRequest] = (*WorkerProfileChangeRequestsTable)(nil)
 
 var _ keel.Query[*profilechange.WorkerProfileChangeRequest] = (*WorkerProfileChangeRequestsQuery)(nil)
 
@@ -263,42 +261,42 @@ func (t *WorkerProfileChangeRequestsTable) Compute(col keel.Column, e keel.Expr)
 
 // Create inserts row.
 func (t *WorkerProfileChangeRequestsTable) Create(ctx context.Context, db *keel.DB, row *profilechange.WorkerProfileChangeRequest) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerProfileChangeRequestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*profilechange.WorkerProfileChangeRequest) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerProfileChangeRequestsTable) Save(ctx context.Context, db *keel.DB, row *profilechange.WorkerProfileChangeRequest, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerProfileChangeRequestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *profilechange.WorkerProfileChangeRequest, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerProfileChangeRequestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *profilechange.WorkerProfileChangeRequest) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerProfileChangeRequestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*profilechange.WorkerProfileChangeRequest, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerProfileChangeRequestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*profilechange.WorkerProfileChangeRequest, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerProfileChangeRequestsTable) Copy(ctx context.Context, db *keel.DB, rows []*profilechange.WorkerProfileChangeRequest) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -470,37 +468,45 @@ func (q *WorkerProfileChangeRequestsQuery) Clone() keel.Query[*profilechange.Wor
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerProfileChangeRequestsQuery) One(ctx context.Context, db *keel.DB) (*profilechange.WorkerProfileChangeRequest, error) {
-	return keel.One[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*profilechange.WorkerProfileChangeRequest)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerProfileChangeRequestsQuery) First(ctx context.Context, db *keel.DB) (*profilechange.WorkerProfileChangeRequest, error) {
-	return keel.First[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*profilechange.WorkerProfileChangeRequest)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerProfileChangeRequestsQuery) List(ctx context.Context, db *keel.DB) ([]*profilechange.WorkerProfileChangeRequest, error) {
-	return keel.List[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*profilechange.WorkerProfileChangeRequest)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerProfileChangeRequestsQuery) All(ctx context.Context, db *keel.DB) ([]*profilechange.WorkerProfileChangeRequest, error) {
-	return keel.All[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*profilechange.WorkerProfileChangeRequest)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerProfileChangeRequestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*profilechange.WorkerProfileChangeRequest, error) {
-	return keel.UpdateReturning[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*profilechange.WorkerProfileChangeRequest)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerProfileChangeRequestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*profilechange.WorkerProfileChangeRequest], error) {
-	return keel.PageOf[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*profilechange.WorkerProfileChangeRequest])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerProfileChangeRequestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*profilechange.WorkerProfileChangeRequest) error) error {
-	return keel.Each[*profilechange.WorkerProfileChangeRequest](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*profilechange.WorkerProfileChangeRequest)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerProfileChangeRequest() unsafe.Pointer {
@@ -620,38 +626,38 @@ var enumProfileChangeStatus = [...]schema.EnumValue{
 }
 
 // ProfileChangeStatusCol is a column of profilechange.ProfileChangeStatus values.
-type ProfileChangeStatusCol struct{ keel.StringCol }
+type ProfileChangeStatusCol struct{ keel.TypedStringCol }
 
 func (c ProfileChangeStatusCol) Eq(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ProfileChangeStatusCol) Ne(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ProfileChangeStatusCol) Gt(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ProfileChangeStatusCol) Gte(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ProfileChangeStatusCol) Lt(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ProfileChangeStatusCol) Lte(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ProfileChangeStatusCol) IsDistinctFrom(v profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProfileChangeStatusCol) Between(lo, hi profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ProfileChangeStatusCol) To(v profilechange.ProfileChangeStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ProfileChangeStatusCol) In(vs ...profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProfileChangeStatusCol) NotIn(vs ...profilechange.ProfileChangeStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

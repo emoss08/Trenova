@@ -89,17 +89,17 @@ type GuidancesTable struct {
 // Guidances references the agent_profile_guidance table.
 var Guidances = &GuidancesTable{
 	TableBase:      keel.TableBase{Ref: &guidancesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 2}}},
-	Subject:        SubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 3}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 2}}},
+	Subject:        SubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 4}}},
 	Content:        keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 5}},
-	Status:         GuidanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 6}}},
-	Source:         GuidanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 7}}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 8}}},
-	ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 9}}},
-	RetiredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 10}}},
+	Status:         GuidanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 6}}},
+	Source:         GuidanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 7}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 8}}},
+	ThreadID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 9}}},
+	RetiredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &guidancesRef, Index: 10}}},
 	RetiredAt:      keel.Int64Col{Col: keel.Col{Ref: &guidancesRef, Index: 11}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &guidancesRef, Index: 12}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &guidancesRef, Index: 13}},
@@ -110,17 +110,17 @@ var Guidances = &GuidancesTable{
 func BuildGuidances(r *keel.Ref) *GuidancesTable {
 	return &GuidancesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Subject:        SubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Subject:        SubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Content:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:         GuidanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Source:         GuidanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		RetiredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:         GuidanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Source:         GuidanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ThreadID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RetiredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		RetiredAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -148,8 +148,6 @@ func (t *GuidancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*a
 
 // GuidancesQuery is a query over agentprofile.Guidance.
 type GuidancesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentprofile.Guidance] = (*GuidancesTable)(nil)
 
 var _ keel.Query[*agentprofile.Guidance] = (*GuidancesQuery)(nil)
 
@@ -265,42 +263,42 @@ func (t *GuidancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agent
 
 // Create inserts row.
 func (t *GuidancesTable) Create(ctx context.Context, db *keel.DB, row *agentprofile.Guidance) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *GuidancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *GuidancesTable) Save(ctx context.Context, db *keel.DB, row *agentprofile.Guidance, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *GuidancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentprofile.Guidance, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *GuidancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentprofile.Guidance) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *GuidancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *GuidancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *GuidancesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -472,37 +470,45 @@ func (q *GuidancesQuery) Clone() keel.Query[*agentprofile.Guidance] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *GuidancesQuery) One(ctx context.Context, db *keel.DB) (*agentprofile.Guidance, error) {
-	return keel.One[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentprofile.Guidance)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *GuidancesQuery) First(ctx context.Context, db *keel.DB) (*agentprofile.Guidance, error) {
-	return keel.First[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentprofile.Guidance)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *GuidancesQuery) List(ctx context.Context, db *keel.DB) ([]*agentprofile.Guidance, error) {
-	return keel.List[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentprofile.Guidance)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *GuidancesQuery) All(ctx context.Context, db *keel.DB) ([]*agentprofile.Guidance, error) {
-	return keel.All[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentprofile.Guidance)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *GuidancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentprofile.Guidance, error) {
-	return keel.UpdateReturning[*agentprofile.Guidance](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentprofile.Guidance)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *GuidancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentprofile.Guidance], error) {
-	return keel.PageOf[*agentprofile.Guidance](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentprofile.Guidance])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *GuidancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentprofile.Guidance) error) error {
-	return keel.Each[*agentprofile.Guidance](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentprofile.Guidance)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newGuidance() unsafe.Pointer { return unsafe.Pointer(new(agentprofile.Guidance)) }
@@ -690,20 +696,20 @@ type ProfilesTable struct {
 // Profiles references the agent_profiles table.
 var Profiles = &ProfilesTable{
 	TableBase:      keel.TableBase{Ref: &profilesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
-	Subject:        SubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 3}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 4}}},
-	Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 5}}},
-	Trigger:        TriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 6}}},
-	RequestedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 7}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
+	Subject:        SubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 4}}},
+	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 5}}},
+	Trigger:        TriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 6}}},
+	RequestedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 7}}},
 	Content:        keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 8}},
 	Facts:          keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 9}},
 	GuidanceIDs:    keel.JSONBCol{Col: keel.Col{Ref: &profilesRef, Index: 10}},
 	Digest:         keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 11}},
 	Model:          keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 12}},
-	ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 13}}},
+	ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 13}}},
 	InputTokens:    keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 14}},
 	OutputTokens:   keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 15}},
 	ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 16}},
@@ -717,20 +723,20 @@ var Profiles = &ProfilesTable{
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Subject:        SubjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Trigger:        TriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RequestedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Subject:        SubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Trigger:        TriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RequestedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Content:        keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Facts:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		GuidanceIDs:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		Digest:         keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Model:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ProviderID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ProviderID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		InputTokens:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		OutputTokens:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
@@ -756,8 +762,6 @@ func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ag
 
 // ProfilesQuery is a query over agentprofile.Profile.
 type ProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentprofile.Profile] = (*ProfilesTable)(nil)
 
 var _ keel.Query[*agentprofile.Profile] = (*ProfilesQuery)(nil)
 
@@ -873,42 +877,42 @@ func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentp
 
 // Create inserts row.
 func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *agentprofile.Profile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *agentprofile.Profile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentprofile.Profile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentprofile.Profile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1080,37 +1084,45 @@ func (q *ProfilesQuery) Clone() keel.Query[*agentprofile.Profile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*agentprofile.Profile, error) {
-	return keel.One[*agentprofile.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentprofile.Profile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*agentprofile.Profile, error) {
-	return keel.First[*agentprofile.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentprofile.Profile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*agentprofile.Profile, error) {
-	return keel.List[*agentprofile.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*agentprofile.Profile, error) {
-	return keel.All[*agentprofile.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentprofile.Profile, error) {
-	return keel.UpdateReturning[*agentprofile.Profile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentprofile.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentprofile.Profile], error) {
-	return keel.PageOf[*agentprofile.Profile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentprofile.Profile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentprofile.Profile) error) error {
-	return keel.Each[*agentprofile.Profile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentprofile.Profile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(agentprofile.Profile)) }
@@ -1282,144 +1294,128 @@ var enumTrigger = [...]schema.EnumValue{
 }
 
 // GuidanceSourceCol is a column of agentprofile.GuidanceSource values.
-type GuidanceSourceCol struct{ keel.StringCol }
+type GuidanceSourceCol struct{ keel.TypedStringCol }
 
-func (c GuidanceSourceCol) Eq(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c GuidanceSourceCol) Ne(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c GuidanceSourceCol) Gt(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c GuidanceSourceCol) Eq(v agentprofile.GuidanceSource) keel.Pred { return c.Text().Eq(string(v)) }
+func (c GuidanceSourceCol) Ne(v agentprofile.GuidanceSource) keel.Pred { return c.Text().Ne(string(v)) }
+func (c GuidanceSourceCol) Gt(v agentprofile.GuidanceSource) keel.Pred { return c.Text().Gt(string(v)) }
 func (c GuidanceSourceCol) Gte(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c GuidanceSourceCol) Lt(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c GuidanceSourceCol) Lt(v agentprofile.GuidanceSource) keel.Pred { return c.Text().Lt(string(v)) }
 func (c GuidanceSourceCol) Lte(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c GuidanceSourceCol) IsDistinctFrom(v agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c GuidanceSourceCol) Between(lo, hi agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c GuidanceSourceCol) To(v agentprofile.GuidanceSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c GuidanceSourceCol) In(vs ...agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c GuidanceSourceCol) NotIn(vs ...agentprofile.GuidanceSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // GuidanceStatusCol is a column of agentprofile.GuidanceStatus values.
-type GuidanceStatusCol struct{ keel.StringCol }
+type GuidanceStatusCol struct{ keel.TypedStringCol }
 
-func (c GuidanceStatusCol) Eq(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c GuidanceStatusCol) Ne(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c GuidanceStatusCol) Gt(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c GuidanceStatusCol) Eq(v agentprofile.GuidanceStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c GuidanceStatusCol) Ne(v agentprofile.GuidanceStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c GuidanceStatusCol) Gt(v agentprofile.GuidanceStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c GuidanceStatusCol) Gte(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c GuidanceStatusCol) Lt(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c GuidanceStatusCol) Lt(v agentprofile.GuidanceStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c GuidanceStatusCol) Lte(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c GuidanceStatusCol) IsDistinctFrom(v agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c GuidanceStatusCol) Between(lo, hi agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c GuidanceStatusCol) To(v agentprofile.GuidanceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c GuidanceStatusCol) In(vs ...agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c GuidanceStatusCol) NotIn(vs ...agentprofile.GuidanceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of agentprofile.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v agentprofile.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v agentprofile.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v agentprofile.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v agentprofile.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v agentprofile.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v agentprofile.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v agentprofile.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v agentprofile.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v agentprofile.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v agentprofile.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v agentprofile.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v agentprofile.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v agentprofile.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi agentprofile.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v agentprofile.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v agentprofile.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...agentprofile.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...agentprofile.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SubjectCol is a column of agentprofile.Subject values.
-type SubjectCol struct{ keel.StringCol }
+type SubjectCol struct{ keel.TypedStringCol }
 
-func (c SubjectCol) Eq(v agentprofile.Subject) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SubjectCol) Ne(v agentprofile.Subject) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SubjectCol) Gt(v agentprofile.Subject) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SubjectCol) Gte(v agentprofile.Subject) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SubjectCol) Lt(v agentprofile.Subject) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SubjectCol) Lte(v agentprofile.Subject) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SubjectCol) Eq(v agentprofile.Subject) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SubjectCol) Ne(v agentprofile.Subject) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SubjectCol) Gt(v agentprofile.Subject) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SubjectCol) Gte(v agentprofile.Subject) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SubjectCol) Lt(v agentprofile.Subject) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SubjectCol) Lte(v agentprofile.Subject) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SubjectCol) IsDistinctFrom(v agentprofile.Subject) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubjectCol) Between(lo, hi agentprofile.Subject) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SubjectCol) To(v agentprofile.Subject) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SubjectCol) To(v agentprofile.Subject) keel.Assignment { return c.Text().To(string(v)) }
 func (c SubjectCol) In(vs ...agentprofile.Subject) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubjectCol) NotIn(vs ...agentprofile.Subject) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TriggerCol is a column of agentprofile.Trigger values.
-type TriggerCol struct{ keel.StringCol }
+type TriggerCol struct{ keel.TypedStringCol }
 
-func (c TriggerCol) Eq(v agentprofile.Trigger) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TriggerCol) Ne(v agentprofile.Trigger) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TriggerCol) Gt(v agentprofile.Trigger) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TriggerCol) Gte(v agentprofile.Trigger) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TriggerCol) Lt(v agentprofile.Trigger) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TriggerCol) Lte(v agentprofile.Trigger) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TriggerCol) Eq(v agentprofile.Trigger) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TriggerCol) Ne(v agentprofile.Trigger) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TriggerCol) Gt(v agentprofile.Trigger) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TriggerCol) Gte(v agentprofile.Trigger) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TriggerCol) Lt(v agentprofile.Trigger) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TriggerCol) Lte(v agentprofile.Trigger) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TriggerCol) IsDistinctFrom(v agentprofile.Trigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TriggerCol) Between(lo, hi agentprofile.Trigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TriggerCol) To(v agentprofile.Trigger) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c TriggerCol) To(v agentprofile.Trigger) keel.Assignment { return c.Text().To(string(v)) }
 func (c TriggerCol) In(vs ...agentprofile.Trigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TriggerCol) NotIn(vs ...agentprofile.Trigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

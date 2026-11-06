@@ -92,12 +92,12 @@ type InvoiceStatesTable struct {
 // InvoiceStates references the factoring_invoice_states table.
 var InvoiceStates = &InvoiceStatesTable{
 	TableBase:          keel.TableBase{Ref: &invoiceStatesRef},
-	InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 2}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 3}}},
-	CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 4}}},
-	Verdict:            VerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 5}}},
+	InvoiceID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 2}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 3}}},
+	CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 4}}},
+	Verdict:            VerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 5}}},
 	Checks:             keel.JSONBCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 6}},
 	FailedChecks:       keel.Int64Col{Col: keel.Col{Ref: &invoiceStatesRef, Index: 7}},
 	OpenBalanceMinor:   keel.Int64Col{Col: keel.Col{Ref: &invoiceStatesRef, Index: 8}},
@@ -111,12 +111,12 @@ var InvoiceStates = &InvoiceStatesTable{
 func BuildInvoiceStates(r *keel.Ref) *InvoiceStatesTable {
 	return &InvoiceStatesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Verdict:            VerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		InvoiceID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Verdict:            VerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Checks:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
 		FailedChecks:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		OpenBalanceMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -157,8 +157,6 @@ func (t *InvoiceStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // InvoiceStatesQuery is a query over factoringreadiness.InvoiceState.
 type InvoiceStatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringreadiness.InvoiceState] = (*InvoiceStatesTable)(nil)
 
 var _ keel.Query[*factoringreadiness.InvoiceState] = (*InvoiceStatesQuery)(nil)
 
@@ -274,42 +272,42 @@ func (t *InvoiceStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*f
 
 // Create inserts row.
 func (t *InvoiceStatesTable) Create(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceStatesTable) Save(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -481,37 +479,45 @@ func (q *InvoiceStatesQuery) Clone() keel.Query[*factoringreadiness.InvoiceState
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceStatesQuery) One(ctx context.Context, db *keel.DB) (*factoringreadiness.InvoiceState, error) {
-	return keel.One[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringreadiness.InvoiceState)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceStatesQuery) First(ctx context.Context, db *keel.DB) (*factoringreadiness.InvoiceState, error) {
-	return keel.First[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringreadiness.InvoiceState)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceStatesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringreadiness.InvoiceState, error) {
-	return keel.List[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringreadiness.InvoiceState)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceStatesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringreadiness.InvoiceState, error) {
-	return keel.All[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringreadiness.InvoiceState)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringreadiness.InvoiceState, error) {
-	return keel.UpdateReturning[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringreadiness.InvoiceState)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringreadiness.InvoiceState], error) {
-	return keel.PageOf[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringreadiness.InvoiceState])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringreadiness.InvoiceState) error) error {
-	return keel.Each[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringreadiness.InvoiceState)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceState() unsafe.Pointer { return unsafe.Pointer(new(factoringreadiness.InvoiceState)) }
@@ -640,26 +646,24 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric, Format: `count`}
 
 // VerdictCol is a column of factoringreadiness.Verdict values.
-type VerdictCol struct{ keel.StringCol }
+type VerdictCol struct{ keel.TypedStringCol }
 
-func (c VerdictCol) Eq(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c VerdictCol) Ne(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c VerdictCol) Gt(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c VerdictCol) Gte(v factoringreadiness.Verdict) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c VerdictCol) Lt(v factoringreadiness.Verdict) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c VerdictCol) Lte(v factoringreadiness.Verdict) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c VerdictCol) Eq(v factoringreadiness.Verdict) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c VerdictCol) Ne(v factoringreadiness.Verdict) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c VerdictCol) Gt(v factoringreadiness.Verdict) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c VerdictCol) Gte(v factoringreadiness.Verdict) keel.Pred { return c.Text().Gte(string(v)) }
+func (c VerdictCol) Lt(v factoringreadiness.Verdict) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c VerdictCol) Lte(v factoringreadiness.Verdict) keel.Pred { return c.Text().Lte(string(v)) }
 func (c VerdictCol) IsDistinctFrom(v factoringreadiness.Verdict) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VerdictCol) Between(lo, hi factoringreadiness.Verdict) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c VerdictCol) To(v factoringreadiness.Verdict) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c VerdictCol) To(v factoringreadiness.Verdict) keel.Assignment { return c.Text().To(string(v)) }
 func (c VerdictCol) In(vs ...factoringreadiness.Verdict) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VerdictCol) NotIn(vs ...factoringreadiness.Verdict) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

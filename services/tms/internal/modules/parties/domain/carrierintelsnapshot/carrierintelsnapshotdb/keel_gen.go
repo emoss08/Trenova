@@ -76,10 +76,10 @@ type CarrierIntelRawPayloadsTable struct {
 // CarrierIntelRawPayloads references the carrier_intel_raw_payloads table.
 var CarrierIntelRawPayloads = &CarrierIntelRawPayloadsTable{
 	TableBase:      keel.TableBase{Ref: &carrierIntelRawPayloadsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 2}}},
-	Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 2}}},
+	Provider:       integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 3}}},
 	Endpoint:       keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 4}},
 	DOTNumber:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 5}},
 	Payload:        keel.JSONBCol{Col: keel.Col{Ref: &carrierIntelRawPayloadsRef, Index: 6}},
@@ -93,10 +93,10 @@ var CarrierIntelRawPayloads = &CarrierIntelRawPayloadsTable{
 func BuildCarrierIntelRawPayloads(r *keel.Ref) *CarrierIntelRawPayloadsTable {
 	return &CarrierIntelRawPayloadsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Provider:       integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Endpoint:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		DOTNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Payload:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -122,8 +122,6 @@ func (t *CarrierIntelRawPayloadsTable) Get(ctx context.Context, db *keel.DB, key
 
 // CarrierIntelRawPayloadsQuery is a query over carrierintelsnapshot.CarrierIntelRawPayload.
 type CarrierIntelRawPayloadsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrierintelsnapshot.CarrierIntelRawPayload] = (*CarrierIntelRawPayloadsTable)(nil)
 
 var _ keel.Query[*carrierintelsnapshot.CarrierIntelRawPayload] = (*CarrierIntelRawPayloadsQuery)(nil)
 
@@ -239,42 +237,42 @@ func (t *CarrierIntelRawPayloadsTable) Compute(col keel.Column, e keel.Expr) kee
 
 // Create inserts row.
 func (t *CarrierIntelRawPayloadsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelRawPayload) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierIntelRawPayloadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelRawPayload) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierIntelRawPayloadsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelRawPayload, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierIntelRawPayloadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelRawPayload, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierIntelRawPayloadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelRawPayload) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierIntelRawPayloadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelRawPayload, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierIntelRawPayloadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelRawPayload, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierIntelRawPayloadsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelRawPayload) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -446,37 +444,45 @@ func (q *CarrierIntelRawPayloadsQuery) Clone() keel.Query[*carrierintelsnapshot.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierIntelRawPayloadsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
-	return keel.One[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrierintelsnapshot.CarrierIntelRawPayload)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierIntelRawPayloadsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelsnapshot.CarrierIntelRawPayload, error) {
-	return keel.First[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrierintelsnapshot.CarrierIntelRawPayload)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierIntelRawPayloadsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelsnapshot.CarrierIntelRawPayload, error) {
-	return keel.List[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelsnapshot.CarrierIntelRawPayload)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierIntelRawPayloadsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelsnapshot.CarrierIntelRawPayload, error) {
-	return keel.All[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelsnapshot.CarrierIntelRawPayload)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierIntelRawPayloadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelsnapshot.CarrierIntelRawPayload, error) {
-	return keel.UpdateReturning[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrierintelsnapshot.CarrierIntelRawPayload)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierIntelRawPayloadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelsnapshot.CarrierIntelRawPayload], error) {
-	return keel.PageOf[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrierintelsnapshot.CarrierIntelRawPayload])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierIntelRawPayloadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelsnapshot.CarrierIntelRawPayload) error) error {
-	return keel.Each[*carrierintelsnapshot.CarrierIntelRawPayload](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrierintelsnapshot.CarrierIntelRawPayload)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierIntelRawPayload() unsafe.Pointer {
@@ -660,34 +666,34 @@ type CarrierIntelSnapshotsTable struct {
 // CarrierIntelSnapshots references the carrier_intel_snapshots table.
 var CarrierIntelSnapshots = &CarrierIntelSnapshotsTable{
 	TableBase:      keel.TableBase{Ref: &carrierIntelSnapshotsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 2}}},
-	SubjectType:    keelkinds.CarrierintelSubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 2}}},
+	SubjectType:    keelkinds.CarrierintelSubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 3}}},
 	SubjectID:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 4}},
-	CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 5}}},
+	CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 5}}},
 	DOTNumber:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 6}},
 	DocketNumber:   keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 7}},
-	Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 8}}},
+	Provider:       integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 8}}},
 	ProviderRef:    keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 9}},
-	Depth:          keelkinds.CarrierintelLookupDepthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 10}}},
-	Source:         SnapshotSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 11}}},
+	Depth:          keelkinds.CarrierintelLookupDepthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 10}}},
+	Source:         SnapshotSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 11}}},
 	IsCurrent:      keel.BoolCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 12}},
 	NotFound:       keel.BoolCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 13}},
 	Profile:        keel.JSONBCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 14}},
 	Findings:       keel.JSONBCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 15}},
 	BlockingCodes:  keel.StringArrayCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 16}},
 	AdvisoryCodes:  keel.StringArrayCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 17}},
-	RiskLevel:      keelkinds.CarrierintelRiskLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 18}}},
-	ReviewState:    ReviewStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 19}}},
-	ReviewedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 20}}},
+	RiskLevel:      keelkinds.CarrierintelRiskLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 18}}},
+	ReviewState:    ReviewStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 19}}},
+	ReviewedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 20}}},
 	ReviewedAt:     keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 21}},
 	ReviewNote:     keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 22}},
 	PolicyVersion:  keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 23}},
-	RawPayloadID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 24}}},
+	RawPayloadID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 24}}},
 	ContentHash:    keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 25}},
 	FetchedAt:      keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 26}},
-	FetchedDepth:   keelkinds.CarrierintelLookupDepthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 27}}},
+	FetchedDepth:   keelkinds.CarrierintelLookupDepthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 27}}},
 	DepthFetchedAt: keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 28}},
 	SourceAsOf:     keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 29}},
 	ConfirmedAt:    keel.Int64Col{Col: keel.Col{Ref: &carrierIntelSnapshotsRef, Index: 30}},
@@ -699,34 +705,34 @@ var CarrierIntelSnapshots = &CarrierIntelSnapshotsTable{
 func BuildCarrierIntelSnapshots(r *keel.Ref) *CarrierIntelSnapshotsTable {
 	return &CarrierIntelSnapshotsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SubjectType:    keelkinds.CarrierintelSubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SubjectType:    keelkinds.CarrierintelSubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SubjectID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		DOTNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		DocketNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Provider:       integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		ProviderRef:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Depth:          keelkinds.CarrierintelLookupDepthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Source:         SnapshotSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Depth:          keelkinds.CarrierintelLookupDepthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Source:         SnapshotSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		IsCurrent:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
 		NotFound:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
 		Profile:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		Findings:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
 		BlockingCodes:  keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 16}},
 		AdvisoryCodes:  keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 17}},
-		RiskLevel:      keelkinds.CarrierintelRiskLevelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		ReviewState:    ReviewStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ReviewedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		RiskLevel:      keelkinds.CarrierintelRiskLevelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ReviewState:    ReviewStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ReviewedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		ReviewedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		ReviewNote:     keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		PolicyVersion:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		RawPayloadID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		RawPayloadID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		ContentHash:    keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		FetchedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		FetchedDepth:   keelkinds.CarrierintelLookupDepthCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		FetchedDepth:   keelkinds.CarrierintelLookupDepthCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		DepthFetchedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		SourceAsOf:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		ConfirmedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
@@ -750,8 +756,6 @@ func (t *CarrierIntelSnapshotsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // CarrierIntelSnapshotsQuery is a query over carrierintelsnapshot.CarrierIntelSnapshot.
 type CarrierIntelSnapshotsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrierintelsnapshot.CarrierIntelSnapshot] = (*CarrierIntelSnapshotsTable)(nil)
 
 var _ keel.Query[*carrierintelsnapshot.CarrierIntelSnapshot] = (*CarrierIntelSnapshotsQuery)(nil)
 
@@ -867,42 +871,42 @@ func (t *CarrierIntelSnapshotsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *CarrierIntelSnapshotsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelSnapshot) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierIntelSnapshotsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelSnapshot) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierIntelSnapshotsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelSnapshot, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierIntelSnapshotsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelSnapshot, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierIntelSnapshotsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelsnapshot.CarrierIntelSnapshot) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierIntelSnapshotsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelSnapshot, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierIntelSnapshotsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelSnapshot, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierIntelSnapshotsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelsnapshot.CarrierIntelSnapshot) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1074,37 +1078,45 @@ func (q *CarrierIntelSnapshotsQuery) Clone() keel.Query[*carrierintelsnapshot.Ca
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierIntelSnapshotsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-	return keel.One[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrierintelsnapshot.CarrierIntelSnapshot)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierIntelSnapshotsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-	return keel.First[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrierintelsnapshot.CarrierIntelSnapshot)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierIntelSnapshotsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-	return keel.List[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelsnapshot.CarrierIntelSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierIntelSnapshotsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-	return keel.All[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelsnapshot.CarrierIntelSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierIntelSnapshotsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
-	return keel.UpdateReturning[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrierintelsnapshot.CarrierIntelSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierIntelSnapshotsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelsnapshot.CarrierIntelSnapshot], error) {
-	return keel.PageOf[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrierintelsnapshot.CarrierIntelSnapshot])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierIntelSnapshotsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelsnapshot.CarrierIntelSnapshot) error) error {
-	return keel.Each[*carrierintelsnapshot.CarrierIntelSnapshot](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrierintelsnapshot.CarrierIntelSnapshot)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierIntelSnapshot() unsafe.Pointer {
@@ -1366,75 +1378,75 @@ var enumSnapshotSource = [...]schema.EnumValue{
 }
 
 // ReviewStateCol is a column of carrierintelsnapshot.ReviewState values.
-type ReviewStateCol struct{ keel.StringCol }
+type ReviewStateCol struct{ keel.TypedStringCol }
 
 func (c ReviewStateCol) Eq(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReviewStateCol) Ne(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReviewStateCol) Gt(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReviewStateCol) Gte(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReviewStateCol) Lt(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReviewStateCol) Lte(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReviewStateCol) IsDistinctFrom(v carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReviewStateCol) Between(lo, hi carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReviewStateCol) To(v carrierintelsnapshot.ReviewState) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReviewStateCol) In(vs ...carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReviewStateCol) NotIn(vs ...carrierintelsnapshot.ReviewState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SnapshotSourceCol is a column of carrierintelsnapshot.SnapshotSource values.
-type SnapshotSourceCol struct{ keel.StringCol }
+type SnapshotSourceCol struct{ keel.TypedStringCol }
 
 func (c SnapshotSourceCol) Eq(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SnapshotSourceCol) Ne(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SnapshotSourceCol) Gt(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SnapshotSourceCol) Gte(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SnapshotSourceCol) Lt(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SnapshotSourceCol) Lte(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SnapshotSourceCol) IsDistinctFrom(v carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SnapshotSourceCol) Between(lo, hi carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SnapshotSourceCol) To(v carrierintelsnapshot.SnapshotSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SnapshotSourceCol) In(vs ...carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SnapshotSourceCol) NotIn(vs ...carrierintelsnapshot.SnapshotSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
