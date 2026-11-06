@@ -1,5 +1,5 @@
 {
-  "version": "sha256:12d5ccc11c092f348981f9495d6b76fa985c99ca5c87f19d7ed785b33baea9c8",
+  "version": "sha256:a117a50bdc22ed28c522891137688680d07510ec4b179093fd0b6134573dfc4c",
   "modules": [
     {
       "id": "home",
@@ -6558,6 +6558,7 @@
       "capabilities": [],
       "aliases": [
         "users & roles",
+        "give access",
         "user accounts",
         "staff accounts",
         "logins",
@@ -18594,7 +18595,6 @@
         "BOL",
         "command center",
         "trips",
-        "dispatch board",
         "capacity",
         "suggested actions"
       ],
