@@ -86,6 +86,18 @@ func (r *repository) assignmentEvents(
 	after dispatchlearningports.DecisionCursor,
 	limit int,
 ) ([]*shipmentevent.Event, error) {
+	events, err := DecisionEventsQuery(after, limit).List(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("list driver assignment events: %w", err)
+	}
+
+	return events, nil
+}
+
+func DecisionEventsQuery(
+	after dispatchlearningports.DecisionCursor,
+	limit int,
+) keel.Query[*shipmentevent.Event] {
 	e := shipmenteventdb.Events
 	q := e.Pick(e.ID, e.OccurredAt, e.MoveID, e.AssignmentID).
 		Where(
@@ -98,12 +110,7 @@ func (r *repository) assignmentEvents(
 		q = q.Where(keel.Tuple(e.OccurredAt, e.ID).Gt(keel.Tuple(after.At, after.ID.String())))
 	}
 
-	events, err := q.List(ctx, r.db.Keel(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("list driver assignment events: %w", err)
-	}
-
-	return events, nil
+	return q
 }
 
 func (r *repository) pricesByMove(
