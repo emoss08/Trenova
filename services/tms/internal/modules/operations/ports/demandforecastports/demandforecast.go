@@ -134,6 +134,8 @@ type OutlookWindow struct {
 	WindowEnd        int64
 	TypicalLow       int
 	TypicalHigh      int
+	LikelyLow        int
+	LikelyHigh       int
 	Booked           int
 	ExpectedUnbooked float64
 	DriversExpected  int

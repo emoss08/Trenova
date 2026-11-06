@@ -13246,7 +13246,7 @@ export type DispatchFreightOutlookQueryVariables = Exact<{
 }>;
 
 
-export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, windows: Array<{ areaLabel: string, windowStart: number, windowEnd: number, typicalLow: number, typicalHigh: number, booked: number, expectedUnbooked: number, driversExpected: number, shortfall: number, valueCents: number, explanation: string, customers: Array<{ customerId: string, name: string, expectedLoads: number }> }> } };
+export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, windows: Array<{ areaLabel: string, windowStart: number, windowEnd: number, typicalLow: number, typicalHigh: number, likelyLow: number, likelyHigh: number, booked: number, expectedUnbooked: number, driversExpected: number, shortfall: number, valueCents: number, explanation: string, customers: Array<{ customerId: string, name: string, expectedLoads: number }> }> } };
 
 export type DispatchForecastQualityQueryVariables = Exact<{ [key: string]: never; }>;
 

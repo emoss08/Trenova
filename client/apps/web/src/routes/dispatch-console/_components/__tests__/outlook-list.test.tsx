@@ -53,6 +53,8 @@ const dallas: DispatchFreightWindow = {
   windowEnd: START + 12 * HOUR,
   typicalLow: 3,
   typicalHigh: 5,
+  likelyLow: 2,
+  likelyHigh: 6,
   booked: 1,
   expectedUnbooked: 3.36,
   driversExpected: 1,
@@ -72,6 +74,8 @@ const memphis: DispatchFreightWindow = {
   windowEnd: START + 16 * HOUR,
   typicalLow: 2,
   typicalHigh: 2,
+  likelyLow: 1,
+  likelyHigh: 4,
   booked: 0,
   expectedUnbooked: 2,
   driversExpected: 2,
@@ -134,7 +138,7 @@ describe("OutlookList", () => {
     expect(rows[0]).toHaveTextContent(
       collapsed(formatUnixDayTimeRange(dallas.windowStart, dallas.windowEnd)),
     );
-    expect(rows[0]).toHaveTextContent("3–5");
+    expect(rows[0]).toHaveTextContent("2–6");
     expect(rows[0]).toHaveTextContent("1 booked");
     expect(rows[0]).toHaveTextContent("$310");
     expect(within(rows[0]).getByText("2.4")).toHaveClass("text-warning-foreground");
@@ -155,13 +159,14 @@ describe("OutlookList", () => {
     const list = await screen.findByRole("list", { name: "Freight outlook" });
     const [dallasRow] = within(list).getAllByRole("button");
     expect(dallasRow).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByText(dallas.explanation)).not.toBeVisible();
+    expect(screen.getByText("Usually 3–5 loads in this window.")).not.toBeVisible();
+    expect(screen.queryByText(dallas.explanation)).toBeNull();
 
     dallasRow.focus();
     await user.keyboard("{Enter}");
 
     expect(dallasRow).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText(dallas.explanation)).toBeVisible();
+    expect(screen.getByText("Usually 3–5 loads in this window.")).toBeVisible();
     expect(
       screen.getByText("Mostly from Acme Foods (about 3) and Red River Grain (about 1.4)."),
     ).toBeVisible();
@@ -173,6 +178,41 @@ describe("OutlookList", () => {
 
     await user.click(dallasRow);
     expect(dallasRow).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("says nothing more is expected and up to the usual high when the range starts at none", async () => {
+    const user = userEvent.setup();
+    mocks.outlook.mockResolvedValue(
+      outlook({
+        windows: [{ ...dallas, typicalLow: 0, typicalHigh: 1, expectedUnbooked: 0.01 }],
+      }),
+    );
+
+    renderOutlook();
+
+    const list = await screen.findByRole("list", { name: "Freight outlook" });
+    await user.click(within(list).getAllByRole("button")[0]);
+
+    expect(screen.getByText("Usually up to 1 load in this window.")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Nothing more is expected to be booked; one more driver ending here is worth $310 to the plan.",
+      ),
+    ).toBeVisible();
+  });
+
+  it("says no loads when the window usually brings none", async () => {
+    const user = userEvent.setup();
+    mocks.outlook.mockResolvedValue(
+      outlook({ windows: [{ ...dallas, typicalLow: 0, typicalHigh: 0 }] }),
+    );
+
+    renderOutlook();
+
+    const list = await screen.findByRole("list", { name: "Freight outlook" });
+    await user.click(within(list).getAllByRole("button")[0]);
+
+    expect(screen.getByText("Usually no loads in this window.")).toBeVisible();
   });
 
   it("explains a forecast that is not ready instead of listing its windows", async () => {

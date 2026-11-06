@@ -79,6 +79,8 @@ func (s *Service) Outlook(
 				WindowEnd:        reason.WindowEnd,
 				TypicalLow:       reason.TypicalLow,
 				TypicalHigh:      reason.TypicalHigh,
+				LikelyLow:        reason.LikelyLow,
+				LikelyHigh:       reason.LikelyHigh,
 				Booked:           reason.Booked,
 				ExpectedUnbooked: reason.ExpectedUnbooked,
 				DriversExpected:  reason.DriversExpected,

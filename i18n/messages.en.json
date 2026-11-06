@@ -175639,6 +175639,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nothing moving right now.": {
     "sites": 1,
     "scope": [
@@ -309269,6 +309278,33 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Usually up to {0, plural, one {# load} other {# loads}} in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Usually {0}–{1} loads in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Utah (UT)": {

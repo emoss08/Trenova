@@ -784,10 +784,15 @@ export function formatUnixDayTimeRange(
   if (!startDate || !endDate) {
     return fallback;
   }
-  return zonedFormatter({ weekday: "short", ...CLOCK_TIME, timezone, timeFormat }).formatRange(
-    startDate,
-    endDate,
-  );
+  const formatter = zonedFormatter({ weekday: "short", ...CLOCK_TIME, timezone, timeFormat });
+  const dayKey = zonedFormatter({ dateStyle: "short", timezone });
+  if (dayKey.format(startDate) === dayKey.format(endDate)) {
+    return formatter.formatRange(startDate, endDate);
+  }
+
+  // formatRange adds the day of the month once the ends fall on different days ("7 Sat"); a
+  // span under a week is plain with its weekday and time at each end.
+  return `${formatter.format(startDate)} – ${formatter.format(endDate)}`;
 }
 
 export function formatUnixDateTimeOrDash(

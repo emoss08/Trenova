@@ -23,6 +23,8 @@ query DispatchFreightOutlook($hours: Int, $limit: Int) {
       windowEnd
       typicalLow
       typicalHigh
+      likelyLow
+      likelyHigh
       booked
       expectedUnbooked
       driversExpected

@@ -2361,6 +2361,26 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
+				Name:     "likelyLow",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.LikelyLow, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "likelyHigh",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.LikelyHigh, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "booked",
 				NonNull:  true,
 				ChildErr: errNoChild4,

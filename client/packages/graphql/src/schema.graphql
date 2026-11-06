@@ -14163,6 +14163,11 @@ type DispatchFreightWindow {
   expectedUnbooked: Float!
   """The same window in a sentence."""
   explanation: String!
+  likelyHigh: Int!
+  """
+  The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked.
+  """
+  likelyLow: Int!
   """
   Expected loads beyond the drivers expected; zero when the area is covered.
   """

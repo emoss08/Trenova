@@ -55,9 +55,23 @@ const STANDING_ALERT: Record<Exclude<ForecastStanding, "Ready">, "info" | "warni
 };
 
 function likelyLoads(freight: DispatchFreightWindow, t: TranslateFn): string {
-  return freight.typicalLow === freight.typicalHigh
-    ? formatNumber(freight.typicalHigh)
-    : t("{0}–{1}", formatNumber(freight.typicalLow), formatNumber(freight.typicalHigh));
+  return freight.likelyLow === freight.likelyHigh
+    ? formatNumber(freight.likelyHigh)
+    : t("{0}–{1}", formatNumber(freight.likelyLow), formatNumber(freight.likelyHigh));
+}
+
+function usualLoads(freight: DispatchFreightWindow, t: TranslateFn): string {
+  const { typicalLow: low, typicalHigh: high } = freight;
+  if (low === high) {
+    return t(
+      "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.",
+      high,
+    );
+  }
+  if (low <= 0) {
+    return t("Usually up to {0, plural, one {# load} other {# loads}} in this window.", high);
+  }
+  return t("Usually {0}–{1} loads in this window.", formatNumber(low), formatNumber(high));
 }
 
 function OutlookHeading() {
@@ -160,14 +174,19 @@ function OutlookRow({
         hidden={!open}
         className="animate-expand-in text-muted-foreground flex flex-col gap-0.5 pt-1 pr-2 pb-2 pl-6.5 text-2xs"
       >
-        <p className="text-foreground">{freight.explanation}</p>
+        <p className="text-foreground">{usualLoads(freight, t)}</p>
         {customersSentence ? <p>{customersSentence}</p> : null}
         <p>
-          {t(
-            "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.",
-            formatLoads(freight.expectedUnbooked),
-            formatCents(freight.valueCents),
-          )}
+          {freight.expectedUnbooked < 0.05
+            ? t(
+                "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.",
+                formatCents(freight.valueCents),
+              )
+            : t(
+                "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.",
+                formatLoads(freight.expectedUnbooked),
+                formatCents(freight.valueCents),
+              )}
         </p>
       </div>
     </li>

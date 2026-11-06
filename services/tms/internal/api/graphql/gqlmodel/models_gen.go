@@ -4838,6 +4838,9 @@ type DispatchFreightWindow struct {
 	// The usual range of loads in the window (10th to 90th percentile).
 	TypicalLow  int `json:"typicalLow"`
 	TypicalHigh int `json:"typicalHigh"`
+	// The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked.
+	LikelyLow  int `json:"likelyLow"`
+	LikelyHigh int `json:"likelyHigh"`
 	// Loads already booked for the window.
 	Booked int `json:"booked"`
 	// Loads still expected to be booked for the window.

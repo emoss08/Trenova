@@ -2,5 +2,5 @@
 import type { TypedDocumentString, DispatchForecastQualityFieldsFragment, DispatchForecastQualityQuery, DispatchForecastQualityQueryVariables, DispatchFreightOutlookQuery, DispatchFreightOutlookQueryVariables } from "../../graphql";
 
 export const DispatchForecastQualityFieldsFragmentDoc = {"__meta__":{"fragmentName":"DispatchForecastQualityFields"}} as unknown as TypedDocumentString<DispatchForecastQualityFieldsFragment, unknown>;
-export const DispatchFreightOutlookDocument = {"__meta__":{"kind":"query","name":"DispatchFreightOutlook","hash":"sha256:01f8f6e6507c8154defb134aeff4aac405c535fa0b8c6a5e5c5b2551a904da52"}} as unknown as TypedDocumentString<DispatchFreightOutlookQuery, DispatchFreightOutlookQueryVariables>;
+export const DispatchFreightOutlookDocument = {"__meta__":{"kind":"query","name":"DispatchFreightOutlook","hash":"sha256:e436b5c4718460d0c3d66ae3a987f80d7ffd7026f63fb1cee3c6a4f8b7b166c4"}} as unknown as TypedDocumentString<DispatchFreightOutlookQuery, DispatchFreightOutlookQueryVariables>;
 export const DispatchForecastQualityDocument = {"__meta__":{"kind":"query","name":"DispatchForecastQuality","hash":"sha256:1b89a998511c895d5de5d9cb6b5a93d6ad1858f5e468d10b1a159892e81cbd45"}} as unknown as TypedDocumentString<DispatchForecastQualityQuery, DispatchForecastQualityQueryVariables>;

@@ -93,7 +93,7 @@ func mapDispatchForecastStatus(status demandforecast.Status) gqlmodel.DispatchFo
 	case demandforecast.StatusNoSkill:
 		return gqlmodel.DispatchForecastStatusNoSkill
 	case demandforecast.StatusInsufficientHistory:
-		fallthrough
+		return gqlmodel.DispatchForecastStatusInsufficientHistory
 	default:
 		return gqlmodel.DispatchForecastStatusInsufficientHistory
 	}
@@ -133,6 +133,8 @@ func mapDispatchFreightWindow(
 		WindowEnd:        int(window.WindowEnd),
 		TypicalLow:       window.TypicalLow,
 		TypicalHigh:      window.TypicalHigh,
+		LikelyLow:        window.LikelyLow,
+		LikelyHigh:       window.LikelyHigh,
 		Booked:           window.Booked,
 		ExpectedUnbooked: window.ExpectedUnbooked,
 		DriversExpected:  window.DriversExpected,

@@ -712,6 +712,9 @@ type DispatchFreightWindow {
   "The usual range of loads in the window (10th to 90th percentile)."
   typicalLow: Int!
   typicalHigh: Int!
+  "The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked."
+  likelyLow: Int!
+  likelyHigh: Int!
   "Loads already booked for the window."
   booked: Int!
   "Loads still expected to be booked for the window."

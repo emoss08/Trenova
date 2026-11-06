@@ -125,7 +125,7 @@ describe("formatUnixDayTimeRange", () => {
 
     const text = formatUnixDayTimeRange(JAN_15_2024_UTC + HOUR, JAN_15_2024_UTC + 13 * HOUR);
 
-    expect(text).toMatch(/Sun.*18:00.*Mon.*0?6:00/);
+    expect(text).toBe("Sun 18:00 – Mon 06:00");
   });
 
   it("treats an unset end of the span as unset", () => {

@@ -115,6 +115,8 @@ type freightWindowView struct {
 	WindowEnd          string                 `json:"windowEnd"`
 	TypicalLow         int                    `json:"typicalLow"`
 	TypicalHigh        int                    `json:"typicalHigh"`
+	LikelyLow          int                    `json:"likelyLow"`
+	LikelyHigh         int                    `json:"likelyHigh"`
 	Booked             int                    `json:"booked"`
 	ExpectedUnbooked   float64                `json:"expectedUnbooked"`
 	DriversExpected    int                    `json:"driversExpected"`
@@ -210,6 +212,8 @@ func freightWindowViewOf(
 		WindowEnd:          timeutils.FormatStamp(window.WindowEnd, location),
 		TypicalLow:         window.TypicalLow,
 		TypicalHigh:        window.TypicalHigh,
+		LikelyLow:          window.LikelyLow,
+		LikelyHigh:         window.LikelyHigh,
 		Booked:             window.Booked,
 		ExpectedUnbooked:   tenths(window.ExpectedUnbooked),
 		DriversExpected:    window.DriversExpected,
@@ -267,15 +271,9 @@ func forecastQualityViewOf(
 		view.Meaning = "Tested, but not yet better than repeating the same slot last week, " +
 			"so plans ignore it. Say the forecast is not proven yet."
 	case demandforecast.StatusInsufficientHistory:
-		fallthrough
+		view.Status, view.Meaning = forecastStatusInsufficient, insufficientMeaning(&view)
 	default:
-		view.Status = forecastStatusInsufficient
-		view.Meaning = fmt.Sprintf(
-			"Not enough history to test yet: %d weeks and %d loads, where it needs at least "+
-				"%d weeks and %d loads. Plans ignore it until then; say so.",
-			view.HistoryWeeks, view.HistoryLoads,
-			demandforecast.MinHistoryWeeks, demandforecast.MinHistoryLoads,
-		)
+		view.Status, view.Meaning = forecastStatusInsufficient, insufficientMeaning(&view)
 	}
 
 	return view
@@ -313,4 +311,13 @@ func tenths(value float64) float64 {
 
 func percent(share float64) int {
 	return int(math.Round(share * 100))
+}
+
+func insufficientMeaning(view *forecastQualityView) string {
+	return fmt.Sprintf(
+		"Not enough history to test yet: %d weeks and %d loads, where it needs at least "+
+			"%d weeks and %d loads. Plans ignore it until then; say so.",
+		view.HistoryWeeks, view.HistoryLoads,
+		demandforecast.MinHistoryWeeks, demandforecast.MinHistoryLoads,
+	)
 }

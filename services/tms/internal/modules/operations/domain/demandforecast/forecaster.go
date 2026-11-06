@@ -154,6 +154,8 @@ type Reason struct {
 	WindowEnd        int64
 	TypicalLow       int
 	TypicalHigh      int
+	LikelyLow        int
+	LikelyHigh       int
 	Booked           int
 	OpenBooked       int
 	ExpectedUnbooked float64
@@ -232,6 +234,8 @@ func (f *Forecaster) ValueAt(key WindowKey, workerID pulid.ID) Valuation {
 			WindowEnd:        key.Start + WindowSlots*dispatchmarket.SlotSeconds,
 			TypicalLow:       forecast.typical.Quantile(IntervalLow),
 			TypicalHigh:      forecast.typical.Quantile(IntervalHigh),
+			LikelyLow:        forecast.unbooked.Shift(forecast.booked).Quantile(IntervalLow),
+			LikelyHigh:       forecast.unbooked.Shift(forecast.booked).Quantile(IntervalHigh),
 			Booked:           forecast.booked,
 			OpenBooked:       max(forecast.open, 0),
 			ExpectedUnbooked: forecast.unbooked.Mean,
