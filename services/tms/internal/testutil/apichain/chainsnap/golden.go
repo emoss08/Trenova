@@ -124,6 +124,9 @@ func Check(path string, snapshot *Snapshot) (Outcome, error) {
 
 	var diffs []Diff
 	compare(nil, want, got, &diffs)
+	if len(diffs) == 0 {
+		diffs = append(diffs, Diff{Path: "(the file)", Want: "the golden's bytes", Got: "different bytes"})
+	}
 	label(snapshot, diffs)
 
 	return Outcome{Diffs: diffs}, nil
@@ -145,7 +148,7 @@ func compare(path []string, want, got any, out *[]Diff) {
 			keys[key] = true
 		}
 		for _, key := range slices.Sorted(maps.Keys(keys)) {
-			compare(append(slices.Clip(path), key), wantMap[key], gotMap[key], out)
+			compare(append(slices.Clip(path), key), lookup(wantMap, key), lookup(gotMap, key), out)
 		}
 		return
 	}
@@ -170,6 +173,15 @@ func compare(path []string, want, got any, out *[]Diff) {
 }
 
 type missing struct{}
+
+func lookup(values map[string]any, key string) any {
+	value, ok := values[key]
+	if !ok {
+		return missing{}
+	}
+
+	return value
+}
 
 func label(snapshot *Snapshot, diffs []Diff) {
 	for i := range diffs {

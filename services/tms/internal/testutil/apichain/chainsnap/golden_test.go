@@ -100,3 +100,18 @@ func TestCheck_ReportsAnAbsentStep(t *testing.T) {
 	require.NotEmpty(t, outcome.Diffs)
 	assert.Contains(t, outcome.Diffs[0].String(), "got=<absent>")
 }
+
+func TestCheck_ReportsAFieldAddedAsNull(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "demo.golden.json")
+	raw, err := chainsnap.Encode(snapshot("10.00"))
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(path, raw, 0o600))
+	widened := snapshot("10.00")
+	widened.Steps[2].Response = map[string]any{"data": map[string]any{"total": "10.00", "lastHomeAt": nil}}
+
+	outcome, err := chainsnap.Check(path, widened)
+
+	require.NoError(t, err)
+	require.Len(t, outcome.Diffs, 1)
+	assert.Equal(t, "response.data.lastHomeAt want=<absent> got=null", outcome.Diffs[0].String())
+}
