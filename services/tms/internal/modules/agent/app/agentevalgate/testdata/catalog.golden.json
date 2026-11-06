@@ -9912,6 +9912,11 @@
             "type": "string",
             "x-recordOf": "worker"
           },
+          "reason": {
+            "description": "Why this driver, in one or two sentences the dispatcher reads with the proposal: the cost, empty miles, hours or fit that decided it over the others ranked. The driver never sees it.",
+            "maxLength": 600,
+            "type": "string"
+          },
           "secondaryWorkerId": {
             "description": "A second driver for a team move, from worker_list.",
             "type": "string",
@@ -9936,7 +9941,8 @@
         "required": [
           "shipmentMoveId",
           "primaryWorkerId",
-          "tractorId"
+          "tractorId",
+          "reason"
         ],
         "type": "object"
       },
@@ -10148,6 +10154,11 @@
             "type": "string",
             "x-enumOf": "shipment.carrierRateMethod"
           },
+          "reason": {
+            "description": "Why this carrier at this rate, in one or two sentences the dispatcher reads with the proposal: the contract or quote the rate came from and why it beats covering the move with a driver. The carrier never sees it.",
+            "maxLength": 600,
+            "type": "string"
+          },
           "replace": {
             "description": "Replace the carrier already on the move, canceling their assignment and voiding their rate confirmation. Off by default.",
             "type": "boolean"
@@ -10162,7 +10173,8 @@
           "shipmentMoveId",
           "carrierId",
           "rateMethod",
-          "baseRate"
+          "baseRate",
+          "reason"
         ],
         "type": "object"
       },
@@ -10498,7 +10510,7 @@
     },
     {
       "name": "dispatch_rank_candidates",
-      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them: what each driver costs on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), with a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move and propose from the top of the list unless a finding says why not.",
+      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

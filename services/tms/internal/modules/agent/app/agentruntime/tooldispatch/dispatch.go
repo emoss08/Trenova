@@ -324,7 +324,7 @@ func pendingAction(
 			Narration: p.completionText,
 			ToolName:  call.Name,
 			Arguments: call.Arguments,
-			Input:     p.req.Input,
+			Ask:       p.req.Ask(),
 		}),
 		Tier:          hold.tier,
 		ToolCallID:    call.ID,

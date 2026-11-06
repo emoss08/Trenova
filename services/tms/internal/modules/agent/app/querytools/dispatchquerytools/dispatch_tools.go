@@ -47,10 +47,11 @@ func (t *rankMoveCandidatesTool) Name() string { return "dispatch_rank_candidate
 
 func (t *rankMoveCandidatesTool) Description() string {
 	return "Rank the drivers who could cover a shipment move, cheapest first, priced as the " +
-		"dispatch console prices them: what each driver costs on the move in dollars (empty " +
-		"miles, lateness, waiting, rest, then preferences such as home time and fairness), " +
-		"with a verdict, the findings behind it and the cost lines. Call this before " +
-		"dispatch_assign_move and propose from the top of the list unless a finding says why not."
+		"dispatch console prices them. Each driver comes with what they cost on the move in " +
+		"dollars (empty miles, lateness, waiting, rest, then preferences such as home time " +
+		"and fairness), a verdict, the findings behind it and the cost lines. Call this " +
+		"before dispatch_assign_move, propose from the top of the list unless a finding " +
+		"says why not, and give the cost or finding that decided it as the reason."
 }
 
 func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
