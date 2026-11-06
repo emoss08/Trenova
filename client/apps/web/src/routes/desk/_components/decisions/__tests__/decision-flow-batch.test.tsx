@@ -22,6 +22,7 @@ vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
 vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideAgentPlan: vi.fn(),
   decideAgentProposal: vi.fn(),
+  decideAgentProposals: (...args: unknown[]) => decideAgentProposals(...args),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -39,7 +40,6 @@ vi.mock("../use-pending-decisions", async (importOriginal) => ({
   }),
   useRecentDecisions: () => ({ data: [] }),
   usePlanSteps: () => ({ data: [] }),
-  decideAgentProposals: (...args: unknown[]) => decideAgentProposals(...args),
 }));
 
 afterEach(() => {

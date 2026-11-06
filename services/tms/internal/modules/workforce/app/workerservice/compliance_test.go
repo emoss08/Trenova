@@ -66,7 +66,7 @@ func (m *mockDispatchControlRepo) GetOrCreate(
 	return args.Get(0).(*dispatchcontrol.DispatchControl), args.Error(1)
 }
 
-func (m *mockDispatchControlRepo) ListHorizonPlanningTenants(
+func (m *mockDispatchControlRepo) ListCoveragePlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
 	args := m.Called(ctx)

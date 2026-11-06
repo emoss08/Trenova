@@ -95,7 +95,8 @@ function withheldNote(
 
 /**
  * The Desk's front page: the date, a greeting, one line on what the day holds,
- * and the box you talk into, centred in the room and nothing else.
+ * and the box you talk into, centred in the room and nothing else. When the line
+ * is the count of decisions waiting, it is a link to them.
  *
  * Under the box, when anything on the Watchtower is critical, one quiet link
  * says how many and lands on the first of them.
@@ -107,7 +108,7 @@ function withheldNote(
  * it was written about the whole page; a quiet line under the greeting names
  * the sections left out instead.
  * The composer's placeholder types out the chosen agent's own starter
- * questions; Tab takes the one on screen and ⌘1–3 asks it outright.
+ * questions; Tab takes the one on screen and Cmd/Ctrl+1–3 asks it outright.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
@@ -143,16 +144,21 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const hour = toUserWallClock(now, timezone)?.getHours() ?? 9;
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
 
+  // The decisions sentence is the way to them, so it opens Decisions.
   const headline =
     briefing?.headline ||
-    (canDecide && waiting > 0
-      ? t(
+    (canDecide && waiting > 0 ? (
+      <Link to="/desk/decisions" className="dk-headline-link">
+        {t(
           "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
           waiting,
-        )
-      : noAgents
-        ? t("Nothing is running here yet.")
-        : t("How can I help today?"));
+        )}
+      </Link>
+    ) : noAgents ? (
+      t("Nothing is running here yet.")
+    ) : (
+      t("How can I help today?")
+    ));
   const withheld = briefing?.withheldSections ?? [];
   const headlinePending =
     isLoading ||

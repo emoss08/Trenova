@@ -167,6 +167,16 @@ export function DeskUndoBar({
   onNow: () => void;
 }) {
   const t = useT();
+  const undoRef = useRef<HTMLButtonElement>(null);
+  // The card's Approve went away with the approval, which drops focus to the
+  // page. Undo takes it, so a keyboard can take the approval back while its
+  // seconds run; focus held anywhere else, such as the message box, stays put.
+  useEffect(() => {
+    const active = document.activeElement;
+    if (active === null || active === document.body) {
+      undoRef.current?.focus();
+    }
+  }, []);
 
   return (
     <div className="dk-udo" role="status" aria-live="polite">
@@ -191,6 +201,7 @@ export function DeskUndoBar({
         <em className="sr-only">{held.what}</em>
       </span>
       <Button
+        ref={undoRef}
         variant="quiet"
         size="sm"
         className="gap-1.25 rounded-lg text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"

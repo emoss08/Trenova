@@ -305,6 +305,8 @@ func (m *MultiError) HasErrors() bool {
 	return len(m.Errors) > 0
 }
 
+const validationFailedHeader = "validation failed:"
+
 func (m *MultiError) Error() string {
 	if len(m.Errors) == 0 {
 		return ""
@@ -319,7 +321,7 @@ func (m *MultiError) Error() string {
 		messages = append(messages, err.Field+": "+err.Error())
 	}
 
-	return fmt.Sprintf("validation failed:\n- %s", strings.Join(messages, "\n- "))
+	return validationFailedHeader + "\n- " + strings.Join(messages, "\n- ")
 }
 
 func (m *MultiError) MarshalJSON() ([]byte, error) {

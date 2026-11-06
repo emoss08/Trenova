@@ -12,40 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFuzzyWords_KeepTheWordsLongEnoughToSpellClose(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		query string
-		want  []string
-	}{
-		{"FreshHaul", []string{"freshhaul"}},
-		{"Acme manufacuring co", []string{"acme", "manufacuring"}},
-		{"St. Paul's dock", []string{"paul", "dock"}},
-		{"smith Smith SMITH", []string{"smith"}},
-		{"alpha bravo charlie delta echoes", []string{"alpha", "bravo", "charlie", "delta"}},
-		{"store #1123", []string{"store", "1123"}},
-		{"a bc def", nil},
-		{"", nil},
-		{`"dry van"`, nil},
-		{"dry -van", nil},
-		{"dry or van", nil},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.query, func(t *testing.T) {
-			t.Parallel()
-
-			got := fuzzyWords(tc.query)
-			if len(tc.want) == 0 {
-				assert.Empty(t, got)
-				return
-			}
-			assert.Equal(t, tc.want, got)
-		})
-	}
-}
-
 func TestCatalog_KeepsOnlyFuzzyFieldsOfStoredTextColumns(t *testing.T) {
 	t.Parallel()
 

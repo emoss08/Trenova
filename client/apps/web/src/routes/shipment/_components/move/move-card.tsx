@@ -1,13 +1,14 @@
 import { CarrierAssignmentCancelDialog } from "@/components/carrier-assignment/carrier-assignment-cancel-dialog";
+import { useErrorSurface } from "@/hooks/use-error-surface";
 import { useEtaLabels } from "@/hooks/use-eta-labels";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
-import { fieldErrorMessages } from "@/lib/form-errors";
 import { shipment } from "@/lib/queries/shipment";
 import { assignmentService } from "@/services/assignment";
 import { carrierAssignmentService } from "@/services/carrier-assignment";
 import { shipmentService } from "@/services/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangleIcon,
   Building07Icon,
   DotsHorizontalIcon,
   Edit02Icon,
@@ -48,6 +49,7 @@ import { AssignmentDialog } from "../assignment-dialog";
 import { SplitMoveDialog } from "../shipment-split-move-dialog";
 import { MoveCoverage } from "./move-coverage";
 import { focusStop, moveHeadline } from "./move-headline";
+import { type MoveProblem, moveProblems, problemTextInMove } from "./move-problems";
 import { MoveStops, stopDescription, useStopPlace } from "./move-stops";
 import { stopEtaSlackText, VERDICT_DOT } from "./stop-eta";
 import { RecordStopActualDialog } from "./record-stop-actual-dialog";
@@ -81,10 +83,50 @@ function HeadlineDetail({ eta }: { eta: StopEta | undefined }) {
 }
 
 /**
+ * What keeps the move from saving, in place of the line under the headline: how many problems
+ * there are, each named with its stop and field on hover, opening the editor at the first.
+ */
+function MoveProblems({
+  problems,
+  onFix,
+}: {
+  problems: readonly MoveProblem[];
+  onFix: () => void;
+}) {
+  const t = useT();
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            data-move-problem=""
+            onClick={onFix}
+            className="text-danger ui-focus-ring text-2xs flex items-center gap-1 self-start rounded-sm font-medium"
+          />
+        }
+      >
+        <AlertTriangleIcon aria-hidden className="size-3" />
+        {t("{0, plural, one {# problem to fix} other {# problems to fix}}", problems.length)}
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <ul className="space-y-1 text-xs">
+          {problems.map((problem) => (
+            <li key={`${problem.path}:${problem.message}`}>{problemTextInMove(problem, t)}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
  * One move of a shipment, compact: its number, status and distance with every action in one
  * menu; its stops as a route; and who covers it, in a line that opens to the carrier's details.
  * Check calls, assignment, cancelling a carrier and splitting the move happen here and write the
- * result back into the form, so the page reflects them without a reload.
+ * result back into the form, so the page reflects them without a reload. Anything that keeps the
+ * move from saving is flagged on the card and on the stop it belongs to, and opens the editor at
+ * the field to fix.
  */
 export function MoveCard({
   moveIndex,
@@ -94,14 +136,18 @@ export function MoveCard({
 }: {
   moveIndex: number;
   allowPersistedMoveRemoval: boolean;
-  onEdit: () => void;
+  /** Opens the move editor, on the field at the form path given when there is one. */
+  onEdit: (focusPath?: string) => void;
   onRemove: () => void;
 }) {
   const t = useT();
 
   const { control, setValue } = useFormContext<Shipment>();
-  // Only this move's stops' errors, so an error elsewhere in the shipment does not redraw it.
-  const { errors } = useFormState({ control, name: `moves.${moveIndex}.stops` });
+  // Only this move's errors, so an error elsewhere in the shipment does not redraw it.
+  const { errors } = useFormState({ control, name: `moves.${moveIndex}` });
+  // The card says every problem of the move and its stops, so a server refusal on a stop field
+  // lands on that stop even while the move editor, where the field is drawn, is closed.
+  useErrorSurface(control, `moves.${moveIndex}`);
   const queryClient = useQueryClient();
   const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const move = useWatch({ control, name: `moves.${moveIndex}` });
@@ -122,11 +168,8 @@ export function MoveCard({
   const stops = move?.stops ?? [];
   const status: MoveStatus = move?.status ?? "New";
   const moveId = move?.id;
-  const stopErrorTree = errors.moves?.[moveIndex]?.stops;
-  const stopErrors = stops.map((_, index) => {
-    const tree = stopErrorTree?.[index];
-    return tree ? fieldErrorMessages(tree) : [];
-  });
+  const problems = moveProblems(moveIndex, errors.moves?.[moveIndex]);
+  const invalid = problems.length > 0;
   const etas = new Map((shipmentEta?.stops ?? []).map((eta) => [eta.stopId, eta]));
 
   const carrierAssignment = isActiveCarrierAssignment(move?.carrierAssignment)
@@ -235,7 +278,11 @@ export function MoveCard({
   const focusEta = headline.focus?.id ? etas.get(headline.focus.id) : undefined;
 
   return (
-    <div className="bg-card overflow-hidden rounded-lg border">
+    <div
+      data-move-card=""
+      data-invalid={invalid || undefined}
+      className={cn("bg-card overflow-hidden rounded-lg border", invalid && "border-danger")}
+    >
       <div className="flex items-start gap-2 pt-3 pr-2 pb-2 pl-4">
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <div className="text-foreground-muted text-2xs flex flex-wrap items-center gap-x-1.5">
@@ -285,7 +332,11 @@ export function MoveCard({
           >
             {headline.title}
           </h3>
-          <HeadlineDetail eta={focusEta} />
+          {invalid ? (
+            <MoveProblems problems={problems} onFix={() => onEdit(problems[0].path)} />
+          ) : (
+            <HeadlineDetail eta={focusEta} />
+          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -343,7 +394,7 @@ export function MoveCard({
             <DropdownMenuItem
               title={t("Edit")}
               startContent={<Edit02Icon className="size-3.5" />}
-              onClick={onEdit}
+              onClick={() => onEdit()}
             />
             <DropdownMenuItem
               title={t("Delete")}
@@ -361,11 +412,13 @@ export function MoveCard({
 
       <MoveStops
         stops={stops}
-        stopErrors={stopErrors}
+        problems={problems}
         etas={etas}
         distance={distance}
         canRecordActuals={canRecordActuals}
-        onEdit={onEdit}
+        onEdit={(stopIndex, path) =>
+          onEdit(path ?? `moves.${moveIndex}.stops.${stopIndex}.locationId`)
+        }
         onCheckCall={(stop: Stop, action) => {
           if (!stop.id) return;
           setCheckCall({ stopId: stop.id, action, description: stopDescription(stop, t) });

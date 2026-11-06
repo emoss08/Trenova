@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -78,6 +79,19 @@ func TestDecisionOutcomeResult(t *testing.T) {
 			},
 			want: AgentProposalDecisionResult{Error: "the customer is on credit hold"},
 		},
+		{
+			name: "a write its rules refused says what to fix and where, in words",
+			outcome: DecisionOutcome{
+				Decision: &agentdecision.AgentDecision{
+					Decision: agentdecision.DecisionAccepted,
+				},
+				ExecutionError: validationRefusal(),
+			},
+			want: AgentProposalDecisionResult{
+				Error: "Move 1, stop 1: Scheduled window end must be before the next stop's " +
+					"scheduled window start",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -91,4 +105,15 @@ func TestDecisionOutcomeResult(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func validationRefusal() error {
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"moves[0].stops[0].scheduledWindowEnd",
+		errortypes.ErrInvalid,
+		"Scheduled window end must be before the next stop's scheduled window start",
+	)
+
+	return multiErr
 }

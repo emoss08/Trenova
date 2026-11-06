@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchurgency"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,7 +44,7 @@ func TestBoardView_SaysWhatEachLateMoveIsLateFor(t *testing.T) {
 				DestinationWindowStart: destEnd - 7200,
 				DestinationWindowEnd:   &destEnd,
 			},
-			Urgency: dispatchconsoleservice.UrgencyLate,
+			Urgency: dispatchurgency.Late,
 		}
 	}
 	board := &dispatchconsoleservice.Board{
@@ -140,7 +141,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 				DestinationWindowStart: deadline - 3600,
 				DestinationWindowEnd:   &deadline,
 			},
-			Urgency: dispatchconsoleservice.UrgencyLate,
+			Urgency: dispatchurgency.Late,
 		}
 	}
 	reader := &querytooltest.FakeBoard{Board: &dispatchconsoleservice.Board{

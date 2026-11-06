@@ -58,7 +58,6 @@ func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipm
 				validateMoveSequence(ruleCtx)
 				validateMoveStopCount(ruleCtx)
 				validateMoveStopOrder(ruleCtx)
-				validateMoveStopChronology(ruleCtx)
 			}
 
 			return nil
@@ -170,38 +169,6 @@ func validateMoveStopOrder(ctx moveRuleContext) {
 				shipmenttimeline.StopFieldPath(ctx.moveIndex, stopIndex, "type"),
 				errortypes.ErrInvalid,
 				"Stop type must be pickup, split pickup, delivery, or split delivery",
-			)
-		}
-	}
-}
-
-func validateMoveStopChronology(ctx moveRuleContext) {
-	if len(ctx.move.Stops) < 2 {
-		return
-	}
-
-	for stopIndex := 0; stopIndex < len(ctx.move.Stops)-1; stopIndex++ {
-		currentStop := ctx.move.Stops[stopIndex]
-		nextStop := ctx.move.Stops[stopIndex+1]
-		if currentStop == nil || nextStop == nil {
-			continue
-		}
-
-		if currentStop.EffectiveScheduledWindowEnd() >= nextStop.ScheduledWindowStart {
-			ctx.multiErr.Add(
-				shipmenttimeline.StopFieldPath(ctx.moveIndex, stopIndex, "scheduledWindowEnd"),
-				errortypes.ErrInvalid,
-				"Scheduled window end must be before the next stop's scheduled window start",
-			)
-		}
-
-		if currentStop.ActualDeparture != nil &&
-			nextStop.ActualArrival != nil &&
-			*currentStop.ActualDeparture >= *nextStop.ActualArrival {
-			ctx.multiErr.Add(
-				shipmenttimeline.StopFieldPath(ctx.moveIndex, stopIndex, "actualDeparture"),
-				errortypes.ErrInvalid,
-				"Actual departure must be before the next stop's actual arrival",
 			)
 		}
 	}

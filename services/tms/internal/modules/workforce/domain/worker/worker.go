@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/geoutils"
+
+	"github.com/emoss08/trenova/shared/timeutils"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -62,10 +66,16 @@ type Worker struct {
 	Gender                Gender             `keel:"gender"                                   json:"gender"`
 	CanBeAssigned         bool               `keel:"can_be_assigned"                          json:"canBeAssigned"`
 	AvailableForDispatch  bool               `keel:"available_for_dispatch"                   json:"availableForDispatch"`
-	Version               int64              `keel:"version,version"                          json:"version"`
-	CreatedAt             int64              `keel:"created_at,autocreate"                    json:"createdAt"`
-	UpdatedAt             int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
-	CustomFields          map[string]any     `                                                json:"customFields,omitempty"`
+	HomeLatitude          *float64           `keel:"home_latitude,noreport"                   json:"homeLatitude"`
+	HomeLongitude         *float64           `keel:"home_longitude,noreport"                  json:"homeLongitude"`
+	HomePlaceID           string             `keel:"home_place_id,nullzero,noreport"          json:"homePlaceId"`
+	// When the driver was last at home, as a dispatcher recorded it or as the telematics feed saw
+	// them there. The planner also counts the end of approved time off as a day at home.
+	LastHomeAt   *int64         `keel:"last_home_at,label=Last Home" json:"lastHomeAt"`
+	Version      int64          `keel:"version,version"              json:"version"`
+	CreatedAt    int64          `keel:"created_at,autocreate"        json:"createdAt"`
+	UpdatedAt    int64          `keel:"updated_at,autoupdate"        json:"updatedAt"`
+	CustomFields map[string]any `                                    json:"customFields,omitempty"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" keel:"belongs:business_unit_id,noreport"`
 	Organization *tenant.Organization `json:"organization,omitempty" keel:"belongs:organization_id,noreport"`
@@ -147,7 +157,33 @@ func (w *Worker) Validate(multiErr *errortypes.MultiError) {
 				Error("Status must be either Active or Inactive"),
 		),
 		validation.Field(&w.Profile, validation.Required.Error("Worker profile must be provided")),
+		validation.Field(&w.HomeLatitude,
+			validation.When(w.HomeLatitude != nil,
+				validation.Min(-90.0).Error("Home latitude must be between -90 and 90"),
+				validation.Max(90.0).Error("Home latitude must be between -90 and 90"),
+			),
+		),
+		validation.Field(&w.HomeLongitude,
+			validation.When(w.HomeLongitude != nil,
+				validation.Min(-180.0).Error("Home longitude must be between -180 and 180"),
+				validation.Max(180.0).Error("Home longitude must be between -180 and 180"),
+			),
+		),
+		validation.Field(&w.LastHomeAt,
+			validation.When(w.LastHomeAt != nil,
+				validation.Min(int64(0)).Error("Last home cannot be before 1970"),
+				validation.Max(timeutils.NowUnix()+lastHomeSkewSeconds).
+					Error("Last home cannot be in the future"),
+			),
+		),
 	))
+	if (w.HomeLatitude == nil) != (w.HomeLongitude == nil) {
+		multiErr.Add(
+			"homeLatitude",
+			errortypes.ErrInvalid,
+			"Home latitude and longitude are set together",
+		)
+	}
 
 	if w.Profile != nil {
 		profileErr := multiErr.WithPrefix("profile")
@@ -221,6 +257,48 @@ func (w *Worker) AfterLoad(_ context.Context) error {
 	}
 
 	return nil
+}
+
+const (
+	lastHomeSkewSeconds = int64(24 * 60 * 60)
+	HomeRadiusMiles     = 25.0
+)
+
+func AtHome(homeLatitude, homeLongitude, latitude, longitude float64) bool {
+	return geoutils.HaversineMiles(
+		homeLatitude,
+		homeLongitude,
+		latitude,
+		longitude,
+	) <= HomeRadiusMiles
+}
+
+func (w *Worker) HomePoint() (latitude, longitude float64, ok bool) {
+	if w == nil || w.HomeLatitude == nil || w.HomeLongitude == nil {
+		return 0, 0, false
+	}
+
+	return *w.HomeLatitude, *w.HomeLongitude, true
+}
+
+func (w *Worker) SameHomeAddress(other *Worker) bool {
+	return w.AddressLine1 == other.AddressLine1 &&
+		w.AddressLine2 == other.AddressLine2 &&
+		w.City == other.City &&
+		w.StateID == other.StateID &&
+		w.PostalCode == other.PostalCode
+}
+
+func (w *Worker) KeepHomeWithAddress(stored *Worker) {
+	if w == nil || stored == nil || w.SameHomeAddress(stored) {
+		return
+	}
+	if w.HomePlaceID != "" && w.HomePlaceID != stored.HomePlaceID {
+		return
+	}
+	w.HomeLatitude = nil
+	w.HomeLongitude = nil
+	w.HomePlaceID = ""
 }
 
 func (w *Worker) SamePartyDetails(other *Worker) bool {

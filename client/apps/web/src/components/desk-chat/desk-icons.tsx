@@ -130,6 +130,12 @@ const PATHS = {
       <path d="M12 11v5.5M12 7.5v.01" />
     </>
   ),
+  keyboard: (
+    <>
+      <rect x="3" y="6" width="18" height="12" rx="2.5" />
+      <path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10" />
+    </>
+  ),
   headset: (
     <>
       <path d="M4.5 14v-2a7.5 7.5 0 0 1 15 0v2" />

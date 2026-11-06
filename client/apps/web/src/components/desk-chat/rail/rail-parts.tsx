@@ -108,7 +108,7 @@ export function shelfHeading(t: TranslateFn, key: DeskShelfKey): string {
 export function stateLabel(t: TranslateFn, state: DeskThreadState): string {
   switch (state) {
     case "work":
-      return t("Working");
+      return t("Writing a reply");
     case "wait":
       return t("Needs your approval");
     case "error":

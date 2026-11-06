@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,36 +72,36 @@ func EvaluateAvailability(in AvailabilityInput) *Evaluation {
 	w := in.Worker
 
 	if w.Status != domaintypes.StatusActive {
-		eval.Add(Finding{
-			Code:     CodeWorkerInactive,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerInactive,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "status",
 			Message:  "Driver is not active",
 		})
 	}
 
 	if !w.CanBeAssigned {
-		eval.Add(Finding{
-			Code:     CodeWorkerNotAssignable,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerNotAssignable,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "canBeAssigned",
 			Message:  "Driver is not eligible for assignment",
 		})
 	}
 
 	if !w.AvailableForDispatch {
-		eval.Add(Finding{
-			Code:     CodeWorkerNotForDispatch,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerNotForDispatch,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "availableForDispatch",
 			Message:  "Driver is marked unavailable for dispatch",
 		})
 	}
 
 	if w.AssignmentBlocked != "" {
-		eval.Add(Finding{
-			Code:     CodeWorkerBlocked,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerBlocked,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "assignmentBlocked",
 			Message:  fmt.Sprintf("Driver is blocked from assignment: %s", w.AssignmentBlocked),
 		})
@@ -117,9 +118,9 @@ func evaluatePTO(in AvailabilityInput, eval *Evaluation) {
 		if !pto.Window.Overlaps(in.MoveWindow) {
 			continue
 		}
-		eval.Add(Finding{
-			Code:     CodeWorkerOnPTO,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerOnPTO,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "pto",
 			Message: fmt.Sprintf(
 				"Driver has approved %s time off from %s to %s",
@@ -137,9 +138,9 @@ func evaluateCommitments(in AvailabilityInput, eval *Evaluation) {
 		if !committed.Overlaps(in.MoveWindow) {
 			continue
 		}
-		eval.Add(Finding{
-			Code:     CodeWorkerOverlappingMove,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerOverlappingMove,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "assignment",
 			Message:  "Driver is already committed to work that overlaps this move",
 		})
@@ -173,9 +174,9 @@ func EvaluateEquipment(in EquipmentInput) *Evaluation {
 
 func evaluateTractor(in EquipmentInput, eval *Evaluation) {
 	if in.Tractor == nil {
-		eval.Add(Finding{
-			Code:     CodeWorkerNoTractor,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeWorkerNoTractor,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "tractorId",
 			Message:  "No tractor is assigned to this driver",
 		})
@@ -183,9 +184,9 @@ func evaluateTractor(in EquipmentInput, eval *Evaluation) {
 	}
 
 	if in.Tractor.Status != domaintypes.EquipmentStatusAvailable {
-		eval.Add(Finding{
-			Code:     CodeTractorUnavailable,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeTractorUnavailable,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "tractorId",
 			Message: fmt.Sprintf(
 				"Tractor %s is %s",
@@ -197,9 +198,9 @@ func evaluateTractor(in EquipmentInput, eval *Evaluation) {
 
 	if !in.RequiredTractorTypeID.IsNil() &&
 		in.Tractor.EquipmentTypeID != in.RequiredTractorTypeID {
-		eval.Add(Finding{
-			Code:     CodeTractorTypeMismatch,
-			Severity: SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeTractorTypeMismatch,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "tractorId",
 			Message: fmt.Sprintf(
 				"Tractor %s does not match the equipment type this shipment requires",
@@ -215,9 +216,9 @@ func evaluateTrailer(in EquipmentInput, eval *Evaluation) {
 	}
 
 	if in.Trailer.Status != domaintypes.EquipmentStatusAvailable {
-		eval.Add(Finding{
-			Code:     CodeTrailerUnavailable,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeTrailerUnavailable,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "trailerId",
 			Message: fmt.Sprintf(
 				"Trailer %s is %s",
@@ -229,9 +230,9 @@ func evaluateTrailer(in EquipmentInput, eval *Evaluation) {
 
 	if !in.RequiredTrailerTypeID.IsNil() &&
 		in.Trailer.EquipmentTypeID != in.RequiredTrailerTypeID {
-		eval.Add(Finding{
-			Code:     CodeTrailerTypeMismatch,
-			Severity: SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeTrailerTypeMismatch,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "trailerId",
 			Message: fmt.Sprintf(
 				"Trailer %s does not match the equipment type this shipment requires",
@@ -252,9 +253,9 @@ func evaluateFleetContinuity(in EquipmentInput, eval *Evaluation) {
 		return
 	}
 
-	eval.Add(Finding{
-		Code:     CodeFleetMismatch,
-		Severity: SeverityBlock,
+	eval.Add(&dispatchfinding.Finding{
+		Code:     dispatchfinding.CodeFleetMismatch,
+		Severity: dispatchfinding.SeverityBlock,
 		Field:    "tractorId",
 		Message:  "Driver and tractor belong to different fleets",
 	})

@@ -1,0 +1,18 @@
+# Advisories the dependency scan accepts, each with why and until when.
+# Only build and lint tooling belongs here: it runs on this repository's own
+# files and never ships to a browser. Runtime packages are upgraded instead.
+
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2027-02-05
+reason = "glob 13 is reached only through Storybook's docgen plugin, a dev dependency that globs the repository's own sources; the fix is glob 14, which the plugin does not accept yet"
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-02-05
+reason = "minimatch 10 is reached only through ESLint, which matches the repository's own paths at lint time; the fix is minimatch 11, which ESLint's config array does not accept yet"
+
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-02-05
+reason = "deepmerge has no fixed release; it is reached only through the Rollup node-resolve plugin and the shadcn CLI, build-time tools that merge the repository's own configuration"

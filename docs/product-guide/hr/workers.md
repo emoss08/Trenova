@@ -32,7 +32,9 @@ Keywords: new driver, hire, create employee, onboard driver
 1. Open [Workers](/hr/workers).
 2. Select **New worker**.
 3. On **General information**, fill in **Status**, **Worker type**, **First name**,
-   **Last name**, **Driver type**, the address and **Phone number**.
+   **Last name**, **Driver type**, the address and **Phone number**. With Google Maps connected,
+   pick the address from the list under **Address Line 1**: that records where home is, so dispatch
+   can favour moves that head a driver home.
 4. On **Employment information**, enter the **Date of birth**, **Hire date**,
    **License number** and **License expiry**, plus any CDL and medical details.
 5. On **Compliance status**, set the compliance and availability fields if you know them.
@@ -45,7 +47,10 @@ Keywords: edit driver, change driver type, deactivate worker, terminate
 3. Go to **General information**, **Employment information** or **Compliance status** and
    change the fields.
 4. Select **Save** or **Save & close**.
-5. To change several workers at once, tick their rows and use **Update status**,
+5. When a driver was home and dispatch would not otherwise know, set **Last home**. Dispatch also
+   counts the end of approved time off, and telematics seeing the driver's tractor within 25 miles
+   of home, as a day at home.
+6. To change several workers at once, tick their rows and use **Update status**,
    **Update type** or **Update driver type** in the bar at the bottom of the table.
 
 ### Add or renew a credential

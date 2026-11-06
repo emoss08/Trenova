@@ -1,5 +1,114 @@
+fragment DispatchBoardMoveFields on DispatchBoardMove {
+  moveId
+  shipmentId
+  proNumber
+  bol
+  moveStatus
+  shipmentStatus
+  sequence
+  moveCount
+  loaded
+  distance
+  revenue
+  customerId
+  customerName
+  serviceTypeId
+  serviceTypeCode
+  requiredTractorTypeId
+  requiredTrailerTypeId
+  temperatureMin
+  temperatureMax
+  hasHazmat
+  hasActiveHold
+  urgency
+  minutesToPickup
+  isCovered
+  originStopId
+  originLocationId
+  originName
+  originCity
+  originState
+  originLatitude
+  originLongitude
+  originWindowStart
+  originWindowEnd
+  originActualArrival
+  destinationStopId
+  destinationLocationId
+  destinationName
+  destinationCity
+  destinationState
+  destinationLatitude
+  destinationLongitude
+  destinationWindowStart
+  destinationWindowEnd
+  assignmentId
+  assignedWorkerId
+  assignedWorkerName
+  assignedTractorId
+  assignedTractorCode
+  assignedTrailerId
+  assignedTrailerCode
+  assignmentAckStatus
+  previousMoveTrailerId
+  coverageType
+  carrierAssignmentId
+  assignedCarrierId
+  assignedCarrierName
+  carrierTotalCost
+  liveTender {
+    id
+    status
+    mode
+    currentRank
+    offerCount
+    currentCarrierName
+    currentOfferExpiresAt
+  }
+  pendingProposal {
+    id
+    workerId
+    workerName
+    tractorId
+    trailerId
+    confidence
+    rationale
+    createdAt
+    expiresAt
+    stale
+  }
+  failedProposal {
+    id
+    workerId
+    workerName
+    reason
+    failedAt
+  }
+  planPrice {
+    workerId
+    workerName
+    costCents
+    coveragePriceCents
+    driverValueCents
+    uncoveredReason
+    alternatives {
+      workerId
+      workerName
+      extraCents
+    }
+    generatedAt
+  }
+}
+
+query DispatchMove($moveId: ID!) {
+  dispatchMove(moveId: $moveId) {
+    ...DispatchBoardMoveFields
+  }
+}
+
 query DispatchBoard($input: DispatchBoardInput!) {
   dispatchBoard(input: $input) {
+    driversTruncated
     windowStart
     windowEnd
     generatedAt
@@ -15,72 +124,7 @@ query DispatchBoard($input: DispatchBoardInput!) {
       utilizationPercent
     }
     moves {
-      moveId
-      shipmentId
-      proNumber
-      bol
-      moveStatus
-      shipmentStatus
-      sequence
-      moveCount
-      loaded
-      distance
-      revenue
-      customerId
-      customerName
-      serviceTypeId
-      serviceTypeCode
-      requiredTractorTypeId
-      requiredTrailerTypeId
-      temperatureMin
-      temperatureMax
-      hasHazmat
-      hasActiveHold
-      urgency
-      minutesToPickup
-      isCovered
-      originStopId
-      originLocationId
-      originName
-      originCity
-      originState
-      originLatitude
-      originLongitude
-      originWindowStart
-      originWindowEnd
-      originActualArrival
-      destinationStopId
-      destinationLocationId
-      destinationName
-      destinationCity
-      destinationState
-      destinationLatitude
-      destinationLongitude
-      destinationWindowStart
-      destinationWindowEnd
-      assignmentId
-      assignedWorkerId
-      assignedWorkerName
-      assignedTractorId
-      assignedTractorCode
-      assignedTrailerId
-      assignedTrailerCode
-      assignmentAckStatus
-      previousMoveTrailerId
-      coverageType
-      carrierAssignmentId
-      assignedCarrierId
-      assignedCarrierName
-      carrierTotalCost
-      liveTender {
-        id
-        status
-        mode
-        currentRank
-        offerCount
-        currentCarrierName
-        currentOfferExpiresAt
-      }
+      ...DispatchBoardMoveFields
     }
     drivers {
       workerId
@@ -141,149 +185,31 @@ query DispatchBoard($input: DispatchBoardInput!) {
         message
         regulation
       }
+      lastHomeAt
+      plannedMove {
+        moveId
+        proNumber
+        costCents
+        valueCents
+        generatedAt
+      }
     }
   }
 }
 
 query DispatchMoveCandidates($input: DispatchMoveCandidatesInput!) {
   dispatchMoveCandidates(input: $input) {
-    workerId
-    workerName
-    tractorId
-    trailerId
-    moveId
-    score
-    verdict
-    blocked
-    deadheadMiles
-    estimatedDriveMs
-    projectedArrival
-    minutesOfSlack
-    driveRemainingMs
-    shiftRemainingMs
-    cycleRemainingMs
-    projectedTimeAvailable
-    hosStrategy
-    hosRestStartDeadline
-    hosProjectedDriveMs
-    hosProjectedShiftMs
-    hosProjectedCycleMs
-    findings {
-      code
-      severity
-      field
-      message
-      regulation
-    }
-    factors {
-      key
-      label
-      raw
-      weight
-      contribution
-      detail
-    }
+    ...DispatchCandidateFields
   }
 }
 
 query DispatchDriverMoves($input: DispatchDriverMovesInput!) {
   dispatchDriverMoves(input: $input) {
     move {
-      moveId
-      shipmentId
-      proNumber
-      bol
-      moveStatus
-      shipmentStatus
-      sequence
-      moveCount
-      loaded
-      distance
-      revenue
-      customerId
-      customerName
-      serviceTypeId
-      serviceTypeCode
-      requiredTractorTypeId
-      requiredTrailerTypeId
-      temperatureMin
-      temperatureMax
-      hasHazmat
-      hasActiveHold
-      urgency
-      minutesToPickup
-      isCovered
-      originStopId
-      originLocationId
-      originName
-      originCity
-      originState
-      originLatitude
-      originLongitude
-      originWindowStart
-      originWindowEnd
-      originActualArrival
-      destinationStopId
-      destinationLocationId
-      destinationName
-      destinationCity
-      destinationState
-      destinationLatitude
-      destinationLongitude
-      destinationWindowStart
-      destinationWindowEnd
-      assignmentId
-      assignedWorkerId
-      assignedWorkerName
-      assignedTractorId
-      assignedTractorCode
-      assignedTrailerId
-      assignedTrailerCode
-      assignmentAckStatus
-      previousMoveTrailerId
-      coverageType
-      carrierAssignmentId
-      assignedCarrierId
-      assignedCarrierName
-      carrierTotalCost
+      ...DispatchBoardMoveFields
     }
-    score {
-      workerId
-      workerName
-      tractorId
-      trailerId
-      moveId
-      score
-      verdict
-      blocked
-      deadheadMiles
-      estimatedDriveMs
-      projectedArrival
-      minutesOfSlack
-      driveRemainingMs
-      shiftRemainingMs
-      cycleRemainingMs
-      projectedTimeAvailable
-      hosStrategy
-      hosRestStartDeadline
-      hosProjectedDriveMs
-      hosProjectedShiftMs
-      hosProjectedCycleMs
-      findings {
-        code
-        severity
-        field
-        message
-        regulation
-      }
-      factors {
-        key
-        label
-        raw
-        weight
-        contribution
-        detail
-      }
+    candidate {
+      ...DispatchCandidateFields
     }
   }
 }
@@ -296,43 +222,8 @@ query DispatchAssignmentPreview($input: DispatchAssignmentPreviewInput!) {
     trailerId
     blocked
     requiresOverride
-    score {
-      workerId
-      workerName
-      tractorId
-      trailerId
-      moveId
-      score
-      verdict
-      blocked
-      deadheadMiles
-      estimatedDriveMs
-      projectedArrival
-      minutesOfSlack
-      driveRemainingMs
-      shiftRemainingMs
-      cycleRemainingMs
-      projectedTimeAvailable
-      hosStrategy
-      hosRestStartDeadline
-      hosProjectedDriveMs
-      hosProjectedShiftMs
-      hosProjectedCycleMs
-      findings {
-        code
-        severity
-        field
-        message
-        regulation
-      }
-      factors {
-        key
-        label
-        raw
-        weight
-        contribution
-        detail
-      }
+    candidate {
+      ...DispatchCandidateFields
     }
   }
 }
@@ -436,7 +327,9 @@ mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
     runId
     shadowMode
     autonomyTier
-    totalScore
+    planningMode
+    costCents
+    uncoveredCents
     generatedAt
     assignments {
       moveId
@@ -449,56 +342,68 @@ mutation DispatchPlanAutoAssign($input: DispatchPlanInput!) {
       rationale
       autoExecutable
       proposalId
-      score {
+      candidate {
+        ...DispatchCandidateFields
+      }
+      coveragePriceCents
+      driverValueCents
+      alternatives {
         workerId
         workerName
-        tractorId
-        trailerId
-        moveId
-        score
-        verdict
-        blocked
-        deadheadMiles
-        estimatedDriveMs
-        projectedArrival
-        minutesOfSlack
-        driveRemainingMs
-        shiftRemainingMs
-        cycleRemainingMs
-        projectedTimeAvailable
-        hosStrategy
-        hosRestStartDeadline
-        hosProjectedDriveMs
-        hosProjectedShiftMs
-        hosProjectedCycleMs
-        findings {
-          code
-          severity
-          field
-          message
-          regulation
-        }
-        factors {
-          key
-          label
-          raw
-          weight
-          contribution
-          detail
-        }
+        extraCents
       }
     }
     uncovered {
       moveId
       proNumber
       reason
-      bestBlockedFindings {
-        code
-        severity
-        field
-        message
-        regulation
+      explanation
+      coveragePriceCents
+      bestCandidate {
+        ...DispatchCandidateFields
       }
     }
+  }
+}
+
+fragment DispatchCandidateFields on DispatchCandidate {
+  workerId
+  workerName
+  tractorId
+  trailerId
+  moveId
+  costCents
+  costLines {
+    component
+    cents
+    soft
+  }
+  verdict
+  blocked
+  deadheadMiles
+  originSource
+  loadedMiles
+  estimatedDriveMs
+  restMs
+  projectedArrival
+  projectedDelivery
+  projectedFreeAt
+  minutesOfSlack
+  deliveryLateMinutes
+  driveRemainingMs
+  shiftRemainingMs
+  cycleRemainingMs
+  projectedTimeAvailable
+  hosStrategy
+  hosRestStartDeadline
+  hosProjectedDriveMs
+  hosProjectedShiftMs
+  hosProjectedCycleMs
+  findings {
+    code
+    severity
+    field
+    message
+    regulation
   }
 }

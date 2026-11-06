@@ -2,6 +2,7 @@ import {
   assignDispatchMovesGraphQL,
   planDispatchAutoAssignGraphQL,
 } from "@/lib/graphql/dispatch-console";
+import { decideAgentProposals } from "@/lib/graphql/agent-decisions";
 import {
   bulkTransferShipmentsToBillingGraphQL,
   listBillingTransferCandidateIdsGraphQL,
@@ -69,22 +70,26 @@ export function useBoardActions() {
     onError: (error) => toast.error(t("Assignment failed"), { description: errorMessage(error) }),
   });
 
+  // Nova proposes a driver for each selected load and the person's click approves those
+  // proposals through the decision path, so they leave Decisions as the loads are covered
+  // rather than waiting there beside a load someone already assigned.
   const autoAssign = useMutation({
     mutationFn: async (moveIds: string[]) => {
-      const plan = await planDispatchAutoAssignGraphQL({ moveIds, apply: false });
-      if (plan.assignments.length === 0) {
+      const plan = await planDispatchAutoAssignGraphQL({ moveIds });
+      if (plan.shadowMode) {
+        throw new Error(t("Shadow mode is on, so nothing was proposed or assigned."));
+      }
+      const proposalIds = plan.assignments
+        .filter((assignment) => assignment.tractorId && assignment.proposalId)
+        .map((assignment) => assignment.proposalId as string);
+      if (proposalIds.length === 0) {
         throw new Error(t("No available driver fits the selected loads"));
       }
-      return assignDispatchMovesGraphQL(
-        plan.assignments
-          .filter((assignment) => !!assignment.tractorId)
-          .map((assignment) => ({
-            moveId: assignment.moveId,
-            primaryWorkerId: assignment.workerId,
-            tractorId: assignment.tractorId as string,
-            ...(assignment.trailerId ? { trailerId: assignment.trailerId } : {}),
-          })),
-      );
+      const results = await decideAgentProposals(proposalIds, {
+        decision: "Accepted",
+        reasonCode: "approved_from_shipment_board",
+      });
+      return { succeeded: results.filter((result) => !result.error).length };
     },
     onSettled: refresh,
     onSuccess: (result) => toast.success(t("Assigned {0} of the selected loads", result.succeeded)),

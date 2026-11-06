@@ -13,17 +13,19 @@ import { FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getProfile, isMoveRemovalAllowed } from "@trenova/shared/lib/capability";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { useState } from "react";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
-import { MoveEditDialog } from "../shipment-move-edit-dialog";
+import { useEffect, useRef, useState } from "react";
+import { useFieldArray, useFormContext, useFormState, useWatch } from "react-hook-form";
+import { MoveEditDialog, type MoveDialogState } from "../shipment-move-edit-dialog";
 import { MoveCard } from "./move-card";
-
-type MoveDialogState = { open: false } | { open: true; moveIndex: number; isNew: boolean };
 
 /**
  * The shipment's moves, each a compact card of its route and coverage, with adding, editing and
  * removing a move. Removal follows the server's rule: always for an unsaved shipment, and past
  * that as the mode profile (or, without one, the organisation's setting) allows.
+ *
+ * A stop's fields are drawn only in the move editor, so when a save fails on one, the form has
+ * no field of its own to focus. When the moves hold the only problems, the first one takes focus
+ * here instead, bringing its move and stop into view.
  */
 export default function ShipmentMoveDetails() {
   const t = useT();
@@ -41,6 +43,22 @@ export default function ShipmentMoveDetails() {
   });
 
   const [moveDialog, setMoveDialog] = useState<MoveDialogState>({ open: false });
+  const { errors, submitCount, isSubmitting } = useFormState({ control });
+  const movesRef = useRef<HTMLDivElement>(null);
+  const handledSubmit = useRef(submitCount);
+
+  useEffect(() => {
+    if (isSubmitting || submitCount === handledSubmit.current) return;
+    handledSubmit.current = submitCount;
+    // A problem on a field drawn above the moves is focused by the form itself.
+    const elsewhere = Object.keys(errors).some((key) => key !== "moves" && key !== "root");
+    if (elsewhere || !errors.moves) return;
+    const card = movesRef.current?.querySelector("[data-move-card][data-invalid]");
+    const target =
+      card?.querySelector<HTMLElement>("[data-stop-problem]") ??
+      card?.querySelector<HTMLElement>("[data-move-problem]");
+    target?.focus();
+  }, [errors, isSubmitting, submitCount]);
   const { data: shipmentUIPolicy } = useQuery({ ...shipment.uiPolicy() });
   const profile = getProfile(shipmentUIPolicy);
   // An unsaved shipment has no persisted moves to detach history from, so removal
@@ -110,20 +128,22 @@ export default function ShipmentMoveDetails() {
           </div>
         }
       >
-        {moveFields.map((field, moveIndex) => (
-          <MoveCard
-            key={field.fieldId}
-            moveIndex={moveIndex}
-            allowPersistedMoveRemoval={allowPersistedMoveRemoval}
-            onEdit={() => setMoveDialog({ open: true, moveIndex, isNew: false })}
-            onRemove={() => {
-              if (field.id && !allowPersistedMoveRemoval) {
-                return;
-              }
-              removeMove(moveIndex);
-            }}
-          />
-        ))}
+        <div ref={movesRef} className="contents">
+          {moveFields.map((field, moveIndex) => (
+            <MoveCard
+              key={field.fieldId}
+              moveIndex={moveIndex}
+              allowPersistedMoveRemoval={allowPersistedMoveRemoval}
+              onEdit={(focus) => setMoveDialog({ open: true, moveIndex, isNew: false, focus })}
+              onRemove={() => {
+                if (field.id && !allowPersistedMoveRemoval) {
+                  return;
+                }
+                removeMove(moveIndex);
+              }}
+            />
+          ))}
+        </div>
         {moveFields.length === 0 && (
           <EmptyState
             className="rounded-lg border p-4"

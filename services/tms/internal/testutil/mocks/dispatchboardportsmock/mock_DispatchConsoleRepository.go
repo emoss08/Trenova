@@ -112,23 +112,23 @@ func (_c *MockDispatchConsoleRepository_GetBoardSummary_Call) RunAndReturn(run f
 }
 
 // ListBoardDrivers provides a mock function for the type MockDispatchConsoleRepository
-func (_mock *MockDispatchConsoleRepository) ListBoardDrivers(ctx context.Context, filter *dispatchboardports.DispatchBoardFilter) ([]*dispatchboardports.BoardDriver, error) {
+func (_mock *MockDispatchConsoleRepository) ListBoardDrivers(ctx context.Context, filter *dispatchboardports.DispatchBoardFilter) (*dispatchboardports.BoardDriverPage, error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListBoardDrivers")
 	}
 
-	var r0 []*dispatchboardports.BoardDriver
+	var r0 *dispatchboardports.BoardDriverPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchboardports.DispatchBoardFilter) ([]*dispatchboardports.BoardDriver, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchboardports.DispatchBoardFilter) (*dispatchboardports.BoardDriverPage, error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchboardports.DispatchBoardFilter) []*dispatchboardports.BoardDriver); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *dispatchboardports.DispatchBoardFilter) *dispatchboardports.BoardDriverPage); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*dispatchboardports.BoardDriver)
+			r0 = ret.Get(0).(*dispatchboardports.BoardDriverPage)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *dispatchboardports.DispatchBoardFilter) error); ok {
@@ -169,12 +169,12 @@ func (_c *MockDispatchConsoleRepository_ListBoardDrivers_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockDispatchConsoleRepository_ListBoardDrivers_Call) Return(boardDrivers []*dispatchboardports.BoardDriver, err error) *MockDispatchConsoleRepository_ListBoardDrivers_Call {
-	_c.Call.Return(boardDrivers, err)
+func (_c *MockDispatchConsoleRepository_ListBoardDrivers_Call) Return(boardDriverPage *dispatchboardports.BoardDriverPage, err error) *MockDispatchConsoleRepository_ListBoardDrivers_Call {
+	_c.Call.Return(boardDriverPage, err)
 	return _c
 }
 
-func (_c *MockDispatchConsoleRepository_ListBoardDrivers_Call) RunAndReturn(run func(ctx context.Context, filter *dispatchboardports.DispatchBoardFilter) ([]*dispatchboardports.BoardDriver, error)) *MockDispatchConsoleRepository_ListBoardDrivers_Call {
+func (_c *MockDispatchConsoleRepository_ListBoardDrivers_Call) RunAndReturn(run func(ctx context.Context, filter *dispatchboardports.DispatchBoardFilter) (*dispatchboardports.BoardDriverPage, error)) *MockDispatchConsoleRepository_ListBoardDrivers_Call {
 	_c.Call.Return(run)
 	return _c
 }

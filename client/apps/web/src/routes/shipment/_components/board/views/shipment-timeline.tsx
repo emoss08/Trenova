@@ -20,14 +20,13 @@ import {
   ShipmentTimelineSkeleton,
   type TimelineSkeletonShape,
 } from "./shipment-timeline-skeleton";
-import { createTimelineScrollMemory } from "./timeline/timeline-canvas";
+import { createTimelineScrollMemory } from "@/components/timeline/timeline-canvas";
 import { TimelineCard } from "./timeline/timeline-card";
 import { TimelineCoverageLanes } from "./timeline/timeline-coverage-lanes";
 import { TimelineHoverCard } from "./timeline/timeline-hover-card";
 import { TimelineShipmentSheet } from "./timeline/timeline-shipment-rows";
 import { TimelineToolbar } from "./timeline/timeline-toolbar";
 import { useTimelineRange } from "./timeline/use-timeline-range";
-import "./timeline/timeline.css";
 
 /** The most loads one range draws; past it the timeline says so and asks for narrower filters. */
 export const TIMELINE_ROW_LIMIT = 500;
@@ -51,7 +50,7 @@ type ShipmentTimelineProps = {
  */
 export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps) {
   const t = useT();
-  const { timezone, mode, qf, today, days, scale, setUrl, sheetRef } = useTimelineRange();
+  const { timezone, range, mode, qf, today, days, scale, setUrl, sheetRef } = useTimelineRange();
   // A selection belongs to the row mode it was made in: switching between
   // shipments and drivers & carriers closes the card, and switching back
   // brings it back.
@@ -127,6 +126,7 @@ export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps
     <div ref={sheetRef} className="@container/timeline flex h-full min-h-105 flex-col">
       <TimelineToolbar
         scale={scale}
+        range={range}
         mode={mode}
         onModeChange={(next) => void setUrl({ tlrows: next })}
         onRangeChange={(next) => void setUrl({ tl: next })}

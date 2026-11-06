@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useForm } from "react-hook-form";
+import { type FieldValues, type UseFormReturn, useForm } from "react-hook-form";
 import { GraphQLRequestError, type NormalizedGraphQLError } from "@trenova/shared/lib/graphql";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import { isRegisteredLeaf, normalizeFieldPath } from "@/lib/form-errors";
+import {
+  addErrorSurface,
+  isRegisteredLeaf,
+  normalizeFieldPath,
+  refusedFieldMessages,
+} from "@/lib/form-errors";
 
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
@@ -68,7 +73,7 @@ function renderJournalForm() {
   return result;
 }
 
-function errorsOf(form: ReturnType<typeof renderJournalForm>["current"]) {
+function errorsOf<TValues extends FieldValues>(form: UseFormReturn<TValues>) {
   return (form.control as unknown as { _formState: { errors: Record<string, any> } })._formState
     .errors;
 }
@@ -361,5 +366,179 @@ describe("handleMutationError field distribution", () => {
 
     expect(errorsOf(form.current).root).toBeUndefined();
     expect(toastError).not.toHaveBeenCalled();
+  });
+});
+
+// A shipment's moves as the move cards show them: the stops' fields mount only in the move
+// editor, so none is registered here, and the form validates with a resolver, as every form
+// with a surface must for a server error under it to be set there.
+type ShipmentFormValues = {
+  bol: string;
+  moves: {
+    distance: number;
+    stops: { locationId: string; location: { name: string } | null }[];
+  }[];
+};
+
+const SHIPMENT_DEFAULTS: ShipmentFormValues = {
+  bol: "",
+  moves: [
+    {
+      distance: 0,
+      stops: [
+        { locationId: "loc_1", location: { name: "Secaucus DC" } },
+        { locationId: "", location: null },
+      ],
+    },
+    { distance: 0, stops: [] },
+  ],
+};
+
+const passingResolver = async (values: ShipmentFormValues) => ({ values, errors: {} });
+
+function renderShipmentForm({ resolver = true }: { resolver?: boolean } = {}) {
+  const { result } = renderHook(() =>
+    useForm<ShipmentFormValues>({
+      defaultValues: SHIPMENT_DEFAULTS,
+      resolver: resolver ? passingResolver : undefined,
+    }),
+  );
+  return result;
+}
+
+function refuse(
+  form: ReturnType<typeof renderShipmentForm>["current"],
+  fields: [string, string][],
+) {
+  const error = graphQLError(
+    validationError(fields.map(([field, message]) => ({ field, message, code: "INVALID" }))),
+  );
+  act(() => {
+    handleMutationError({ error, form });
+  });
+}
+
+describe("handleMutationError with an error surface", () => {
+  let removeSurfaces: (() => void)[] = [];
+
+  beforeEach(() => {
+    toastError.mockClear();
+  });
+
+  afterEach(() => {
+    for (const remove of removeSurfaces) remove();
+    removeSurfaces = [];
+  });
+
+  function surface(form: ReturnType<typeof renderShipmentForm>["current"], prefix: string) {
+    removeSurfaces.push(addErrorSurface(form.control, prefix));
+  }
+
+  it("sets a refusal under a surface on its path while no field is mounted there", () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+
+    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+
+    const errors = errorsOf(form.current);
+    expect(errors.moves[0].stops[1].locationId.message).toBe("Location is required");
+    expect(errors.root).toBeUndefined();
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("sets a refusal on an object or list under the surface beneath its root, keeping its fields' errors", () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+
+    refuse(form.current, [
+      ["moves[0].stops[1].locationId", "Location is required"],
+      ["moves[0].stops", "A move needs a pickup and a delivery"],
+      ["moves[0].stops[0].location", "Location is inactive"],
+    ]);
+
+    const errors = errorsOf(form.current);
+    expect(errors.moves[0].stops[1].locationId.message).toBe("Location is required");
+    expect(errors.moves[0].stops.root.message).toBe("A move needs a pickup and a delivery");
+    expect(errors.moves[0].stops[0].location.root.message).toBe("Location is inactive");
+  });
+
+  it("sends a refusal outside every surface to the root, said in a toast", () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+
+    refuse(form.current, [["moves[1].distance", "Distance cannot be negative"]]);
+
+    const errors = errorsOf(form.current);
+    expect(errors.root.message).toBe("Distance cannot be negative");
+    expect(errors.moves).toBeUndefined();
+    expect(toastError).toHaveBeenCalledWith("This change could not be saved", {
+      description: "Distance cannot be negative",
+    });
+  });
+
+  it("sends a refusal to the root once the surface has gone", () => {
+    const form = renderShipmentForm();
+    addErrorSurface(form.current.control, "moves.0")();
+
+    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+
+    expect(errorsOf(form.current).root.message).toBe("Location is required");
+    expect(errorsOf(form.current).moves).toBeUndefined();
+  });
+
+  it("keeps a surface while any component still shows it", () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+    addErrorSurface(form.current.control, "moves.0")();
+
+    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+
+    expect(errorsOf(form.current).moves[0].stops[1].locationId.message).toBe(
+      "Location is required",
+    );
+  });
+
+  // Without a resolver, a submit validates only the registered fields, so an error on a
+  // path no field registers would never clear and the form could never be submitted again.
+  it("sends a refusal to the root on a form validated field by field", () => {
+    const form = renderShipmentForm({ resolver: false });
+    surface(form.current, "moves.0");
+
+    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+
+    expect(errorsOf(form.current).root.message).toBe("Location is required");
+    expect(errorsOf(form.current).moves).toBeUndefined();
+  });
+
+  it("does not let a refusal under a surface outlive the next submit", async () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+
+    let submitted = false;
+    const onSubmit = form.current.handleSubmit(() => {
+      submitted = true;
+    });
+    await act(async () => {
+      await onSubmit();
+    });
+
+    expect(submitted).toBe(true);
+    expect(errorsOf(form.current).moves).toBeUndefined();
+  });
+
+  it("counts a refusal a surface shows as landing on the form", () => {
+    const form = renderShipmentForm();
+    surface(form.current, "moves.0");
+
+    expect(
+      refusedFieldMessages(
+        [
+          { field: "moves[0].stops[1].locationId", message: "Location is required" },
+          { field: "moves[1].distance", message: "Distance cannot be negative" },
+        ],
+        form.current.control,
+      ),
+    ).toEqual(["Location is required"]);
   });
 });

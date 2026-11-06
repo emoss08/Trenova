@@ -167,6 +167,34 @@ type SkipPendingByPlanRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+// ReplaceTargetedProposalsRequest records proposals that each name the record
+// they would change, and supersedes every earlier pending proposal of the same
+// tool for those records, in one transaction: a record carries at most one
+// pending proposal of a tool, the newest.
+type ReplaceTargetedProposalsRequest struct {
+	TenantInfo     pagination.TenantInfo
+	ToolName       string
+	TargetResource string
+	Proposals      []*agent.AgentProposal
+}
+
+// ListPendingByTargetsRequest reads the pending proposals of one tool for a
+// page of records, such as the moves on the dispatch board.
+type ListPendingByTargetsRequest struct {
+	TenantInfo     pagination.TenantInfo
+	ToolName       string
+	TargetResource string
+	TargetIDs      []pulid.ID
+	Now            int64
+}
+
+type ListFailedByTargetsRequest struct {
+	TenantInfo     pagination.TenantInfo
+	ToolName       string
+	TargetResource string
+	TargetIDs      []pulid.ID
+}
+
 type AgentProposalRepository interface {
 	List(
 		ctx context.Context,
@@ -178,6 +206,18 @@ type AgentProposalRepository interface {
 	) (*pagination.CursorListResult[*agent.AgentProposal], error)
 	GetByID(ctx context.Context, req GetAgentProposalByIDRequest) (*agent.AgentProposal, error)
 	Create(ctx context.Context, entity *agent.AgentProposal) (*agent.AgentProposal, error)
+	ReplacePendingForTargets(
+		ctx context.Context,
+		req *ReplaceTargetedProposalsRequest,
+	) ([]*agent.AgentProposal, error)
+	ListPendingByTargets(
+		ctx context.Context,
+		req *ListPendingByTargetsRequest,
+	) ([]*agent.AgentProposal, error)
+	ListFailedByTargets(
+		ctx context.Context,
+		req *ListFailedByTargetsRequest,
+	) ([]*agent.AgentProposal, error)
 	ListByThread(
 		ctx context.Context,
 		req ListAgentProposalsByThreadRequest,

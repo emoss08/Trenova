@@ -74,15 +74,6 @@ func mailboxSettings(input *gqlmodel.InboundMailboxInput) inboundmailbox.Mailbox
 	}
 }
 
-func unixPtr(value int64) *int {
-	if value == 0 {
-		return nil
-	}
-	converted := int(value)
-
-	return &converted
-}
-
 func responseTargetMinutes(message *inboundmessage.InboundMessage) int {
 	if message.DueAt <= message.ReceivedAt {
 		return 0

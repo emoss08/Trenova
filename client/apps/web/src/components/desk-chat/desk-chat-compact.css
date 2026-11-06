@@ -100,6 +100,9 @@
 .dk-dense .dk-dcx > .dk-dcx-t {
   flex: 1 1 calc(100% - 40px);
 }
+.dk-dense .dk-dcx-acts {
+  order: 2;
+}
 .dk-dense .dk-dcx::before {
   content: "";
   order: 1;

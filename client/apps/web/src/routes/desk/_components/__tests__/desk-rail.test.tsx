@@ -126,10 +126,7 @@ function RailHarness({
   ...props
 }: RailOptions & {
   onLoadMore: DeskRailProps["onLoadMore"];
-  handlers: Pick<
-    DeskRailProps,
-    "onSearch" | "onSettings" | "onSetPinned" | "onDelete" | "onFold"
-  >;
+  handlers: Pick<DeskRailProps, "onSearch" | "onSettings" | "onSetPinned" | "onDelete" | "onFold">;
 }) {
   const collapsed = useDeskSettingsStore((store) => store.collapsedShelves);
   const edges = deskShelfEdges(HARNESS_NOW, "UTC");
@@ -329,6 +326,60 @@ describe("DeskRail", () => {
     );
   });
 
+  it("says in words, with the agent's name, what a conversation needs or is doing", () => {
+    state.live = new Set(["live"]);
+    renderRail({
+      threads: [
+        thread({ id: "live", title: "Working one" }),
+        thread({
+          id: "wait",
+          title: "Waiting one",
+          attention: { pendingDecisions: 2, lastTurnFailed: false, unread: false },
+        }),
+        thread({
+          id: "fail",
+          title: "Failed one",
+          attention: { pendingDecisions: 0, lastTurnFailed: true, unread: false },
+        }),
+        thread({
+          id: "new",
+          title: "Unread one",
+          attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true },
+        }),
+        thread({ id: "quiet", title: "Quiet one" }),
+      ],
+    });
+
+    const note = (title: string) =>
+      screen.getByText(title).closest(".dk-sb-c")?.querySelector(".dk-sb-n")?.textContent ?? null;
+    expect(note("Working one")).toBe("Billing desk · Writing a reply");
+    expect(note("Waiting one")).toBe("Billing desk · Needs your approval");
+    expect(note("Failed one")).toBe("Billing desk · Last reply failed");
+    // A new reply has its own dot; a conversation at rest stays one line.
+    expect(note("Unread one")).toBeNull();
+    expect(note("Quiet one")).toBeNull();
+  });
+
+  it("makes each conversation a link to it that says which one is open, beside its own actions", () => {
+    renderRail({
+      place: "thread",
+      activeThreadId: "open",
+      threads: [
+        thread({ id: "open", title: "Open one" }),
+        thread({ id: "other", title: "Other one" }),
+      ],
+    });
+
+    const open = screen.getByRole("link", { name: "Open one" });
+    expect(open).toHaveAttribute("href", "/desk/t/open");
+    expect(open).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Other one" })).not.toHaveAttribute("aria-current");
+    // Pin and delete are siblings of the link, not controls nested inside it.
+    expect(within(open).queryByRole("button")).toBeNull();
+    const row = open.closest(".dk-sb-c") as HTMLElement;
+    expect(within(row).getAllByRole("button", { name: /conversation/ })).toHaveLength(2);
+  });
+
   it("does not call the open conversation unread", () => {
     renderRail({
       place: "thread",
@@ -505,16 +556,23 @@ describe("DeskRail", () => {
   it("shows the places with what waits at each", () => {
     renderRail({ watchtowerCount: 11, decisionsCount: 6, decisionsWaitHere: true });
 
-    expect(screen.getByRole("button", { name: /Watchtower/ })).toHaveTextContent("11");
-    const decisions = screen.getByRole("button", { name: /Decisions/ });
+    expect(screen.getByRole("link", { name: /Watchtower/ })).toHaveTextContent("11");
+    const decisions = screen.getByRole("link", { name: /Decisions/ });
     expect(decisions).toHaveTextContent("6");
     expect(decisions.querySelector(".dk-sb-ct")).toHaveClass("dk-w");
+  });
+
+  it("shows no count at a place where nothing waits", () => {
+    renderRail({ watchtowerCount: 0, decisionsCount: 0 });
+
+    expect(screen.getByRole("link", { name: "Watchtower" }).querySelector(".dk-sb-ct")).toBeNull();
+    expect(screen.getByRole("link", { name: "Decisions" }).querySelector(".dk-sb-ct")).toBeNull();
   });
 
   it("opens the scheduled requests from their place, and lights it while they are open", () => {
     renderRail();
 
-    const scheduled = screen.getByRole("button", { name: "Scheduled" });
+    const scheduled = screen.getByRole("link", { name: "Scheduled" });
     expect(scheduled).not.toHaveClass("text-dsk-fg");
     fireEvent.click(scheduled);
     expect(screen.getByTestId("location")).toHaveTextContent("/desk/scheduled");
@@ -523,16 +581,16 @@ describe("DeskRail", () => {
   it("lights Scheduled, not Today, on the scheduled requests", () => {
     renderRail({ place: "scheduled" });
 
-    expect(screen.getByRole("button", { name: "Scheduled" })).toHaveAttribute("data-k", "n:sched");
-    expect(screen.getByRole("button", { name: "Scheduled" })).toHaveClass("text-dsk-fg");
+    expect(screen.getByRole("link", { name: "Scheduled" })).toHaveAttribute("data-k", "n:sched");
+    expect(screen.getByRole("link", { name: "Scheduled" })).toHaveClass("text-dsk-fg");
     expect(document.querySelector('[data-k="n:today"]')).not.toHaveClass("text-dsk-fg");
   });
 
   it("leaves out the places a person may not open", () => {
     renderRail({ canWatch: false, canDecide: false });
 
-    expect(screen.queryByRole("button", { name: /Watchtower/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Decisions/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Watchtower/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Decisions/ })).not.toBeInTheDocument();
   });
 
   it("names who is signed in and opens search and settings", () => {

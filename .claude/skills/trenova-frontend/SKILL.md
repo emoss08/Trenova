@@ -130,6 +130,12 @@ field components from `apps/web/src/components/fields/`; table panels through
 primary. Dialogs take `size`, never an arbitrary max-width. Settings pages are stacked
 `Card`s with a `FormSaveDock`.
 
+A server field error lands on a field only while one is registered there; otherwise it goes
+to the form root. A component that shows the errors of fields it does not mount (a summary
+card whose fields open in a dialog, like the shipment's move card) calls
+`useErrorSurface(control, prefix)`, so a refusal under `prefix` is set where it shows it.
+Only forms with a resolver honour a surface (`serverErrorTarget` in `lib/form-errors.ts`).
+
 A toast is for news the screen cannot show (design-system.md → "Toasts"). A save, delete,
 toggle or approval the person can see happen takes no success toast, and `useApiMutation`
 already reports a failure. Toast a failure with nowhere else to go, work that finished out

@@ -1,30 +1,28 @@
-import type {
-  DispatchBoardDriver,
-  DispatchBoardMove,
-  DispatchCandidate,
-} from "@/lib/graphql/dispatch-console";
+import type { DispatchBoardDriver, DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
+import { watchtower } from "@/lib/queries/watchtower";
 import { useDispatchConsoleStore, type PreflightTarget } from "@/stores/dispatch-console-store";
-import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   hasOrganizationCapability,
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
-import { Suspense, lazy, useCallback, useEffect, useMemo } from "react";
-import { PageInsightsStrip } from "@/components/insights/page-insights";
-import { CapacityRail } from "./capacity-rail";
-import { ConsoleCenterPane } from "./console-center-pane";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react";
+import { DispatchTimeline, TimelinePane } from "./console-center-pane";
 import { ConsoleOverlays } from "./console-overlays";
 import { InspectorSkeleton } from "./console-skeletons";
 import { ConsoleToolbar } from "./console-toolbar";
 import { groupMovesByUrgency, URGENCY_ORDER } from "./dispatch-vocabulary";
+import { QueuePane } from "./queue-pane";
 import { SummaryStrip } from "./summary-strip";
-import { useDispatchActions } from "./use-dispatch-actions";
-import { useDispatchHotkeys } from "./use-dispatch-hotkeys";
+import type { DispatchActions } from "./use-dispatch-actions";
+import { focusQueueRow, stepMove, useDispatchHotkeys } from "./use-dispatch-hotkeys";
 import {
   toDispatchBoardInput,
   useDispatchRail,
@@ -34,27 +32,33 @@ import {
 } from "./url-state";
 
 // The inspector only answers a question once something is selected, and it drags in the
-// candidate scoring UI to do it — none of which the first paint of the board needs.
+// candidate scoring UI to do it, none of which the first paint of the queue needs.
 const Inspector = lazy(() => import("./inspector").then((m) => ({ default: m.Inspector })));
 
 const BOARD_REFETCH_MS = 60_000;
+const EXCEPTIONS_REFETCH_MS = 60_000;
+// Long enough for the collapse to play out before the row stops being drawn.
+const DEPART_MS = 220;
+// A move approved inside its undo window stays uncovered on the board until the approval
+// runs; it is kept out of the queue that long, and no longer, so a write that never lands
+// brings it back.
+const DEPARTED_TTL_MS = 120_000;
 
-// Stable identities for the empty case. Without them every render produces a new array and
-// every memo below it recomputes, which on a board this size is not free.
+// Stable identities for the empty case, so the memos below do not recompute every render.
 const NO_MOVES: readonly DispatchBoardMove[] = [];
 const NO_DRIVERS: readonly DispatchBoardDriver[] = [];
 
-export function DispatchConsoleContent() {
-  const { range, zoom, includeCovered, shiftWindow, goToday } = useDispatchWindow();
+export function DispatchConsoleContent({ actions }: { actions: DispatchActions }) {
+  const t = useT();
+  const { range, filters, includeCovered, search, setSearch, shiftWindow, goToday, setAnchor } =
+    useDispatchWindow();
   const { selectedMoveId, selectedWorkerId, selectMove, selectDriver, clearSelection } =
     useDispatchSelection();
-  const { urgencyFocus, setUrgencyFocus } = useDispatchView();
+  const { mode, tab, setTab, urgencyFocus, setUrgencyFocus } = useDispatchView();
   const { setCapacityFilter } = useDispatchRail();
   const capabilities = useOrgCapabilities();
-  // The rail is a column of driver rows with HOS gauges and drag handles. With no
-  // drivers to put in it there is nothing to rail, so the column is removed
-  // rather than left standing empty beside the board.
-  const showsCapacityRail = hasOrganizationCapability(
+  // Drivers are only listed for an organization that employs them.
+  const showsDrivers = hasOrganizationCapability(
     capabilities,
     OrganizationCapability.AssetOperations,
   );
@@ -70,70 +74,148 @@ export function DispatchConsoleContent() {
   // A drag or a pending pre-flight belongs to the visit, not to the store's lifetime.
   useEffect(() => resetConsole, [resetConsole]);
 
-  const boardInput = useMemo(
-    () => toDispatchBoardInput(range, includeCovered),
-    [includeCovered, range],
-  );
+  const [queueScope, setQueueScope] = useState<HTMLDivElement | null>(null);
 
-  const { data: board, isLoading } = useQuery({
+  const boardInput = useMemo(() => toDispatchBoardInput(range, filters), [filters, range]);
+  // The last board stays on screen while a new search or window loads, and while a poll
+  // fails: the status line says it is not current rather than the queue going blank.
+  const boardQuery = useQuery({
     ...dispatchConsoleQueries.board(boardInput),
     refetchInterval: BOARD_REFETCH_MS,
+    placeholderData: keepPreviousData,
   });
+  const board = boardQuery.data;
+  const boardRead = {
+    isPending: boardQuery.isPending,
+    // Only a board that never arrived is drawn as a failure; a failed poll keeps the last
+    // good board and turns the status line.
+    isError: boardQuery.isError && !board,
+    error: boardQuery.error,
+    refetch: () => void boardQuery.refetch(),
+  };
 
-  const actions = useDispatchActions();
+  const exceptionsQuery = useQuery({
+    ...watchtower.dispatchExceptions(),
+    refetchInterval: EXCEPTIONS_REFETCH_MS,
+  });
+  const exceptionItems = exceptionsQuery.data?.items ?? [];
+  const exceptionsMore = exceptionsQuery.data?.hasNextPage ?? false;
 
   const moves = board?.moves ?? NO_MOVES;
   const drivers = board?.drivers ?? NO_DRIVERS;
 
-  // The visual order of the kanban, reused by j/k navigation so the keyboard walks the
-  // board in the same order the eye does.
-  const orderedMoves = useMemo(() => {
-    const grouped = groupMovesByUrgency(moves);
-    return URGENCY_ORDER.flatMap((bucket) => grouped.get(bucket) ?? []);
-  }, [moves]);
+  // Moves just covered here collapse out at once rather than waiting on the next read.
+  const [departing, setDeparting] = useState<ReadonlySet<string>>(() => new Set());
+  const [departed, setDeparted] = useState<ReadonlyMap<string, number>>(() => new Map());
+  const nowSeconds = useNow();
 
-  const selectedMove = useMemo(
+  // A new board settles what was departing: a move it no longer holds needs no hiding, and
+  // one hidden past its time comes back.
+  const [prevMoves, setPrevMoves] = useState(moves);
+  if (prevMoves !== moves) {
+    setPrevMoves(moves);
+    const present = new Set(moves.map((move) => move.moveId));
+    const now = nowSeconds * 1000;
+    if (departed.size > 0) {
+      const kept = new Map(
+        [...departed].filter(([id, at]) => present.has(id) && now - at < DEPARTED_TTL_MS),
+      );
+      if (kept.size !== departed.size) setDeparted(kept);
+    }
+  }
+
+  const shownMoves = useMemo(
+    () =>
+      moves.filter(
+        (move) =>
+          !departed.has(move.moveId) && (urgencyFocus === null || move.urgency === urgencyFocus),
+      ),
+    [departed, moves, urgencyFocus],
+  );
+
+  // The order the queue draws, which is the order J and K walk; a move on its way out is
+  // already behind the dispatcher.
+  const orderedMoves = useMemo(() => {
+    const grouped = groupMovesByUrgency(shownMoves);
+    return URGENCY_ORDER.flatMap((bucket) => grouped.get(bucket) ?? []).filter(
+      (move) => !departing.has(move.moveId),
+    );
+  }, [departing, shownMoves]);
+
+  const boardMove = useMemo(
     () => moves.find((move) => move.moveId === selectedMoveId) ?? null,
     [moves, selectedMoveId],
   );
+  // A selection can point off the board: a best-fit match, a link, a timeline bar, a
+  // window that moved. It is read on its own and explained rather than dropped.
+  const offBoard = Boolean(selectedMoveId) && !boardMove && boardQuery.isSuccess;
+  const moveQuery = useQuery({
+    ...dispatchConsoleQueries.move(selectedMoveId ?? ""),
+    enabled: offBoard,
+  });
+  const selectedMove = boardMove ?? (offBoard ? (moveQuery.data ?? null) : null);
+  const outsideWindow =
+    offBoard &&
+    selectedMove !== null &&
+    (selectedMove.originWindowStart < range.start || selectedMove.originWindowStart >= range.end);
+
   const selectedDriver = useMemo(
     () => drivers.find((driver) => driver.workerId === selectedWorkerId) ?? null,
     [drivers, selectedWorkerId],
   );
 
-  const assignCandidate = useCallback(
-    (candidate: DispatchCandidate) => {
-      if (!candidate.tractorId) return;
-      const move = moves.find((item) => item.moveId === candidate.moveId);
-      actions.assign([
-        {
-          moveId: candidate.moveId,
-          primaryWorkerId: candidate.workerId,
-          tractorId: candidate.tractorId,
-          trailerId: candidate.trailerId ?? undefined,
-          reassign: move?.isCovered ?? false,
-        },
-      ]);
+  const inspectorOpen = Boolean(selectedMoveId) || selectedDriver !== null;
+
+  const onCovered = useCallback(
+    (moveId: string) => {
+      const next =
+        stepMove(orderedMoves, moveId, 1) === moveId
+          ? stepMove(orderedMoves, moveId, -1)
+          : stepMove(orderedMoves, moveId, 1);
+      setDeparting((current) => new Set(current).add(moveId));
+      window.setTimeout(() => {
+        setDeparted((current) => new Map(current).set(moveId, Date.now()));
+        setDeparting((current) => {
+          const rest = new Set(current);
+          rest.delete(moveId);
+          return rest;
+        });
+      }, DEPART_MS);
+      if (next && next !== moveId) {
+        selectMove(next);
+        focusQueueRow(next, queueScope);
+      } else {
+        clearSelection();
+      }
     },
-    [actions, moves],
+    [clearSelection, orderedMoves, queueScope, selectMove],
   );
+
+  const undo = useCallback(() => {
+    // Whatever undo reverses comes back into the queue from the next read, so nothing
+    // stays hidden on the strength of a write that was taken back.
+    setDeparted(new Map());
+    setDeparting(new Set());
+    void actions.undo();
+  }, [actions]);
+
+  const nextMove = useCallback(() => {
+    const next = stepMove(orderedMoves, selectedMoveId, 1);
+    if (next) {
+      selectMove(next);
+      focusQueueRow(next, queueScope);
+    }
+  }, [orderedMoves, queueScope, selectMove, selectedMoveId]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       const data = event.active.data.current;
-      if (data?.type === "driver") {
-        const driver = data.driver as DispatchBoardDriver;
-        setDragPreview(
-          `${driver.firstName} ${driver.lastName}${driver.tractorCode ? ` · ${driver.tractorCode}` : ""}`,
-        );
-        return;
-      }
       if (data?.type === "move") {
         const move = data.move as DispatchBoardMove;
-        setDragPreview(`${move.proNumber} · ${move.originCity} → ${move.destinationCity}`);
+        setDragPreview(t("{0} · {1} → {2}", move.proNumber, move.originCity, move.destinationCity));
       }
     },
-    [setDragPreview],
+    [setDragPreview, t],
   );
 
   const handleDragEnd = useCallback(
@@ -144,25 +226,18 @@ export function DispatchConsoleContent() {
       const overData = event.over?.data.current;
       if (!activeData || !overData) return;
 
-      // A drop opens the pre-flight rather than committing. The dispatcher sees the score,
-      // the empty miles, and anything the pairing trips before anything is written.
-      let target: PreflightTarget | null = null;
-      if (activeData.type === "driver" && overData.type === "move-target") {
-        target = {
-          move: overData.move as DispatchBoardMove,
-          driver: activeData.driver as DispatchBoardDriver,
-        };
-      } else if (activeData.type === "move" && overData.type === "driver-target") {
-        target = {
-          move: activeData.move as DispatchBoardMove,
-          driver: overData.driver as DispatchBoardDriver,
-        };
-      }
-      if (!target) return;
+      // A drop on the timeline opens the pre-flight rather than committing: the
+      // dispatcher sees the score, the empty miles and anything the pairing trips first,
+      // including why a blocked driver can't take it.
+      if (activeData.type !== "move" || overData.type !== "driver-target") return;
+      const target: PreflightTarget = {
+        move: activeData.move as DispatchBoardMove,
+        driver: overData.driver as DispatchBoardDriver,
+      };
 
       // A carrier-covered move cannot take a driver until its carrier assignment is
-      // canceled; selecting it surfaces the coverage card with that action instead of
-      // opening a pre-flight that is guaranteed to fail.
+      // canceled; selecting it shows the coverage card with that action instead of a
+      // pre-flight that is bound to fail.
       if (target.move.coverageType === "carrier") {
         selectMove(target.move.moveId);
         return;
@@ -177,11 +252,10 @@ export function DispatchConsoleContent() {
   const sensors = useSensors(
     // A small activation distance keeps a click on a row from being read as a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-  );
-
-  const planForWindow = useCallback(
-    () => actions.planAutoAssign({ windowStart: range.start, windowEnd: range.end }),
-    [actions, range],
+    // Space picks a move up; Enter stays the bar's own click, which opens it.
+    useSensor(KeyboardSensor, {
+      keyboardCodes: { start: ["Space"], cancel: ["Escape"], end: ["Space", "Enter"] },
+    }),
   );
 
   const hasDialogOpen =
@@ -189,84 +263,174 @@ export function DispatchConsoleContent() {
     Boolean(carrierAssignTarget) ||
     Boolean(carrierCancelTarget) ||
     Boolean(tenderTarget) ||
-    Boolean(actions.plan && !actions.plan.shadowMode);
+    Boolean(actions.shadowPlan);
 
   useDispatchHotkeys({
     enabled: !hasDialogOpen,
     orderedMoves,
     selectedMoveId,
     canUndo: actions.canUndo,
+    queueScope,
     onSelectMove: selectMove,
     onClearSelection: clearSelection,
     onShiftWindow: shiftWindow,
     onToday: goToday,
-    onUndo: actions.undo,
+    onUndo: undo,
   });
 
+  const proposalsWaiting = useMemo(
+    () => moves.filter((move) => !move.isCovered && move.pendingProposal).length,
+    [moves],
+  );
+
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex min-h-135 flex-1 flex-col gap-3">
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setDragPreview(null)}
+    >
+      {/* A full-screen workspace, edge to edge as the design draws it: the toolbar and
+          the figures are bars across the top, and the queue and the inspector fill the
+          rest with a rule between them. */}
+      <div className="flex min-h-135 flex-1 flex-col">
+        <ConsoleToolbar
+          freshness={{
+            generatedAt: board?.generatedAt ?? 0,
+            isError: boardQuery.isError,
+            isFetching: boardQuery.isFetching,
+            refetch: () => void boardQuery.refetch(),
+          }}
+        />
+
         <SummaryStrip
           summary={board?.summary}
-          isLoading={isLoading}
+          proposalsWaiting={proposalsWaiting}
+          exceptions={
+            exceptionsQuery.isSuccess
+              ? { count: exceptionItems.length, more: exceptionsMore }
+              : null
+          }
+          isPending={boardQuery.isPending}
+          isError={boardRead.isError}
           urgencyFocus={urgencyFocus}
-          onUrgencyFocus={setUrgencyFocus}
-          onCapacityFilter={setCapacityFilter}
+          onUrgencyFocus={(bucket) => {
+            setTab("moves");
+            setUrgencyFocus(bucket);
+          }}
+          onShowExceptions={() => setTab("exceptions")}
+          onShowOpenDrivers={() => {
+            setTab("drivers");
+            setCapacityFilter("open");
+          }}
+          showsDrivers={showsDrivers}
         />
 
-        <ConsoleToolbar
-          canUndo={actions.canUndo}
-          isAssigning={actions.isAssigning}
-          isPlanning={actions.isPlanning}
-          onUndo={actions.undo}
-          onPlan={planForWindow}
-        />
-
-        {/* Empty miles, a slipping customer, a driver about to lose a card: the
-            findings a dispatcher can act on from here, kept to one row so the
-            board underneath keeps its height. */}
-        <PageInsightsStrip surface="Dispatch" />
-
-        <div
-          className={cn(
-            "grid min-h-0 flex-1 grid-cols-1 gap-3",
-            showsCapacityRail
-              ? "lg:grid-cols-[300px_minmax(0,1fr)_320px]"
-              : "lg:grid-cols-[minmax(0,1fr)_320px]",
-          )}
-        >
-          {showsCapacityRail && (
-            <CapacityRail
+        <div className="flex min-h-0 flex-1">
+          {mode === "queue" ? (
+            <QueuePane
+              tab={tab}
+              onTab={setTab}
+              moves={shownMoves}
+              moveCount={board ? shownMoves.length - departing.size : null}
+              read={boardRead}
+              narrowed={
+                search.trim() !== "" ||
+                filters.fleetCodeIds.length > 0 ||
+                filters.customerIds.length > 0
+              }
+              includeCovered={includeCovered}
+              onClearSearch={() => setSearch("")}
+              selectedMoveId={selectedMoveId}
+              departingMoveIds={departing}
+              onSelectMove={selectMove}
+              outcome={actions.outcome}
+              canUndo={actions.canUndo}
+              onUndo={undo}
+              exceptions={exceptionItems}
+              driversTruncated={board?.driversTruncated ?? false}
+              exceptionsRead={{
+                isPending: exceptionsQuery.isPending,
+                isError: exceptionsQuery.isError,
+                error: exceptionsQuery.error,
+                refetch: () => void exceptionsQuery.refetch(),
+              }}
+              exceptionsMore={exceptionsMore}
               drivers={drivers}
-              isLoading={isLoading}
               selectedWorkerId={selectedWorkerId}
               onSelectDriver={selectDriver}
+              showsDrivers={showsDrivers}
+              listRef={setQueueScope}
             />
+          ) : (
+            <TimelinePane isLoading={boardQuery.isPending}>
+              {(sheet) => (
+                <DispatchTimeline
+                  moves={moves}
+                  drivers={drivers}
+                  scale={sheet.scale}
+                  today={sheet.today}
+                  selectedMoveId={selectedMoveId}
+                  selectedWorkerId={selectedWorkerId}
+                  onSelectMove={selectMove}
+                  onSelectDriver={selectDriver}
+                />
+              )}
+            </TimelinePane>
           )}
 
-          <ConsoleCenterPane
-            moves={moves}
-            drivers={drivers}
-            isLoading={isLoading}
-            range={range}
-            zoom={zoom}
-            selectedMoveId={selectedMoveId}
-            selectedWorkerId={selectedWorkerId}
-            onSelectMove={selectMove}
-            onSelectDriver={selectDriver}
-          />
-
-          <Suspense fallback={<InspectorSkeleton />}>
-            <Inspector
-              selectedMove={selectedMove}
-              selectedDriver={selectedDriver}
-              onAssign={assignCandidate}
-              onSelectMove={selectMove}
-              isAssigning={actions.isAssigning}
-              hotkeysEnabled={!hasDialogOpen}
-              actions={actions}
-            />
-          </Suspense>
+          {/* Opens and closes by width, so the queue gives up and takes back the room
+              rather than being covered. */}
+          <aside
+            aria-label={
+              selectedMove
+                ? t("Move {0}", selectedMove.proNumber)
+                : selectedDriver
+                  ? t("Driver {0} {1}", selectedDriver.firstName, selectedDriver.lastName)
+                  : t("Inspector")
+            }
+            aria-hidden={!inspectorOpen}
+            inert={!inspectorOpen}
+            className={cn(
+              "bg-background min-h-0 shrink-0 overflow-hidden border-l transition-[width,opacity,border-color] duration-320 ease-settle motion-reduce:transition-none",
+              inspectorOpen
+                ? "border-border w-100 opacity-100"
+                : "w-0 border-transparent opacity-0",
+            )}
+          >
+            <div className="flex h-full w-100 flex-col">
+              {inspectorOpen ? (
+                <Suspense fallback={<InspectorSkeleton />}>
+                  <Inspector
+                    move={selectedMove}
+                    moveRead={
+                      offBoard
+                        ? {
+                            isPending: moveQuery.isPending,
+                            isError: moveQuery.isError,
+                            error: moveQuery.error,
+                            refetch: () => void moveQuery.refetch(),
+                          }
+                        : boardQuery.isPending
+                          ? { isPending: true, isError: false, error: null, refetch: () => {} }
+                          : null
+                    }
+                    outsideWindow={outsideWindow}
+                    driver={selectedMove ? null : selectedDriver}
+                    range={range}
+                    hotkeysEnabled={!hasDialogOpen}
+                    queueScope={queueScope}
+                    onClose={clearSelection}
+                    onSelectMove={selectMove}
+                    onNextMove={nextMove}
+                    onCovered={onCovered}
+                    onJumpTo={(move) => setAnchor(new Date(move.originWindowStart * 1000))}
+                    actions={actions}
+                  />
+                </Suspense>
+              ) : null}
+            </div>
+          </aside>
         </div>
       </div>
       <ConsoleOverlays actions={actions} />

@@ -53,3 +53,6 @@ client/packages/cloud/
 
 # Imaging benchmark corpus and runs (tools/docling-fixtures/corpus.py, task imaging:bench)
 .imagingbench/
+
+# Saved design plans and mockups, kept out of commits
+design-plans/

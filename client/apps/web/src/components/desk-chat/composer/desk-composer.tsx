@@ -24,7 +24,7 @@ import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatAltShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
+import { formatAltShortcut, formatShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { DeskIcon } from "../desk-icons";
@@ -330,6 +330,13 @@ export function DeskComposer({
     if (mention.onKeyDown(event) || slash.onKeyDown(event)) {
       return;
     }
+    // Esc stops the reply under way, whatever is in the box: a correction half
+    // typed never stands between the person and stopping the agent.
+    if (event.key === "Escape" && busy && onStop && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      onStop();
+      return;
+    }
     if (
       offering &&
       (event.key === "Tab" || event.key === "ArrowRight") &&
@@ -366,6 +373,20 @@ export function DeskComposer({
       }
     }
   };
+
+  const stopButton = (
+    <Button
+      variant="bare"
+      size="bare"
+      className={cn(sendClass, "bg-transparent ring-[1.5px] ring-dsk-b-strong ring-inset")}
+      title={t("Stop the reply (Esc)")}
+      aria-label={t("Stop the reply")}
+      aria-keyshortcuts="Escape"
+      onClick={onStop}
+    >
+      <span className="size-2.5 rounded-[2.5px] bg-dsk-fg" />
+    </Button>
+  );
 
   const statusText = compacting
     ? compacting.auto
@@ -573,7 +594,7 @@ export function DeskComposer({
                     <span className="dk-tw-tab">
                       <span className="dk-kbd">Tab</span>{" "}
                       <span className="dk-tw-w">{t("to use")} · </span>
-                      <span className="dk-kbd">⌘{typed.index + 1}</span>{" "}
+                      <span className="dk-kbd">{formatShortcut(String(typed.index + 1))}</span>{" "}
                       <span className="dk-tw-w">{t("to ask")}</span>
                     </span>
                   )}
@@ -665,6 +686,7 @@ export function DeskComposer({
                 <DeskIcon name="enter" size={15} />
               </Button>
             )}
+            {busy && steering && canSend && stopButton}
             {busy && steering && canSend ? (
               <Button
                 variant="bare"
@@ -681,19 +703,7 @@ export function DeskComposer({
                 <DeskIcon name="up" size={15} stroke={2.2} />
               </Button>
             ) : busy ? (
-              <Button
-                variant="bare"
-                size="bare"
-                className={cn(
-                  sendClass,
-                  "bg-transparent ring-[1.5px] ring-dsk-b-strong ring-inset",
-                )}
-                title={t("Stop")}
-                aria-label={t("Stop the reply")}
-                onClick={onStop}
-              >
-                <span className="size-2.5 rounded-[2.5px] bg-dsk-fg" />
-              </Button>
+              stopButton
             ) : (
               <Button
                 variant="bare"

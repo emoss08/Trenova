@@ -34,3 +34,12 @@ export function formatShiftShortcut(key: string, mac: boolean = isMacPlatform())
   // i18n-ignore: key names as printed on the keyboard
   return mac ? `⇧${key}` : `Shift+${key}`;
 }
+
+/**
+ * The label for a primary-modifier and Shift shortcut, spelled the way the person's platform
+ * spells it: "⇧⌘O" on a Mac, "Ctrl+Shift+O" elsewhere.
+ */
+export function formatModShiftShortcut(key: string, mac: boolean = isMacPlatform()): string {
+  // i18n-ignore: key names as printed on the keyboard
+  return mac ? `⇧⌘${key}` : `Ctrl+Shift+${key}`;
+}

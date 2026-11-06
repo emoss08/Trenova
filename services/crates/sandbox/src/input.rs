@@ -168,6 +168,7 @@ impl MappedInput {
                 0,
             )
         }?;
+        drop(fd);
         Ok(Self {
             ptr: NonNull::new(ptr.cast::<u8>()),
             len,

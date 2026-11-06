@@ -4,385 +4,357 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/shared/assignmentsolver"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func score(
-	value int,
-	findings ...dispatcheligibility.Finding,
-) *dispatchcandidateservice.CandidateScore {
-	return &dispatchcandidateservice.CandidateScore{
-		WorkerID:   pulid.MustNew("wrk_"),
-		WorkerName: "Test Driver",
-		TractorID:  pulid.MustNew("trac_"),
-		Score:      value,
-		Findings:   findings,
+func candidate(findings ...dispatchfinding.Finding) *dispatchplanports.CandidateScore {
+	miles := 18.0
+
+	return &dispatchplanports.CandidateScore{
+		WorkerID:      pulid.MustNew("wrk_"),
+		WorkerName:    "Ada Reed",
+		TractorID:     pulid.MustNew("trac_"),
+		MoveID:        pulid.MustNew("smv_"),
+		DeadheadMiles: &miles,
+		Findings:      findings,
 	}
 }
 
-func blockFinding() dispatcheligibility.Finding {
-	return dispatcheligibility.Finding{
-		Code:     dispatcheligibility.CodeHOSNoDriveTime,
-		Severity: dispatcheligibility.SeverityBlock,
+func pairing(c *dispatchplanports.CandidateScore) *dispatchplanports.Pairing {
+	return &dispatchplanports.Pairing{
+		MoveID:             c.MoveID,
+		MoveVersion:        3,
+		ProNumber:          "PRO-42",
+		Candidate:          c,
+		CoveragePriceCents: 100_000,
+	}
+}
+
+func blockFinding() dispatchfinding.Finding {
+	return dispatchfinding.Finding{
+		Code:     dispatchfinding.CodeHOSNoDriveTime,
+		Severity: dispatchfinding.SeverityBlock,
 		Message:  "Driver has no drive time remaining on the 11-hour clock",
 	}
 }
 
-func warnFinding() dispatcheligibility.Finding {
-	return dispatcheligibility.Finding{
-		Code:     dispatcheligibility.CodeMVROverdue,
-		Severity: dispatcheligibility.SeverityWarn,
+func warnFinding() dispatchfinding.Finding {
+	return dispatchfinding.Finding{
+		Code:     dispatchfinding.CodeMVROverdue,
+		Severity: dispatchfinding.SeverityWarn,
 		Message:  "Annual MVR check is overdue",
 	}
-}
-
-func TestCostFor_BlockedPairingsAreForbidden(t *testing.T) {
-	t.Parallel()
-
-	assert.InDelta(t, assignmentsolver.Forbidden, costFor(nil, nil), 1)
-	assert.InDelta(
-		t,
-		assignmentsolver.Forbidden,
-		costFor(score(90, blockFinding()), nil),
-		1,
-	)
-}
-
-func TestCostFor_HigherScoreCostsLess(t *testing.T) {
-	t.Parallel()
-
-	assert.InDelta(t, 10.0, costFor(score(90), nil), 0.001)
-	assert.InDelta(t, 70.0, costFor(score(30), nil), 0.001)
-	assert.Less(t, costFor(score(90), nil), costFor(score(30), nil))
-}
-
-// An organization that caps empty miles means it as a rule. Treating an over-limit
-// pairing as merely expensive would let the solver pick it whenever nothing else fits.
-func TestCostFor_DeadheadCapIsAHardLimit(t *testing.T) {
-	t.Parallel()
-
-	maxDeadhead := int32(100)
-	control := &dispatchcontrol.DispatchControl{AutoAssignMaxDeadheadMiles: &maxDeadhead}
-
-	within := score(80)
-	withinMiles := 50.0
-	within.DeadheadMiles = &withinMiles
-
-	beyond := score(80)
-	beyondMiles := 150.0
-	beyond.DeadheadMiles = &beyondMiles
-
-	assert.InDelta(t, 20.0, costFor(within, control), 0.001)
-	assert.InDelta(t, assignmentsolver.Forbidden, costFor(beyond, control), 1)
 }
 
 func TestConfidenceFor(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, confidenceFor(nil).Equal(decimal.Zero))
-	assert.True(t, confidenceFor(score(95, blockFinding())).Equal(decimal.Zero),
-		"a blocked pairing has no confidence at all")
-
-	clean := confidenceFor(score(90))
-	assert.True(t, clean.Equal(decimal.NewFromFloat(0.9)))
-
-	// Warnings discount confidence so a technically eligible driver carrying advisories
-	// cannot clear an auto-execute threshold on raw score alone.
-	oneWarning := confidenceFor(score(90, warnFinding()))
-	assert.True(t, oneWarning.Equal(decimal.NewFromFloat(0.8)))
-
-	manyWarnings := confidenceFor(score(20,
-		warnFinding(), warnFinding(), warnFinding(), warnFinding()))
-	assert.True(t, manyWarnings.Equal(decimal.Zero), "confidence never goes negative")
-}
-
-func planFor(
-	t *testing.T,
-	scores []*dispatchcandidateservice.CandidateScore,
-	control *dispatchcontrol.DispatchControl,
-	policy Policy,
-) *dispatchconsoleports.DispatchPlan {
-	t.Helper()
-
-	moves := make([]*dispatchboardports.BoardMove, len(scores))
-	cost := make([][]float64, len(scores))
-	grid := make([][]*dispatchcandidateservice.CandidateScore, len(scores))
-
-	for i := range scores {
-		moves[i] = &dispatchboardports.BoardMove{
-			MoveID:    pulid.MustNew("sm_"),
-			ProNumber: "PRO-1",
-		}
-		cost[i] = make([]float64, len(scores))
-		grid[i] = make([]*dispatchcandidateservice.CandidateScore, len(scores))
-		for j := range scores {
-			if i == j {
-				cost[i][j] = costFor(scores[j], control)
-				grid[i][j] = scores[j]
-				continue
-			}
-			cost[i][j] = assignmentsolver.Forbidden
-		}
-	}
-
-	return buildPlan(&buildPlanParams{
-		Moves:    moves,
-		Solution: assignmentsolver.Solve(cost),
-		Scores:   grid,
-		Control:  control,
-		Policy:   policy,
-		Now:      1_700_000_000,
-	})
-}
-
-func autoExecuteControls() (*dispatchcontrol.DispatchControl, Policy) {
-	return &dispatchcontrol.DispatchControl{
-			AutoAssignConfidenceThreshold: decimal.NewFromFloat(0.85),
-		}, Policy{
-			Enabled:    true,
-			Tier:       agent.TierAutoExecute,
-			ShadowMode: false,
-		}
-}
-
-func TestBuildPlan_AutoExecutesOnlyAboveTheConfidenceThreshold(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{
-		score(95),
-		score(80),
-	}, control, policy)
-
-	require.Len(t, plan.Assignments, 2)
-	assert.True(t, plan.Assignments[0].AutoExecutable, "0.95 clears the 0.85 threshold")
-	assert.False(t, plan.Assignments[1].AutoExecutable, "0.80 does not")
-}
-
-// A pairing the agent is unsure about must remain a pending proposal. Dropping it would
-// take the move off the board with nobody watching it.
-func TestBuildPlan_BelowThresholdStillProducesAnAssignment(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(50)},
-		control, policy)
-
-	require.Len(t, plan.Assignments, 1)
-	assert.False(t, plan.Assignments[0].AutoExecutable)
-	assert.Empty(t, plan.Uncovered)
-}
-
-func TestBuildPlan_ShadowModeNeverAutoExecutes(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	policy.ShadowMode = true
-
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, policy)
-
-	require.Len(t, plan.Assignments, 1)
-	assert.False(t, plan.Assignments[0].AutoExecutable)
-	assert.True(t, plan.ShadowMode)
-}
-
-func TestBuildPlan_ProposeTierNeverAutoExecutes(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	policy.Tier = agent.TierPropose
-
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, policy)
-
-	require.Len(t, plan.Assignments, 1)
-	assert.False(t, plan.Assignments[0].AutoExecutable)
-	assert.Equal(t, agent.TierPropose, plan.AutonomyTier)
-}
-
-func TestBuildPlan_ActWithApprovalNeverAutoExecutes(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	policy.Tier = agent.TierActWithApproval
-
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{score(100)},
-		control, policy)
-
-	require.Len(t, plan.Assignments, 1)
-	assert.False(t, plan.Assignments[0].AutoExecutable)
-}
-
-func TestBuildPlan_UncoveredMovesExplainTheClosestDisqualification(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	blocked := score(70, blockFinding())
-	blocked.WorkerName = "Dana Ellis"
-
-	plan := planFor(t, []*dispatchcandidateservice.CandidateScore{blocked},
-		control, policy)
-
-	assert.Empty(t, plan.Assignments)
-	require.Len(t, plan.Uncovered, 1)
-	assert.Contains(t, plan.Uncovered[0].Reason, "Dana Ellis")
-	assert.Contains(t, plan.Uncovered[0].Reason, "disqualified")
-	assert.NotEmpty(t, plan.Uncovered[0].BestBlockedFindings)
-}
-
-func TestBuildPlan_SurvivesAnEmptySolverResult(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	moves := []*dispatchboardports.BoardMove{{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-9"}}
-
-	plan := buildPlan(&buildPlanParams{
-		Moves:    moves,
-		Solution: assignmentsolver.Result{RowAssignment: []int{}, ColAssignment: []int{}},
-		Scores:   [][]*dispatchcandidateservice.CandidateScore{nil},
-		Control:  control,
-		Policy:   policy,
-		Now:      1_700_000_000,
-	})
-
-	assert.Empty(t, plan.Assignments)
-	require.Len(t, plan.Uncovered, 1)
-	assert.Equal(t, "PRO-9", plan.Uncovered[0].ProNumber)
-}
-
-func TestSolve_NoDriversLeavesEveryMoveUncovered(t *testing.T) {
-	t.Parallel()
-
-	control, policy := autoExecuteControls()
-	svc := &Service{}
-
-	plan := svc.solve(&solveParams{
-		Moves: []*dispatchboardports.BoardMove{
-			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-1"},
-			{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-2"},
+	tests := []struct {
+		name     string
+		pairing  func() *dispatchplanports.Pairing
+		expected string
+	}{
+		{
+			name:     "a pairing with no hard cost is certain",
+			pairing:  func() *dispatchplanports.Pairing { return pairing(candidate()) },
+			expected: "1",
 		},
-		Snapshot: &dispatchcandidateservice.FleetSnapshot{},
-		Control:  control,
-		Policy:   policy,
-		Now:      1_700_000_000,
-	})
+		{
+			name: "hard cost takes its share of what covering the move is worth",
+			pairing: func() *dispatchplanports.Pairing {
+				c := candidate()
+				c.HardCents = 20_000
+				return pairing(c)
+			},
+			expected: "0.8",
+		},
+		{
+			name: "each advisory finding takes a tenth",
+			pairing: func() *dispatchplanports.Pairing {
+				c := candidate(warnFinding())
+				c.HardCents = 20_000
+				return pairing(c)
+			},
+			expected: "0.7",
+		},
+		{
+			name: "confidence rounds to two places",
+			pairing: func() *dispatchplanports.Pairing {
+				c := candidate()
+				c.HardCents = 33_333
+				return pairing(c)
+			},
+			expected: "0.67",
+		},
+		{
+			name: "hard cost above the coverage price clamps to zero",
+			pairing: func() *dispatchplanports.Pairing {
+				c := candidate()
+				c.HardCents = 250_000
+				return pairing(c)
+			},
+			expected: "0",
+		},
+		{
+			name: "findings never push confidence below zero",
+			pairing: func() *dispatchplanports.Pairing {
+				c := candidate(warnFinding(), warnFinding(), warnFinding(), warnFinding())
+				c.HardCents = 70_000
+				return pairing(c)
+			},
+			expected: "0",
+		},
+		{
+			name:     "a blocked pairing has no confidence",
+			pairing:  func() *dispatchplanports.Pairing { return pairing(candidate(blockFinding())) },
+			expected: "0",
+		},
+		{
+			name: "a move with no coverage price has no confidence",
+			pairing: func() *dispatchplanports.Pairing {
+				p := pairing(candidate())
+				p.CoveragePriceCents = 0
+				return p
+			},
+			expected: "0",
+		},
+		{
+			name: "a pairing without a candidate has no confidence",
+			pairing: func() *dispatchplanports.Pairing {
+				return &dispatchplanports.Pairing{CoveragePriceCents: 100_000}
+			},
+			expected: "0",
+		},
+	}
 
-	assert.Empty(t, plan.Assignments)
-	require.Len(t, plan.Uncovered, 2)
-	for _, uncovered := range plan.Uncovered {
-		assert.Equal(t, "No eligible driver was available for this move", uncovered.Reason)
-		assert.Empty(t, uncovered.BestBlockedFindings)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := confidenceFor(tt.pairing())
+
+			assert.True(t, got.Equal(decimal.RequireFromString(tt.expected)),
+				"expected %s, got %s", tt.expected, got)
+		})
 	}
 }
 
-func TestUncoveredFor_DistinguishesBlockedFromMerelyUnchosen(t *testing.T) {
+func TestPlannedAssignmentFor_AutoExecutable(t *testing.T) {
 	t.Parallel()
 
-	move := &dispatchboardports.BoardMove{MoveID: pulid.MustNew("sm_"), ProNumber: "PRO-3"}
+	threshold := decimal.RequireFromString("0.85")
 
-	eligible := score(85)
-	eligible.WorkerName = "Riley Chen"
-
-	unchosen := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{eligible}, nil)
-	assert.Contains(t, unchosen.Reason, "Riley Chen")
-	assert.Contains(t, unchosen.Reason, "no feasible pairing remained")
-	assert.NotContains(t, unchosen.Reason, "disqualified",
-		"an eligible candidate who lost the solve must not be reported as disqualified")
-	assert.Empty(t, unchosen.BestBlockedFindings)
-
-	maxDeadhead := int32(100)
-	control := &dispatchcontrol.DispatchControl{AutoAssignMaxDeadheadMiles: &maxDeadhead}
-	far := score(85)
-	far.WorkerName = "Sam Ortiz"
-	farMiles := 240.0
-	far.DeadheadMiles = &farMiles
-
-	overLimit := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{far}, control)
-	assert.Contains(t, overLimit.Reason, "Sam Ortiz")
-	assert.Contains(t, overLimit.Reason, "deadhead limit")
-	assert.Empty(t, overLimit.BestBlockedFindings)
-
-	blocked := score(70, warnFinding(), blockFinding())
-	blocked.WorkerName = "Dana Ellis"
-
-	disqualified := uncoveredFor(move, []*dispatchcandidateservice.CandidateScore{blocked}, nil)
-	assert.Contains(t, disqualified.Reason, "disqualified")
-	assert.Contains(t, disqualified.Reason, "Dana Ellis")
-	assert.NotContains(t, disqualified.Reason, "no drive time remaining",
-		"the findings carry the why; repeating it in the reason reads twice in the UI")
-	assert.NotEmpty(t, disqualified.BestBlockedFindings)
-}
-
-func TestRationaleFor_LeadsWithTheDrivingFactors(t *testing.T) {
-	t.Parallel()
-
-	candidate := score(88, warnFinding())
-	candidate.WorkerName = "Ada Reed"
-	candidate.Factors = []dispatchcandidateservice.ScoreFactor{
-		{Key: dispatchcontrol.FactorDeadhead, Detail: "12 empty miles to the pickup"},
-		{Key: dispatchcontrol.FactorOnTime, Detail: "3.0 hours of margin to the appointment"},
+	tests := []struct {
+		name       string
+		candidate  func() *dispatchplanports.CandidateScore
+		tier       agent.AutonomyTier
+		shadowMode bool
+		expected   bool
+	}{
+		{
+			name:      "a clean, located pairing above the threshold auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore { return candidate() },
+			tier:      agent.TierAutoExecute,
+			expected:  true,
+		},
+		{
+			name: "confidence exactly at the threshold auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore {
+				c := candidate()
+				c.HardCents = 15_000
+				return c
+			},
+			tier:     agent.TierAutoExecute,
+			expected: true,
+		},
+		{
+			name: "confidence below the threshold stays a proposal",
+			candidate: func() *dispatchplanports.CandidateScore {
+				c := candidate()
+				c.HardCents = 20_000
+				return c
+			},
+			tier:     agent.TierAutoExecute,
+			expected: false,
+		},
+		{
+			name:       "shadow mode never auto-executes",
+			candidate:  func() *dispatchplanports.CandidateScore { return candidate() },
+			tier:       agent.TierAutoExecute,
+			shadowMode: true,
+			expected:   false,
+		},
+		{
+			name:      "the propose tier never auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore { return candidate() },
+			tier:      agent.TierPropose,
+			expected:  false,
+		},
+		{
+			name:      "the act-with-approval tier never auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore { return candidate() },
+			tier:      agent.TierActWithApproval,
+			expected:  false,
+		},
+		{
+			name: "a driver with no known position never auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore {
+				c := candidate()
+				c.DeadheadMiles = nil
+				return c
+			},
+			tier:     agent.TierAutoExecute,
+			expected: false,
+		},
+		{
+			name: "a blocked driver never auto-executes",
+			candidate: func() *dispatchplanports.CandidateScore {
+				return candidate(blockFinding())
+			},
+			tier:     agent.TierAutoExecute,
+			expected: false,
+		},
 	}
 
-	rationale := rationaleFor(candidate, &dispatchboardports.BoardMove{ProNumber: "PRO-42"})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	assert.Contains(t, rationale, "Ada Reed")
-	assert.Contains(t, rationale, "PRO-42")
-	assert.Contains(t, rationale, "12 empty miles to the pickup")
-	assert.Contains(t, rationale, "1 advisory finding(s) to review")
+			p := pairing(tt.candidate())
+
+			planned := plannedAssignmentFor(&plannedAssignmentParams{
+				Pairing:    p,
+				Tier:       tt.tier,
+				Threshold:  threshold,
+				ShadowMode: tt.shadowMode,
+			})
+
+			assert.Same(t, p, planned.Pairing)
+			assert.Equal(t, tt.expected, planned.AutoExecutable)
+			assert.True(t, planned.Confidence.Equal(confidenceFor(p)))
+			assert.Equal(t, rationaleFor(p), planned.Rationale)
+		})
+	}
 }
 
-func TestEvidenceFor_RecordsMoveAndHOSAlways(t *testing.T) {
+func TestRationaleFor_NamesTheCostItsLargestLinesAndTheNextDriver(t *testing.T) {
 	t.Parallel()
 
-	candidate := score(80)
-	candidate.DriveRemainingMs = 6 * 3600 * 1000
+	c := candidate(warnFinding())
+	c.Cost = dispatcheconomics.Cost{
+		TotalCents: 18_449,
+		Lines: []dispatcheconomics.Line{
+			{Component: dispatcheconomics.ComponentIdleWait, Cents: 3_050},
+			{Component: dispatcheconomics.ComponentEmptyMiles, Cents: 9_000},
+			{Component: dispatcheconomics.ComponentLateness, Cents: 0},
+			{Component: dispatcheconomics.ComponentFairness, Cents: -500},
+			{Component: dispatcheconomics.ComponentHomeTime, Cents: 6_399},
+			{Component: dispatcheconomics.ComponentRest, Cents: 1_000},
+		},
+	}
+	p := pairing(c)
+	p.CoveragePriceCents = 120_000
+	p.Alternatives = []dispatchplanprice.Alternative{
+		{WorkerID: pulid.MustNew("wrk_"), WorkerName: "Lee Park", ExtraCents: 4_150},
+		{WorkerID: pulid.MustNew("wrk_"), WorkerName: "Sam Ortiz", ExtraCents: 9_900},
+	}
 
-	evidence := evidenceFor(candidate, &dispatchboardports.BoardMove{
-		MoveID:      pulid.MustNew("sm_"),
-		OriginCity:  "Joliet",
-		OriginState: "IL",
-	})
+	assert.Equal(
+		t,
+		"Ada Reed costs $184 to cover PRO-42, which is worth $1200: "+
+			"$90 empty miles, $64 time away from home, $31 waiting. "+
+			"Choosing Lee Park instead adds $42 to the plan. "+
+			"1 advisory finding(s) to review.",
+		rationaleFor(p),
+	)
+}
 
-	require.Len(t, evidence, 2, "deadhead evidence is omitted without a position")
+func TestRationaleFor_AFreePairingWithNoAlternativesIsOneSentence(t *testing.T) {
+	t.Parallel()
+
+	p := pairing(candidate())
+	p.ProNumber = "PRO-7"
+	p.CoveragePriceCents = 40_000
+
+	assert.Equal(t, "Ada Reed costs $0 to cover PRO-7, which is worth $400.", rationaleFor(p))
+}
+
+func TestRationaleFor_NoCandidateHasNoRationale(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, rationaleFor(&dispatchplanports.Pairing{ProNumber: "PRO-1"}))
+}
+
+func TestEvidenceFor_RecordsTheMoveTheClocksAndThePosition(t *testing.T) {
+	t.Parallel()
+
+	c := candidate()
+	miles := 42.4
+	c.DeadheadMiles = &miles
+	c.MinutesOfSlack = 95
+	c.DriveRemainingMs = 6 * 60 * millisPerMinute
+	c.ShiftRemainingMs = 10 * 60 * millisPerMinute
+	c.CycleRemainingMs = 50 * 60 * millisPerMinute
+	p := pairing(c)
+	p.OriginLabel = "Joliet, IL"
+	p.DestinationLabel = "Gary, IN"
+	p.PickupOpens = 1_700_000_000
+	p.CoveragePriceCents = 120_000
+
+	evidence := evidenceFor(p)
+
+	require.Len(t, evidence, 3)
 	assert.Equal(t, evidenceTypeMove, evidence[0].Type)
-	assert.Contains(t, evidence[0].Note, "Joliet, IL")
+	assert.Equal(t, p.MoveID.String(), evidence[0].ID)
+	assert.Equal(
+		t,
+		"Joliet, IL → Gary, IN, pickup window opens 2023-11-14T22:13:20Z; covering it is worth $1200",
+		evidence[0].Note,
+	)
 	assert.Equal(t, evidenceTypeHOS, evidence[1].Type)
-	assert.Contains(t, evidence[1].Note, "drive 360m")
+	assert.Equal(t, c.WorkerID.String(), evidence[1].ID)
+	assert.Equal(t, "drive 360m, shift 600m, cycle 3000m remaining", evidence[1].Note)
+	assert.Equal(t, evidenceTypeDeadhead, evidence[2].Type)
+	assert.Equal(t, c.TractorID.String(), evidence[2].ID)
+	assert.Equal(t, "42 empty miles to the pickup; 95 minutes of appointment margin",
+		evidence[2].Note)
+}
 
-	withPosition := score(80)
-	miles := 42.0
-	withPosition.DeadheadMiles = &miles
-	assert.Len(t, evidenceFor(withPosition, &dispatchboardports.BoardMove{}), 3)
+func TestEvidenceFor_OmitsThePositionWhenItIsUnknown(t *testing.T) {
+	t.Parallel()
+
+	c := candidate()
+	c.DeadheadMiles = nil
+
+	evidence := evidenceFor(pairing(c))
+
+	require.Len(t, evidence, 2)
+	assert.Equal(t, evidenceTypeMove, evidence[0].Type)
+	assert.Equal(t, evidenceTypeHOS, evidence[1].Type)
 }
 
 func TestToolParamsFor(t *testing.T) {
 	t.Parallel()
 
-	planned := &dispatchconsoleports.DispatchPlannedAssignment{
-		MoveID:    pulid.MustNew("sm_"),
-		WorkerID:  pulid.MustNew("wrk_"),
-		TractorID: pulid.MustNew("trac_"),
-	}
+	c := candidate()
 
-	params, err := toolParamsFor(planned)
+	params, err := toolParamsFor(c)
 	require.NoError(t, err)
-	assert.Equal(t, planned.MoveID.String(), params["shipmentMoveId"])
-	assert.Equal(t, planned.WorkerID.String(), params["primaryWorkerId"])
-	assert.Equal(t, planned.TractorID.String(), params["tractorId"])
-	assert.NotContains(t, params, "trailerId")
+	assert.Equal(t, map[string]any{
+		"shipmentMoveId":  c.MoveID.String(),
+		"primaryWorkerId": c.WorkerID.String(),
+		"tractorId":       c.TractorID.String(),
+	}, params)
 
-	planned.TrailerID = pulid.MustNew("tr_")
-	params, err = toolParamsFor(planned)
+	c.TrailerID = pulid.MustNew("tr_")
+	params, err = toolParamsFor(c)
 	require.NoError(t, err)
-	assert.Equal(t, planned.TrailerID.String(), params["trailerId"])
+	assert.Equal(t, c.TrailerID.String(), params["trailerId"])
 }

@@ -9,8 +9,8 @@ import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import { useMapFocusStore } from "../../../map/map-focus-store";
 import { NextStep } from "../../expanded-row/next-step";
 import { useShipmentBoardUrl } from "../../url-state";
-import { formatTimelineTime } from "./timeline-format";
-import type { TimelineScale } from "./timeline-scale";
+import { formatTimelineTime } from "@/components/timeline/timeline-format";
+import type { TimelineScale } from "@/components/timeline/timeline-scale";
 
 /**
  * The selected load beside the timeline: its stops with appointments and

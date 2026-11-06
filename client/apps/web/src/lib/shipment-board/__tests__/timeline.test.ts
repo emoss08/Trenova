@@ -1,16 +1,14 @@
 import type { CapacityUnit } from "@/lib/graphql/shipment-board";
 import type { Shipment } from "@trenova/shared/types/shipment";
+import { packLane } from "@/lib/timeline/lanes";
 import { describe, expect, it } from "vitest";
 import {
   buildCoverageLanes,
   buildTimelineLoads,
   checkAssignment,
-  dayBoundaries,
   dayStartOfIso,
   groupLoadsByStage,
   isoDay,
-  laneGaps,
-  packLane,
   rangeFirstDay,
   type TimelineLoad,
 } from "../timeline";
@@ -82,22 +80,7 @@ function withMove(s: Shipment, move: Record<string, unknown>): Shipment {
 
 const NOW = at(10);
 
-describe("day boundaries", () => {
-  it("starts each day at its own local midnight across a daylight-saving change", () => {
-    // America/Chicago falls back on Sunday 1 November 2026: that day is 25 hours long.
-    const satStart = dayStartOfIso("2026-10-31", "America/Chicago")!;
-    const boundaries = dayBoundaries(satStart, 3, "America/Chicago");
-
-    expect(boundaries.map((b) => isoDay(b, "America/Chicago"))).toEqual([
-      "2026-10-31",
-      "2026-11-01",
-      "2026-11-02",
-      "2026-11-03",
-    ]);
-    expect(boundaries[2] - boundaries[1]).toBe(25 * HOUR);
-    expect(boundaries[1] - boundaries[0]).toBe(24 * HOUR);
-  });
-
+describe("days", () => {
   it("reads an ISO date back to the start of that day, and refuses anything else", () => {
     const start = dayStartOfIso("2026-11-03", "UTC");
 
@@ -268,53 +251,6 @@ function load(
     ),
   ])[0];
 }
-
-describe("packLane", () => {
-  it("stacks overlapping loads into rows and marks both as double-booked", () => {
-    const packed = packLane([load("a", 8, 14), load("b", 12, 18), load("c", 15, 20)]);
-
-    expect(packed.rows).toBe(2);
-    expect(packed.placed.map((p) => [p.load.id, p.row])).toEqual([
-      ["a", 0],
-      ["b", 1],
-      ["c", 0],
-    ]);
-    expect([...packed.conflicts].sort()).toEqual(["a", "b", "c"]);
-  });
-
-  it("packs a lane that is not a driver's without calling its overlaps double-booked", () => {
-    const packed = packLane([load("a", 8, 14), load("b", 12, 18)], { flagOverlaps: false });
-
-    expect(packed.rows).toBe(2);
-    expect(packed.conflicts.size).toBe(0);
-  });
-
-  it("keeps back-to-back loads on one row with no conflict", () => {
-    const packed = packLane([load("a", 8, 12), load("b", 12, 16)]);
-
-    expect(packed.rows).toBe(1);
-    expect(packed.conflicts.size).toBe(0);
-  });
-});
-
-describe("laneGaps", () => {
-  it("labels free time between loads and the open time after the last one", () => {
-    const gaps = laneGaps([load("a", 8, 11), load("b", 15, 17)], at(10), at(24));
-
-    expect(gaps).toEqual([
-      { start: at(11), end: at(15), open: false },
-      { start: at(17), end: at(24), open: true },
-    ]);
-  });
-
-  it("leaves out free time too short to read", () => {
-    expect(laneGaps([load("a", 8, 11), load("b", 12, 23)], at(8), at(24))).toEqual([]);
-  });
-
-  it("frees a lane with no loads for the whole range", () => {
-    expect(laneGaps([], at(10), at(24))).toEqual([{ start: at(10), end: at(24), open: true }]);
-  });
-});
 
 /** A load on a driver's assignment: the worker, their tractor, its code. */
 function driven(

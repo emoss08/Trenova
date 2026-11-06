@@ -3,9 +3,11 @@ import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import { DragOverlay } from "@dnd-kit/core";
 import { Suspense, lazy } from "react";
+import { previousAssignmentOf } from "./assignment-input";
 import type { DispatchActions } from "./use-dispatch-actions";
 
-// Neither dialog is on the path to a rendered board: one needs a drop, the other a plan.
+// None of these is on the path to a rendered board: one needs a drop on the timeline,
+// another a shadow plan.
 // Both stay out of the initial download until the dispatcher does that.
 const PreflightDialog = lazy(() =>
   import("./preflight-dialog").then((m) => ({ default: m.PreflightDialog })),
@@ -57,17 +59,25 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
             target={preflight}
             onCancel={closePreflight}
             isAssigning={actions.isAssigning}
-            onConfirm={(params) => {
-              actions.assign([
+            onConfirm={async (params) => {
+              const { move, driver } = preflight;
+              const assigned = await actions.assign([
                 {
-                  moveId: params.moveId,
-                  primaryWorkerId: params.workerId,
-                  tractorId: params.tractorId,
-                  trailerId: params.trailerId,
-                  reassign: params.reassign,
+                  input: {
+                    moveId: params.moveId,
+                    primaryWorkerId: params.workerId,
+                    tractorId: params.tractorId,
+                    trailerId: params.trailerId,
+                    reassign: params.reassign,
+                  },
+                  proNumber: move.proNumber,
+                  driverName: `${driver.firstName} ${driver.lastName}`.trim(),
+                  previous: previousAssignmentOf(move),
                 },
               ]);
-              closePreflight();
+              // A failed assign keeps the pre-flight open, so the dispatcher sees why and
+              // can try again or pick someone else.
+              if (assigned) closePreflight();
             }}
           />
         </Suspense>
@@ -118,17 +128,9 @@ export function ConsoleOverlays({ actions }: { actions: DispatchActions }) {
         </CapabilityGate>
       )}
 
-      {actions.plan && (
+      {actions.shadowPlan && (
         <Suspense fallback={null}>
-          <PlanReviewDialog
-            plan={actions.plan}
-            onClose={actions.clearPlan}
-            isAssigning={actions.isAssigning}
-            onApply={(input) => {
-              actions.assign(input);
-              actions.clearPlan();
-            }}
-          />
+          <PlanReviewDialog plan={actions.shadowPlan} onClose={actions.clearPlan} />
         </Suspense>
       )}
     </>

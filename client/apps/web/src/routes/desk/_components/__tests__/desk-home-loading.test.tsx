@@ -170,6 +170,21 @@ describe("Desk home headline while its figures load", () => {
 });
 
 describe("Desk home briefing cut to the reader's access", () => {
+  it("makes the count of decisions waiting a link to them", async () => {
+    renderHome();
+
+    const link = await screen.findByRole("link", { name: "2 decisions are waiting on you." });
+    expect(link).toHaveAttribute("href", "/desk/decisions");
+  });
+
+  it("asks how it can help, with no link, when nothing waits", async () => {
+    state.summary = { isPending: false, total: 0 };
+    renderHome();
+
+    expect(await screen.findByText("How can I help today?")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /waiting on you/ })).toBeNull();
+  });
+
   it("says nothing about access when the reader sees the whole briefing", async () => {
     state.briefing = {
       settled: true,

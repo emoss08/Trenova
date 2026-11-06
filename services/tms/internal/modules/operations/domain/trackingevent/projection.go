@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +30,7 @@ type Verdict struct {
 }
 
 type Projection struct {
-	Changes  []shipment.StopActualChange
+	Changes  []stopactual.Change
 	Verdicts map[pulid.ID]Verdict
 }
 
@@ -100,7 +102,7 @@ func Project(move *shipment.ShipmentMove, events []*TrackingEvent, opts Options)
 			bounds:     bounds{lower: arrival, upper: nextArrival},
 		}, projection.Verdicts)
 
-		change := shipment.StopActualChange{StopID: stop.ID}
+		change := stopactual.Change{StopID: stop.ID}
 		if differs(stop.ActualArrival, arrival) {
 			change.Arrival = arrival
 		}
