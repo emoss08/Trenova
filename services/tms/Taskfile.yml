@@ -73,13 +73,20 @@ vars:
   # included), keeps the server running when the new binary is identical, and
   # restarts it without a build when config/ changes (--restart).
   GOCUT_WATCH: '{{if and .GOCUT (ne .GOCUT "off")}}true{{end}}'
-  # The one build command of every hot-reload task (run-watch, watch,
-  # run-worker-watch). Each task appends -o and its main package.
+  # The one build command of every local binary (run-watch, watch,
+  # run-worker-watch, build-cli and the tasks that run the CLI). Each task
+  # appends -o and its main package, and sets WATCH_CGO.
+  # build-watch-targets builds all three mains with it.
   WATCH_BUILD: >-
     go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}
     -gcflags=all=-dwarf=false
     -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'
     -ldflags='-s -w'
+  # cgo off, as in deploy/Dockerfile.tms: nothing in the module uses it, and a
+  # package with cgo files hashes the local C compiler into its cache key, so
+  # with it on no machine shares objects with another, and linux CI cannot
+  # fill a Mac's cache.
+  WATCH_CGO: "0"
   # Search is off by default, Gotenberg only renders PDFs, and Redis Insight and
   # the Samsara simulator are debugging aids, so the API starts without them.
   # Temporal stays: every AI feature and background job runs on it. The imaging
@@ -123,9 +130,11 @@ tasks:
 
   build-cli:
     desc: Build the unified CLI tool
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -buildvcs=false {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
+      - "{{.WATCH_BUILD}} -buildvcs=false -o {{.CLI_PATH}} ./cmd/cli"
 
   build-devdb:
     desc: Build trenova-devdb, the development database tool (migrations, seeds, templates, volume data, reset)
@@ -141,6 +150,8 @@ tasks:
 
   run-watch:
     desc: Run the API server with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - >-
         {{if .GOCUT_WATCH}}
@@ -152,6 +163,14 @@ tasks:
         --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
         {{end}}
 
+  build-watch-targets:
+    desc: "Build cmd/api, cmd/worker and cmd/cli with the watch flags (GOOS/GOARCH from the environment); CI fills the shared cache with it"
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}/watch-targets
+      - "{{.WATCH_BUILD}} -buildvcs=false -o {{.BUILD_DIR}}/watch-targets/ ./cmd/api ./cmd/worker ./cmd/cli"
+
   build-bench:
     desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
     cmds:
@@ -159,6 +178,8 @@ tasks:
 
   run-worker-watch:
     desc: Run the worker service with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - >-
         {{if .GOCUT_WATCH}}
