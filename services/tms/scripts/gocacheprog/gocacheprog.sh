@@ -74,10 +74,29 @@ if [ "${1:-}" = clear-local ]; then
 	exec "$bin" clear-local
 fi
 
-if [ -z "$endpoint" ] || [ -z "$access_key_id" ] || [ -z "$secret_access_key" ]; then
-	echo "gocacheprog: no credentials in $credentials; using the local cache only" >&2
+local_only() {
+	echo "gocacheprog: $1; using the local cache only" >&2
 	export GOBUILDCACHE_BACKEND_TYPE=disk
 	exec "$bin"
+}
+
+if [ -z "$endpoint" ] || [ -z "$access_key_id" ] || [ -z "$secret_access_key" ]; then
+	local_only "no credentials in $credentials"
+fi
+
+# gobuildcache exits when it cannot reach the bucket, and the go command fails
+# with it, so a revoked key or an R2 outage would break every build. Check the
+# bucket first (the key goes to curl through a descriptor, not its arguments)
+# and remember a success for ten minutes.
+mkdir -p "$cache_root"
+reachable="$cache_root/.bucket-reachable"
+if [ -z "$(find "$reachable" -mmin -10 2>/dev/null)" ]; then
+	if ! curl -fsS -o /dev/null -I --max-time 10 --aws-sigv4 "aws:amz:auto:s3" \
+		-K <(printf 'user = "%s:%s"\n' "$access_key_id" "$secret_access_key") \
+		"${endpoint%/}/$bucket" </dev/null; then
+		local_only "cannot reach bucket $bucket"
+	fi
+	touch "$reachable"
 fi
 
 export GOBUILDCACHE_BACKEND_TYPE=s3

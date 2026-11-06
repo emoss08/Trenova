@@ -48,6 +48,23 @@ vars:
   GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
   GOCUT_WATCH_FLAGS: '{{if .GO_JOBS}}--delay 2000{{end}}'
+  # GO_REMOTE_CACHE=on reads compiled packages from the shared build cache on
+  # R2, which CI fills on every push to master for linux/amd64 and darwin/arm64
+  # with the watch flags (docs/engineering/go-build-cache.md). Read-only; needs
+  # gobuildcache (task go-remote-cache-install) and a read token in
+  # ~/.config/trenova/go-remote-cache.env, or a cloud session's R2_* variables.
+  GO_REMOTE_CACHE: '{{.GO_REMOTE_CACHE | default "off"}}'
+  # A remote hit costs a round trip (about 100 ms p50 from a cloud session), and
+  # the go command looks up only as many actions at once as it runs (-p, one
+  # per core), so the watch builds run GO_REMOTE_CACHE_JOBS at once while it is
+  # on. A fresh cloud session's cmd/api build read the cache in 267 s at -p 4,
+  # 71 s at -p 16 and 43 s at -p 32; a rebuild that misses 791 packages took
+  # 76 s at -p 4 and 67 s at -p 32 (3 GB peak). LOW_RESOURCE keeps its own -p.
+  GO_REMOTE_CACHE_JOBS: '{{.GO_REMOTE_CACHE_JOBS | default "32"}}'
+  GO_REMOTE_CACHE_JOBS_FLAG: '{{if and (eq .GO_REMOTE_CACHE "on") (not .GO_JOBS)}} -p={{.GO_REMOTE_CACHE_JOBS}}{{end}}'
+  GOCACHEPROG_SCRIPT: "{{.TASKFILE_DIR}}/scripts/gocacheprog/gocacheprog.sh"
+  GOBUILDCACHE_VERSION:
+    sh: cat "{{.TASKFILE_DIR}}/scripts/gocacheprog/version"
   # gocut builds the local binaries (the watch tasks and build-cli, so run,
   # run-worker and every task that runs the CLI) through -toolexec. gocut
   # reuses a package's previous compile when nothing the package uses from a
@@ -79,7 +96,7 @@ vars:
   # build-watch-targets builds all three mains with it, which is how CI fills
   # the shared cache, so a change here changes what developers hit.
   WATCH_BUILD: >-
-    go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}
+    go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}{{.GO_REMOTE_CACHE_JOBS_FLAG}}
     -gcflags=all=-dwarf=false
     -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'
     -ldflags='-s -w'
@@ -94,15 +111,6 @@ vars:
   # worker stays: every document preview, page view and capture page goes through it.
   DOCKER_MINIMAL_SERVICES: '{{.DOCKER_MINIMAL_SERVICES | default "db redis minio temporal imaging"}}'
   DOCKER_SERVICES: '{{if .GO_JOBS}}{{.DOCKER_MINIMAL_SERVICES}}{{end}}'
-  # GO_REMOTE_CACHE=on reads compiled packages from the shared build cache on
-  # R2, which CI fills on every push to master for linux/amd64 and darwin/arm64
-  # with the watch flags (docs/engineering/go-build-cache.md). Read-only; needs
-  # gobuildcache (task go-remote-cache-install) and a read token in
-  # ~/.config/trenova/go-remote-cache.env, or a cloud session's R2_* variables.
-  GO_REMOTE_CACHE: '{{.GO_REMOTE_CACHE | default "off"}}'
-  GOCACHEPROG_SCRIPT: "{{.TASKFILE_DIR}}/scripts/gocacheprog/gocacheprog.sh"
-  GOBUILDCACHE_VERSION:
-    sh: cat "{{.TASKFILE_DIR}}/scripts/gocacheprog/version"
 
 # 769 of 832 packages depend on gin, so a go command that misses the tag set
 # rebuilds and re-caches almost the whole tree under a second configuration.
@@ -115,7 +123,11 @@ vars:
 # `run-watch` start, which keeps a local server from competing with the build.
 #
 # GOCACHEPROG is empty, which Go treats as unset, unless GO_REMOTE_CACHE=on.
-# CI exports its own, which takes precedence.
+# CI exports its own, which takes precedence. With a cache program the go
+# command's module index, which it keeps in the build cache under each
+# package's absolute path and file times, is one remote miss per first-party
+# package on every new checkout; goindex=0 reads the directories instead
+# (a warm cmd/api build: 158 s with the index, 9 s without).
 #
 # GOTOOLCHAIN pins the exact Go release, because the go directive in go.work is
 # only a minimum and gocut reads that one release's export data: on any other
@@ -127,6 +139,7 @@ env:
   GOMAXPROCS: '{{.GO_JOBS}}'
   GOGC: '{{if .GO_JOBS}}50{{end}}'
   GOCACHEPROG: '{{if eq .GO_REMOTE_CACHE "on"}}{{.GOCACHEPROG_SCRIPT}}{{end}}'
+  GODEBUG: '{{if eq .GO_REMOTE_CACHE "on"}}goindex=0{{end}}'
 
 tasks:
   default:
