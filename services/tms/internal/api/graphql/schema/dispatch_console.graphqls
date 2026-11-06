@@ -293,6 +293,11 @@ type DispatchBoardDriver {
   timeOff: [DispatchTimeOff!]!
   findings: [DispatchFinding!]!
   plannedMove: DispatchDriverPlannedMove
+  """
+  When the driver was last home: recorded on the worker, seen by telematics near home, or the
+  end of approved time off. Absent when nothing says.
+  """
+  lastHomeAt: Timestamp
 }
 
 """

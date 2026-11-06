@@ -1,3 +1,4 @@
+import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type {
   DispatchBoardDriver,
   DispatchDriverPlannedMove,
@@ -68,6 +69,7 @@ function driver(overrides: Partial<DispatchBoardDriver> = {}): DispatchBoardDriv
     timeOff: [],
     findings: [],
     plannedMove: null,
+    lastHomeAt: null,
     ...overrides,
   } as DispatchBoardDriver;
 }
@@ -122,5 +124,22 @@ describe("DriverInspector planned move", () => {
 
     expect(screen.queryByText("Plan")).toBeNull();
     expect(screen.queryByText(/Planned on/)).toBeNull();
+  });
+});
+
+describe("DriverInspector last home", () => {
+  it("says when the driver was last home", () => {
+    const lastHomeAt = 1_762_300_800;
+    renderInspector(driver({ lastHomeAt }));
+
+    expect(screen.getByText("Last home").nextElementSibling).toHaveTextContent(
+      formatUnixDateMedium(lastHomeAt),
+    );
+  });
+
+  it("says nothing about home when no record says when the driver was there", () => {
+    renderInspector(driver({ lastHomeAt: null }));
+
+    expect(screen.queryByText("Last home")).toBeNull();
   });
 });

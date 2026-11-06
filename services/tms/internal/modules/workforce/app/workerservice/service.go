@@ -370,6 +370,7 @@ func (s *Service) update(
 	}
 
 	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
+	entity.KeepHomeWithAddress(original)
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

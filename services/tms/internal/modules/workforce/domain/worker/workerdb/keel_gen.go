@@ -644,6 +644,10 @@ var workersTable = schema.Table{
 		{Name: "gender", Quoted: `"gender"`, Field: "Gender", Kind: schema.KindString, Flags: 0, Label: `Gender`, JSON: `gender`, Enum: enumGender[:], Report: &reportDimEnum},
 		{Name: "can_be_assigned", Quoted: `"can_be_assigned"`, Field: "CanBeAssigned", Kind: schema.KindBool, Flags: 0, Label: `Can Be Assigned`, JSON: `canBeAssigned`, Report: &reportDimBool},
 		{Name: "available_for_dispatch", Quoted: `"available_for_dispatch"`, Field: "AvailableForDispatch", Kind: schema.KindBool, Flags: 0, Label: `Available For Dispatch`, JSON: `availableForDispatch`, Report: &reportDimBool},
+		{Name: "home_latitude", Quoted: `"home_latitude"`, Field: "HomeLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Home Latitude`, JSON: `homeLatitude`, Report: &reportMeasureFloatHidden},
+		{Name: "home_longitude", Quoted: `"home_longitude"`, Field: "HomeLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable, Label: `Home Longitude`, JSON: `homeLongitude`, Report: &reportMeasureFloatHidden},
+		{Name: "home_place_id", Quoted: `"home_place_id"`, Field: "HomePlaceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Home Place ID`, JSON: `homePlaceId`, Report: &reportDimStringHidden},
+		{Name: "last_home_at", Quoted: `"last_home_at"`, Field: "LastHomeAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Home`, Doc: `When the driver was last at home, as a dispatcher recorded it or as the telematics feed saw them there. The planner also counts the end of approved time off as a day at home.`, JSON: `lastHomeAt`, Report: &reportDimEpoch},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
@@ -661,14 +665,14 @@ var workersTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 33},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 37},
 	Returning:    []int32{15},
-	Version:      31,
+	Version:      35,
 	AutoID:       0,
-	AutoCreate:   32,
-	AutoUpdate:   33,
+	AutoCreate:   36,
+	AutoUpdate:   37,
 	IDPrefix:     "wrk_",
 	New:          newWorker,
 	NewN:         newNWorker,
@@ -716,6 +720,10 @@ type WorkersTable struct {
 	Gender                GenderCol
 	CanBeAssigned         keel.BoolCol
 	AvailableForDispatch  keel.BoolCol
+	HomeLatitude          keel.Float64Col
+	HomeLongitude         keel.Float64Col
+	HomePlaceID           keel.StringCol
+	LastHomeAt            keel.Int64Col
 	Version               keel.Int64Col
 	CreatedAt             keel.Int64Col
 	UpdatedAt             keel.Int64Col
@@ -755,9 +763,13 @@ var Workers = &WorkersTable{
 	Gender:                GenderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 28}}},
 	CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 29}},
 	AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: &workersRef, Index: 30}},
-	Version:               keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 31}},
-	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 32}},
-	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 33}},
+	HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 31}},
+	HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: &workersRef, Index: 32}},
+	HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: &workersRef, Index: 33}},
+	LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 34}},
+	Version:               keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 35}},
+	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 36}},
+	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &workersRef, Index: 37}},
 }
 
 // BuildWorkers builds the table of workers for ref. Generated relation and alias methods call it.
@@ -795,9 +807,13 @@ func BuildWorkers(r *keel.Ref) *WorkersTable {
 		Gender:                GenderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		CanBeAssigned:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 29}},
 		AvailableForDispatch:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 30}},
-		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		HomeLatitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 31}},
+		HomeLongitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 32}},
+		HomePlaceID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
+		LastHomeAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
+		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 	}
 }
 
@@ -1284,10 +1300,18 @@ func ptrWorker(p unsafe.Pointer, c int32) any {
 	case 30:
 		return &r.AvailableForDispatch
 	case 31:
-		return &r.Version
+		return &r.HomeLatitude
 	case 32:
-		return &r.CreatedAt
+		return &r.HomeLongitude
 	case 33:
+		return &r.HomePlaceID
+	case 34:
+		return &r.LastHomeAt
+	case 35:
+		return &r.Version
+	case 36:
+		return &r.CreatedAt
+	case 37:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1398,10 +1422,30 @@ func valueWorker(p unsafe.Pointer, c int32) any {
 	case 30:
 		return r.AvailableForDispatch
 	case 31:
-		return r.Version
+		if r.HomeLatitude == nil {
+			return nil
+		}
+		return *r.HomeLatitude
 	case 32:
-		return r.CreatedAt
+		if r.HomeLongitude == nil {
+			return nil
+		}
+		return *r.HomeLongitude
 	case 33:
+		if r.HomePlaceID == "" {
+			return nil
+		}
+		return r.HomePlaceID
+	case 34:
+		if r.LastHomeAt == nil {
+			return nil
+		}
+		return *r.LastHomeAt
+	case 35:
+		return r.Version
+	case 36:
+		return r.CreatedAt
+	case 37:
 		return r.UpdatedAt
 	}
 	return nil
@@ -3095,6 +3139,8 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueTSVector, Aggs: schema.AggsCount}
 
 var reportMeasureDecimal = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueDecimal, Aggs: schema.AggsNumeric}
+
+var reportMeasureFloatHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueFloat, Aggs: schema.AggsNumeric}
 
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 

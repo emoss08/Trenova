@@ -83,6 +83,7 @@ func decorateDrivers(
 			row.Commitments,
 			now,
 		)
+		row.LastHomeAt = snapshot.LastHomeAt(driver)
 		row.Findings = availabilityFindings(driver, snapshot, control, now)
 		row.Availability = availabilityFor(row, now)
 

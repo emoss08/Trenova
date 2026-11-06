@@ -370,6 +370,7 @@ func mapDispatchBoardDriver(
 		TimeOff:                timeOff,
 		Findings:               mapDispatchFindings(driver.Findings),
 		PlannedMove:            mapDispatchDriverPlannedMove(driver.PlannedMove),
+		LastHomeAt:             gqlscalar.NonZeroIntPtr(driver.LastHomeAt),
 	}
 }
 

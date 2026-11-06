@@ -205,6 +205,11 @@ export function DriverInspector({
                 </span>
               </DescriptionItem>
             ) : null}
+            {driver.lastHomeAt ? (
+              <DescriptionItem label={t("Last home")}>
+                {formatUnixDateMedium(driver.lastHomeAt)}
+              </DescriptionItem>
+            ) : null}
             {nextTimeOff ? (
               <DescriptionItem label={t("Time off")}>
                 {t(

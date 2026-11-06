@@ -2702,6 +2702,8 @@
   "worker.gender.Female": "Female",
   "worker.gender.Male": "Male",
   "worker.id": "ID",
+  "worker.lastHomeAt": "Last Home",
+  "worker.lastHomeAt@description": "When the driver was last at home, as a dispatcher recorded it or as the telematics feed saw them there. The planner also counts the end of approved time off as a day at home.",
   "worker.lastName": "Last Name",
   "worker.leaveType": "Leave Type",
   "worker.leaveType.FMLA": "FMLA",

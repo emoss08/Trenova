@@ -13739,6 +13739,11 @@ type DispatchBoardDriver {
   formattedLocation: String!
   hosIsStale: Boolean!
   hosRecordedAt: Timestamp!
+  """
+  When the driver was last home: recorded on the worker, seen by telematics near home, or the
+  end of approved time off. Absent when nothing says.
+  """
+  lastHomeAt: Timestamp
   lastName: String!
   latitude: Float
   longitude: Float

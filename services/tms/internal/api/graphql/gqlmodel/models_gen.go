@@ -4518,6 +4518,9 @@ type DispatchBoardDriver struct {
 	TimeOff                []*DispatchTimeOff         `json:"timeOff"`
 	Findings               []*DispatchFinding         `json:"findings"`
 	PlannedMove            *DispatchDriverPlannedMove `json:"plannedMove,omitempty"`
+	// When the driver was last home: recorded on the worker, seen by telematics near home, or the
+	// end of approved time off. Absent when nothing says.
+	LastHomeAt *int `json:"lastHomeAt,omitempty"`
 }
 
 type DispatchBoardInput struct {

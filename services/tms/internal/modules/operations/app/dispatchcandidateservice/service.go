@@ -28,6 +28,7 @@ const (
 	positionMaxAgeSeconds = int64(4 * 3600)
 
 	workloadLookbackSeconds = int64(7 * 24 * 3600)
+	homeLookbackSeconds     = int64(60 * 24 * 3600)
 
 	laneExperienceLookbackSeconds = int64(365 * 24 * 3600)
 
@@ -408,6 +409,20 @@ func (s *Service) loadSchedules(
 	for _, pto := range timeOff {
 		snapshot.TimeOffByWorker[pto.WorkerID] = append(snapshot.TimeOffByWorker[pto.WorkerID], pto)
 	}
+
+	pastTimeOff, err := s.consoleRepo.ListWorkerTimeOff(
+		ctx,
+		&dispatchboardports.ListWorkerWindowsRequest{
+			TenantInfo:  req.TenantInfo,
+			WorkerIDs:   workerIDs,
+			WindowStart: snapshot.Now - homeLookbackSeconds,
+			WindowEnd:   snapshot.Now,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	snapshot.LastTimeOffEnd = lastTimeOffEnds(pastTimeOff, snapshot.Now)
 
 	workload, err := s.consoleRepo.ListWorkerWorkload(ctx, &dispatchboardports.ListWorkloadRequest{
 		TenantInfo: req.TenantInfo,

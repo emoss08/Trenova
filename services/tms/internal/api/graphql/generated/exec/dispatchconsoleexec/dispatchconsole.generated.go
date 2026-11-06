@@ -610,6 +610,15 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalODispatchDriverPlannedMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchDriverPlannedMove),
 			},
+			{
+				Name:     "lastHomeAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchBoardDriver)
+					return obj.LastHomeAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
 		}},
 		{Object: "DispatchBoardMove", Fields: []*gqlexec.Field{
 			{

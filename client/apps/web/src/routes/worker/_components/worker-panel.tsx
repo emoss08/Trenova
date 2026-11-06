@@ -33,6 +33,10 @@ export function WorkerPanel({ open, onOpenChange, mode, row }: DataTablePanelPro
       profilePicUrl: "",
       canBeAssigned: false,
       availableForDispatch: true,
+      homeLatitude: null,
+      homeLongitude: null,
+      homePlaceId: "",
+      lastHomeAt: null,
       assignmentBlocked: "",
       profile: {
         dob: undefined,

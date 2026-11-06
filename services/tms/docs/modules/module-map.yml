@@ -381,6 +381,7 @@ modules:
       - driverportalinvitationservice
       - driverportalrecordsservice
       - driverportalservice
+      - homevisitservice
       - hosprojection
       - orgholidayservice
       - performancereviewservice

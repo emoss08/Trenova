@@ -185,6 +185,7 @@ query DispatchBoard($input: DispatchBoardInput!) {
         message
         regulation
       }
+      lastHomeAt
       plannedMove {
         moveId
         proNumber

@@ -66,6 +66,7 @@ type BoardDriver struct {
 	CommittedMiles         float64                                `json:"committedMiles"`
 	CommittedRevenue       float64                                `json:"committedRevenue"`
 	PlannedMove            *PlannedMove                           `json:"plannedMove"`
+	LastHomeAt             int64                                  `json:"lastHomeAt"`
 }
 
 type PlannedMove struct {

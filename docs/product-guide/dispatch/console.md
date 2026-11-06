@@ -22,7 +22,7 @@ Keywords: approve proposal, nova picked a driver, decline proposal, proposed dri
 2. Under **Nova proposes**, read the driver, the reason and the dry run line. **Dry run: would go through as shown** means the move has not changed since it was proposed.
 3. Select **Approve** (A) to assign that driver. The same proposal leaves Decisions too.
 4. Or select **Decline** (D), write why in the box, and select **Decline proposal**. Nova and whoever looks after it see the reason.
-5. If an approval can't be carried out, the move stays in the queue with **Approved (driver); not assigned** and the reason, such as which stop's times conflict. Open it to see the same under the move's details, select **Open shipment** to fix what was refused, then assign a driver or select **Propose coverage** again. The note goes away once the move changes or a newer proposal replaces it.
+5. If an approval can't be carried out, the move stays in the queue marked as approved for the driver but not assigned, with the reason, such as which stop's times conflict. Open it to see the same under the move's details, select **Open shipment** to fix what was refused, then assign a driver or select **Propose coverage** again. The note goes away once the move changes or a newer proposal replaces it.
 
 ### Assign a driver yourself
 Keywords: cover a load, dispatch a driver, assign truck, rank drivers, pre-flight, driver cost
@@ -42,7 +42,7 @@ Keywords: auto dispatch, optimize assignments, propose drivers, auto assign
 ### Plan on the timeline
 Keywords: drag a load onto a driver, driver lanes, free time, gantt, plan relays
 1. Open [Console](/dispatch/console) and select **Timeline**. Pick **Day**, **2 Days** or **3 Days** for the window.
-2. The moves that need a driver come first, one row each, grouped by when their window is. Under **Drivers**, each lane shows the moves the driver holds, time off in its own band, and free time labeled (**Free from 2:00 PM**, **Free 4h**). A red dot on a driver means two of their moves overlap.
+2. The moves that need a driver come first, one row each, grouped by when their window is. Under **Drivers**, each lane shows the moves the driver holds, time off in its own band, and free time labeled with when it starts or how long it lasts. A red dot on a driver means two of their moves overlap.
 3. Hover a bar to see its stops and times. Select a bar or a row to open it in the inspector.
 4. Drag a move's bar onto a driver (or focus it, press Space, move with the arrow keys and press Space again). The pre-flight for that pairing opens; nothing is assigned until you confirm it. A lane turns red under the bar when the driver is blocked or has no tractor, and the pre-flight says why.
 

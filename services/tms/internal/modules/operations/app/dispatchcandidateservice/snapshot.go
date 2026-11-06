@@ -29,6 +29,7 @@ type FleetSnapshot struct {
 	PosByTractor        map[pulid.ID]*telematics.VehiclePosition
 	CommitmentsByWorker map[pulid.ID][]*dispatchboardports.WorkerCommitment
 	TimeOffByWorker     map[pulid.ID][]*dispatchboardports.WorkerTimeOff
+	LastTimeOffEnd      map[pulid.ID]int64
 	WorkloadByWorker    map[pulid.ID]*dispatchboardports.WorkerWorkload
 	OnTimeByWorker      map[pulid.ID]*dispatchboardports.WorkerOnTimeStats
 	AcceptanceByWorker  map[pulid.ID]*dispatchboardports.WorkerAcceptanceStats
@@ -77,6 +78,14 @@ func (s *FleetSnapshot) profile(driver *dispatchboardports.BoardDriver) *driverP
 	}
 
 	return s.profiles[driver.WorkerID]
+}
+
+func (s *FleetSnapshot) LastHomeAt(driver *dispatchboardports.BoardDriver) int64 {
+	if profile := s.profile(driver); profile != nil {
+		return profile.lastHomeAt
+	}
+
+	return 0
 }
 
 func (s *FleetSnapshot) RefreshProfile(workerID pulid.ID) {

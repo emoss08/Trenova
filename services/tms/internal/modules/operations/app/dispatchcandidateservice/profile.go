@@ -54,6 +54,10 @@ type driverProfile struct {
 	origin       geoPoint
 	originSource dispatchplanports.OriginSource
 
+	home       geoPoint
+	homeKnown  bool
+	lastHomeAt int64
+
 	trailerID  pulid.ID
 	hasTrailer bool
 
@@ -89,6 +93,7 @@ func buildProfile(
 	}
 	profile.trailerID, profile.hasTrailer = currentTrailer(commitments)
 	profile.origin, profile.originSource = resolveOrigin(snapshot, driver, profile, commitments)
+	applyHomeProfile(snapshot, profile)
 	applyHOSProfile(snapshot, profile)
 	applyHistoryProfile(snapshot, profile)
 

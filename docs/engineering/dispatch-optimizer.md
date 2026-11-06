@@ -20,6 +20,14 @@ Dispatch is economics, so every number the optimizer works with is in cents.
   `max(revenue × margin %, floor) + urgency premium` (`dispatchcost.CoveragePrice`; Late and
   Now buckets from `dispatchurgency`). A move is covered only when a driver costs less than
   leaving it.
+- **Home time.** `HomeOverdueDays` is the days from when the driver was last home to when the
+  move frees them, past `HomeTimeTargetDays`; `HomewardShare` is the share of the way home the
+  move closes. Last home is the latest of `workers.last_home_at` (set on the worker form, or
+  stamped by the telematics poll when a tractor is within `worker.HomeRadiusMiles` of home),
+  the end of approved time off in the last 60 days, and the current position when it is at
+  home. Home is `workers.home_latitude/longitude`, filled when the worker form picks the
+  address from the place lookup and cleared by `KeepHomeWithAddress` when the address changes
+  without a new lookup. Unknown home or last home prices nothing.
 - **Economics** are per-organization settings (`dispatchcontrol.Economics`, defaults in
   `dispatcheconomics.Default`). Nothing else weighs a pairing: ranking, pre-flight, the plan
   and the agent tool all use the same model.
@@ -41,11 +49,21 @@ Dispatch is economics, so every number the optimizer works with is in cents.
    columns keep potential 0, so the potentials are proper duals. 2,000 × 3,000 at K=40 solves
    in about 6 ms; the dense Hungarian it replaced took 16.6 s.
 4. **Prices** from the same solution:
-   - `ColumnValue(col)`: how much more the plan costs without that driver (exact reroute,
-     not the degenerate dual).
+   - `ColumnValues()`: how much more the plan costs without each driver, for every driver in
+     one reverse Dijkstra from the exits (free drivers and uncovered columns); `ColumnValue`
+     is the single-driver form and the tests hold the two equal.
    - `OverrideCost(row, col)`: the exact extra cost of forcing a different driver onto a move
-     with the rest re-planned around it. It is checked against brute force on random boards.
-5. **Horizon mode** chains several moves per driver with `shared/dispatchplanner`
+     with the rest re-planned around it, checked against brute force on random boards. Each
+     search stops once nothing left can beat its best candidate and settles at most 4,096
+     nodes: an answer is exact or reported unknown, never approximate.
+   - The plan prices alternatives for the six nearest arcs of each covered move in parallel,
+     soonest pickup first, within 1.5 s. With spare drivers 5,000 moves price in ~80 ms; a
+     5,000 × 5,000 board in full shortage hits the budget and later moves carry no
+     alternatives.
+5. **Stability.** A move whose last plan chose a driver (`dispatch_plan_prices`) costs
+   `ReplanChangeCents` more on any other driver or uncovered, in both modes, so proposals do
+   not churn for a few dollars.
+6. **Horizon mode** chains several moves per driver with `shared/dispatchplanner`
    (`dispatchplanservice/horizon.go`). The planner seeds from the exact assignment, inserts
    the rest in pickup order, then anneals with relocate, swap, 2-opt* (tail exchange),
    reorder, leave and cover-in-place moves under a wall-clock budget and an iteration cap,
@@ -56,7 +74,7 @@ Dispatch is economics, so every number the optimizer works with is in cents.
    driver's planned commitments and calls `ScoreCandidate`, so HOS, windows and position
    carry through. Every step is memoised in a prefix trie keyed by (driver, chain prefix,
    move), so a re-evaluated chain costs nothing and only a new suffix reaches the oracle. A
-   standing proposal moved to another driver costs `StabilityCents`. Alternatives and driver
+   standing pairing moved to another driver costs `ReplanChangeCents`. Alternatives and driver
    value come from one-step insertion costs against the final plan.
 
 `dispatchplanservice` implements `dispatchplanports.Planner`. The agent

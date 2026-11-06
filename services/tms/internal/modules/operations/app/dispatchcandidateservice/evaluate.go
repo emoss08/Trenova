@@ -364,6 +364,12 @@ func featuresFor(
 		EarlyMinutes:        t.earlyMinutes,
 		RestHours:           float64(t.restMs) / millisPerHour,
 		WeekMilesOverMedian: profile.weekMilesOverMedian,
+		HomeOverdueDays: homeOverdueDays(
+			profile,
+			t.freeAt,
+			snapshot.Model.Economics().HomeTimeTargetDays,
+		),
+		HomewardShare: homewardShare(profile, move),
 		CustomerRuns: dispatchcost.CustomerRunsQuality(
 			snapshot.LaneExperience[laneKey{profile.driver.WorkerID, move.CustomerID}],
 		),

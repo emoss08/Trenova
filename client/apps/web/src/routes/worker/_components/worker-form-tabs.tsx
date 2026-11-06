@@ -23,6 +23,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Worker } from "@trenova/shared/types/worker";
 import { useFormContext, useWatch } from "react-hook-form";
+import { WorkerHomeAddressField } from "./worker-home-address-field";
 
 export function GeneralTab() {
   const t = useT();
@@ -137,15 +138,7 @@ export function GeneralTab() {
       >
         <FormGroup cols={2}>
           <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="addressLine1"
-              label={t("Address Line 1")}
-              placeholder={t("e.g. 1200 W Main St")}
-              description={t("Street address of the worker's residence.")}
-              maxLength={150}
-            />
+            <WorkerHomeAddressField />
           </FormControl>
           <FormControl cols="full">
             <InputField
@@ -187,6 +180,17 @@ export function GeneralTab() {
               placeholder={t("e.g. 60432")}
               description={t("5-digit ZIP code (or ZIP+4).")}
               maxLength={10}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <AutoCompleteDateField
+              control={control}
+              name="lastHomeAt"
+              label={t("Last home")}
+              description={t(
+                "When the driver was last at home. Dispatch plans home time from it, the end of approved time off, and telematics seeing the tractor near home.",
+              )}
+              placeholder={t("MM/DD/YYYY")}
             />
           </FormControl>
         </FormGroup>
