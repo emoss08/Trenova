@@ -598,10 +598,10 @@ tasks:
       - "{{.DEVDB_PATH}} seed apply{{if .name}} {{.name}}{{end}}"
 
   db-seed-volume:
-    desc: "Fill the development organization with volume data (shipments=10000 months=12 seed=0)"
+    desc: "Fill the development organization with volume data (shipments=10000 months=12 lanes=40 seed=0)"
     deps: [build-devdb]
     cmds:
-      - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -seed {{.seed | default 0}}"
+      - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -lanes {{.lanes | default 40}} -seed {{.seed | default 0}}"
 
   db-reset:
     desc: Recreate the database from the migrated template, then apply the fixtures

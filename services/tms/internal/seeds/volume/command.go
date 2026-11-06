@@ -18,7 +18,7 @@ var ErrEnvironment = errors.New(
 
 var Command = keelcli.Command{
 	Name:  "volume",
-	Usage: "[-shipments n] [-months n] [-seed n] [-org id]",
+	Usage: "[-shipments n] [-months n] [-lanes percent] [-seed n] [-org id]",
 	Summary: "fill one organization with a large, consistent data set for load and UI testing; " +
 		"running it again grows the data set",
 	Run: runCommand,
@@ -31,6 +31,11 @@ func runCommand(ctx context.Context, env *keelcli.Env, args []string) error {
 		"months",
 		volumegen.DefaultHistoryMonths,
 		"months of history to spread the data across",
+	)
+	lanes := fs.Int(
+		"lanes",
+		volumegen.DefaultLanePercent,
+		"percent of shipments drawn from weekly lane programs (0 turns them off)",
 	)
 	seedValue := fs.Uint64("seed", 0, "random seed for a reproducible data set (0 picks one)")
 	org := fs.String("org", "", "organization to fill (default: the development organization)")
@@ -62,6 +67,7 @@ func runCommand(ctx context.Context, env *keelcli.Env, args []string) error {
 	report, err := Run(ctx, db, volumegen.Options{
 		Shipments:      *shipments,
 		HistoryMonths:  *months,
+		LanePercent:    *lanes,
 		Seed:           *seedValue,
 		OrganizationID: orgID,
 		Logf: func(format string, args ...any) {

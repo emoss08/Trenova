@@ -407,8 +407,12 @@ func (b *shpBuilder) planAll(n int) []*shpPlan {
 	span := float64(end - begin)
 	const low, slope = 0.7, 0.6
 
+	lanes := b.planLanes(n, begin, end)
 	plans := make([]*shpPlan, 0, n)
-	for range n {
+	for _, load := range lanes[:min(len(lanes), n)] {
+		plans = append(plans, b.lanePlan(load))
+	}
+	for range n - len(plans) {
 		u := f.Float()
 		x := (-low + math.Sqrt(low*low+2*slope*u*(low+slope/2))) / slope
 		day := begin + int64(x*span)
@@ -438,6 +442,46 @@ func (b *shpBuilder) planAll(n int) []*shpPlan {
 
 	sort.SliceStable(plans, func(i, j int) bool { return plans[i].pickupAt < plans[j].pickupAt })
 	return plans
+}
+
+func (b *shpBuilder) planLanes(n int, begin, end int64) []volumegen.LaneLoad {
+	lanes := volumegen.PlanLanePrograms(b.g.Fake, &volumegen.LaneProgramParams{
+		Customers:  b.g.Customers,
+		Shippers:   b.shippers,
+		Consignees: b.consignees,
+		Begin:      begin,
+		End:        end,
+		Now:        b.now,
+		Loads:      n * b.g.Opts.LanePercent / 100,
+	})
+	for _, program := range lanes.Programs {
+		b.g.Opts.Logf(
+			"  • lane program %s: %s from %s, %s (%.1f loads a week)",
+			program.Name,
+			program.Customer.Name,
+			program.Origin.City.Name,
+			program.Origin.City.State,
+			program.WeeklyLoads,
+		)
+	}
+
+	return lanes.Loads
+}
+
+func (b *shpBuilder) lanePlan(load volumegen.LaneLoad) *shpPlan {
+	p := &shpPlan{
+		customer: load.Program.Customer,
+		moves: [][]shpStopPlan{{
+			{loc: load.Program.Origin, typ: shipmentvocab.StopTypePickup},
+			{loc: load.Dest, typ: shipmentvocab.StopTypeDelivery},
+		}},
+		createdAt: load.CreatedAt,
+		pickupAt:  load.PickupAt,
+		canceled:  b.g.Fake.Chance(0.02),
+	}
+	b.planFreight(p)
+
+	return p
 }
 
 func (b *shpBuilder) leadTime(pickupAt int64) int64 {

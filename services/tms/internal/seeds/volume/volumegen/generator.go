@@ -12,17 +12,20 @@ import (
 const (
 	DefaultShipments     = 10_000
 	DefaultHistoryMonths = 12
+	DefaultLanePercent   = 40
 	MaxShipments         = 250_000
 )
 
 var (
 	ErrShipmentCount = errors.New("shipment count must be between 1 and 250000")
 	ErrHistoryMonths = errors.New("history must be between 1 and 36 months")
+	ErrLanePercent   = errors.New("the lane program share must be between 0 and 100 percent")
 )
 
 type Options struct {
 	Shipments      int
 	HistoryMonths  int
+	LanePercent    int
 	Seed           uint64
 	OrganizationID pulid.ID
 	Logf           func(format string, args ...any)
@@ -40,6 +43,9 @@ func (o *Options) Normalize() error {
 	}
 	if o.HistoryMonths < 1 || o.HistoryMonths > 36 {
 		return ErrHistoryMonths
+	}
+	if o.LanePercent < 0 || o.LanePercent > 100 {
+		return ErrLanePercent
 	}
 	if o.Seed == 0 {
 		o.Seed = uint64(time.Now().UnixNano()) //nolint:gosec // any seed is fine
