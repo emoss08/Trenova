@@ -65,15 +65,46 @@ switching every workflow.
 
 ## Worktrees and developer machines
 
-Without `-trimpath` (which Trenova does not set globally, because it changes debug paths), the
-go command puts the package's absolute directory into the action ID of every package outside
-`GOROOT` (`cmd/go/internal/work/exec.go`, `"dir %s"`). So:
+The Taskfile sets `-trimpath` for every go command, and with it the action ID carries no
+directory (`cmd/go/internal/work/exec.go` hashes `dir %s` only without `-trimpath`). A release
+compiler's tool ID is its version line (`compile version go1.27.1`, `buildid.go`), not its binary.
+So a cache filled by a Taskfile build is valid at any path on any machine with the same Go, flags,
+`GOOS`/`GOARCH` and cgo setting. Measured on 2026-11-06 (4 cores, Go 1.27.1, the watch flags): a
+cold `cmd/api` build at one path, then the same commit at another path against that cache,
+compiled 0 of 3,978 packages, took 7.5 s (the link) and produced a byte-identical binary.
 
-- CI hits fully, because every runner checks out to the same path.
-- Worktrees on one machine already share `~/.cache/go-build` for the standard library and every
-  module from the shared module cache; they miss only on Trenova's own packages, whose paths
-  differ. A remote cache adds nothing there.
-- A developer's machine would hit the remote cache only for the standard library and third-party
-  modules (about a third of a cold `cmd/api` build's compiler CPU, roughly 330 of 1,050
-  CPU-seconds), and only with the same Go version, `GOMODCACHE` path and flags as CI. That is
-  worth doing read-only with the same helper once CI uses it, not as a reason to adopt it.
+What a developer cache needs on top of CI's:
+
+- **The developers' flags.** CI's test jobs build without `-trimpath` and without the watch
+  build's `-gcflags`, so their objects never match a `task run-watch` build. A job on `master`
+  has to build the watch targets (`cmd/api`, `cmd/worker`, `cmd/cli`) with `WATCH_BUILD`'s flags.
+- **Every developer platform.** `GOOS` and `GOARCH` are in every action ID. A Linux runner can
+  fill `darwin/arm64` by cross-compiling, but only if cgo is off on both sides: a package with cgo
+  files hashes the C compiler, and `net` and `runtime/cgo` sit under nearly every package. The
+  watch tasks would set `CGO_ENABLED=0`, as `deploy/Dockerfile.tms` already does.
+- **The bandwidth.** One `cmd/api` watch build is 3.5 GB in 12,962 objects and compresses about
+  1.2x, so a cold fill downloads about 3 GB: about 30 s at 1 Gbps, about 4 minutes at 100 Mbps,
+  against about 3.5 minutes compiling on 4 cores and less on a laptop with more. A developer
+  cache pays on a fast link and after a pull that touched widely imported packages, not
+  everywhere. `gobuildcache` also never trims its local directory, so a laptop needs a periodic
+  `clear-local`.
+
+## Trust
+
+Anything that can write the store can put compiled code into every build that reads it, so:
+
+- Only jobs on pushes to `master` hold a write token. Pull requests, from the repository or from
+  forks, and developer machines use a read-only token (R2 tokens are scoped per bucket and
+  permission) or none.
+- Release images (`deploy/Dockerfile.*`) never read the shared cache.
+- `GOCACHEPROG` points at a small wrapper that sets the endpoint and credentials for
+  `gobuildcache` alone. The go command passes its environment to every test binary, so keys in
+  the job environment would reach test code, and `AWS_ENDPOINT_URL_S3` there would redirect any
+  AWS SDK client a test builds.
+
+`gobuildcache` v1.9.0 has the pieces: `GOBUILDCACHE_READ_ONLY`, LZ4 compression (on by default),
+path-style addressing, and the AWS SDK's `AWS_ENDPOINT_URL_S3` for R2's endpoint with region
+`auto`. Building it needs Go 1.27.3 or later (its `go.mod`); the binary does not depend on the
+toolchain the build uses. R2 has no egress fees, which matters because a cache is mostly reads:
+$0.015 per GB-month, $4.50 per million writes and $0.36 per million reads, so the store costs
+a few dollars a month at Trenova's size.
