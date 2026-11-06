@@ -262,7 +262,10 @@ modules decides whether it does anything. On Go 1.26.10 it reuses no package: ev
 dependency is refused as a dot import (1,361) or a failed patch (1,256), and the same S4 edit takes
 64 s with gocut and without it. On Go 1.27.1 the same tree and edit take 18 s warm (57 s without
 gocut), with 2,365 packages reused and all 254 verified reuses byte-identical (4 cores, the watch
-flags, measured 2026-11-06). Moving the Go version means moving gocut with it.
+flags, measured 2026-11-06). So `go.work` and the modules declare `go 1.27.1`, and the Taskfile
+sets `GOTOOLCHAIN=go1.27.1`, since the go directive is only a minimum and a newer local Go would
+otherwise build the watch tasks. Moving the Go version means moving gocut with it: on 1.27.2 every
+changed dependency is blocked as a dot import, and 1.27.3 writes export data version 5.
 
 ### Why `WorkerOptions` live in the jobs package
 

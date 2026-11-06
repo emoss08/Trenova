@@ -96,7 +96,13 @@ vars:
 # empty GOMAXPROCS or GOGC as unset. A value already exported in your shell
 # takes precedence over these. They also reach the API process that `run` and
 # `run-watch` start, which keeps a local server from competing with the build.
+#
+# GOTOOLCHAIN pins the exact Go release, because the go directive in go.work is
+# only a minimum and gocut reads that one release's export data: on any other
+# Go it reuses nothing and the watch builds lose their early cutoff (S4: 18 s on
+# go1.27.1, 64 s on go1.26.10). Move it with go.work, and gocut with both.
 env:
+  GOTOOLCHAIN: go1.27.1
   GOFLAGS: '-trimpath {{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
   GOMAXPROCS: '{{.GO_JOBS}}'
   GOGC: '{{if .GO_JOBS}}50{{end}}'

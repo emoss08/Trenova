@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.26.10
+go 1.27.1
 
 require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
