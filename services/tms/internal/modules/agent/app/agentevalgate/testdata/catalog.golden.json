@@ -55920,6 +55920,42 @@
             "description": "The driving title the worker holds; front-office titles are held by users. true for only records that have a position, false for only those that have none.",
             "type": "boolean"
           },
+          "homeLatitudeMax": {
+            "description": "Where the worker lives, from the address the worker form looked up; absent until one is. Only records whose home latitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "homeLatitudeMin": {
+            "description": "Where the worker lives, from the address the worker form looked up; absent until one is. Only records whose home latitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "homeLongitudeMax": {
+            "description": "Only records whose home longitude is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "homeLongitudeMin": {
+            "description": "Only records whose home longitude is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "homePlaceId": {
+            "description": "Only records whose home place id contains this text.",
+            "type": "string"
+          },
+          "lastHomeAtFrom": {
+            "description": "When the driver was last at home, as a dispatcher recorded it or as telematics saw them there. Only records whose last home at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastHomeAtTo": {
+            "description": "When the driver was last at home, as a dispatcher recorded it or as telematics saw them there. Only records whose last home at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "lastName": {
             "description": "Only records whose last name contains this text.",
             "type": "string"
@@ -56317,6 +56353,10 @@
               "firstName",
               "fleetCodeId",
               "gender",
+              "homeLatitude",
+              "homeLongitude",
+              "homePlaceId",
+              "lastHomeAt",
               "lastName",
               "leaveType",
               "managerId",

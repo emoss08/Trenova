@@ -35235,7 +35235,17 @@ type Worker {
   fleetCode: FleetCode
   fleetCodeId: ID
   gender: WorkerGender!
+  """
+  Where the worker lives, from the address the worker form looked up; absent until one is.
+  """
+  homeLatitude: Float
+  homeLongitude: Float
+  homePlaceId: String!
   id: ID!
+  """
+  When the driver was last at home, as a dispatcher recorded it or as telematics saw them there.
+  """
+  lastHomeAt: Timestamp
   lastName: String!
   """Set while a leave of absence is open on the timeline."""
   leaveType: WorkerLeaveType

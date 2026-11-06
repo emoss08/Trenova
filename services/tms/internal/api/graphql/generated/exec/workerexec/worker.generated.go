@@ -639,6 +639,43 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "homeLatitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.Worker)
+					return obj.HomeLatitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "homeLongitude",
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.Worker)
+					return obj.HomeLongitude, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+			},
+			{
+				Name:     "homePlaceId",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.Worker)
+					return obj.HomePlaceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastHomeAt",
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.Worker)
+					return obj.LastHomeAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -651,7 +688,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.Worker)
 					return obj.CreatedAt, nil
@@ -661,7 +698,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.Worker)
 					return obj.UpdatedAt, nil
@@ -891,7 +928,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.Status, nil
@@ -901,7 +938,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.Type, nil
@@ -911,7 +948,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "startDate",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.StartDate, nil
@@ -921,7 +958,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "endDate",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.EndDate, nil
@@ -965,7 +1002,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild13,
+				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").Days(ctx, obj)
@@ -976,7 +1013,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "balanceAfterDays",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild13,
+				ChildErr:   errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return gqlexec.Resolver[WorkerPTOResolver](ec, "WorkerPTO@worker").BalanceAfterDays(ctx, obj)
@@ -1006,7 +1043,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.CreatedAt, nil
@@ -1016,7 +1053,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerPTO)
 					return obj.UpdatedAt, nil
@@ -1184,7 +1221,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "dob",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.DOB, nil
@@ -1203,7 +1240,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cdlClass",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.CDLClass, nil
@@ -1223,7 +1260,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "endorsement",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.Endorsement, nil
@@ -1232,7 +1269,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "hazmatExpiry",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.HazmatExpiry, nil
@@ -1242,7 +1279,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "licenseExpiry",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LicenseExpiry, nil
@@ -1251,7 +1288,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "medicalCardExpiry",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.MedicalCardExpiry, nil
@@ -1289,7 +1326,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "twicExpiry",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.TWICExpiry, nil
@@ -1299,7 +1336,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hireDate",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.HireDate, nil
@@ -1308,7 +1345,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "terminationDate",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.TerminationDate, nil
@@ -1317,7 +1354,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "physicalDueDate",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.PhysicalDueDate, nil
@@ -1326,7 +1363,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "mvrDueDate",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.MVRDueDate, nil
@@ -1336,7 +1373,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "complianceStatus",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.ComplianceStatus, nil
@@ -1346,7 +1383,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "trainingHealth",
 				NonNull:  true,
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.TrainingHealth, nil
@@ -1356,7 +1393,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "safetyRating",
 				NonNull:  true,
-				ChildErr: errNoChild18,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.SafetyRating, nil
@@ -1375,7 +1412,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "nextCredentialExpiry",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.NextCredentialExpiry, nil
@@ -1384,7 +1421,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "nextTrainingDue",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.NextTrainingDue, nil
@@ -1394,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "drugAlcoholStatus",
 				NonNull:  true,
-				ChildErr: errNoChild19,
+				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.DrugAlcoholStatus, nil
@@ -1424,7 +1461,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lastComplianceCheck",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastComplianceCheck, nil
@@ -1434,7 +1471,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lastMvrCheck",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastMVRCheck, nil
@@ -1443,7 +1480,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastDrugTest",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.LastDrugTest, nil
@@ -1483,7 +1520,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.CreatedAt, nil
@@ -1493,7 +1530,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*worker.WorkerProfile)
 					return obj.UpdatedAt, nil
@@ -1583,16 +1620,17 @@ var (
 	errNoChild7  = errors.New("field of type DriverType does not have child fields")
 	errNoChild8  = errors.New("field of type WorkerLeaveType does not have child fields")
 	errNoChild9  = errors.New("field of type WorkerGender does not have child fields")
-	errNoChild10 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild11 = errors.New("field of type PTOStatus does not have child fields")
-	errNoChild12 = errors.New("field of type PTOType does not have child fields")
-	errNoChild13 = errors.New("field of type Decimal does not have child fields")
-	errNoChild14 = errors.New("field of type CDLClass does not have child fields")
-	errNoChild15 = errors.New("field of type EndorsementType does not have child fields")
-	errNoChild16 = errors.New("field of type ComplianceStatus does not have child fields")
-	errNoChild17 = errors.New("field of type WorkerTrainingHealth does not have child fields")
-	errNoChild18 = errors.New("field of type SafetyRating does not have child fields")
-	errNoChild19 = errors.New("field of type DrugAlcoholStatus does not have child fields")
+	errNoChild10 = errors.New("field of type Float does not have child fields")
+	errNoChild11 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild12 = errors.New("field of type PTOStatus does not have child fields")
+	errNoChild13 = errors.New("field of type PTOType does not have child fields")
+	errNoChild14 = errors.New("field of type Decimal does not have child fields")
+	errNoChild15 = errors.New("field of type CDLClass does not have child fields")
+	errNoChild16 = errors.New("field of type EndorsementType does not have child fields")
+	errNoChild17 = errors.New("field of type ComplianceStatus does not have child fields")
+	errNoChild18 = errors.New("field of type WorkerTrainingHealth does not have child fields")
+	errNoChild19 = errors.New("field of type SafetyRating does not have child fields")
+	errNoChild20 = errors.New("field of type DrugAlcoholStatus does not have child fields")
 )
 
 func field_Mutation_patchWorker_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2781,6 +2819,14 @@ func marshalOFleetCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "FleetCode", v)
+}
+
+func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
