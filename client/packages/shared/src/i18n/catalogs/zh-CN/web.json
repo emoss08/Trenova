@@ -8397,6 +8397,7 @@
   "{0} live": "{0} 个运行中",
   "{0} location": "{0}地点",
   "{0} logo": "{0} 标志",
+  "{0} margin": "毛利 {0}",
   "{0} marked paid, {1} failed": "已标记付款 {0} 项，{1} 项失败",
   "{0} match": "匹配度 {0}",
   "{0} may be empty, and an empty value has no place in an order: give it a fallback": "{0} 可能为空，而空值无法排序：请为其提供后备值",

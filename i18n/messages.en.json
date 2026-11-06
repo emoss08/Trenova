@@ -123337,6 +123337,15 @@
       "routes/worker"
     ]
   },
+  "Hours unknown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Hours worked by staff paid by the clock, and the sign-off on them": {
     "sites": 1,
     "scope": [
@@ -141215,6 +141224,15 @@
       "apps/web/types",
       "routes/reports",
       "routes/table-change-alert"
+    ]
+  },
+  "Less what the best driver pays in preferences": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Less {0}": {
@@ -352827,6 +352845,15 @@
       "routes/inbox"
     ]
   },
+  "{0} drive left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} drive · {1} on-duty · {2} mi": {
     "sites": 1,
     "scope": [
@@ -352929,29 +352956,12 @@
     ]
   },
   "{0} empty": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "{0} empty · {1} drive left · {2} late": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "{0} empty · {1} drive left · {2} margin": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "routes/dispatch-console"
     ]
   },
@@ -357514,13 +357524,14 @@
     ]
   },
   "{0} late": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/shipment"
     ]
   },
@@ -357814,12 +357825,13 @@
     ]
   },
   "{0} margin": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "{0} margin against a {1} target": {
