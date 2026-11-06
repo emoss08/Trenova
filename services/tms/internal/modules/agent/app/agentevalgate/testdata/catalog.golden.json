@@ -10352,6 +10352,64 @@
       }
     },
     {
+      "name": "dispatch_forecast_demand",
+      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear on a given day and which regions will need more trucks. Learned from this organization's own shipment history, not market data: each twelve-hour window gives the usual range of loads, what is booked, the loads still expected, the drivers expected free there, the shortfall and what one more driver ending there is worth in dollars. Plans use it only once quality.status is Ready; until then it lists no windows, so say it is not proven yet and why, from quality.meaning, rather than guessing. Answer by naming the areas, the windows and the shortfall; act on it through dispatch_plan.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "hoursAhead": {
+            "description": "How many hours ahead to look, from now: 48 unless you ask, at most 96. Ask for enough to reach the day in question; a weekend can need all 96.",
+            "maximum": 96,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "limit": {
+            "description": "How many rows to return: 20 unless you ask, at most 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "outlook",
+        "anticipate",
+        "demand",
+        "upcoming",
+        "coming",
+        "busy",
+        "usually",
+        "regions",
+        "short of drivers",
+        "need more trucks",
+        "position trucks"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "shipment_move",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "dispatch_get_board",
       "description": "The dispatch board: moves in the window, furthest behind first, with urgency and coverage, and drivers with availability, hours left and position. Urgency (Late, Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked up, then delivery window. The one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo (late to pick up or to deliver) and lateBy (how far past the window). Answer a rundown from the board as it stands, not by tracking each move; check shipment_get_tracking before acting on a late move, since arrivals are sometimes recorded late. summary counts every move in the window, listed or not; on a board, show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, find it with shipment_list.",
       "parameters": {

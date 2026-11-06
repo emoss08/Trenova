@@ -115,6 +115,7 @@ var families = [...][]string{
 		"dispatch_assign_move",
 		"dispatch_create_carrier_assignment",
 	},
+	{"dispatch_forecast_demand", "dispatch_plan"},
 	{"invoice_list_runs", "invoice_get_run", "invoice_commit_run", "invoice_cancel_run"},
 	{
 		"carrier_list_intelligence_events",

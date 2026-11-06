@@ -1,6 +1,6 @@
 ---
 path: /dispatch/console
-aliases: [dispatch board, dispatch queue, planning board, cover loads, driver assignment, load coverage, dispatch desk, tender board, nova proposals]
+aliases: [dispatch board, dispatch queue, planning board, cover loads, driver assignment, load coverage, dispatch desk, tender board, nova proposals, freight outlook, where to send trucks]
 related:
   - /shipment-management/shipments
   - /dispatch/routing-guides
@@ -12,7 +12,7 @@ related:
 ## What it's for
 The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.
 
-The **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.
+The **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. A fourth tab, **Outlook**, looks ahead instead: where freight is likely to appear in the next 48 hours, before it is booked, against the drivers expected there. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.
 
 ## Tasks
 
@@ -27,7 +27,7 @@ Keywords: approve proposal, nova picked a driver, decline proposal, proposed dri
 ### Assign a driver yourself
 Keywords: cover a load, dispatch a driver, assign truck, rank drivers, pre-flight, driver cost
 1. Open [Console](/dispatch/console) and select a move, or walk the queue with J and K.
-2. Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why.
+2. Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why. The **Where they end up** line credits a move that leaves the driver somewhere useful, and says why. Where the freight forecast is in use (**Anticipate freight** is on and the forecast is **Ready**), it names the loads that usually appear near the drop after the driver is free, who usually books them, how many are already booked and how many other drivers are expected there. The credit is what the driver is worth at the drop less what they were worth staying where they are, so when staying was worth something the line says how much and what the move adds; a move that pulls a driver out of a busier area costs the plan instead of earning a credit. Elsewhere it is what drivers free there have been worth to past plans.
 3. Press the driver's number (1–9) or select **Assign**. The pre-flight opens under the driver.
 4. When it has loaded, check the empty miles, drive time left, pickup margin and any findings, then press Enter or select **Assign driver** (**Reassign driver** on a covered move, which names who it replaces). Nothing is written until you confirm.
 
@@ -45,6 +45,26 @@ Keywords: drag a load onto a driver, driver lanes, free time, gantt, plan relays
 2. The moves that need a driver come first, one row each, grouped by when their window is. Under **Drivers**, each lane shows the moves the driver holds, time off in its own band, and free time labeled with when it starts or how long it lasts. A red dot on a driver means two of their moves overlap.
 3. Hover a bar to see its stops and times. Select a bar or a row to open it in the inspector.
 4. Drag a move's bar onto a driver (or focus it, press Space, move with the arrow keys and press Space again). The pre-flight for that pairing opens; nothing is assigned until you confirm it. A lane turns red under the bar when the driver is blocked or has no tractor, and the pre-flight says why.
+
+### See where freight is likely to appear
+Keywords: freight forecast, where to send trucks, position drivers, busy areas, short of drivers, likely loads
+1. Open [Console](/dispatch/console) and select the **Outlook** tab.
+2. Each row is an area and a twelve-hour window in the next 48 hours, the most short of drivers first:
+   - **Area**: the area, named for its busiest pickup city, with the customers who usually bring freight there.
+   - **Window**: when the twelve hours start and end, and how soon they start.
+   - **Likely loads**: how many loads usually appear there in that window, and how many are already booked.
+   - **Drivers expected**: drivers expected to be free in the area by the end of the window.
+   - **Short by**: loads expected beyond those drivers, highlighted when the area is likely to miss a driver.
+   - **One more driver**: what one more driver ending there is worth to the plan.
+3. Select a row to read it as a sentence, with who usually books there and how many loads are still expected to be booked.
+4. When the drivers expected cover everything likely, the tab says **Drivers cover the freight ahead**. If it can't be read, it says **The outlook didn't load**; select **Try again**.
+5. To have plans position drivers for this freight, turn on **Anticipate freight** in [Dispatch control](/admin/dispatch-controls).
+
+### When the outlook says the forecast isn't ready
+Keywords: forecast not ready, not enough history, outlook empty, forecast not better than last week
+1. Open [Console](/dispatch/console) and select the **Outlook** tab.
+2. The forecast is learned from your own shipment history and tested every night. Until it has proven itself, the tab shows why instead of rows: **Not fitted yet**, **Not enough history yet** (it needs 8 weeks and 200 loads of history) or **Not better than last week yet** (it has not yet beaten repeating the same time last week).
+3. Select **See the forecast in Dispatch controls** to see how it was tested. The outlook and **Anticipate freight** use the forecast only once it is **Ready**, so drivers are not moved for freight it cannot yet predict.
 
 ### Work the exceptions
 Keywords: late delivery, missed stop, no check call, tender exhausted, covered move slipping
@@ -71,6 +91,6 @@ Keywords: change date, show tomorrow, covered moves, undo assignment, search mov
 4. Select **Undo** (U) to take back the last assignment or approval. Undoing a reassign puts the previous driver back.
 
 ## Notes
-Needs read access to shipment moves and workers. Assigning, approving with a pre-flight and **Propose coverage** need assign permission on shipment moves and the Asset operations capability. Approving and declining Nova's proposals needs update permission on agent proposals. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Tender to carriers** also needs create permission on tenders.
+Needs read access to shipment moves and workers. **See the forecast in Dispatch controls** shows only to people who can read dispatch control. Assigning, approving with a pre-flight and **Propose coverage** need assign permission on shipment moves and the Asset operations capability. Approving and declining Nova's proposals needs update permission on agent proposals. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Tender to carriers** also needs create permission on tenders.
 
 A driver with no tractor cannot be assigned until one is set, and a pairing the organization's policy blocks cannot be assigned from the pre-flight. When the board cannot be read, the queue says so and offers **Try again** instead of showing an empty board.

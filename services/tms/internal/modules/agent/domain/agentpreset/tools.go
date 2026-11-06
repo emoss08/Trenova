@@ -401,6 +401,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"dispatch_get_board",
 		"dispatch_rank_candidates",
 		"dispatch_plan",
+		"dispatch_forecast_demand",
 		"carrier_list",
 		"carrier_shop",
 		"dispatch_assign_move",

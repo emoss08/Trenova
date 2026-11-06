@@ -265,7 +265,7 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"hoursAhead": map[string]any{
+			paramHoursAhead: map[string]any{
 				"type":        "integer",
 				"description": "How far ahead to plan, from now; defaults to 24, at most 168.",
 			},
@@ -328,7 +328,7 @@ func (t *planDispatchTool) Query(
 		return nil, err
 	}
 
-	hours := querytool.OptionalInt(params.Params, "hoursAhead", defaultPlanHours)
+	hours := querytool.OptionalInt(params.Params, paramHoursAhead, defaultPlanHours)
 	if hours <= 0 || hours > maxPlanHours {
 		hours = defaultPlanHours
 	}

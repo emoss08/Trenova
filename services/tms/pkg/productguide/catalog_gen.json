@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a117a50bdc22ed28c522891137688680d07510ec4b179093fd0b6134573dfc4c",
+  "version": "sha256:b76892c9917d3a5cfeb17e4807b6782d8d46c14b3d032131e1c6383f09fbe4ab",
   "modules": [
     {
       "id": "home",
@@ -4165,7 +4165,7 @@
         "Dispatch controls"
       ],
       "description": "Configure and manage your dispatch control settings",
-      "summary": "Dispatch control holds the organization-wide rules for assigning and dispatching work. The page is one settings form in up to four cards: **Automated resource assignment** (letting the system assign drivers and equipment), **Costs and prices** (what the planner weighs, in money), **Service failure monitoring** (which late pickups and deliveries are recorded as service failures) and **DOT compliance enforcement** (checks that run before an assignment goes ahead).\n\nDispatch managers and safety or compliance leads use it.",
+      "summary": "Dispatch control holds the organization-wide rules for assigning and dispatching work. The page is one settings form in up to four cards: **Automated resource assignment** (letting the system assign drivers and equipment), **Costs and prices** (what the planner weighs, in money), **Service failure monitoring** (which late pickups and deliveries are recorded as service failures) and **DOT compliance enforcement** (checks that run before an assignment goes ahead). **Freight forecast** shows whether the organization's freight forecast, learned from its own shipment history, has proven itself well enough for plans to use.\n\nDispatch managers and safety or compliance leads use it.",
       "requires": [
         {
           "resource": "dispatch_control",
@@ -4179,7 +4179,9 @@
         "auto dispatch",
         "DOT compliance checks",
         "service failure settings",
-        "HOS enforcement"
+        "HOS enforcement",
+        "anticipatory dispatch",
+        "demand forecast"
       ],
       "tasks": [
         {
@@ -4193,7 +4195,7 @@
           "steps": [
             "Open [Dispatch controls](/admin/dispatch-controls).",
             "In **Automated resource assignment**, turn on **Enable automated assignment**.",
-            "Optionally turn on **Learn our dispatch style** (the planner learns how much your dispatchers weigh each preference from the drivers they assign against the plan) and **Plan for where drivers end up** (a move that leaves its driver where drivers have been worth more at that time of the week is credited). Both are off by default.",
+            "Optionally turn on **Learn our dispatch style** (the planner learns how much your dispatchers weigh each preference from the drivers they assign against the plan) and **Plan for where drivers end up** (a move that leaves its driver where drivers have been worth more at that time of the week is credited) and **Anticipate freight** (see below). All three are off by default.",
             "Set the **Auto-execute confidence threshold** (0 to 1), **Maximum deadhead miles**, **Planning horizon (hours)** and **Coverage risk window (hours)**.",
             "Select **Save changes**."
           ]
@@ -4212,6 +4214,38 @@
             "In **Costs and prices**, set what an **Empty mile**, a **Late minute**, a **Driver hour** and a **Day past home time** cost your operation, and what each of the **Preferences** is worth. The planner prices every driver for every move and picks the plan that costs least overall; a cost of $0 is ignored. Home time needs the driver's home address and **Last home** on their worker record. **Changing a planned driver** is what moving a move off the driver the last plan chose costs, so proposals don't change for a few dollars.",
             "Under **Leaving a move uncovered**, set the **Share of revenue (%)**, the **At least** floor and the **Late premium** and **Due now premium**. When drivers are short, the moves that cost most to leave are covered first.",
             "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Anticipate freight before it is booked",
+          "keywords": [
+            "anticipatory dispatch",
+            "position drivers ahead of freight",
+            "forecast freight",
+            "likely loads"
+          ],
+          "steps": [
+            "Open [Dispatch controls](/admin/dispatch-controls).",
+            "In **Automated resource assignment**, turn on **Anticipate freight**. Plans then credit a move that leaves its driver near freight your history says is likely to appear in the twelve hours after the driver is free, beyond what other drivers expected there can take, less what the driver was worth staying where they are. A move that takes a driver out of an area about to get busy costs the plan instead. The first extra driver in a busy area is worth much more than the fifth, and two drivers are not both credited for the same likely load.",
+            "In **Costs and prices**, set **Most a likely load is worth**: the most ending near likely freight, or staying near it, can be worth on one move.",
+            "Select **Save changes**.",
+            "Check **Freight forecast**: plans use the forecast only while it says **Ready**. Until then the card says **Anticipate freight is on, but plans ignore the forecast until it is Ready.** and plans run as if the setting were off.",
+            "On a planned move, the **Where they end up** line of the driver's cost in the [Console](/dispatch/console) says which likely loads the credit is for and, when staying put was worth something, how much the move adds or costs against it."
+          ]
+        },
+        {
+          "title": "Check the freight forecast",
+          "keywords": [
+            "forecast quality",
+            "is the forecast ready",
+            "forecast accuracy",
+            "not enough history"
+          ],
+          "steps": [
+            "Open [Dispatch controls](/admin/dispatch-controls) and find **Freight forecast**.",
+            "The forecast is learned from your shipment history and tested every night on the weeks it has not seen. Its status is one of: - **Ready**: how many actual counts fell inside the forecast range, and how much more accurate it was than repeating last week. Plans use it when **Anticipate freight** is on. - **Not better than last week yet**: it was tested but did not beat repeating last week, so plans ignore it until it does better. - **Not enough history yet**: it needs 8 weeks and 200 loads of history before it can be tested; the card says how much it has. - **Not fitted yet**: it has not been fitted from your history yet.",
+            "**History**, **Average miss** and **Last fitted** give the figures behind the status.",
+            "If the card says **The freight forecast could not be loaded.**, select **Try again**."
           ]
         },
         {
@@ -4261,7 +4295,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to dispatch control; saving needs update access. The automated assignment, costs and prices and DOT compliance cards only appear for organizations with asset operations turned on; a brokerage-only organization sees just **Service failure monitoring**. Turning off **Enable DOT compliance enforcement** turns off the four individual checks.",
+      "notes": "Opening the page needs read access to dispatch control; saving needs update access. The automated assignment, costs and prices, learned dispatch style, freight forecast and DOT compliance cards only appear for organizations with asset operations turned on; a brokerage-only organization sees just **Service failure monitoring**. Turning off **Enable DOT compliance enforcement** turns off the four individual checks.",
       "related": [
         "/admin/service-failure-reason-codes",
         "/admin/shipment-controls",
@@ -11986,7 +12020,7 @@
         "Console"
       ],
       "description": "Cover open moves against available capacity without opening a shipment",
-      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.\n\nThe **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.",
+      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.\n\nThe **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. A fourth tab, **Outlook**, looks ahead instead: where freight is likely to appear in the next 48 hours, before it is booked, against the drivers expected there. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.",
       "requires": [
         {
           "resource": "shipment_move",
@@ -12003,7 +12037,9 @@
         "load coverage",
         "dispatch desk",
         "tender board",
-        "nova proposals"
+        "nova proposals",
+        "freight outlook",
+        "where to send trucks"
       ],
       "tasks": [
         {
@@ -12034,7 +12070,7 @@
           ],
           "steps": [
             "Open [Console](/dispatch/console) and select a move, or walk the queue with J and K.",
-            "Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why.",
+            "Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why. The **Where they end up** line credits a move that leaves the driver somewhere useful, and says why. Where the freight forecast is in use (**Anticipate freight** is on and the forecast is **Ready**), it names the loads that usually appear near the drop after the driver is free, who usually books them, how many are already booked and how many other drivers are expected there. The credit is what the driver is worth at the drop less what they were worth staying where they are, so when staying was worth something the line says how much and what the move adds; a move that pulls a driver out of a busier area costs the plan instead of earning a credit. Elsewhere it is what drivers free there have been worth to past plans.",
             "Press the driver's number (1–9) or select **Assign**. The pre-flight opens under the driver.",
             "When it has loaded, check the empty miles, drive time left, pickup margin and any findings, then press Enter or select **Assign driver** (**Reassign driver** on a covered move, which names who it replaces). Nothing is written until you confirm."
           ]
@@ -12069,6 +12105,38 @@
             "The moves that need a driver come first, one row each, grouped by when their window is. Under **Drivers**, each lane shows the moves the driver holds, time off in its own band, and free time labeled with when it starts or how long it lasts. A red dot on a driver means two of their moves overlap.",
             "Hover a bar to see its stops and times. Select a bar or a row to open it in the inspector.",
             "Drag a move's bar onto a driver (or focus it, press Space, move with the arrow keys and press Space again). The pre-flight for that pairing opens; nothing is assigned until you confirm it. A lane turns red under the bar when the driver is blocked or has no tractor, and the pre-flight says why."
+          ]
+        },
+        {
+          "title": "See where freight is likely to appear",
+          "keywords": [
+            "freight forecast",
+            "where to send trucks",
+            "position drivers",
+            "busy areas",
+            "short of drivers",
+            "likely loads"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
+            "Each row is an area and a twelve-hour window in the next 48 hours, the most short of drivers first: - **Area**: the area, named for its busiest pickup city, with the customers who usually bring freight there. - **Window**: when the twelve hours start and end, and how soon they start. - **Likely loads**: how many loads usually appear there in that window, and how many are already booked. - **Drivers expected**: drivers expected to be free in the area by the end of the window. - **Short by**: loads expected beyond those drivers, highlighted when the area is likely to miss a driver. - **One more driver**: what one more driver ending there is worth to the plan.",
+            "Select a row to read it as a sentence, with who usually books there and how many loads are still expected to be booked.",
+            "When the drivers expected cover everything likely, the tab says **Drivers cover the freight ahead**. If it can't be read, it says **The outlook didn't load**; select **Try again**.",
+            "To have plans position drivers for this freight, turn on **Anticipate freight** in [Dispatch control](/admin/dispatch-controls)."
+          ]
+        },
+        {
+          "title": "When the outlook says the forecast isn't ready",
+          "keywords": [
+            "forecast not ready",
+            "not enough history",
+            "outlook empty",
+            "forecast not better than last week"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
+            "The forecast is learned from your own shipment history and tested every night. Until it has proven itself, the tab shows why instead of rows: **Not fitted yet**, **Not enough history yet** (it needs 8 weeks and 200 loads of history) or **Not better than last week yet** (it has not yet beaten repeating the same time last week).",
+            "Select **See the forecast in Dispatch controls** to see how it was tested. The outlook and **Anticipate freight** use the forecast only once it is **Ready**, so drivers are not moved for freight it cannot yet predict."
           ]
         },
         {
@@ -12130,7 +12198,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to shipment moves and workers. Assigning, approving with a pre-flight and **Propose coverage** need assign permission on shipment moves and the Asset operations capability. Approving and declining Nova's proposals needs update permission on agent proposals. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Tender to carriers** also needs create permission on tenders.\n\nA driver with no tractor cannot be assigned until one is set, and a pairing the organization's policy blocks cannot be assigned from the pre-flight. When the board cannot be read, the queue says so and offers **Try again** instead of showing an empty board.",
+      "notes": "Needs read access to shipment moves and workers. **See the forecast in Dispatch controls** shows only to people who can read dispatch control. Assigning, approving with a pre-flight and **Propose coverage** need assign permission on shipment moves and the Asset operations capability. Approving and declining Nova's proposals needs update permission on agent proposals. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Tender to carriers** also needs create permission on tenders.\n\nA driver with no tractor cannot be assigned until one is set, and a pairing the organization's policy blocks cannot be assigned from the pre-flight. When the board cannot be read, the queue says so and offers **Try again** instead of showing an empty board.",
       "related": [
         "/shipment-management/shipments",
         "/dispatch/routing-guides",

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 640.
+Tools listed: 641.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 11 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -133,6 +133,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Delegate task (`delegate_task`) | Reads only | Automatic | — | — | Hands a task to another agent of the organization, which runs as the same person under its own tiers. |
 | Get detention occurrence (`detention_get_occurrence`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List detention occurrences (`detention_list_occurrences`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Forecast dispatch demand (`dispatch_forecast_demand`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get dispatch board (`dispatch_get_board`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List tenders (`dispatch_list_tenders`) | Reads only | Automatic | — | — | Reads a shipment's tenders and their offers; a carrier's own words, such as a decline reason, are left out, so nothing written outside the organization is read. |
 | Plan dispatch (`dispatch_plan`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

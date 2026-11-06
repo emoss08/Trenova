@@ -178,7 +178,7 @@ func (t *getDispatchBoardTool) Description() string {
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		"hoursAhead": map[string]any{
+		paramHoursAhead: map[string]any{
 			"type": "integer",
 			"description": fmt.Sprintf(
 				"How far ahead the window reaches, in hours. Default %d, at most %d.",
@@ -231,7 +231,7 @@ func (t *getDispatchBoardTool) Query(
 		return nil, err
 	}
 
-	hours := querytool.OptionalInt(params.Params, "hoursAhead", defaultBoardHours)
+	hours := querytool.OptionalInt(params.Params, paramHoursAhead, defaultBoardHours)
 	if hours <= 0 || hours > maxBoardHours {
 		hours = defaultBoardHours
 	}

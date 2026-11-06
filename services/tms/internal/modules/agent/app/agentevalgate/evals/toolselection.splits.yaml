@@ -112,6 +112,8 @@ strata:
       - assign a driver and tractor to the move
       - generate the rate con for the carrier covering this move
       - shop carriers for a rate on this lane
+      - which areas will be short of drivers in the next two days
+      - which cities tend to get a rush of orders early in the week
   - stratum:
       desk: EDI desk
       mode: unattended
