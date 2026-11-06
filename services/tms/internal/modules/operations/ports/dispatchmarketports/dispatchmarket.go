@@ -10,6 +10,7 @@ import (
 type ListByCellsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Cells      []int64
+	ForUpdate  bool
 }
 
 type Repository interface {

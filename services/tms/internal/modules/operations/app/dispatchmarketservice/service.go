@@ -62,6 +62,7 @@ func (s *Service) Record(ctx context.Context, req *dispatchmarketports.RecordReq
 		existing, err := s.repo.ListByCells(ctx, &dispatchmarketports.ListByCellsRequest{
 			TenantInfo: req.TenantInfo,
 			Cells:      dispatchmarket.SampleCells(samples),
+			ForUpdate:  true,
 		})
 		if err != nil {
 			return err

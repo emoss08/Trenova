@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -411,4 +412,40 @@ func TestColumnValues_MatchEachDriversOwnReroute(t *testing.T) {
 			require.Equal(t, solution.ColumnValue(col), values[col], "board %d column %d", board, col)
 		}
 	}
+}
+
+func TestPrices_AreSafeToReadConcurrentlyAndAgreeWithASerialRead(t *testing.T) {
+	t.Parallel()
+
+	p := candidateGraphPriced(300, 400, 20, 80_000)
+	solution := assignmentsolver.SolveWithPrices(p)
+
+	type key struct{ row, col int }
+	serial := map[key]int64{}
+	for row, arcs := range p.Rows {
+		for _, arc := range arcs[:4] {
+			if cost, ok := solution.OverrideCost(row, arc.Col); ok {
+				serial[key{row, arc.Col}] = cost
+			}
+		}
+	}
+
+	var mu sync.Mutex
+	parallel := map[key]int64{}
+	work := pool.New().WithMaxGoroutines(8)
+	for row, arcs := range p.Rows {
+		work.Go(func() {
+			for _, arc := range arcs[:4] {
+				if cost, ok := solution.OverrideCost(row, arc.Col); ok {
+					mu.Lock()
+					parallel[key{row, arc.Col}] = cost
+					mu.Unlock()
+				}
+			}
+			solution.ColumnValues()
+		})
+	}
+	work.Wait()
+
+	require.Equal(t, serial, parallel)
 }

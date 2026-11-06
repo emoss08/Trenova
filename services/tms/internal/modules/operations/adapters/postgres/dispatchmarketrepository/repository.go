@@ -41,17 +41,25 @@ func (r *repository) ListByCells(
 		return []*dispatchmarket.MarketValue{}, nil
 	}
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*dispatchmarket.MarketValue, error) {
+	list := func(ctx context.Context) ([]*dispatchmarket.MarketValue, error) {
 		m := dispatchmarketdb.MarketValues
-		rows, err := m.Where(m.Cell.In(req.Cells...)).
-			Limit(len(req.Cells)*int(dispatchmarket.SlotsPerWeek)).
-			List(ctx, r.db.Keel(ctx))
+		q := m.Where(m.Cell.In(req.Cells...)).
+			Limit(len(req.Cells) * int(dispatchmarket.SlotsPerWeek))
+		if req.ForUpdate {
+			q = q.Order(m.Cell.Asc(), m.Slot.Asc()).Lock(keel.ForUpdate)
+		}
+		rows, err := q.List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list market values by cell: %w", err)
 		}
 
 		return rows, nil
-	})
+	}
+	if req.ForUpdate {
+		return dbtx.Write(ctx, r.db, list)
+	}
+
+	return dbtx.Read(ctx, r.db, list)
 }
 
 func (r *repository) Upsert(ctx context.Context, values []*dispatchmarket.MarketValue) error {

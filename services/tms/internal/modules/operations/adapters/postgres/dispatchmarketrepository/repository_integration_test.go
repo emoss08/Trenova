@@ -91,6 +91,7 @@ func TestUpsert_InsertsNewCellsAndFoldsIntoExistingOnes(t *testing.T) {
 	again, err := repo.ListByCells(own.ctx, &dispatchmarketports.ListByCellsRequest{
 		TenantInfo: own.tenant,
 		Cells:      []int64{chicagoCell},
+		ForUpdate:  true,
 	})
 	require.NoError(t, err)
 	require.Len(t, again, 1, "the second fold updates the cell rather than adding a row")
