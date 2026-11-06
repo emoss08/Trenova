@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -657,100 +656,6 @@ func TestFailureOutcome_KeepsTheMetricLabelForAnUnconfiguredProvider(t *testing.
 	assert.Equal(t, "missing_config", failureOutcome(llmports.ErrNoProviderConfigured))
 	assert.Equal(t, "invalid_output", failureOutcome(llmports.ErrModelSchemaValidation))
 	assert.Equal(t, "error", failureOutcome(errors.New("connection refused")))
-}
-
-func TestExtractRateConfirmationForEvaluation_RunsOnNovaAndBillsTheEvaluation(t *testing.T) {
-	t.Parallel()
-
-	providerID := pulid.MustNew("aiprv_")
-	cost := decimal.RequireFromString("0.0042")
-	completion := &stubCompletion{
-		structured: &llmports.StructuredCompletionResult{
-			Text:            extractPayload,
-			ModelIdentifier: "tuned-extractor",
-			ProviderID:      providerID,
-			InputTokens:     900,
-			OutputTokens:    120,
-			LatencyMs:       1500,
-			CostUSD:         &cost,
-		},
-	}
-	service := newTestService(t, completion)
-	source := extractRequest()
-
-	result, err := service.ExtractRateConfirmationForEvaluation(
-		t.Context(),
-		&documentaiextractionports.AIEvaluationExtractRequest{
-			TenantInfo: source.TenantInfo,
-			ProviderID: providerID,
-			FileName:   source.FileName,
-			Pages:      source.Pages,
-		},
-	)
-	require.NoError(t, err)
-
-	request := completion.sawRequest
-	require.NotNil(t, request)
-	assert.Equal(t, aitask.TaskDocumentExtraction, request.Task)
-	assert.True(t, request.Nova)
-	assert.True(t, request.PreferredProviderID.IsNil(), "Nova chooses no provider of its own")
-	assert.False(t, request.RequireProvider)
-	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, request.Attribution.Purpose)
-	assert.Equal(t, aiusage.FeatureDocumentIntelligenceExtract, request.Attribution.Feature)
-
-	require.NotNil(t, result.Extract)
-	assert.Equal(t, "4471", result.Extract.Fields["loadNumber"].Value)
-	assert.Equal(t, "tuned-extractor", result.Model)
-	assert.Equal(t, providerID, result.ProviderID)
-	assert.Equal(t, 900, result.InputTokens)
-	assert.Equal(t, 120, result.OutputTokens)
-	assert.Equal(t, int64(1500), result.LatencyMs)
-	require.NotNil(t, result.CostUSD)
-	assert.True(t, cost.Equal(*result.CostUSD))
-}
-
-func TestExtractRateConfirmationForShadow_SendsProductionsInputToNova(t *testing.T) {
-	t.Parallel()
-
-	providerID := pulid.MustNew("aiprv_")
-	completion := &stubCompletion{
-		structured: &llmports.StructuredCompletionResult{
-			Text:            extractPayload,
-			ModelIdentifier: "tuned-extractor",
-			ProviderID:      providerID,
-			LatencyMs:       900,
-		},
-	}
-	service := newTestService(t, completion)
-	production := extractRequest()
-	production.Text = "RATE CONFIRMATION Load 4471 rate $1,850"
-
-	result, err := service.ExtractRateConfirmationForShadow(
-		t.Context(),
-		&documentaiextractionports.AIShadowExtractRequest{
-			TenantInfo: production.TenantInfo,
-			ProviderID: providerID,
-			DocumentID: production.DocumentID,
-			FileName:   production.FileName,
-			Text:       production.Text,
-			Pages:      production.Pages,
-		},
-	)
-	require.NoError(t, err)
-
-	request := completion.sawRequest
-	require.NotNil(t, request)
-	assert.True(t, request.Nova)
-	assert.True(t, request.PreferredProviderID.IsNil())
-	assert.False(t, request.RequireProvider)
-	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, request.Attribution.Purpose,
-		"shadow calls are billed to the evaluation budget, not live usage")
-	assert.Equal(t, aiusage.SubjectTypeDocument, request.Attribution.Subject.Type)
-	assert.Equal(t, production.DocumentID.String(), request.Attribution.Subject.ID)
-	assert.Equal(t, newExtractCall(production).context, request.Context,
-		"the candidate reads exactly what production read")
-	assert.Equal(t, "tuned-extractor", result.Model)
-	assert.Equal(t, int64(900), result.LatencyMs)
 }
 
 func TestExtractRateConfirmation_LiveCallsRunOnNova(t *testing.T) {

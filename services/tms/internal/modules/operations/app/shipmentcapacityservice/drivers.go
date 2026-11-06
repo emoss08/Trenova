@@ -179,8 +179,8 @@ func (s *Service) driverMatches(
 		}
 		match := matchFromMove(candidate.Move)
 		match.DeadheadMiles = candidate.Score.DeadheadMiles
-		fit := float64(candidate.Score.Score)
-		match.FitPercent = &fit
+		cost := candidate.Score.Cost.TotalCents
+		match.CostCents = &cost
 		matches = append(matches, match)
 	}
 

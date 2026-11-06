@@ -48,6 +48,7 @@ function driver(overrides: Partial<DispatchBoardDriver> = {}): DispatchBoardDriv
     commitments: [],
     timeOff: [],
     findings: [],
+    plannedMove: null,
     ...overrides,
   } as DispatchBoardDriver;
 }
@@ -110,10 +111,16 @@ describe("DriverQueue", () => {
     cleanup();
   });
 
-  function renderQueue(drivers: DispatchBoardDriver[], read: QueueRead = ok, search = "") {
+  function renderQueue(
+    drivers: DispatchBoardDriver[],
+    read: QueueRead = ok,
+    search = "",
+    truncated = false,
+  ) {
     render(
       <DriverQueue
         drivers={drivers}
+        truncated={truncated}
         read={read}
         filter="all"
         search={search}
@@ -169,5 +176,21 @@ describe("DriverQueue", () => {
 
     expect(screen.getByText("No drivers match")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Clear filters" })).toBeInTheDocument();
+  });
+
+  it("says when the board lists only the first drivers", () => {
+    renderQueue([driver({ workerId: "wrk_a" }), driver({ workerId: "wrk_b" })], ok, "", true);
+
+    expect(
+      screen.getByText(
+        "The board lists only the first 2 drivers, available drivers first. Filter by fleet to see the rest.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing about a limit when every driver is listed", () => {
+    renderQueue([driver()]);
+
+    expect(screen.queryByText(/The board lists only the first/)).toBeNull();
   });
 });

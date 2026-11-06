@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -229,7 +229,7 @@ func blockingFindings(check *dispatchconsoleservice.AssignmentPreview) string {
 	messages := make([]string, 0, len(check.Score.Findings))
 	for idx := range check.Score.Findings {
 		finding := &check.Score.Findings[idx]
-		if finding.Severity == dispatcheligibility.SeverityBlock {
+		if finding.Severity == dispatchfinding.SeverityBlock {
 			messages = append(messages, finding.Message)
 		}
 	}

@@ -943,7 +943,7 @@ writes:
     tools: [dispatch_cancel_carrier_assignment]
   "mutation dispatchPlanAutoAssign":
     exempt: read-only
-    reason: "Plans automatic assignments for review and saves nothing."
+    reason: "Plans coverage for review: it files pending proposals a person decides with decideAgentProposal and refreshes the stored plan prices, and assigns nothing."
   "mutation dispatchUnassignMoves":
     tools: [dispatch_unassign_move]
 
@@ -951,6 +951,11 @@ writes:
   "PUT /api/v1/dispatch-controls/":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # dispatchstyle
+  "mutation resetDispatchStyle":
+    exempt: configuration
+    reason: "Forgets the dispatch style the planner learned for the whole organization; an administrator decides when the planner starts over, alongside the dispatch control setting that turns learning on."
 
   # distancecontrol
   "PATCH /api/v1/distance-controls/":

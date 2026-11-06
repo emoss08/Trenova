@@ -188,6 +188,14 @@ type RunRequest struct {
 	UsagePurpose kernelports.AIUsagePurpose
 }
 
+func (r *RunRequest) Ask() string {
+	if r.Unattended || r.Delegation != nil {
+		return ""
+	}
+
+	return r.Input
+}
+
 func (r *RunRequest) AttributedPurpose() kernelports.AIUsagePurpose {
 	if r.UsagePurpose != kernelports.AIUsagePurposeLive {
 		return r.UsagePurpose

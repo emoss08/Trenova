@@ -187,10 +187,11 @@ func driverSummaryQuery(
 	filter *dispatchboardports.DispatchBoardFilter,
 ) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
-	return w.
+	q, open := withOpenWork(w.Query(), w)
+	return q.
 		Pick(
 			keel.Count(),
-			countIf(zero(openAssignments(w)).Eq(0)),
+			countIf(open.Eq(0)),
 		).
 		Where(driverFilters(filter)...).
 		Where(w.AvailableForDispatch.IsTrue())

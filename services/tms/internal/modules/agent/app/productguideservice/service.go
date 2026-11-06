@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -68,6 +69,7 @@ type Service struct {
 	permissions   permissionports.PermissionEngine
 	organizations tenantports.OrganizationRepository
 	index         []indexedPage
+	rarity        map[string]float64
 	resources     *permissioncatalog.Registry
 	vectorizer    retrievalports.QueryVectorizer
 	vectors       retrievalports.CatalogVectorIndex
@@ -91,17 +93,25 @@ type indexedTask struct {
 	steps    map[string]struct{}
 }
 
-func New(p Params) productguideports.ProductGuide {
+func New(
+	p Params, //nolint:gocritic // fx requires an fx.In parameter struct by value
+) productguideports.ProductGuide {
 	return newService(p, productguide.Default)
 }
 
-func newService(p Params, catalog *productguide.Catalog) *Service {
+func newService(
+	p Params, //nolint:gocritic // the fx.In struct New receives, passed on as it came
+	catalog *productguide.Catalog,
+) *Service {
+	index, rarity := buildIndex(catalog)
+
 	return &Service{
 		l:             p.Logger.Named("service.productguide"),
 		catalog:       catalog,
 		permissions:   p.Permissions,
 		organizations: p.Organizations,
-		index:         buildIndex(catalog),
+		index:         index,
+		rarity:        rarity,
 		resources:     p.Registry,
 		vectorizer:    p.Vectorizer,
 		vectors:       p.CatalogVectors,
@@ -109,8 +119,10 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 	}
 }
 
-func buildIndex(catalog *productguide.Catalog) []indexedPage {
-	index := make([]indexedPage, 0, len(catalog.Pages))
+func buildIndex(
+	catalog *productguide.Catalog,
+) (index []indexedPage, rarity map[string]float64) {
+	index = make([]indexedPage, 0, len(catalog.Pages))
 	for i := range catalog.Pages {
 		page := &catalog.Pages[i]
 		entry := indexedPage{
@@ -134,7 +146,7 @@ func buildIndex(catalog *productguide.Catalog) []indexedPage {
 		index = append(index, entry)
 	}
 
-	return index
+	return index, rarityOf(index)
 }
 
 func (s *Service) PageForPath(path string) (*productguide.Page, bool) {
@@ -143,7 +155,7 @@ func (s *Service) PageForPath(path string) (*productguide.Page, bool) {
 
 type scored struct {
 	entry *indexedPage
-	score int
+	score float64
 	task  *productguide.Task
 }
 
@@ -201,21 +213,21 @@ func (s *Service) rank(terms map[string]struct{}, onlyPage string) []scored {
 			if entry.page.Path != onlyPage {
 				continue
 			}
-			task, _ := bestTask(entry, terms)
+			task, _ := bestTask(entry, terms, s.rarity)
 			if task == nil && len(entry.page.Tasks) > 0 {
 				task = &entry.page.Tasks[0]
 			}
 			return []scored{{entry: entry, score: 1, task: task}}
 		}
 
-		pageScore := scoreTerms(terms, []weighted{
+		pageScore := scoreTerms(terms, s.rarity, []weighted{
 			{entry.name, nameWeight},
 			{entry.aliases, aliasWeight},
 			{entry.breadcrumb, breadcrumbWeight},
 			{entry.description, descriptionWeight},
 			{entry.body, bodyWeight},
 		})
-		task, taskScore := bestTask(entry, terms)
+		task, taskScore := bestTask(entry, terms, s.rarity)
 		total := pageScore + taskScore
 		if total == 0 {
 			continue
@@ -249,13 +261,20 @@ type weighted struct {
 	weight int
 }
 
-// scoreTerms counts each term once, at the heaviest field it appears in.
-func scoreTerms(terms map[string]struct{}, fields []weighted) int {
-	total := 0
+// scoreTerms counts each term once, at the heaviest field it appears in,
+// weighted by how few pages use it: a word on every page ("load", "shipment")
+// says little about which page is meant, so a long guide that happens to use
+// it cannot outrank the page the question names.
+func scoreTerms(
+	terms map[string]struct{},
+	rarity map[string]float64,
+	fields []weighted,
+) float64 {
+	total := 0.0
 	for term := range terms {
 		for _, field := range fields {
 			if _, ok := field.tokens[term]; ok {
-				total += field.weight
+				total += float64(field.weight) * rarity[term]
 				break
 			}
 		}
@@ -264,12 +283,14 @@ func scoreTerms(terms map[string]struct{}, fields []weighted) int {
 	return total
 }
 
-func bestTask(entry *indexedPage, terms map[string]struct{}) (*productguide.Task, int) {
-	var best *productguide.Task
-	bestScore := 0
+func bestTask(
+	entry *indexedPage,
+	terms map[string]struct{},
+	rarity map[string]float64,
+) (best *productguide.Task, bestScore float64) {
 	for i := range entry.tasks {
 		task := &entry.tasks[i]
-		score := scoreTerms(terms, []weighted{
+		score := scoreTerms(terms, rarity, []weighted{
 			{task.title, taskTitleWeight},
 			{task.keywords, taskKeywordWeight},
 			{task.steps, bodyWeight},
@@ -280,6 +301,53 @@ func bestTask(entry *indexedPage, terms map[string]struct{}) (*productguide.Task
 	}
 
 	return best, bestScore
+}
+
+// rarityOf is each word's inverse page frequency, ln(1 + pages / pages using
+// it), counted over the fields that say what a page is for: its name,
+// aliases, breadcrumb, description and its tasks' titles and keywords. Notes
+// and steps share boilerplate ("Needs read access to …") that would make
+// "access" worthless on the pages about access; a word found only there is
+// counted over every field instead.
+func rarityOf(index []indexedPage) map[string]float64 {
+	describing := make(map[string]int)
+	anywhere := make(map[string]int)
+	for i := range index {
+		entry := &index[i]
+		signal := []map[string]struct{}{
+			entry.name, entry.aliases, entry.breadcrumb, entry.description,
+		}
+		every := []map[string]struct{}{entry.body}
+		for _, task := range entry.tasks {
+			signal = append(signal, task.title, task.keywords)
+			every = append(every, task.steps)
+		}
+		countPage(describing, signal)
+		countPage(anywhere, append(every, signal...))
+	}
+
+	pages := float64(len(index))
+	rarity := make(map[string]float64, len(anywhere))
+	for token, count := range anywhere {
+		if described, ok := describing[token]; ok {
+			count = described
+		}
+		rarity[token] = math.Log1p(pages / float64(count))
+	}
+
+	return rarity
+}
+
+func countPage(pagesUsing map[string]int, fields []map[string]struct{}) {
+	seen := make(map[string]struct{})
+	for _, field := range fields {
+		for token := range field {
+			if _, ok := seen[token]; !ok {
+				seen[token] = struct{}{}
+				pagesUsing[token]++
+			}
+		}
+	}
 }
 
 func (s *Service) Destination(
@@ -498,8 +566,7 @@ func requirementKey(requirement productguide.Requirement) string {
 // check is whether the person may open a page and, when not, what they lack
 // in words: the permission's display name, or the part of the product the
 // organization has switched off.
-func (a *access) check(page *productguide.Page) (bool, []string) {
-	var missing []string
+func (a *access) check(page *productguide.Page) (canOpen bool, missing []string) {
 	for _, capability := range page.Capabilities {
 		switch capability {
 		case capabilityBrokerage:

@@ -151,7 +151,18 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 			"Cover the move although the carrier's insurance expires soon. A carrier that is " +
 				"blocked can never be used. Off by default.",
 		),
-	}, toolparams.ParamShipmentMoveID, toolparams.ParamCarrierID, fieldRateMethod, fieldBaseRate)
+		toolparams.ParamReason: agenttoolschema.Reason(
+			"Why this carrier at this rate, in one or two sentences the dispatcher reads " +
+				"with the proposal: the contract or quote the rate came from and why it " +
+				"beats covering the move with a driver. The carrier never sees it.",
+		),
+	},
+		toolparams.ParamShipmentMoveID,
+		toolparams.ParamCarrierID,
+		fieldRateMethod,
+		fieldBaseRate,
+		toolparams.ParamReason,
+	)
 }
 
 func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {

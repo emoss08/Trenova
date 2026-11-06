@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
@@ -286,9 +286,9 @@ func TestFindingsFromError_MapsValidationErrorsToFindings(t *testing.T) {
 	findings := findingsFromError(multiErr)
 
 	require.Len(t, findings, 2)
-	assert.Equal(t, string(dispatcheligibility.SeverityBlock), findings[0].Severity)
+	assert.Equal(t, string(dispatchfinding.SeverityBlock), findings[0].Severity)
 	assert.Equal(t, "Driver has no drive time remaining", findings[0].Message)
-	assert.Equal(t, string(dispatcheligibility.SeverityWarn), findings[1].Severity)
+	assert.Equal(t, string(dispatchfinding.SeverityWarn), findings[1].Severity)
 }
 
 func TestFindingsFromError_NonValidationErrorYieldsNoFindings(t *testing.T) {

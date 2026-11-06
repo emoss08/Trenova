@@ -279,6 +279,10 @@ export const workerSchema = z.object({
   gender: genderSchema,
   canBeAssigned: z.boolean().default(false),
   availableForDispatch: z.boolean().default(true),
+  homeLatitude: z.number().min(-90).max(90).nullish(),
+  homeLongitude: z.number().min(-180).max(180).nullish(),
+  homePlaceId: nullableStringSchema,
+  lastHomeAt: z.number().int().nullish(),
 
   state: usStateRelationSchema,
   fleetCode: fleetCodeRelationSchema,

@@ -1,8 +1,11 @@
 package dispatchquerytools
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"context"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
@@ -10,9 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -25,18 +28,13 @@ const (
 	millisPerHour         = 3_600_000
 )
 
-// candidateRanker is the dispatch console's ranking of drivers for one move.
 type candidateRanker interface {
 	GetMoveCandidates(
 		ctx context.Context,
 		req *dispatchconsoleservice.MoveCandidatesRequest,
-	) ([]*dispatchcandidateservice.CandidateScore, error)
+	) ([]*dispatchplanports.CandidateScore, error)
 }
 
-// rankMoveCandidatesTool scores every eligible driver for an uncovered move
-// the way the dispatch console does: hours of service, deadhead, equipment,
-// slack against the pickup window. It is the read that should come before
-// dispatch_assign_move, so the proposal names a driver the desk would have picked.
 type rankMoveCandidatesTool struct {
 	ranker candidateRanker
 }
@@ -48,11 +46,12 @@ func NewRankMoveCandidatesTool(ranker candidateRanker) agenttoolports.AgentQuery
 func (t *rankMoveCandidatesTool) Name() string { return "dispatch_rank_candidates" }
 
 func (t *rankMoveCandidatesTool) Description() string {
-	return "Rank the drivers who could cover a shipment move, scored as the dispatch " +
-		"console scores them: hours left, deadhead, slack against the window, equipment " +
-		"fit. Each candidate carries a verdict, " +
-		"the findings behind it and the factors that made its score. Call this before " +
-		"dispatch_assign_move and propose from the top of the list unless a finding says why not."
+	return "Rank the drivers who could cover a shipment move, cheapest first, priced as the " +
+		"dispatch console prices them. Each driver comes with what they cost on the move in " +
+		"dollars (empty miles, lateness, waiting, rest, then preferences such as home time " +
+		"and fairness), a verdict, the findings behind it and the cost lines. Call this " +
+		"before dispatch_assign_move, propose from the top of the list unless a finding " +
+		"says why not, and give the cost or finding that decided it as the reason."
 }
 
 func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
@@ -92,10 +91,9 @@ type findingView struct {
 	Message  string `json:"message"`
 }
 
-type factorView struct {
-	Label        string  `json:"label"`
-	Contribution float64 `json:"contribution"`
-	Detail       string  `json:"detail,omitempty"`
+type costLineView struct {
+	Component string `json:"component"`
+	Dollars   string `json:"dollars"`
 }
 
 type candidateView struct {
@@ -103,7 +101,7 @@ type candidateView struct {
 	WorkerName          string                 `json:"workerName"`
 	TractorID           string                 `json:"tractorId,omitempty"`
 	TrailerID           string                 `json:"trailerId,omitempty"`
-	Score               int                    `json:"score"`
+	Cost                string                 `json:"cost"`
 	Verdict             string                 `json:"verdict"`
 	Blocked             bool                   `json:"blocked"`
 	DeadheadMiles       *float64               `json:"deadheadMiles,omitempty"`
@@ -114,7 +112,7 @@ type candidateView struct {
 	Hours               string                 `json:"hours,omitempty"`
 	HOSStrategy         string                 `json:"hosStrategy,omitempty"`
 	Findings            []findingView          `json:"findings"`
-	Factors             []factorView           `json:"factors"`
+	CostLines           []costLineView         `json:"costLines"`
 }
 
 type candidatesView struct {
@@ -162,7 +160,7 @@ func (t *rankMoveCandidatesTool) Query(
 
 func candidatesViewOf(
 	moveID pulid.ID,
-	scores []*dispatchcandidateservice.CandidateScore,
+	scores []*dispatchplanports.CandidateScore,
 ) *candidatesView {
 	view := &candidatesView{
 		MoveID:     moveID.String(),
@@ -183,18 +181,18 @@ func candidatesViewOf(
 	return view
 }
 
-func candidateViewOf(score *dispatchcandidateservice.CandidateScore) candidateView {
+func candidateViewOf(score *dispatchplanports.CandidateScore) candidateView {
 	out := candidateView{
 		WorkerID:         score.WorkerID.String(),
 		WorkerName:       score.WorkerName,
-		Score:            score.Score,
+		Cost:             dispatcheconomics.Dollars(score.Cost.TotalCents),
 		Verdict:          score.Verdict,
 		Blocked:          score.Blocked(),
 		DeadheadMiles:    score.DeadheadMiles,
 		ProjectedArrival: querytool.ExpectedDate(score.ProjectedArrival, "unknown"),
 		HOSStrategy:      score.HOSStrategy,
 		Findings:         findingViews(score.Findings),
-		Factors:          make([]factorView, 0, len(score.Factors)),
+		CostLines:        make([]costLineView, 0, len(score.Cost.Lines)),
 	}
 	if score.SlackKnown {
 		out.MinutesOfSlack = &score.MinutesOfSlack
@@ -213,18 +211,17 @@ func candidateViewOf(score *dispatchcandidateservice.CandidateScore) candidateVi
 	if score.TrailerID.IsNotNil() {
 		out.TrailerID = score.TrailerID.String()
 	}
-	for _, factor := range score.Factors {
-		out.Factors = append(out.Factors, factorView{
-			Label:        factor.Label,
-			Contribution: factor.Contribution,
-			Detail:       factor.Detail,
+	for _, line := range score.Cost.Lines {
+		out.CostLines = append(out.CostLines, costLineView{
+			Component: line.Component.Label(),
+			Dollars:   dispatcheconomics.Dollars(line.Cents),
 		})
 	}
 
 	return out
 }
 
-func findingViews(findings []dispatcheligibility.Finding) []findingView {
+func findingViews(findings []dispatchfinding.Finding) []findingView {
 	out := make([]findingView, 0, len(findings))
 	for _, finding := range findings {
 		out = append(out, findingView{
@@ -241,7 +238,6 @@ func hoursOf(millis int64) float64 {
 	return float64(millis) / millisPerHour
 }
 
-// dispatchPlanner is the auto-assign service's dry run.
 type dispatchPlanner interface {
 	Plan(
 		ctx context.Context,
@@ -249,9 +245,6 @@ type dispatchPlanner interface {
 	) (*dispatchconsoleports.DispatchPlan, error)
 }
 
-// planDispatchTool runs the auto-assignment planner over a window without
-// applying anything, so an agent can see how the desk's own optimizer would
-// cover the board and propose the lines it agrees with.
 type planDispatchTool struct {
 	planner dispatchPlanner
 }
@@ -306,7 +299,7 @@ type plannedAssignmentView struct {
 	WorkerName string   `json:"workerName"`
 	TractorID  string   `json:"tractorId,omitempty"`
 	TrailerID  string   `json:"trailerId,omitempty"`
-	Score      int      `json:"score"`
+	Cost       string   `json:"cost"`
 	Confidence string   `json:"confidence"`
 	Rationale  string   `json:"rationale"`
 	Deadhead   *float64 `json:"deadheadMiles,omitempty"`
@@ -321,7 +314,7 @@ type uncoveredMoveView struct {
 
 type planView struct {
 	PlanningMode string                  `json:"planningMode"`
-	TotalScore   int                     `json:"totalScore"`
+	Cost         string                  `json:"cost"`
 	Assignments  []plannedAssignmentView `json:"assignments"`
 	Uncovered    []uncoveredMoveView     `json:"uncovered"`
 	Note         string                  `json:"note"`
@@ -371,8 +364,8 @@ func (t *planDispatchTool) Query(
 
 func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 	view := &planView{
-		PlanningMode: plan.PlanningMode,
-		TotalScore:   plan.TotalScore,
+		PlanningMode: plan.Mode.String(),
+		Cost:         dispatcheconomics.Dollars(plan.CostCents),
 		Assignments:  make([]plannedAssignmentView, 0, len(plan.Assignments)),
 		Uncovered:    make([]uncoveredMoveView, 0, len(plan.Uncovered)),
 		Note: "This is a dry run: nothing was assigned. Use dispatch_assign_move for each " +
@@ -382,23 +375,22 @@ func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 		if line == nil {
 			continue
 		}
+		candidate := line.Candidate
 		out := plannedAssignmentView{
 			MoveID:     line.MoveID.String(),
 			ProNumber:  line.ProNumber,
-			WorkerID:   line.WorkerID.String(),
-			WorkerName: line.WorkerName,
+			WorkerID:   candidate.WorkerID.String(),
+			WorkerName: candidate.WorkerName,
+			Cost:       dispatcheconomics.Dollars(candidate.Cost.TotalCents),
 			Confidence: line.Confidence.String(),
 			Rationale:  line.Rationale,
+			Deadhead:   candidate.DeadheadMiles,
 		}
-		if line.TractorID.IsNotNil() {
-			out.TractorID = line.TractorID.String()
+		if candidate.TractorID.IsNotNil() {
+			out.TractorID = candidate.TractorID.String()
 		}
-		if line.TrailerID.IsNotNil() {
-			out.TrailerID = line.TrailerID.String()
-		}
-		if line.Score != nil {
-			out.Score = line.Score.Score
-			out.Deadhead = line.Score.DeadheadMiles
+		if candidate.TrailerID.IsNotNil() {
+			out.TrailerID = candidate.TrailerID.String()
 		}
 		view.Assignments = append(view.Assignments, out)
 	}
@@ -409,10 +401,24 @@ func planViewOf(plan *dispatchconsoleports.DispatchPlan) *planView {
 		view.Uncovered = append(view.Uncovered, uncoveredMoveView{
 			MoveID:    move.MoveID.String(),
 			ProNumber: move.ProNumber,
-			Reason:    move.Reason,
-			Findings:  findingViews(move.BestBlockedFindings),
+			Reason:    move.Explanation(),
+			Findings:  findingViews(blockingFindings(move.BestCandidate)),
 		})
 	}
 
 	return view
+}
+
+func blockingFindings(candidate *dispatchplanports.CandidateScore) []dispatchfinding.Finding {
+	if candidate == nil {
+		return nil
+	}
+	out := make([]dispatchfinding.Finding, 0, len(candidate.Findings))
+	for _, finding := range candidate.Findings {
+		if finding.Severity == dispatchfinding.SeverityBlock {
+			out = append(out, finding)
+		}
+	}
+
+	return out
 }

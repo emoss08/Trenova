@@ -326,6 +326,19 @@ export function GroupHeading({
   );
 }
 
+/** Each outcome's tone: a tinted strip, its rule and its text, so a refusal reads apart from a
+ * success before its words do. */
+const OUTCOME_TONES = {
+  ok: {
+    surface: "bg-success-subtle border-success-border text-success-subtle-foreground",
+    Icon: CheckCircleIcon,
+  },
+  warn: {
+    surface: "bg-warning-subtle border-warning-border text-warning-subtle-foreground",
+    Icon: AlertTriangleIcon,
+  },
+} satisfies Record<DispatchOutcome["tone"], { surface: string; Icon: typeof CheckCircleIcon }>;
+
 /** What the last write here came to, in place, with the way to take it back. */
 export function QueueOutcome({
   outcome,
@@ -336,27 +349,44 @@ export function QueueOutcome({
   canUndo: boolean;
   onUndo: () => void;
 }) {
-  const t = useT();
-
   return (
     <div role="status" aria-live="polite" aria-atomic="true">
       {outcome ? (
-        <div
-          key={outcome.id}
-          className="animate-rise border-border flex items-center gap-2 border-b px-3.5 py-2 text-xs"
+        <QueueOutcomeRow key={outcome.id} outcome={outcome} canUndo={canUndo} onUndo={onUndo} />
+      ) : null}
+    </div>
+  );
+}
+
+function QueueOutcomeRow({
+  outcome,
+  canUndo,
+  onUndo,
+}: {
+  outcome: DispatchOutcome;
+  canUndo: boolean;
+  onUndo: () => void;
+}) {
+  const t = useT();
+  const { surface, Icon } = OUTCOME_TONES[outcome.tone];
+
+  return (
+    <div
+      data-tone={outcome.tone}
+      className={cn("flex animate-rise items-center gap-2 border-b px-3.5 py-2 text-xs", surface)}
+    >
+      <Icon className="size-3.5 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1">{outcome.text}</span>
+      {outcome.undoable && canUndo ? (
+        <Button
+          variant="link"
+          size="xxs"
+          className="shrink-0 font-medium text-current"
+          onClick={onUndo}
+          shortcut="U"
         >
-          {outcome.tone === "ok" ? (
-            <CheckCircleIcon className="text-success-foreground size-3.5 shrink-0" aria-hidden />
-          ) : (
-            <AlertTriangleIcon className="text-warning-foreground size-3.5 shrink-0" aria-hidden />
-          )}
-          <span className="min-w-0 flex-1">{outcome.text}</span>
-          {outcome.undoable && canUndo ? (
-            <Button variant="link" size="xxs" className="shrink-0" onClick={onUndo} shortcut="U">
-              {t("Undo")}
-            </Button>
-          ) : null}
-        </div>
+          {t("Undo")}
+        </Button>
       ) : null}
     </div>
   );

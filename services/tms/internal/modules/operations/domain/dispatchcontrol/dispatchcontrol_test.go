@@ -3,6 +3,8 @@ package dispatchcontrol
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +26,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeNever,
 				ServiceFailureGracePeriod:  nil,
@@ -38,7 +39,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickup,
 				ServiceFailureGracePeriod:  nil,
@@ -52,7 +52,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeDelivery,
 				ServiceFailureGracePeriod:  new(0),
@@ -65,7 +64,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
 				ServiceFailureGracePeriod:  new(-1),
@@ -78,7 +76,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyAvailability,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
 				ServiceFailureGracePeriod:  new(15),
@@ -87,24 +84,11 @@ func TestDispatchControl_Validate(t *testing.T) {
 			wantErr:         false,
 		},
 		{
-			name: "invalid auto assignment strategy fails",
-			entity: DispatchControl{
-				ID:                         pulid.MustNew("dc_"),
-				BusinessUnitID:             pulid.MustNew("bu_"),
-				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategy("Invalid"),
-				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
-				RecordServiceFailures:      ServiceIncidentTypeNever,
-			},
-			wantErr: true,
-		},
-		{
 			name: "invalid compliance enforcement level fails",
 			entity: DispatchControl{
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevel("Invalid"),
 				RecordServiceFailures:      ServiceIncidentTypeNever,
 			},
@@ -116,19 +100,17 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentType("Invalid"),
 			},
 			wantErr: true,
 		},
 		{
-			name: "availability strategy passes",
+			name: "block enforcement recording pickup failures passes",
 			entity: DispatchControl{
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyAvailability,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelBlock,
 				RecordServiceFailures:      ServiceIncidentTypePickup,
 				ServiceFailureGracePeriod:  new(10),
@@ -136,12 +118,11 @@ func TestDispatchControl_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "load balancing strategy passes",
+			name: "audit enforcement recording delivery failures passes",
 			entity: DispatchControl{
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyLoadBalancing,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelAudit,
 				RecordServiceFailures:      ServiceIncidentTypeDelivery,
 				ServiceFailureGracePeriod:  new(10),
@@ -154,7 +135,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeAllExceptShipper,
 				ServiceFailureGracePeriod:  new(10),
@@ -167,7 +147,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
 				ServiceFailureGracePeriod:  new(10),
@@ -175,24 +154,11 @@ func TestDispatchControl_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "empty auto assignment strategy fails",
-			entity: DispatchControl{
-				ID:                         pulid.MustNew("dc_"),
-				BusinessUnitID:             pulid.MustNew("bu_"),
-				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategy(""),
-				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
-				RecordServiceFailures:      ServiceIncidentTypeNever,
-			},
-			wantErr: true,
-		},
-		{
 			name: "empty compliance enforcement level fails",
 			entity: DispatchControl{
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevel(""),
 				RecordServiceFailures:      ServiceIncidentTypeNever,
 			},
@@ -204,7 +170,6 @@ func TestDispatchControl_Validate(t *testing.T) {
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
 				OrganizationID:             pulid.MustNew("org_"),
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentType(""),
 			},
@@ -353,7 +318,9 @@ func TestNewDefaultDispatchControl(t *testing.T) {
 	assert.Equal(t, orgID, dc.OrganizationID)
 	assert.Equal(t, buID, dc.BusinessUnitID)
 	assert.True(t, dc.EnableAutoAssignment)
-	assert.Equal(t, AutoAssignmentStrategyProximity, dc.AutoAssignmentStrategy)
+	assert.Equal(t, dispatcheconomics.Default(), dc.Economics)
+	assert.False(t, dc.LearnDispatchStyle, "learning a dispatch style is a choice, off by default")
+	assert.False(t, dc.PlanForEndMarket, "planning for end markets is a choice, off by default")
 	assert.True(t, dc.EnforceWorkerAssign)
 	assert.True(t, dc.EnforceTrailerContinuity)
 	assert.True(t, dc.EnforceHOSCompliance)
@@ -457,99 +424,6 @@ func TestServiceIncidentTypeFromString(t *testing.T) {
 			got, err := ServiceIncidentTypeFromString(tt.input)
 			if tt.wantErr {
 				assert.ErrorIs(t, err, ErrInvalidServiceIncidentType)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
-func TestAutoAssignmentStrategy_String(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		a    AutoAssignmentStrategy
-		want string
-	}{
-		{name: "proximity", a: AutoAssignmentStrategyProximity, want: "Proximity"},
-		{name: "availability", a: AutoAssignmentStrategyAvailability, want: "Availability"},
-		{name: "load balancing", a: AutoAssignmentStrategyLoadBalancing, want: "LoadBalancing"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, tt.a.String())
-		})
-	}
-}
-
-func TestAutoAssignmentStrategy_IsValid(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		a    AutoAssignmentStrategy
-		want bool
-	}{
-		{name: "proximity", a: AutoAssignmentStrategyProximity, want: true},
-		{name: "availability", a: AutoAssignmentStrategyAvailability, want: true},
-		{name: "load balancing", a: AutoAssignmentStrategyLoadBalancing, want: true},
-		{name: "invalid", a: AutoAssignmentStrategy("Invalid"), want: false},
-		{name: "empty", a: AutoAssignmentStrategy(""), want: false},
-		{name: "lowercase", a: AutoAssignmentStrategy("proximity"), want: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, tt.a.IsValid())
-		})
-	}
-}
-
-func TestAutoAssignmentStrategyFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		want    AutoAssignmentStrategy
-		wantErr bool
-	}{
-		{
-			name:    "proximity",
-			input:   "Proximity",
-			want:    AutoAssignmentStrategyProximity,
-			wantErr: false,
-		},
-		{
-			name:    "availability",
-			input:   "Availability",
-			want:    AutoAssignmentStrategyAvailability,
-			wantErr: false,
-		},
-		{
-			name:    "load balancing",
-			input:   "LoadBalancing",
-			want:    AutoAssignmentStrategyLoadBalancing,
-			wantErr: false,
-		},
-		{name: "invalid", input: "Invalid", want: "", wantErr: true},
-		{name: "empty", input: "", want: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := AutoAssignmentStrategyFromString(tt.input)
-			if tt.wantErr {
-				assert.ErrorIs(t, err, ErrInvalidAutoAssignmentStrategy)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
@@ -707,61 +581,7 @@ func TestComplianceEnforcementLevel_IsAuditOnly(t *testing.T) {
 	}
 }
 
-func TestPresetWeights_EveryStrategyCoversAllFactors(t *testing.T) {
-	strategies := []AutoAssignmentStrategy{
-		AutoAssignmentStrategyProximity,
-		AutoAssignmentStrategyAvailability,
-		AutoAssignmentStrategyLoadBalancing,
-		AutoAssignmentStrategyPerformance,
-	}
-
-	for _, strategy := range strategies {
-		weights := PresetWeights(strategy)
-		assert.Len(t, weights, len(AllScoringFactors()),
-			"strategy %s must weight every factor", strategy)
-		for _, factor := range AllScoringFactors() {
-			weight, ok := weights[factor]
-			assert.True(t, ok, "strategy %s is missing factor %s", strategy, factor)
-			assert.Greater(t, weight, 0.0)
-			assert.LessOrEqual(t, weight, 10.0)
-		}
-	}
-}
-
-func TestScoringFactor_NewFactorsAreValid(t *testing.T) {
-	for _, factor := range []ScoringFactor{
-		FactorOnTimeHistory,
-		FactorSafetyHistory,
-		FactorAcceptance,
-		FactorPTOProximity,
-	} {
-		assert.True(t, factor.IsValid(), "%s must be a valid scoring factor", factor)
-	}
-	assert.False(t, ScoringFactor("bogus").IsValid())
-}
-
-func TestAutoAssignmentStrategy_Performance(t *testing.T) {
-	assert.True(t, AutoAssignmentStrategyPerformance.IsValid())
-
-	parsed, err := AutoAssignmentStrategyFromString("Performance")
-	require.NoError(t, err)
-	assert.Equal(t, AutoAssignmentStrategyPerformance, parsed)
-}
-
-func TestResolve_OverridesNewFactors(t *testing.T) {
-	weights := ScoringWeights{
-		"onTimeHistory": 7.5,
-		"acceptance":    0,
-	}
-
-	resolved := weights.Resolve(AutoAssignmentStrategyPerformance)
-	assert.InDelta(t, 7.5, resolved[FactorOnTimeHistory], 0.001)
-	assert.InDelta(t, 0.0, resolved[FactorAcceptance], 0.001)
-	assert.InDelta(t, 2.0, resolved[FactorSafetyHistory], 0.001,
-		"untouched factors keep the preset value")
-}
-
-func TestHorizonSearchRounds(t *testing.T) {
+func TestResolvedHorizonSearchRounds(t *testing.T) {
 	t.Parallel()
 
 	rounds := func(v int16) *int16 { return &v }
@@ -774,32 +594,32 @@ func TestHorizonSearchRounds(t *testing.T) {
 		{
 			name:    "nil control uses the default",
 			control: nil,
-			want:    int(DefaultHorizonSearchIterations),
+			want:    int(DefaultHorizonSearchRounds),
 		},
 		{
 			name:    "unset uses the default",
 			control: &DispatchControl{},
-			want:    int(DefaultHorizonSearchIterations),
+			want:    int(DefaultHorizonSearchRounds),
 		},
 		{
 			name:    "an explicit zero disables the search",
-			control: &DispatchControl{HorizonSearchIterations: rounds(0)},
+			control: &DispatchControl{HorizonSearchRounds: rounds(0)},
 			want:    0,
 		},
 		{
 			name:    "a negative value is malformed data and falls back to the default",
-			control: &DispatchControl{HorizonSearchIterations: rounds(-10)},
-			want:    int(DefaultHorizonSearchIterations),
+			control: &DispatchControl{HorizonSearchRounds: rounds(-10)},
+			want:    int(DefaultHorizonSearchRounds),
 		},
 		{
 			name:    "a configured value is honoured",
-			control: &DispatchControl{HorizonSearchIterations: rounds(120)},
+			control: &DispatchControl{HorizonSearchRounds: rounds(120)},
 			want:    120,
 		},
 		{
 			name:    "an oversized value is clamped",
-			control: &DispatchControl{HorizonSearchIterations: rounds(5000)},
-			want:    int(MaxHorizonSearchIterations),
+			control: &DispatchControl{HorizonSearchRounds: rounds(5000)},
+			want:    int(MaxHorizonSearchRounds),
 		},
 	}
 
@@ -807,7 +627,7 @@ func TestHorizonSearchRounds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tt.want, tt.control.HorizonSearchRounds())
+			assert.Equal(t, tt.want, tt.control.ResolvedHorizonSearchRounds())
 		})
 	}
 }
@@ -837,7 +657,7 @@ func TestHorizonMovesPerDriver(t *testing.T) {
 	)
 }
 
-func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
+func TestValidate_HorizonSearchRoundsBounds(t *testing.T) {
 	t.Parallel()
 
 	rounds := func(v int16) *int16 { return &v }
@@ -850,7 +670,7 @@ func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
 		{name: "unset is allowed", value: nil},
 		{name: "zero disables the search", value: rounds(0)},
 		{name: "a normal value is allowed", value: rounds(50)},
-		{name: "the maximum is allowed", value: rounds(MaxHorizonSearchIterations)},
+		{name: "the maximum is allowed", value: rounds(MaxHorizonSearchRounds)},
 		{name: "negative is rejected", value: rounds(-1), wantErr: true},
 		{name: "above the maximum is rejected", value: rounds(501), wantErr: true},
 	}
@@ -860,10 +680,9 @@ func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
 			t.Parallel()
 
 			dc := &DispatchControl{
-				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeNever,
-				HorizonSearchIterations:    tt.value,
+				HorizonSearchRounds:        tt.value,
 			}
 
 			multiErr := errortypes.NewMultiError()
@@ -871,7 +690,7 @@ func TestValidate_HorizonSearchIterationsBounds(t *testing.T) {
 
 			found := false
 			for _, e := range multiErr.Errors {
-				if e.Field == "horizonSearchIterations" {
+				if e.Field == "horizonSearchRounds" {
 					found = true
 				}
 			}
@@ -907,4 +726,35 @@ func TestExceptionPolicy_FallsBackForAMissingRecord(t *testing.T) {
 	assert.Equal(t, DefaultExceptionDueCriticalMinutes, policy.DueCriticalMinutes)
 	assert.Equal(t, DefaultExceptionMaxEscalations, policy.MaxEscalations)
 	assert.True(t, policy.DefaultAssigneeID.IsNil())
+}
+
+func TestEconomics_ReachesValidationWithItsOwnRules(t *testing.T) {
+	t.Parallel()
+
+	dc := NewDefaultDispatchControl(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	dc.ID = pulid.MustNew("dc_")
+	dc.Economics.EmptyMileCents = -1
+
+	multiErr := errortypes.NewMultiError()
+	dc.Validate(multiErr)
+
+	assert.True(t, multiErr.HasErrors(), "a negative cost is refused")
+}
+
+func TestResolvedEconomics_FillsAnUnsetOrganizationWithDefaults(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, dispatcheconomics.Default(), (&DispatchControl{}).ResolvedEconomics())
+	var nothing *DispatchControl
+	assert.Equal(t, dispatcheconomics.Default(), nothing.ResolvedEconomics())
+}
+
+func TestAfterLoad_ReadsAStoredEmptyEconomicsAsTheDefaults(t *testing.T) {
+	t.Parallel()
+
+	dc := &DispatchControl{}
+	require.NoError(t, dc.AfterLoad(t.Context()))
+
+	assert.Equal(t, dispatcheconomics.Default(), dc.Economics,
+		"a row stored before economics existed reads as the defaults, never as zeros")
 }

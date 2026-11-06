@@ -93,6 +93,8 @@ func (s *Service) pollVehiclePositions(
 			zap.Error(err))
 	}
 
+	s.homeVisits.RecordPositions(ctx, tenantInfo, positions)
+
 	if len(positions) > 0 {
 		s.publishInvalidation(ctx, tenantInfo, "vehiclePosition")
 		s.waits.NotifyPositions(ctx, tenantInfo, positions)

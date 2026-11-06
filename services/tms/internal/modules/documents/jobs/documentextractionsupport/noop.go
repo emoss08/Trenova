@@ -46,20 +46,6 @@ func (NoopAIDocumentService) PollRateConfirmationBackgroundExtraction(
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
-func (NoopAIDocumentService) ExtractRateConfirmationForEvaluation(
-	context.Context,
-	*documentaiextractionports.AIEvaluationExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return nil, nil //nolint:nilnil // intentional noop
-}
-
-func (NoopAIDocumentService) ExtractRateConfirmationForShadow(
-	context.Context,
-	*documentaiextractionports.AIShadowExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return nil, nil //nolint:nilnil // intentional noop
-}
-
 type noopDocumentSearchProjectionService struct{}
 
 func (noopDocumentSearchProjectionService) Upsert(

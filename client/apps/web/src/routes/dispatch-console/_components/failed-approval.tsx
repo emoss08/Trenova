@@ -2,9 +2,10 @@ import { recordPath } from "@/config/record-links";
 import type { DispatchBoardMove } from "@/lib/graphql/dispatch-console";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Link } from "react-router";
 
 type FailedProposal = NonNullable<DispatchBoardMove["failedProposal"]>;
@@ -41,15 +42,12 @@ export function FailedApproval({
         <span className="text-muted-foreground">
           {t("Fix it on the shipment, then assign a driver below or propose coverage again.")}
         </span>
-        <Button
-          variant="link"
-          size="xxs"
-          className="px-0"
-          nativeButton={false}
-          render={<Link to={recordPath("shipment", move.shipmentId)} />}
+        <Link
+          to={recordPath("shipment", move.shipmentId)}
+          className={cn(buttonVariants({ variant: "link", size: "xxs" }), "px-0")}
         >
           {t("Open shipment")}
-        </Button>
+        </Link>
       </AlertDescription>
     </Alert>
   );

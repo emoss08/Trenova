@@ -29,7 +29,7 @@ func TestProposalRationale_UsesTheModelsOwnWordsWhenItGaveAny(t *testing.T) {
 		Narration: "  Reassigning to the Dallas terminal because the driver is out of hours.  ",
 		ToolName:  "reassign_move",
 		Arguments: map[string]any{"attemptSummary": "ignored while the model narrated"},
-		Input:     "ignored while the model narrated",
+		Ask:       "ignored while the model narrated",
 	})
 
 	assert.Equal(
@@ -44,8 +44,7 @@ func TestProposalRationale_SaysSoWhenTheModelExplainedNothing(t *testing.T) {
 
 	rationale := ProposalRationale(RationaleInput{Narration: "   ", ToolName: "reassign_move"})
 
-	assert.Contains(t, rationale, "reassign_move")
-	assert.Contains(t, rationale, "without explaining why")
+	assert.Equal(t, "The agent asked to reassign move without explaining why.", rationale)
 }
 
 // A model that calls a tool without narrating usually put its reasoning in
@@ -61,7 +60,7 @@ func TestProposalRationale_FallsBackToTheSummaryInTheArguments(t *testing.T) {
 			"subjectId":      "shp_1",
 			"attemptSummary": "  The shipment completed without a signed BOL.  ",
 		},
-		Input: "flag these for review",
+		Ask:   "flag these for review",
 	})
 
 	assert.Equal(t, "The shipment completed without a signed BOL.", rationale)
@@ -81,15 +80,15 @@ func TestProposalRationale_PrefersTheMostSpecificArgument(t *testing.T) {
 	assert.Equal(t, "Consignee is closed until Monday", rationale)
 }
 
-// With no narration and nothing in the call, the person's own request is the
-// best account of why: they asked for it.
+// With no narration and nothing in the call, the request a person typed is
+// the best account of why: they asked for it.
 func TestProposalRationale_FallsBackToWhatThePersonAsked(t *testing.T) {
 	t.Parallel()
 
 	rationale := ProposalRationale(RationaleInput{
 		ToolName:  "agent_raise_exception",
 		Arguments: map[string]any{"subjectId": "shp_1", "reason": "", "note": 12},
-		Input:     "  Flag SEED-DET-011 for review  ",
+		Ask:       "  Flag SEED-DET-011 for review  ",
 	})
 
 	assert.Equal(
@@ -111,10 +110,10 @@ func TestProposalRationale_TruncatesTheFallbacksToo(t *testing.T) {
 		ToolName:  "hold_shipment",
 		Arguments: map[string]any{"reason": string(long)},
 	})
-	fromInput := ProposalRationale(RationaleInput{ToolName: "hold_shipment", Input: string(long)})
+	fromAsk := ProposalRationale(RationaleInput{ToolName: "hold_shipment", Ask: string(long)})
 
 	assert.LessOrEqual(t, len([]rune(fromArgument)), maxRationaleChars+1)
-	assert.LessOrEqual(t, len([]rune(fromInput)), maxRationaleChars+1)
+	assert.LessOrEqual(t, len([]rune(fromAsk)), maxRationaleChars+1)
 }
 
 func TestProposalRationale_TruncatesNarration(t *testing.T) {

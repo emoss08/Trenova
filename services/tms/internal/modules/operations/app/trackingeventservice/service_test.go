@@ -9,6 +9,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -113,7 +115,7 @@ func (m *memoryMoves) ReconcileStopActuals(
 	ctx context.Context,
 	req *shipmentmoveports.ReconcileStopActualsRequest,
 ) (*shipmentmoveports.ReconcileStopActualsResult, error) {
-	var applied []shipment.StopActualChange
+	var applied []stopactual.Change
 	for range 8 {
 		changes, err := req.Plan(ctx, m.move)
 		if err != nil {
@@ -125,7 +127,7 @@ func (m *memoryMoves) ReconcileStopActuals(
 				Changes: applied,
 			}, nil
 		}
-		if _, err = m.move.ApplyStopActualChanges(changes); err != nil {
+		if _, err = stopactual.Apply(m.move, changes); err != nil {
 			return nil, err
 		}
 		applied = append(applied, changes...)
@@ -138,14 +140,14 @@ func (m *memoryMoves) RecordStopActual(
 	req *shipmentmoveports.RecordStopActualRequest,
 ) (*shipment.ShipmentMove, error) {
 	m.recorded = append(m.recorded, req)
-	change := shipment.StopActualChange{StopID: req.StopID}
+	change := stopactual.Change{StopID: req.StopID}
 	if req.Action == shipmentmoveports.StopActualActionArrive {
 		change.Arrival = req.OccurredAt
 		change.Departure = req.DepartedAt
 	} else {
 		change.Departure = req.OccurredAt
 	}
-	if _, err := m.move.ApplyStopActualChanges([]shipment.StopActualChange{change}); err != nil {
+	if _, err := stopactual.Apply(m.move, []stopactual.Change{change}); err != nil {
 		return nil, err
 	}
 	return m.move, nil

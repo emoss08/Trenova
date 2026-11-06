@@ -2,14 +2,13 @@ package listquery
 
 import (
 	"strconv"
-	"strings"
+
+	"github.com/emoss08/trenova/pkg/searchtext"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
-
-const minPrefixSearchLength = 2
 
 func (p *plan) search(query string) keel.Pred {
 	if query == "" {
@@ -17,7 +16,7 @@ func (p *plan) search(query string) keel.Pred {
 	}
 
 	if p.cat.Vector >= 0 {
-		return p.vector().Match(query, searchOptions(query)...)
+		return p.vector().Match(query, searchtext.Options(query)...)
 	}
 
 	if len(p.cat.Search) > 0 {
@@ -32,38 +31,11 @@ func (p *plan) rank(query string) keel.Expr {
 		return nil
 	}
 
-	return p.vector().Rank(query, searchOptions(query)...)
+	return p.vector().Rank(query, searchtext.Options(query)...)
 }
 
 func (p *plan) vector() keel.TSVectorCol {
 	return keel.TSVectorCol{Col: p.baseColumn(p.cat.Vector)}
-}
-
-func searchOptions(query string) []keel.SearchOption {
-	modes := keel.SearchModes(keel.WebSearch)
-	if !hasWebsearchOperators(query) && len(query) >= minPrefixSearchLength {
-		modes = keel.SearchModes(keel.WebSearch, keel.Prefix)
-	}
-
-	return []keel.SearchOption{keel.SearchConfig("simple", "english"), modes}
-}
-
-func hasWebsearchOperators(query string) bool {
-	if strings.Contains(query, "\"") {
-		return true
-	}
-
-	if strings.Contains(query, " OR ") || strings.Contains(query, " or ") {
-		return true
-	}
-
-	for word := range strings.FieldsSeq(query) {
-		if strings.HasPrefix(word, "-") && len(word) > 1 {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (p *plan) configuredSearch(query string) keel.Pred {

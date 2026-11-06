@@ -11,6 +11,7 @@ import {
 const assignmentSections: readonly SettingsSectionSpec[] = [
   { title: "lg", fields: ["switch"] },
   { title: "lg", description: 3, cols: 2, fields: [{ kind: "input", count: 13 }] },
+  { title: "lg", description: 2, fields: [{ kind: "input", count: 3 }] },
 ];
 
 const monitoringSections: readonly SettingsSectionSpec[] = [
@@ -28,7 +29,12 @@ const tenderSections: readonly SettingsSectionSpec[] = [
   {
     title: "lg",
     description: 2,
-    fields: ["switch", { kind: "input", narrow: true }, "switch", { kind: "input", count: 5, narrow: true }],
+    fields: [
+      "switch",
+      { kind: "input", narrow: true },
+      "switch",
+      { kind: "input", count: 5, narrow: true },
+    ],
   },
 ];
 

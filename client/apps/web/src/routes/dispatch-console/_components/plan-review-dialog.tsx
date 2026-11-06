@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type {
+  DispatchFinding,
   DispatchPlan,
   DispatchPlannedAssignment,
   DispatchUncoveredMove,
@@ -15,17 +16,19 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, SearchXIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { formatMiles, scoreTone, verdictMeta } from "./dispatch-vocabulary";
+import { verdictMeta } from "./dispatch-vocabulary";
+import { formatCents, UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
 import { FindingList } from "./finding-list";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 
 function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssignment }) {
   const t = useT();
 
-  const verdict = verdictMeta(assignment.score.verdict);
+  const candidate = assignment.candidate;
+  const verdict = verdictMeta(candidate.verdict);
+  const next = assignment.alternatives[0];
 
   return (
     <div className="flex items-start gap-2 border-b px-3 py-2 last:border-b-0">
@@ -36,63 +39,63 @@ function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssig
             →
           </span>
           <span className="truncate text-xs">{assignment.workerName}</span>
-          <span
-            className={cn(
-              "ml-auto shrink-0 font-mono text-xs tabular-nums",
-              scoreTone(assignment.score.score),
-            )}
-          >
-            {assignment.score.score}
+          <span className="ml-auto shrink-0 font-mono text-xs tabular-nums">
+            {formatCents(assignment.planCostCents)}
           </span>
           <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
             {t(verdict.label)}
           </Badge>
         </div>
         <span className="text-muted-foreground text-2xs">
-          {assignment.score.deadheadMiles != null
+          {next
             ? t(
-                "{0} · {1} empty · {2}% confidence",
-                assignment.rationale,
-                formatMiles(assignment.score.deadheadMiles),
+                "Worth {0} to cover · {1} instead adds {2} · {3}% confidence",
+                formatCents(assignment.coveragePriceCents),
+                next.workerName,
+                formatCents(next.extraCents),
                 Math.round(assignment.confidence * 100),
               )
             : t(
-                "{0} · {1}% confidence",
-                assignment.rationale,
+                "Worth {0} to cover · {1}% confidence",
+                formatCents(assignment.coveragePriceCents),
                 Math.round(assignment.confidence * 100),
               )}
         </span>
-        {assignment.score.blocked && <FindingList findings={assignment.score.findings} limit={2} />}
+        {candidate.blocked && <FindingList findings={candidate.findings} limit={2} />}
       </div>
     </div>
   );
 }
 
 type UncoveredGroup = {
-  reason: string;
-  findings: DispatchUncoveredMove["bestBlockedFindings"];
+  reason: DispatchUncoveredMove["reason"];
+  findings: DispatchFinding[];
   proNumbers: string[];
 };
 
 /**
  * Twenty moves blocked by the same exhausted driver is one problem, not twenty. Uncovered
- * moves are grouped by their shared cause so the dispatcher reads each reason once and
+ * moves are grouped by why they went uncovered so the dispatcher reads each reason once and
  * sees exactly which freight it strands.
  */
 function groupUncovered(uncovered: readonly DispatchUncoveredMove[]): UncoveredGroup[] {
   const groups = new Map<string, UncoveredGroup>();
   for (const move of uncovered) {
-    const signature =
-      move.reason +
-      "|" +
-      move.bestBlockedFindings.map((finding) => `${finding.code}:${finding.message}`).join("|");
-    const existing = groups.get(signature);
+    const blocking = (move.bestCandidate?.findings ?? []).filter(
+      (finding) => finding.severity === "Block",
+    );
+    const existing = groups.get(move.reason);
     if (existing) {
       existing.proNumbers.push(move.proNumber);
+      for (const finding of blocking) {
+        if (!existing.findings.some((known) => known.code === finding.code)) {
+          existing.findings.push(finding);
+        }
+      }
     } else {
-      groups.set(signature, {
+      groups.set(move.reason, {
         reason: move.reason,
-        findings: move.bestBlockedFindings,
+        findings: [...blocking],
         proNumbers: [move.proNumber],
       });
     }
@@ -112,7 +115,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
   return (
     <div className="flex flex-col gap-1.5 px-3 py-2.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-medium">{group.reason}</span>
+        <span className="text-xs font-medium">{UNCOVERED_REASON_LABELS[group.reason]}</span>
         <span className="text-muted-foreground shrink-0 text-2xs tabular-nums">
           {t("{0, plural, one {# move} other {# moves}}", group.proNumbers.length)}
         </span>

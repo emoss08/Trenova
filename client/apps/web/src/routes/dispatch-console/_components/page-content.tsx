@@ -6,6 +6,7 @@ import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -106,6 +107,7 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
   // Moves just covered here collapse out at once rather than waiting on the next read.
   const [departing, setDeparting] = useState<ReadonlySet<string>>(() => new Set());
   const [departed, setDeparted] = useState<ReadonlyMap<string, number>>(() => new Map());
+  const nowSeconds = useNow();
 
   // A new board settles what was departing: a move it no longer holds needs no hiding, and
   // one hidden past its time comes back.
@@ -113,7 +115,7 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
   if (prevMoves !== moves) {
     setPrevMoves(moves);
     const present = new Set(moves.map((move) => move.moveId));
-    const now = Date.now();
+    const now = nowSeconds * 1000;
     if (departed.size > 0) {
       const kept = new Map(
         [...departed].filter(([id, at]) => present.has(id) && now - at < DEPARTED_TTL_MS),
@@ -346,6 +348,7 @@ export function DispatchConsoleContent({ actions }: { actions: DispatchActions }
               canUndo={actions.canUndo}
               onUndo={undo}
               exceptions={exceptionItems}
+              driversTruncated={board?.driversTruncated ?? false}
               exceptionsRead={{
                 isPending: exceptionsQuery.isPending,
                 isError: exceptionsQuery.isError,

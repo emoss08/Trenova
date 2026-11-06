@@ -2,20 +2,17 @@ package listquery
 
 import (
 	"context"
-	"slices"
 	"strings"
-	"unicode"
-	"unicode/utf8"
+
+	"github.com/emoss08/trenova/pkg/searchtext"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 const (
-	fuzzyThreshold     = "0.5"
-	fuzzyMinWordLength = 4
-	fuzzyMaxWords      = 4
-	fuzzyThresholdSQL  = "SELECT set_config('pg_trgm.word_similarity_threshold', $1, true)"
+	fuzzyThreshold    = "0.5"
+	fuzzyThresholdSQL = "SELECT set_config('pg_trgm.word_similarity_threshold', $1, true)"
 )
 
 var wordSimilarity = keel.DeclareFunc2[keel.Float64Expr, keel.StringValue, keel.StringValue](
@@ -31,34 +28,12 @@ type fuzzyMatch struct {
 	score keel.Float64Expr
 }
 
-func fuzzyWords(query string) []string {
-	if hasWebsearchOperators(query) {
-		return nil
-	}
-
-	words := make([]string, 0, fuzzyMaxWords)
-	for _, word := range strings.FieldsFunc(strings.ToLower(query), wordBreak) {
-		if len(words) == fuzzyMaxWords {
-			break
-		}
-		if utf8.RuneCountInString(word) >= fuzzyMinWordLength && !slices.Contains(words, word) {
-			words = append(words, word)
-		}
-	}
-
-	return words
-}
-
-func wordBreak(r rune) bool {
-	return !unicode.IsLetter(r) && !unicode.IsDigit(r)
-}
-
 func (p *plan) fuzzy(filter *pagination.QueryOptions) (fuzzyMatch, bool) {
 	if len(p.cat.Fuzzy) == 0 {
 		return fuzzyMatch{}, false
 	}
 
-	words := fuzzyWords(queryOf(filter))
+	words := searchtext.FuzzyWords(queryOf(filter))
 	if len(words) == 0 {
 		return fuzzyMatch{}, false
 	}

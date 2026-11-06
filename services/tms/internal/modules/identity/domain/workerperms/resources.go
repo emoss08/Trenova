@@ -170,6 +170,9 @@ func workerFieldSensitivities() map[string]permission.FieldSensitivity {
 		"lastDrugTest":           permission.SensitivityConfidential,
 		"drugAlcoholStatus":      permission.SensitivityConfidential,
 		"returnToDutyStatus":     permission.SensitivityConfidential,
+		"homeLatitude":           permission.SensitivityConfidential,
+		"homeLongitude":          permission.SensitivityConfidential,
+		"homePlaceId":            permission.SensitivityConfidential,
 	}
 }
 

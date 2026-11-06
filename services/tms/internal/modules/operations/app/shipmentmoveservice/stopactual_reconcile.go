@@ -3,6 +3,8 @@ package shipmentmoveservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
@@ -123,10 +125,10 @@ func settleStopActuals(
 	ctx context.Context,
 	move *shipment.ShipmentMove,
 	plan shipmentmoveports.StopActualPlanner,
-) ([]*shipment.Stop, []shipment.StopActualChange, error) {
+) ([]*shipment.Stop, []stopactual.Change, error) {
 	touched := make([]*shipment.Stop, 0)
 	seen := make(map[pulid.ID]struct{})
-	applied := make([]shipment.StopActualChange, 0)
+	applied := make([]stopactual.Change, 0)
 
 	maxPasses := 2*len(move.Stops) + 2
 	for range maxPasses {
@@ -138,7 +140,7 @@ func settleStopActuals(
 			return touched, applied, nil
 		}
 
-		stops, err := move.ApplyStopActualChanges(changes)
+		stops, err := stopactual.Apply(move, changes)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -190,7 +192,7 @@ func (s *service) checkReconciledStatus(
 
 func recordedActions(
 	req *shipmentmoveports.ReconcileStopActualsRequest,
-	changes []shipment.StopActualChange,
+	changes []stopactual.Change,
 ) []*shipmentmoveports.RecordStopActualRequest {
 	actions := make([]*shipmentmoveports.RecordStopActualRequest, 0, 2*len(changes))
 	for _, change := range changes {

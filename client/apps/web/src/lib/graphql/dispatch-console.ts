@@ -5,6 +5,7 @@ import {
   DispatchAssignmentPreviewDocument,
   DispatchBoardDocument,
   DispatchBoardMoveFieldsFragmentDoc,
+  DispatchCandidateFieldsFragmentDoc,
   DispatchCancelCarrierAssignmentDocument,
   DispatchCarrierAssignmentPreviewDocument,
   DispatchDriverMovesDocument,
@@ -26,7 +27,7 @@ import {
   type DispatchDriverMovesInput,
   type DispatchDriverMovesQuery,
   type DispatchMoveCandidatesInput,
-  type DispatchMoveCandidatesQuery,
+  type DispatchCandidateFieldsFragment,
   type DispatchPlanAutoAssignMutation,
   type DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
@@ -34,6 +35,7 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type DispatchBoardMove = DispatchBoardMoveFieldsFragment;
 export type DispatchMoveProposal = NonNullable<DispatchBoardMove["pendingProposal"]>;
+export type DispatchMovePlanPrice = NonNullable<DispatchBoardMove["planPrice"]>;
 export type DispatchBoard = Omit<DispatchBoardQuery["dispatchBoard"], "moves"> & {
   moves: DispatchBoardMove[];
 };
@@ -42,21 +44,35 @@ export type DispatchBoardSummary = DispatchBoard["summary"];
 export type DispatchCommitment = DispatchBoardDriver["commitments"][number];
 export type DispatchTimeOff = DispatchBoardDriver["timeOff"][number];
 export type DispatchFinding = DispatchBoardDriver["findings"][number];
-export type DispatchCandidate = DispatchMoveCandidatesQuery["dispatchMoveCandidates"][number];
-export type DispatchScoreFactor = DispatchCandidate["factors"][number];
-export type DispatchAssignmentPreview = DispatchAssignmentPreviewQuery["dispatchAssignmentPreview"];
+export type DispatchDriverPlannedMove = NonNullable<DispatchBoardDriver["plannedMove"]>;
+export type DispatchCandidate = DispatchCandidateFieldsFragment;
+export type DispatchCostLine = DispatchCandidate["costLines"][number];
+export type DispatchAssignmentPreview = Omit<
+  DispatchAssignmentPreviewQuery["dispatchAssignmentPreview"],
+  "candidate"
+> & { candidate: DispatchCandidate };
 export type DispatchDriverMoveMatch = Omit<
   DispatchDriverMovesQuery["dispatchDriverMoves"][number],
-  "move"
-> & { move: DispatchBoardMove };
+  "move" | "candidate"
+> & { move: DispatchBoardMove; candidate: DispatchCandidate };
 export type DispatchBulkAssignResult = DispatchAssignMovesMutation["dispatchAssignMoves"];
 export type DispatchCarrierEligibility =
   DispatchCarrierAssignmentPreviewQuery["dispatchCarrierAssignmentPreview"];
 export type DispatchCarrierAssignment =
   DispatchAssignMoveToCarrierMutation["dispatchAssignMoveToCarrier"];
-export type DispatchPlan = DispatchPlanAutoAssignMutation["dispatchPlanAutoAssign"];
-export type DispatchPlannedAssignment = DispatchPlan["assignments"][number];
-export type DispatchUncoveredMove = DispatchPlan["uncovered"][number];
+type MaskedPlan = DispatchPlanAutoAssignMutation["dispatchPlanAutoAssign"];
+export type DispatchPlannedAssignment = Omit<MaskedPlan["assignments"][number], "candidate"> & {
+  candidate: DispatchCandidate;
+};
+export type DispatchUncoveredMove = Omit<MaskedPlan["uncovered"][number], "bestCandidate"> & {
+  bestCandidate: DispatchCandidate | null;
+};
+export type DispatchPlan = Omit<MaskedPlan, "assignments" | "uncovered"> & {
+  assignments: DispatchPlannedAssignment[];
+  uncovered: DispatchUncoveredMove[];
+};
+export type DispatchUncoveredReason = DispatchUncoveredMove["reason"];
+export type DispatchPlanAlternative = DispatchPlannedAssignment["alternatives"][number];
 
 export async function getDispatchBoardGraphQL(
   input: DispatchBoardInput,
@@ -96,7 +112,7 @@ export async function getDispatchMoveCandidatesGraphQL(
     variables: { input },
     signal: options?.signal,
   });
-  return data.dispatchMoveCandidates;
+  return [...getFragmentData(DispatchCandidateFieldsFragmentDoc, data.dispatchMoveCandidates)];
 }
 
 export async function getDispatchDriverMovesGraphQL(
@@ -112,6 +128,7 @@ export async function getDispatchDriverMovesGraphQL(
   return data.dispatchDriverMoves.map((match) => ({
     ...match,
     move: getFragmentData(DispatchBoardMoveFieldsFragmentDoc, match.move),
+    candidate: getFragmentData(DispatchCandidateFieldsFragmentDoc, match.candidate),
   }));
 }
 
@@ -125,7 +142,11 @@ export async function getDispatchAssignmentPreviewGraphQL(
     variables: { input },
     signal: options?.signal,
   });
-  return data.dispatchAssignmentPreview;
+  const preview = data.dispatchAssignmentPreview;
+  return {
+    ...preview,
+    candidate: getFragmentData(DispatchCandidateFieldsFragmentDoc, preview.candidate),
+  };
 }
 
 export async function assignDispatchMovesGraphQL(
@@ -194,5 +215,17 @@ export async function planDispatchAutoAssignGraphQL(
     operationName: "DispatchPlanAutoAssign",
     variables: { input },
   });
-  return data.dispatchPlanAutoAssign;
+  const plan = data.dispatchPlanAutoAssign;
+  return {
+    ...plan,
+    assignments: plan.assignments.map((assignment) => ({
+      ...assignment,
+      candidate: getFragmentData(DispatchCandidateFieldsFragmentDoc, assignment.candidate),
+    })),
+    uncovered: plan.uncovered.map((move) => ({
+      ...move,
+      bestCandidate:
+        getFragmentData(DispatchCandidateFieldsFragmentDoc, move.bestCandidate) ?? null,
+    })),
+  };
 }

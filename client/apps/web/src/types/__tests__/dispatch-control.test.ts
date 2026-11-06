@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { dispatchControlSchema } from "../dispatch-control";
+import { DEFAULT_DISPATCH_ECONOMICS, dispatchControlSchema } from "../dispatch-control";
 
 const BASE = {
   enableAutoAssignment: false,
   autoProposeCoverage: false,
-  autoAssignmentStrategy: "Proximity",
   enforceWorkerAssign: true,
   enforceTrailerContinuity: true,
   enforceHosCompliance: true,
@@ -140,5 +139,27 @@ describe("dispatchControlSchema tender settings", () => {
 
   it("refuses an exhausted-tender action the server does not know", () => {
     expect(tenderIssues({ tenderExhaustedAction: "Retry" })).toHaveLength(1);
+  });
+});
+
+describe("dispatchControlSchema economics", () => {
+  it("gives a record that predates costs and prices the server's defaults", () => {
+    const parsed = dispatchControlSchema.parse(BASE);
+
+    expect(parsed.economics).toEqual(DEFAULT_DISPATCH_ECONOMICS);
+    expect(parsed.learnDispatchStyle).toBe(false);
+    expect(parsed.planForEndMarket).toBe(false);
+  });
+
+  it("refuses a negative cost on the field that holds it", () => {
+    const result = dispatchControlSchema.safeParse({
+      ...BASE,
+      economics: { ...DEFAULT_DISPATCH_ECONOMICS, emptyMileCents: -1 },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "economics.emptyMileCents",
+    );
   });
 });

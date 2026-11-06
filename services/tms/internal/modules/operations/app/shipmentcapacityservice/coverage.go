@@ -98,7 +98,7 @@ func (s *Service) driverSuggestions(
 			continue
 		}
 		remaining := candidate.DriveRemainingMs
-		fit := float64(candidate.Score)
+		cost := candidate.Cost.TotalCents
 		out = append(out, &shipmentcapacityports.DriverCoverageSuggestion{
 			WorkerID:         candidate.WorkerID,
 			TractorID:        candidate.TractorID,
@@ -107,7 +107,7 @@ func (s *Service) driverSuggestions(
 			Initials:         stringutils.Initials(candidate.WorkerName),
 			DistanceMiles:    candidate.DeadheadMiles,
 			DriveRemainingMs: &remaining,
-			FitPercent:       &fit,
+			CostCents:        &cost,
 		})
 	}
 

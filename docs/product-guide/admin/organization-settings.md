@@ -102,14 +102,14 @@ Keywords: SCIM token, directory sync, group mapping, user provisioning, Okta, En
      paste the base URL as the tenant URL and the token as the secret token, select Test
      Connection, then assign the users and groups to provision.
 
-People your identity provider assigns are added to this organization. Someone who already belongs
+## Notes
+SCIM provisioning: people your identity provider assigns are added to this organization. Someone who already belongs
 to it is linked rather than added again, and someone whose email belongs to another organization
 must be added here by an administrator first. Group membership grants the mapped roles within a
 few seconds. Unassigning or deactivating a person in your identity provider ends their access to
 this organization; if they also belong to other organizations, that access and their profile are
 left alone.
 
-## Notes
 Opening the page needs read access to the organization; saving the **General** tab needs update
 access. Each part of the security briefing appears only to people who can read what it is drawn
 from: member figures need users, two-factor coverage needs MFA authenticators, failed sign-ins need

@@ -13145,16 +13145,15 @@ type DispatchFinding {
 }
 
 """
-One weighted dimension of a candidate's score, carrying both its numeric contribution and
-the sentence a dispatcher reads to understand it.
+One part of what a pairing costs, in cents. A negative line is a credit, such as a move that
+leaves the driver where drivers are worth more.
 """
-type DispatchScoreFactor {
-  key: String!
-  label: String!
-  raw: Float!
-  weight: Float!
-  contribution: Float!
-  detail: String!
+type DispatchCostLine {
+  "emptyMiles, lateness, idleWait, rest, homeTime, fairness, customerExperience, onTimeHistory, safety, acceptance, trailerContinuity, haulFit, timeOffBuffer or endMarket."
+  component: String!
+  cents: Int!
+  "True for a preference that chooses between drivers without deciding whether a move is worth covering."
+  soft: Boolean!
 }
 
 """
@@ -13166,13 +13165,28 @@ type DispatchCandidate {
   tractorId: ID
   trailerId: ID
   moveId: ID!
-  score: Int!
+  "What this driver taking the move costs, in cents: the sum of its cost lines."
+  costCents: Int!
+  costLines: [DispatchCostLine!]!
   verdict: String!
   blocked: Boolean!
+  "Empty miles to the pickup; null when where the driver is is unknown."
   deadheadMiles: Float
+  "Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown."
+  originSource: String!
+  loadedMiles: Float!
   estimatedDriveMs: Int!
+  "Rest the driver needs on the way, from the hours-of-service projection."
+  restMs: Int!
   projectedArrival: Timestamp!
+  projectedDelivery: Timestamp!
+  projectedFreeAt: Timestamp!
   minutesOfSlack: Int!
+  "False when the move has no pickup appointment still ahead to measure margin against."
+  slackKnown: Boolean!
+  deliveryLateMinutes: Int!
+  "False when the driver's hours of service are not known or are too old to trust."
+  hosKnown: Boolean!
   driveRemainingMs: Int!
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
@@ -13188,7 +13202,6 @@ type DispatchCandidate {
   hosProjectedShiftMs: Int!
   hosProjectedCycleMs: Int!
   findings: [DispatchFinding!]!
-  factors: [DispatchScoreFactor!]!
 }
 
 """
@@ -13277,6 +13290,46 @@ type DispatchBoardMove {
   """
   pendingProposal: DispatchMoveProposal
   failedProposal: DispatchMoveFailedProposal
+  """
+  What the last plan said this move is worth and who should take it. Absent on a covered
+  move and on one no plan has priced yet.
+  """
+  planPrice: DispatchMovePlanPrice
+}
+
+"""
+The price the last plan put on an uncovered move. The coverage price is what leaving it
+uncovered costs; the plan covers it when a driver costs less. Plan again to refresh it.
+"""
+type DispatchMovePlanPrice {
+  "The driver the plan put on the move; absent when the plan left it uncovered."
+  workerId: ID
+  "The planned driver, or for an uncovered move the cheapest driver the plan considered."
+  workerName: String!
+  "What the named driver costs the plan on this move, in cents."
+  costCents: Int!
+  """
+  What the best driver for this move pays in preferences, in cents. A candidate costs the
+  plan its own cost less this, which is what the plan weighed against the coverage price.
+  """
+  preferenceFloorCents: Int!
+  coveragePriceCents: Int!
+  "How much more the plan costs without the planned driver, in cents."
+  driverValueCents: Int!
+  "Why the plan left the move uncovered; absent when it is covered."
+  uncoveredReason: DispatchUncoveredReason
+  alternatives: [DispatchPlanAlternative!]!
+  generatedAt: Timestamp!
+}
+
+"The move the last plan put a driver on, and what the driver is worth to it."
+type DispatchDriverPlannedMove {
+  moveId: ID!
+  proNumber: String!
+  costCents: Int!
+  "How much more the plan costs without this driver, in cents."
+  valueCents: Int!
+  generatedAt: Timestamp!
 }
 
 """
@@ -13381,6 +13434,12 @@ type DispatchBoardDriver {
   commitments: [DispatchCommitment!]!
   timeOff: [DispatchTimeOff!]!
   findings: [DispatchFinding!]!
+  plannedMove: DispatchDriverPlannedMove
+  """
+  When the driver was last home: recorded on the worker, seen by telematics near home, or the
+  end of approved time off. Absent when nothing says.
+  """
+  lastHomeAt: Timestamp
 }
 
 """
@@ -13403,6 +13462,8 @@ type DispatchBoardSummary {
 type DispatchBoard {
   moves: [DispatchBoardMove!]!
   drivers: [DispatchBoardDriver!]!
+  "True when more drivers match than the board lists; drivers available for dispatch come first."
+  driversTruncated: Boolean!
   summary: DispatchBoardSummary!
   windowStart: Timestamp!
   windowEnd: Timestamp!
@@ -13411,7 +13472,7 @@ type DispatchBoard {
 
 type DispatchDriverMoveMatch {
   move: DispatchBoardMove!
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
 }
 
 """
@@ -13426,7 +13487,7 @@ type DispatchAssignmentPreview {
   trailerId: ID
   blocked: Boolean!
   requiresOverride: Boolean!
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
 }
 
 """
@@ -13578,7 +13639,19 @@ type DispatchPlannedAssignment {
   """
   autoExecutable: Boolean!
   proposalId: ID
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
+  """
+  What this driver costs the plan on the move, in cents: the candidate's cost less what the
+  best driver for the move pays in preferences too. This is what was weighed against the
+  coverage price.
+  """
+  planCostCents: Int!
+  "What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium."
+  coveragePriceCents: Int!
+  "What this driver is worth to the plan, in cents: how much more the plan costs without them."
+  driverValueCents: Int!
+  "The next cheapest drivers and exactly how much more the whole plan costs if each takes the move instead."
+  alternatives: [DispatchPlanAlternative!]!
   """
   Set only under Horizon planning: the tour this move belongs to and its position
   within that tour. Immediate planning leaves both empty.
@@ -13591,7 +13664,13 @@ type DispatchPlannedAssignment {
   """
   projectedStartAt: Timestamp!
   projectedCompleteAt: Timestamp!
-  projectedDriveRemainingMs: Int!
+}
+
+type DispatchPlanAlternative {
+  workerId: ID!
+  workerName: String!
+  "How much more the whole plan costs, in cents, when this driver takes the move and the rest re-plan around it."
+  extraCents: Int!
 }
 
 """
@@ -13606,19 +13685,36 @@ type DispatchTour {
   moveIds: [ID!]!
   startsAt: Timestamp!
   endsAt: Timestamp!
-  totalScore: Int!
-  totalDeadheadMiles: Float!
+  costCents: Int!
+  emptyMiles: Float!
 }
 
 """
 A move the optimizer could not cover. Reporting these matters more than the successes: a
 move that silently vanishes from a plan is a load nobody is watching.
 """
+enum DispatchUncoveredReason {
+  NoCandidate
+  Disqualified
+  BeyondDeadhead
+  LocationUnknown
+  "Every driver costs more than leaving the move."
+  NotWorthIt
+  "Its drivers are worth more on other moves."
+  Outbid
+}
+
 type DispatchUncoveredMove {
   moveId: ID!
   proNumber: String!
-  reason: String!
-  bestBlockedFindings: [DispatchFinding!]!
+  reason: DispatchUncoveredReason!
+  "The reason in a sentence, with the driver it is about."
+  explanation: String!
+  "What the cheapest driver would have cost the plan, in cents; zero when none could take it."
+  planCostCents: Int!
+  coveragePriceCents: Int!
+  "The nearest driver who could not take it, or the cheapest who was outbid."
+  bestCandidate: DispatchCandidate
 }
 
 type DispatchPlan {
@@ -13637,7 +13733,10 @@ type DispatchPlan {
   """
   shadowMode: Boolean!
   autonomyTier: String!
-  totalScore: Int!
+  "What the covered moves cost, in cents."
+  costCents: Int!
+  "What the uncovered moves cost by being left, in cents."
+  uncoveredCents: Int!
   generatedAt: Timestamp!
 }
 
@@ -13650,6 +13749,69 @@ input DispatchPlanInput {
 
 extend type Mutation {
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
+}
+`, BuiltIn: false},
+	{Name: "../schema/dispatch_style.graphqls", Input: `"A soft cost whose weight the planner learns from the organization's dispatchers."
+enum DispatchStyleComponent {
+  homeTime
+  fairness
+  customerExperience
+  onTimeHistory
+  safety
+  acceptance
+  trailerContinuity
+  haulFit
+  timeOffBuffer
+}
+
+"""
+How much the organization's dispatchers weigh one cost against what dispatch control
+says it costs, learned from the drivers they assign.
+"""
+type DispatchStyleWeight {
+  component: DispatchStyleComponent!
+  """
+  1 is the organization's own cost; 1.6 means dispatchers choose as if it cost 60%
+  more. Between 0.25 and 4.
+  """
+  multiplier: Float!
+  "Decisions that moved this weight."
+  samples: Int!
+}
+
+"""
+The organization's learned dispatch style: from each driver a person assigns against
+the standing plan, whether they took the planned driver, a priced alternative, or a
+driver the plan did not price.
+"""
+type DispatchStyle {
+  "Learning is on in dispatch control, and the planner uses the weights."
+  enabled: Boolean!
+  decisions: Int!
+  "The planned driver was assigned."
+  approvals: Int!
+  "An alternative the plan priced was assigned instead."
+  overrides: Int!
+  "A driver the plan did not price was assigned instead."
+  declines: Int!
+  "When learning began or was last reset; null before it ever ran."
+  learningSince: Timestamp
+  "When a decision last moved the weights."
+  updatedAt: Timestamp
+  "The weights decisions have moved, the one furthest from the default first."
+  weights: [DispatchStyleWeight!]!
+}
+
+extend type Query {
+  dispatchStyle: DispatchStyle!
+}
+
+extend type Mutation {
+  """
+  Forgets the learned weights: the planner goes back to the organization's own costs
+  and learning starts again from the next decision.
+  """
+  resetDispatchStyle: DispatchStyle!
 }
 `, BuiltIn: false},
 	{Name: "../schema/distance_override.graphqls", Input: `type DistanceOverrideStop {
@@ -30060,7 +30222,10 @@ type CapacityMatch {
   quote: Decimal @protected(group: Margins)
   "Null to a reader without the margins field group."
   marginPercent: Float @protected(group: Margins)
+  "How well a carrier fits the lane, 0 to 100. Null for a driver's match."
   fitPercent: Float
+  "What the driver taking this move costs the plan, in cents. Null for a carrier's match."
+  costCents: Int
 }
 
 type DriverCoverageSuggestion {
@@ -30072,7 +30237,8 @@ type DriverCoverageSuggestion {
   unitLabel: String
   distanceMiles: Float
   driveRemainingMs: Int
-  fitPercent: Float
+  "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
+  costCents: Int
 }
 
 type CarrierCoverageSuggestion {
@@ -32686,6 +32852,14 @@ type Worker {
   gender: WorkerGender!
   canBeAssigned: Boolean!
   availableForDispatch: Boolean!
+  "Where the worker lives, from the address the worker form looked up; absent until one is."
+  homeLatitude: Float @protected(group: Personal)
+  homeLongitude: Float @protected(group: Personal)
+  homePlaceId: String @protected(group: Personal)
+  """
+  When the driver was last at home, as a dispatcher recorded it or as telematics saw them there.
+  """
+  lastHomeAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

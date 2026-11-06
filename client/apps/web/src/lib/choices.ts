@@ -36,7 +36,6 @@ import type {
 import type { FieldType } from "@/types/custom-field";
 import type { CaseFormat } from "@/types/data-entry-control";
 import type {
-  AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
   TenderExhaustedAction,
@@ -1486,13 +1485,6 @@ export const serviceIncidentTypeChoices = [
     color: "var(--success-foreground)",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceIncidentType>>;
-
-export const autoAssignmentStrategyChoices = [
-  { value: "Proximity", label: "Proximity", color: "var(--info)" },
-  { value: "Availability", label: "Availability", color: "var(--success)" },
-  { value: "LoadBalancing", label: "Load balancing", color: "var(--accent-rose)" },
-  { value: "Performance", label: "Performance", color: "var(--accent-violet)" },
-] satisfies ReadonlyArray<GenericSelectOption<AutoAssignmentStrategy>>;
 
 export const complianceEnforcementLevelChoices = [
   { value: "Warning", label: "Warning", color: "var(--warning)" },

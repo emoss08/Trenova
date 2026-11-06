@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -48,9 +49,9 @@ func Evaluate(in EvaluateInput) *Evaluation {
 	eval := NewEvaluation(6)
 
 	if in.Requirements.HasActiveHold {
-		eval.Add(Finding{
-			Code:     CodeShipmentOnHold,
-			Severity: SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeShipmentOnHold,
+			Severity: dispatchfinding.SeverityBlock,
 			Field:    "shipmentId",
 			Message:  "Shipment has an active dispatch-blocking hold",
 		})

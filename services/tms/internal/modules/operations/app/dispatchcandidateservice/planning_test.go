@@ -4,116 +4,106 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	denverLat, denverLon   = 39.7392, -104.9903
-	chicagoLat, chicagoLon = 41.8781, -87.6298
-)
-
 func TestCommitPlannedMove_DeadheadIsMeasuredFromThePriorDestination(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{}
-	now := int64(1_000_000)
-	workerID := pulid.MustNew("wrk_")
-	tractorID := pulid.MustNew("trac_")
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", denverLat, denverLon)
+	next := pickupAt(chicagoLat, chicagoLon, 200)
 
-	snapshot := &FleetSnapshot{
-		Now: now,
-		PosByTractor: map[pulid.ID]*telematics.VehiclePosition{
-			tractorID: {TractorID: tractorID, Latitude: denverLat, Longitude: denverLon},
-		},
-	}
-	driver := &dispatchboardports.BoardDriver{WorkerID: workerID, TractorID: tractorID}
-
-	nextMove := &dispatchboardports.BoardMove{
-		Distance:        ptr(200),
-		OriginLatitude:  ptr(chicagoLat),
-		OriginLongitude: ptr(chicagoLon),
-	}
-
-	before := svc.computeTrip(driver, nextMove, snapshot)
-	require.NotNil(t, before.deadheadMiles)
-	assert.Greater(t, *before.deadheadMiles, 800.0,
+	before := evaluateFor(s, driver, next, nil)
+	require.True(t, before.trip.emptyKnown)
+	assert.Greater(t, before.trip.emptyMiles, 800.0,
 		"from the live Denver position, Chicago is most of a day of empty miles")
 
 	CommitPlannedMove(&CommitPlannedMoveRequest{
-		Snapshot: snapshot,
+		Snapshot: s,
 		Move: &dispatchboardports.BoardMove{
-			MoveID:               pulid.MustNew("mov_"),
-			DestinationLatitude:  ptr(chicagoLat),
-			DestinationLongitude: ptr(chicagoLon),
-			DestinationWindowEnd: ptrInt64(now + 8*3600),
+			MoveID:               pulid.MustNew("smv_"),
+			DestinationLatitude:  new(chicagoLat),
+			DestinationLongitude: new(chicagoLon),
 		},
-		Score: &CandidateScore{
-			WorkerID:           workerID,
-			ProjectedAvailable: now,
-			EstimatedDriveMs:   4 * 3600 * 1000,
+		Score: &dispatchplanports.CandidateScore{
+			WorkerID:        driver.WorkerID,
+			ProjectedFreeAt: testNow + 8*3600,
 		},
 	})
 
-	after := svc.computeTrip(driver, nextMove, snapshot)
-	require.NotNil(t, after.deadheadMiles)
-	assert.Less(t, *after.deadheadMiles, 1.0,
+	after := evaluateFor(s, driver, next, nil)
+	require.True(t, after.trip.emptyKnown)
+	assert.Less(t, after.trip.emptyMiles, 1.0,
 		"the driver already ends up in Chicago, so the next Chicago pickup is not a deadhead")
+	assert.Equal(t, dispatchplanports.OriginCommitment, after.profile.originSource)
 }
 
-func TestCommitPlannedMove_AdvancesDeparture(t *testing.T) {
+func TestCommitPlannedMove_AdvancesDepartureToTheProjectedFinish(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{}
-	now := int64(1_000_000)
-	workerID := pulid.MustNew("wrk_")
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", chicagoLat, chicagoLon)
+	completion := testNow + 8*3600
 
-	snapshot := &FleetSnapshot{Now: now}
-	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
-
-	completion := now + 8*3600
 	CommitPlannedMove(&CommitPlannedMoveRequest{
-		Snapshot: snapshot,
-		Move: &dispatchboardports.BoardMove{
-			MoveID:               pulid.MustNew("mov_"),
-			DestinationWindowEnd: &completion,
+		Snapshot: s,
+		Move:     &dispatchboardports.BoardMove{MoveID: pulid.MustNew("smv_")},
+		Score: &dispatchplanports.CandidateScore{
+			WorkerID:        driver.WorkerID,
+			ProjectedFreeAt: completion,
 		},
-		Score: &CandidateScore{WorkerID: workerID, ProjectedAvailable: now},
 	})
 
-	trip := svc.computeTrip(
-		driver,
-		&dispatchboardports.BoardMove{Distance: ptr(100)},
-		snapshot,
-	)
+	eval := evaluateFor(s, driver, pickupAt(chicagoLat, chicagoLon, 100), nil)
 
-	assert.Equal(t, completion, trip.departure,
+	assert.Equal(t, completion, eval.trip.departure,
 		"a driver committed through 8 hours out cannot start the next move before then")
+}
+
+func TestCommitPlannedMove_RefreshesAPreparedProfileInPlace(t *testing.T) {
+	t.Parallel()
+
+	s := newTestSnapshot()
+	driver := addPlacedDriver(s, "Ada", chicagoLat, chicagoLon)
+	s.Prepare()
+	require.Equal(t, testNow, s.profile(driver).availableAt)
+
+	completion := testNow + 6*3600
+	CommitPlannedMove(&CommitPlannedMoveRequest{
+		Snapshot: s,
+		Move:     &dispatchboardports.BoardMove{MoveID: pulid.MustNew("smv_")},
+		Score: &dispatchplanports.CandidateScore{
+			WorkerID:        driver.WorkerID,
+			ProjectedFreeAt: completion,
+		},
+	})
+
+	assert.Equal(t, completion, s.profile(driver).availableAt,
+		"the next evaluation in the same run sees the new commitment")
 }
 
 func TestCommitPlannedMove_CarriesTheTrailerForward(t *testing.T) {
 	t.Parallel()
 
-	now := int64(1_000_000)
+	s := newTestSnapshot()
 	workerID := pulid.MustNew("wrk_")
-	trailerID := pulid.MustNew("trl_")
-
-	snapshot := &FleetSnapshot{Now: now}
+	trailerID := pulid.MustNew("tr_")
 
 	CommitPlannedMove(&CommitPlannedMoveRequest{
-		Snapshot: snapshot,
-		Move:     &dispatchboardports.BoardMove{MoveID: pulid.MustNew("mov_")},
-		Score: &CandidateScore{
-			WorkerID:           workerID,
-			TrailerID:          trailerID,
-			ProjectedAvailable: now,
-			EstimatedDriveMs:   3600 * 1000,
+		Snapshot: s,
+		Move:     &dispatchboardports.BoardMove{MoveID: pulid.MustNew("smv_")},
+		Score: &dispatchplanports.CandidateScore{
+			WorkerID:        workerID,
+			TrailerID:       trailerID,
+			ProjectedFreeAt: testNow + 3600,
 		},
 	})
 
-	current, ok := currentTrailer(snapshot.CommitmentsByWorker[workerID])
+	current, ok := currentTrailer(s.CommitmentsByWorker[workerID])
 	require.True(t, ok)
 	assert.Equal(t, trailerID, current)
 }
@@ -122,7 +112,7 @@ func TestCommitPlannedMove_IgnoresIncompleteRequests(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	move := &dispatchboardports.BoardMove{MoveID: pulid.MustNew("mov_")}
+	move := &dispatchboardports.BoardMove{MoveID: pulid.MustNew("smv_")}
 
 	tests := []struct {
 		name string
@@ -131,22 +121,28 @@ func TestCommitPlannedMove_IgnoresIncompleteRequests(t *testing.T) {
 		{name: "nil request"},
 		{
 			name: "nil snapshot",
-			req:  &CommitPlannedMoveRequest{Move: move, Score: &CandidateScore{WorkerID: workerID}},
+			req: &CommitPlannedMoveRequest{
+				Move:  move,
+				Score: &dispatchplanports.CandidateScore{WorkerID: workerID},
+			},
 		},
 		{
 			name: "nil move",
 			req: &CommitPlannedMoveRequest{
 				Snapshot: &FleetSnapshot{},
-				Score:    &CandidateScore{WorkerID: workerID},
+				Score:    &dispatchplanports.CandidateScore{WorkerID: workerID},
 			},
 		},
-		{name: "nil score", req: &CommitPlannedMoveRequest{Snapshot: &FleetSnapshot{}, Move: move}},
+		{
+			name: "nil score",
+			req:  &CommitPlannedMoveRequest{Snapshot: &FleetSnapshot{}, Move: move},
+		},
 		{
 			name: "score without a worker",
 			req: &CommitPlannedMoveRequest{
 				Snapshot: &FleetSnapshot{},
 				Move:     move,
-				Score:    &CandidateScore{},
+				Score:    &dispatchplanports.CandidateScore{},
 			},
 		},
 	}
@@ -166,43 +162,31 @@ func TestCommitPlannedMove_IgnoresIncompleteRequests(t *testing.T) {
 func TestPlannedCompletion(t *testing.T) {
 	t.Parallel()
 
-	now := int64(1_000_000)
+	end := testNow + 22*3600
 
 	tests := []struct {
 		name  string
 		move  *dispatchboardports.BoardMove
-		score *CandidateScore
+		score *dispatchplanports.CandidateScore
 		want  int64
 	}{
 		{
-			name: "no destination window falls back to finishing the drive",
-			move: &dispatchboardports.BoardMove{},
-			score: &CandidateScore{
-				ProjectedAvailable: now,
-				EstimatedDriveMs:   6 * 3600 * 1000,
-			},
-			want: now + 6*3600,
+			name:  "the projected finish wins",
+			move:  &dispatchboardports.BoardMove{DestinationWindowStart: testNow + 20*3600},
+			score: &dispatchplanports.CandidateScore{ProjectedFreeAt: testNow + 9*3600},
+			want:  testNow + 9*3600,
 		},
 		{
-			name: "a later appointment wins over the drive time",
-			move: &dispatchboardports.BoardMove{DestinationWindowStart: now + 20*3600},
-			score: &CandidateScore{
-				ProjectedAvailable: now,
-				EstimatedDriveMs:   6 * 3600 * 1000,
+			name: "without a projection the delivery window closes it",
+			move: &dispatchboardports.BoardMove{
+				DestinationWindowStart: testNow + 20*3600,
+				DestinationWindowEnd:   &end,
 			},
-			want: now + 20*3600,
+			score: &dispatchplanports.CandidateScore{},
+			want:  end,
 		},
-		{
-			name: "a drive running past the appointment wins",
-			move: &dispatchboardports.BoardMove{DestinationWindowStart: now + 2*3600},
-			score: &CandidateScore{
-				ProjectedAvailable: now,
-				EstimatedDriveMs:   9 * 3600 * 1000,
-			},
-			want: now + 9*3600,
-		},
-		{name: "nil move", move: nil, score: &CandidateScore{}, want: 0},
-		{name: "nil score", move: &dispatchboardports.BoardMove{}, score: nil, want: 0},
+		{name: "nil move", score: &dispatchplanports.CandidateScore{}, want: 0},
+		{name: "nil score", move: &dispatchboardports.BoardMove{}, want: 0},
 	}
 
 	for _, tt := range tests {
@@ -213,19 +197,3 @@ func TestPlannedCompletion(t *testing.T) {
 		})
 	}
 }
-
-func TestScoreCandidate_RejectsIncompleteRequests(t *testing.T) {
-	t.Parallel()
-
-	svc := &Service{}
-
-	assert.Nil(t, svc.ScoreCandidate(nil))
-	assert.Nil(t, svc.ScoreCandidate(&ScoreCandidateRequest{}))
-	assert.Nil(t, svc.ScoreCandidate(&ScoreCandidateRequest{
-		Driver:   &dispatchboardports.BoardDriver{},
-		Move:     &dispatchboardports.BoardMove{},
-		Snapshot: &FleetSnapshot{},
-	}), "a snapshot without a control has no scoring weights to resolve")
-}
-
-func ptrInt64(v int64) *int64 { return &v }

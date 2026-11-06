@@ -2,7 +2,6 @@ package documentextractionjobs
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -45,20 +44,6 @@ const (
 )
 
 type asyncRouteOnlyAIDocumentService struct{}
-
-func (asyncRouteOnlyAIDocumentService) ExtractRateConfirmationForEvaluation(
-	context.Context,
-	*documentaiextractionports.AIEvaluationExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return nil, errors.New("evaluation extraction is not used by these tests")
-}
-
-func (asyncRouteOnlyAIDocumentService) ExtractRateConfirmationForShadow(
-	context.Context,
-	*documentaiextractionports.AIShadowExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return nil, errors.New("shadow extraction is not used by these tests")
-}
 
 func (asyncRouteOnlyAIDocumentService) RouteDocument(
 	context.Context,

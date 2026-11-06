@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import { useForm } from "react-hook-form";
+import { type FieldValues, type UseFormReturn, useForm } from "react-hook-form";
 import { GraphQLRequestError, type NormalizedGraphQLError } from "@trenova/shared/lib/graphql";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import {
@@ -73,7 +73,7 @@ function renderJournalForm() {
   return result;
 }
 
-function errorsOf(form: ReturnType<typeof renderJournalForm>["current"]) {
+function errorsOf<TValues extends FieldValues>(form: UseFormReturn<TValues>) {
   return (form.control as unknown as { _formState: { errors: Record<string, any> } })._formState
     .errors;
 }

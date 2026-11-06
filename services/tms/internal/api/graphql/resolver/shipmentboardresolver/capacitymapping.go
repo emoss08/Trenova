@@ -79,6 +79,7 @@ func capacityMatchesToModel(
 			Quote:           gqldecimal.NullDecimalStringPtr(match.Quote),
 			MarginPercent:   match.MarginPercent,
 			FitPercent:      match.FitPercent,
+			CostCents:       gqlscalar.IntPtr(match.CostCents),
 		})
 	}
 
@@ -99,7 +100,7 @@ func coverageSuggestionsToModel(
 			UnitLabel:        gqlscalar.EmptyToNil(driver.UnitLabel),
 			DistanceMiles:    driver.DistanceMiles,
 			DriveRemainingMs: gqlscalar.IntPtr(driver.DriveRemainingMs),
-			FitPercent:       driver.FitPercent,
+			CostCents:        gqlscalar.IntPtr(driver.CostCents),
 		})
 	}
 

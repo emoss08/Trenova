@@ -153,6 +153,14 @@ type Worker {
   gender: WorkerGender!
   canBeAssigned: Boolean!
   availableForDispatch: Boolean!
+  "Where the worker lives, from the address the worker form looked up; absent until one is."
+  homeLatitude: Float @protected(group: Personal)
+  homeLongitude: Float @protected(group: Personal)
+  homePlaceId: String @protected(group: Personal)
+  """
+  When the driver was last at home, as a dispatcher recorded it or as telematics saw them there.
+  """
+  lastHomeAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

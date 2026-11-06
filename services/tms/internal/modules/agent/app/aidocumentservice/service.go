@@ -148,64 +148,6 @@ func (s *Service) ExtractRateConfirmation(
 	return convertExtractResponse(parsed), nil
 }
 
-func (s *Service) ExtractRateConfirmationForEvaluation(
-	ctx context.Context,
-	req *documentaiextractionports.AIEvaluationExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return s.evaluationExtract(ctx, &documentaiextractionports.AIExtractRequest{
-		TenantInfo: req.TenantInfo,
-		FileName:   req.FileName,
-		Pages:      req.Pages,
-	}, "extract_evaluation")
-}
-
-func (s *Service) ExtractRateConfirmationForShadow(
-	ctx context.Context,
-	req *documentaiextractionports.AIShadowExtractRequest,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	return s.evaluationExtract(ctx, &documentaiextractionports.AIExtractRequest{
-		TenantInfo: req.TenantInfo,
-		DocumentID: req.DocumentID,
-		FileName:   req.FileName,
-		Text:       req.Text,
-		Pages:      req.Pages,
-	}, "extract_shadow")
-}
-
-// evaluationExtract runs an extraction whose usage counts as evaluation, on
-// Nova like every other extraction.
-func (s *Service) evaluationExtract(
-	ctx context.Context,
-	req *documentaiextractionports.AIExtractRequest,
-	metric string,
-) (*documentaiextractionports.AIEvaluationExtractResult, error) {
-	if !s.cfg.DocumentExtractionEnabled() {
-		return nil, errDisabled
-	}
-
-	call := s.extractCall(req)
-	call.metric = metric
-	call.evaluation = true
-
-	parsed := new(extractResponse)
-	result, err := s.runStructured(ctx, call, parsed)
-	if err != nil {
-		return nil, err
-	}
-
-	s.recordAIUsage(call.metric, true, "success")
-
-	return &documentaiextractionports.AIEvaluationExtractResult{
-		Extract:      convertExtractResponse(parsed),
-		Model:        result.ModelIdentifier,
-		ProviderID:   result.ProviderID,
-		InputTokens:  result.InputTokens,
-		OutputTokens: result.OutputTokens,
-		LatencyMs:    result.LatencyMs,
-		CostUSD:      result.CostUSD,
-	}, nil
-}
-
 func (s *Service) extractCall(req *documentaiextractionports.AIExtractRequest) *structuredCall {
 	return newExtractCall(req)
 }
