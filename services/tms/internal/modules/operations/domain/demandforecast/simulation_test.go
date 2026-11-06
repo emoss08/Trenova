@@ -144,7 +144,7 @@ type simWorld struct {
 	econ    dispatcheconomics.Economics
 }
 
-func newSimWorld(t *testing.T) *simWorld {
+func newSimWorld(t *testing.T, seed uint64) *simWorld {
 	t.Helper()
 	w := &simWorld{econ: dispatcheconomics.Default()}
 	seen := map[int64]bool{}
@@ -165,7 +165,7 @@ func newSimWorld(t *testing.T) *simWorld {
 		}
 	}
 
-	r := rand.New(rand.NewPCG(2026, 11))
+	r := rand.New(rand.NewPCG(seed, 11))
 	first := dispatchmarket.WeekOf(mondayMidnight)
 	w.start = nowAtWeek(first + simHistoryWeeks)
 	w.end = w.start + simEvalWeeks*dispatchmarket.WeekSeconds
@@ -467,38 +467,33 @@ func (w *simWorld) solve(
 /*
 Anticipation earns by covering loads a myopic plan leaves, which costs some empty driving, so
 the measure is contribution (revenue covered less empty miles at the organization's rate), not
-empty miles per load. Valuing a move by where it leaves the driver minus what the driver was
-worth staying put charges for pulling a truck out of an area about to get busy; on this world
-it beats valuing the drop alone.
+empty miles per load. Valuing a move by where it leaves the driver less what the driver was
+worth staying put charges for pulling a truck out of an area about to get busy. Six random
+worlds, not one: a single world once showed a gain a counting bug had made.
 */
 func TestSimulation_AnticipationEarnsMoreWithoutLosingCoverage(t *testing.T) {
 	t.Parallel()
 
-	w := newSimWorld(t)
-	t.Logf("forecast %s: skill %.2f, interval coverage %.2f over %d weeks",
-		w.quality.Status, w.quality.Skill, w.quality.IntervalCoverage, w.quality.WeeksTested)
-	require.True(t, w.quality.Ready(), "sixteen weeks of a steady rhythm pass the backtest")
-	for _, cell := range w.cells {
-		require.True(t, demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-			Quality: w.quality, Areas: w.fitted.Areas,
-		}).Covers(cell))
+	var off, drop, relative float64
+	for _, seed := range []uint64{2026, 7, 42, 99, 314, 1234} {
+		w := newSimWorld(t, seed)
+		require.True(t, w.quality.Ready(), "sixteen weeks of a steady rhythm pass the backtest")
+		rate := w.econ.EmptyMileCents
+		o, d, r := w.run(simOff), w.run(simDropOnly), w.run(simRelative)
+		require.Equal(t, o.loads, r.loads)
+		require.Positive(t, o.emptyMiles, "the world needs repositioning for anticipation to matter")
+		t.Logf("seed %4d: off %.1f%% $%.0f, drop %.1f%% $%.0f, relative %.1f%% $%.0f", seed,
+			100*o.coverage(), o.contribution(rate)/100, 100*d.coverage(), d.contribution(rate)/100,
+			100*r.coverage(), r.contribution(rate)/100)
+		assert.GreaterOrEqual(t, r.coverage(), o.coverage(),
+			"anticipation covers no fewer loads (seed %d)", seed)
+		off += o.contribution(rate)
+		drop += d.contribution(rate)
+		relative += r.contribution(rate)
 	}
 
-	off := w.run(simOff)
-	drop := w.run(simDropOnly)
-	relative := w.run(simRelative)
-	rate := w.econ.EmptyMileCents
-	for name, r := range map[string]simResult{"off": off, "drop": drop, "relative": relative} {
-		t.Logf("%-8s %d of %d covered (%.1f%%), %.1f empty mi per load, contribution $%.0f",
-			name, r.covered, r.loads, 100*r.coverage(), r.emptyPerLoad(), r.contribution(rate)/100)
-	}
-
-	require.Equal(t, off.loads, relative.loads)
-	require.Positive(t, off.emptyMiles, "the world needs repositioning for anticipation to matter")
-	assert.GreaterOrEqual(t, relative.contribution(rate), 1.02*off.contribution(rate),
-		"anticipation earns at least 2%% more than a myopic plan")
-	assert.GreaterOrEqual(t, relative.coverage(), off.coverage(),
-		"anticipation covers no fewer loads")
-	assert.Greater(t, relative.contribution(rate), drop.contribution(rate),
-		"charging for the value left behind beats valuing the drop alone")
+	assert.GreaterOrEqual(t, relative, 1.01*off,
+		"anticipation earns at least 1%% more than a myopic plan across the worlds")
+	assert.Greater(t, relative, drop,
+		"charging for the value left behind beats valuing the drop alone across the worlds")
 }

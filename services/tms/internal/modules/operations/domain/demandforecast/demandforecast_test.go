@@ -424,3 +424,23 @@ func TestExplain_SaysUpToWhenTheRangeStartsAtNoneAndNamesBothDaysAcrossMidnight(
 		demandforecast.Explain(reason, time.UTC),
 	)
 }
+
+/*
+Booked loads were added to the mean of the unbooked count, which the walk then read as a
+Poisson around the new mean: four booked loads and nothing more expected became a spread of
+about one to seven, and the chance of demand beyond the drivers was mispriced.
+*/
+func TestCount_ShiftAddsAKnownCountNotASpread(t *testing.T) {
+	t.Parallel()
+
+	booked := demandforecast.Count{}.Shift(4)
+
+	assert.InDelta(t, 1.0, booked.Exceeds(3), 1e-9)
+	assert.InDelta(t, 0.0, booked.Exceeds(4), 1e-9)
+	assert.Equal(t, 4, booked.Quantile(0.1))
+	assert.Equal(t, 4, booked.Quantile(0.9))
+
+	withMore := demandforecast.Count{Mean: 2, Variance: 2}.Shift(4)
+	assert.InDelta(t, demandforecast.Count{Mean: 2, Variance: 2}.Exceeds(1), withMore.Exceeds(5), 1e-12)
+	assert.GreaterOrEqual(t, withMore.Quantile(0.1), 4)
+}

@@ -285,17 +285,24 @@ own precedence.
 
 `TestSimulation_AnticipationEarnsMoreWithoutLosingCoverage` (`simulation_test.go`) fits 16
 weeks of a steady rhythm in four Texas and Oklahoma cities, then plans 4 weeks with 10
-drivers and the real solver:
+drivers and the real solver, in six random worlds:
 
-| Credit | Covered | Contribution |
-|---|---|---|
-| Off | 378 of 488 (77.5%) | $276,261 |
-| Drop only | 392 (80.3%) | $283,273 |
-| Drop minus stay | 391 (80.1%) | $284,460 (+3.0%) |
+| World | Off | Drop only | Drop minus stay |
+|---|---|---|---|
+| 2026 | $276,261 | $286,958 | $284,719 |
+| 7 | $251,569 | $251,276 | $255,628 |
+| 42 | $256,406 | $253,350 | $253,808 |
+| 99 | $263,596 | $269,334 | $269,863 |
+| 314 | $256,637 | $256,801 | $257,733 |
+| 1234 | $243,848 | $247,300 | $246,146 |
+| Average | $258,053 | $260,837 (+1.1%) | $261,316 (+1.3%) |
 
-The win is covering loads a myopic plan leaves, which costs some empty driving (65.7 empty
-miles per load against 64.9 off). Measure contribution (revenue covered less empty miles at
-the organization's rate), not empty miles per load.
+Drop minus stay never covers fewer loads than off (+1.9 points on average) and earns most on
+average, but not in every world: where coverage is already about 90% anticipation can cost a
+little. The win is covering loads a myopic plan leaves, which costs some empty driving, so
+measure contribution (revenue covered less empty miles at the organization's rate), not
+empty miles per load. Judge it on several worlds: a single world once showed +3.0% that a
+counting bug (booked loads added to a mean instead of as a known count) had made.
 
 ## Rules that bite
 

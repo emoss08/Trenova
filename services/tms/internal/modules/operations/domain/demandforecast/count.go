@@ -10,6 +10,7 @@ const (
 type Count struct {
 	Mean     float64
 	Variance float64
+	Offset   int
 }
 
 func GammaPoisson(alpha, beta float64) Count {
@@ -34,14 +35,21 @@ func Nowcast(alpha, beta float64, booked int, unbookedShare float64) Count {
 }
 
 func (c Count) Plus(other Count) Count {
-	return Count{Mean: c.Mean + other.Mean, Variance: c.Variance + other.Variance}
+	return Count{
+		Mean:     c.Mean + other.Mean,
+		Variance: c.Variance + other.Variance,
+		Offset:   c.Offset + other.Offset,
+	}
 }
 
 func (c Count) Shift(by int) Count {
-	return Count{Mean: c.Mean + float64(by), Variance: c.Variance}
+	c.Offset += by
+
+	return c
 }
 
 func (c Count) Exceeds(k int) float64 {
+	k -= c.Offset
 	if k < 0 {
 		return 1
 	}
@@ -59,7 +67,7 @@ func (c Count) Exceeds(k int) float64 {
 
 func (c Count) Quantile(q float64) int {
 	if c.Mean <= 0 {
-		return 0
+		return c.Offset
 	}
 	target := math.Max(0, math.Min(q, 1))
 	cumulative := 0.0
@@ -70,7 +78,7 @@ func (c Count) Quantile(q float64) int {
 		return cumulative < target
 	})
 
-	return at
+	return c.Offset + at
 }
 
 func (c Count) walk(visit func(n int, p float64) bool) {
