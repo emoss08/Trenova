@@ -57,7 +57,9 @@ jobs:
         if: env.EVAL_KEY != ''
         uses: ./.github/actions/setup-go
         with:
-          cache-key: agent-evals-live
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Live red-team pass rate
         if: env.EVAL_KEY != ''

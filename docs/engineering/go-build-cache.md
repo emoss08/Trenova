@@ -1,110 +1,122 @@
 # Go build cache
 
-How CI caches Go builds today, what a shared cache (`GOCACHEPROG`) would change, and what it
-would and would not do for worktrees and developer machines. Adopting it needs a bucket and
-secrets, which is the maintainer's call; this is the recommendation.
+CI, developer machines and cloud sessions share one Go build cache: the R2 bucket
+`trenova-go-build-cache`, reached through `GOCACHEPROG` and
+[`gobuildcache`](https://pkg.go.dev/github.com/richardartoul/gobuildcache) (pinned in
+`services/tms/scripts/gocacheprog/version`). The go command asks the helper for each action ID;
+the helper answers from a local directory, then from the bucket, and in write mode uploads what
+the build produced (LZ4, about 2.5x on Go objects). Everything is content-addressed, so every job,
+branch, tag set and checkout path shares one store.
 
-## What CI does today
+## Pieces
 
-Every Go job runs `.github/actions/setup-go`, which restores and saves the whole `GOCACHE`
-directory with `actions/cache` under `gobuild-<os>-<go>-<cache-key>-<sha>`, falling back to the
-newest entry with the same prefix. There are six cache keys (`default`, `integration`, `lint`,
-`race`, `assay`, `agent-evals-live`), because a build with `-race` or another tag set produces
-different objects. This has three costs:
+- **`scripts/gocacheprog/gocacheprog.sh`** is what `GOCACHEPROG` points at. It reads the endpoint
+  and keys from a credentials file (`GO_REMOTE_CACHE_CREDENTIALS`, default
+  `~/.config/trenova/go-remote-cache.env`) or, in a cloud session, the environment's `R2_*`
+  variables; drops every inherited `AWS_*` variable; sets the gobuildcache and AWS SDK variables in
+  its own environment and execs gobuildcache. It is read-only unless the file says
+  `GO_REMOTE_CACHE_WRITE=true`. If it has no credentials or a signed `HEAD` on the bucket fails,
+  it runs as a local disk cache and says so on stderr, because gobuildcache exits on an
+  unreachable bucket and takes the go command with it. Either answer of the `HEAD` is remembered
+  for ten minutes, so an outage costs one timed-out check per ten minutes, not one per go command.
+- **`.github/actions/setup-go`** takes `r2-endpoint`, `r2-access-key-id` and
+  `r2-secret-access-key`. With all three it installs gobuildcache (cached per version), writes the
+  credentials file under `$RUNNER_TEMP`, and exports `GOCACHEPROG` and `GODEBUG=goindex=0`.
+  Without them (forks, Dependabot) the job builds with a cold local `GOCACHE`. Every caller passes
+  the write pair on pushes to `master` and the read pair otherwise. Because the fallback only makes
+  builds slower, the action probes the bucket once per job (on pushes to `master` it also writes and
+  deletes `ci-probe/<run>`) and raises a `::warning::` annotation and a job-summary line when the
+  token cannot read, or on `master` cannot write, the bucket, or when the secrets are missing on a
+  run that is not from a fork or Dependabot. An expired token shows up on every run's page.
+  Rotate the tokens before their expiry: create the new token, update the two secrets, delete the
+  old token.
+- **`.github/workflows/go-build-cache.yml`** runs `task build-watch-targets` (cmd/api, cmd/worker,
+  cmd/cli with `WATCH_BUILD`'s flags and cgo off) for linux/amd64 and darwin/arm64 on every push to
+  `master`. CI's test jobs build with other flags, so without this job no developer build would
+  hit.
+- **Taskfile.** `GO_REMOTE_CACHE=on` (default off) sets `GOCACHEPROG`, `GODEBUG=goindex=0`, and
+  `-p=$GO_REMOTE_CACHE_JOBS` (32) on the watch builds. The watch tasks and `build-cli` (so `run`,
+  `run-worker` and the CLI tasks) all build with `WATCH_BUILD` and `CGO_ENABLED=0`.
+  `task go-remote-cache-install` installs the pinned helper; `task go-remote-cache-clear` empties
+  its local directory (`~/.cache/trenova/gobuildcache`), which gobuildcache never trims.
 
-- **Size.** A cold `cmd/api` build alone writes 3.9 GB to `GOCACHE`; `go test ./...` with test
-  binaries and coverage writes several times that. Each job saves a full snapshot per commit,
-  and GitHub keeps 10 GB per repository by default, so snapshots evict each other and a job
-  regularly falls back to an older snapshot or none (a cold build: about 1,050 compiler
-  CPU-seconds for `cmd/api` alone on 4 cores, 5 minutes wall).
-- **Transfer.** Restore downloads and unpacks the whole snapshot before the first compile, and
-  save tars and uploads it again after the job, whatever the job used.
-- **No sharing.** A pull request reads only its own and the default branch's entries; the six keys
-  never share the objects they have in common (the standard library, every third-party module
-  and every package whose flags match), and nothing reaches a developer's machine.
+## Turning it on
 
-## What GOCACHEPROG changes
+Developer machine: `task go-remote-cache-install`, put a **read** token in
+`~/.config/trenova/go-remote-cache.env` (mode 600):
 
-`GOCACHEPROG` (stable since Go 1.24) makes the go command ask a helper process for each action
-ID and output ID instead of reading `GOCACHE`. The helper keeps a local disk cache and fills it
-from, and writes through to, a remote store. A job fetches only the objects its build needs,
-uploads only the ones it produced, and every job, branch and tag set shares one store, because
-the cache is content-addressed: the tag set and `-race` are part of each action ID, so the six
-keys become unnecessary.
+```
+R2_BUILD_CACHE_ENDPOINT=https://<account>.r2.cloudflarestorage.com
+R2_BUILD_CACHE_ACCESS_KEY_ID=...
+R2_BUILD_CACHE_SECRET_ACCESS_KEY=...
+```
 
-## Implementations
+then `GO_REMOTE_CACHE=on task run-watch` (or export `GO_REMOTE_CACHE=on`). Cloud sessions need
+only the install task: the wrapper uses the environment's `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY` and `R2_S3_API_ENDPOINT`, read-only. Give the cloud environment a
+read-only build-cache token under those names rather than the app's storage keys.
 
-| Implementation | Store | Notes |
-|---|---|---|
-| [`richardartoul/gobuildcache`](https://pkg.go.dev/github.com/richardartoul/gobuildcache) | S3 (Express One Zone recommended), S3-compatible (Tigris, R2), GCS | Built for CI; maintained (v1.5.0 adds GCS Anywhere Cache); read-only mode for untrusted PRs; no eviction of its own, so a bucket lifecycle rule expires old objects. **Recommended.** |
-| [`tailscale/go-cache-plugin`](https://pkg.go.dev/github.com/tailscale/go-cache-plugin/cmd/go-cache-plugin) | S3 | Runs as a long-lived daemon and can also serve a module proxy; used on Tailscale's own builders; releases are infrequent (v0.0.11, 2024). Good when the cache runs on a shared builder host. |
-| [`vearutop/gocacheprog`](https://pkg.go.dev/github.com/vearutop/gocacheprog) | its own server | Has GitHub Actions init/done steps, but needs a server we would run. |
-| [`jakebailey/gocachez`](https://pkg.go.dev/github.com/jakebailey/gocachez), [`sgrankin/gocachez`](https://pkg.go.dev/github.com/sgrankin/gocachez) | local disk | zstd compression and automatic eviction of a local cache; no remote store, so no sharing. |
-| `bradfitz/go-tool-cache` | S3 / HTTP | The original reference implementation of the protocol; superseded by the above. |
+A hit needs the same Go release, flags, `GOOS`/`GOARCH` and cgo setting as `master`'s build, so a
+change to `WATCH_BUILD` or the Go version misses until the next `master` push refills the store.
+`-trimpath` keeps the checkout path out of every action ID, and with cgo off a linux runner's
+darwin/arm64 build has a Mac's keys. gocut builds through `-toolexec`, and the compiler's tool ID
+then comes from `gocut compile -V=full`: a developer running gocut hits only if gocut passes that
+line through unchanged.
 
-## Recommendation
+## Why the two settings
 
-Use `gobuildcache` in CI against an S3-compatible bucket with no egress fees (Cloudflare R2 or
-Tigris for GitHub-hosted runners; S3 Express One Zone in the runners' region if CI moves to
-self-hosted AWS runners):
+- **`GODEBUG=goindex=0`.** The go command stores its module index in the build cache, keyed by
+  each package's absolute path and file times. Under a cache program that is one remote miss per
+  first-party package (about 2,700 for cmd/api) on every new checkout, before any compile.
+  Turning the index off changes no action ID.
+- **`-p 32`.** The go command looks up only as many actions at once as it runs, and a remote hit
+  costs a round trip (about 100 ms p50 from a cloud session), so at the default `-p` (one per
+  core) a warm store is read at round-trip speed. CI leaves `-p` alone: in `go test` it also sets
+  how many test binaries run at once.
 
-1. In `setup-go`, install a pinned `gobuildcache`, set `GOCACHEPROG` to it with the bucket and
-   credentials from repository secrets, and drop both `actions/cache` steps for `GOCACHE` (keep
-   the module cache step, or point `GOPROXY` at a module proxy) and the `cache-key` input with it.
-2. Runs on `master` and on pull requests from the repository write; pull requests from forks get
-   no secrets and run read-only (or cold).
-3. A bucket lifecycle rule deletes objects not written for 14 days. The store then holds the
-   working set of every job instead of six snapshots competing for 10 GB.
+## Measurements
 
-Expected effect: the restore and save steps (tarring, uploading and downloading multi-GB
-snapshots) disappear, a job never falls back to a cold cache because another job's snapshot
-evicted its own, and a pull request starts from the objects of every earlier run, not only its
-base. The size of the saving depends on how often jobs miss today; measure it by running
-`test-tms` on one branch both ways and comparing the setup, build and post-job step times before
-switching every workflow.
+2026-11-06, a cloud session (4 cores, 16 GB), Go 1.27.1, the cmd/api watch build, cgo off:
 
-## Worktrees and developer machines
+| Build | Wall | Compiled | Transferred |
+|---|---|---|---|
+| Cold, writing to R2 (no cache anywhere) | 400 s | 3,978 | 1.35 GB up (3.36 GB raw) |
+| Other checkout path, empty local dir, read-only, `-p 4`, index on | 484 s | 1 | 1.35 GB down |
+| Same, `-p 4`, `goindex=0` | 267 s | 1 | 1.34 GB down |
+| Same, `-p 16`, `goindex=0` | 71 s | 1 | 1.34 GB down |
+| Same, `-p 32`, `goindex=0` | 43 s | 1 | 1.34 GB down |
+| Warm local dir from another path, index on / `goindex=0` | 158 s / 9 s | 0 | 3 MB / 0 |
+| S4 (exported func added to `shipment/additionalcharge.go`), `-p 4` / `-p 32` | 76 s / 67 s | 791 | 0 |
 
-The Taskfile sets `-trimpath` for every go command, and with it the action ID carries no
-directory (`cmd/go/internal/work/exec.go` hashes `dir %s` only without `-trimpath`). A release
-compiler's tool ID is its version line (`compile version go1.27.1`, `buildid.go`), not its binary.
-So a cache filled by a Taskfile build is valid at any path on any machine with the same Go, flags,
-`GOOS`/`GOARCH` and cgo setting. Measured on 2026-11-06 (4 cores, Go 1.27.1, the watch flags): a
-cold `cmd/api` build at one path, then the same commit at another path against that cache,
-compiled 0 of 3,978 packages, took 7.5 s (the link) and produced a byte-identical binary.
-
-What a developer cache needs on top of CI's:
-
-- **The developers' flags.** CI's test jobs build without `-trimpath` and without the watch
-  build's `-gcflags`, so their objects never match a `task run-watch` build. A job on `master`
-  has to build the watch targets (`cmd/api`, `cmd/worker`, `cmd/cli`) with `WATCH_BUILD`'s flags.
-- **Every developer platform.** `GOOS` and `GOARCH` are in every action ID. A Linux runner can
-  fill `darwin/arm64` by cross-compiling, but only if cgo is off on both sides: a package with cgo
-  files hashes the C compiler, and `net` and `runtime/cgo` sit under nearly every package. The
-  watch tasks would set `CGO_ENABLED=0`, as `deploy/Dockerfile.tms` already does.
-- **The bandwidth.** One `cmd/api` watch build is 3.5 GB in 12,962 objects and compresses about
-  1.2x, so a cold fill downloads about 3 GB: about 30 s at 1 Gbps, about 4 minutes at 100 Mbps,
-  against about 3.5 minutes compiling on 4 cores and less on a laptop with more. A developer
-  cache pays on a fast link and after a pull that touched widely imported packages, not
-  everywhere. `gobuildcache` also never trims its local directory, so a laptop needs a periodic
-  `clear-local`.
+The one compile is the main package, whose VCS stamp differed; with the same commit the binaries
+were byte-identical. `GO_REMOTE_CACHE=on task build-cli` from an empty local directory took 45 s.
+The S4 rebuild at `-p 32` peaked at 3 GB of memory. One cmd/api build is 15,102 objects and
+1.45 GB in the bucket.
 
 ## Trust
 
-Anything that can write the store can put compiled code into every build that reads it, so:
+Anything that can write the store can put compiled code into every build that reads it.
 
-- Only jobs on pushes to `master` hold a write token. Pull requests, from the repository or from
-  forks, and developer machines use a read-only token (R2 tokens are scoped per bucket and
-  permission) or none.
-- Release images (`deploy/Dockerfile.*`) never read the shared cache.
-- `GOCACHEPROG` points at a small wrapper that sets the endpoint and credentials for
-  `gobuildcache` alone. The go command passes its environment to every test binary, so keys in
-  the job environment would reach test code, and `AWS_ENDPOINT_URL_S3` there would redirect any
-  AWS SDK client a test builds.
+- Only pushes to `master` write. Pull requests, other events, developer machines and cloud
+  sessions read, and the wrapper enforces read-only from the credentials file, whatever the job
+  or shell environment says. Give everything but `master` an R2 token with read permission only.
+- Repository secrets are readable by any workflow run on a branch of this repository, so someone
+  who can push a branch could change a workflow to use the write pair. To close that, move the
+  write pair to an environment restricted to `master` and add `environment:` to the jobs that
+  pass it.
+- The go command passes its environment to every test binary, so the keys and
+  `AWS_ENDPOINT_URL_S3` exist only in the helper's process; the job environment holds only the
+  path of the credentials file.
+- Release images (`deploy/Dockerfile.tms`, `deploy/Dockerfile.operator`) set an empty
+  `GOCACHEPROG` and compile everything themselves.
 
-`gobuildcache` v1.9.0 has the pieces: `GOBUILDCACHE_READ_ONLY`, LZ4 compression (on by default),
-path-style addressing, and the AWS SDK's `AWS_ENDPOINT_URL_S3` for R2's endpoint with region
-`auto`. Building it needs Go 1.27.3 or later (its `go.mod`); the binary does not depend on the
-toolchain the build uses. R2 has no egress fees, which matters because a cache is mostly reads:
-$0.015 per GB-month, $4.50 per million writes and $0.36 per million reads, so the store costs
-a few dollars a month at Trenova's size.
+## The bucket
+
+A lifecycle rule expires objects 3 days after they were written and aborts multipart uploads
+after a day, so the bucket holds about three days of uploads: one full set of objects is about
+1.5 GB, and each `master` push adds only the packages it changed. R2 counts age from the upload,
+not the last read, and gobuildcache does not write an object it found, so a hot object (the
+standard library, a third-party module) also expires after 3 days and the next `master` build
+writes it again; a shorter rule would make that refill daily. R2 has no egress fees; storage is
+$0.015 per GB-month, writes $4.50 per million and reads $0.36 per million, cents a month at this
+size.

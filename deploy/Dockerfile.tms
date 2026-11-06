@@ -14,7 +14,10 @@ COPY shared/ ./shared/
 COPY services/tms/ ./services/tms/
 
 WORKDIR /build/services/tms
-ENV CGO_ENABLED=0
+# Release builds compile everything here and never read the shared build cache
+# (docs/engineering/go-build-cache.md): whoever can write it could put code
+# into the image. An empty GOCACHEPROG keeps it off whatever the base sets.
+ENV CGO_ENABLED=0 GOCACHEPROG=
 
 FROM source AS build-tms
 RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli

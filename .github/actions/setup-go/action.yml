@@ -1,27 +1,30 @@
 name: Setup Go
 description: >-
-  Installs Go and restores the module and build caches. actions/setup-go only
-  saves its cache on a miss, so a long-lived key goes stale and every job pays
-  full compilation. A rolling key plus restore-keys keeps the build cache warm.
+  Installs Go, restores the module cache and, when the build cache secrets are
+  passed, points GOCACHEPROG at the shared build cache on Cloudflare R2
+  (docs/engineering/go-build-cache.md). Without them (forks, Dependabot) the
+  job builds with a cold local GOCACHE.
 
 inputs:
   go-version:
     description: Go version to install
     required: false
     default: "1.27.1"
-  cache-key:
-    description: >-
-      Distinguishes build caches that are not interchangeable, e.g. builds with
-      -race or with a different build tag produce different object files.
+  r2-endpoint:
+    description: The R2 account's S3 API endpoint (secrets.R2_BUILD_CACHE_ENDPOINT).
     required: false
-    default: default
-  save-build-cache:
+    default: ""
+  r2-access-key-id:
     description: >-
-      Save the build cache when the job ends. actions/cache saves only after a
-      successful job, so a job that can fail with a cold cache (the lint job)
-      passes "false" and saves the cache itself with if: always().
+      The write token's key on pushes to master, the read token's everywhere
+      else. The cache is read-only unless this is a push to master, whichever
+      key is passed.
     required: false
-    default: "true"
+    default: ""
+  r2-secret-access-key:
+    description: The secret of r2-access-key-id.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -47,8 +50,8 @@ runs:
       id: paths
       shell: bash
       run: |
-        echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
         echo "mod=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+        echo "gobuildcache-version=$(cat services/tms/scripts/gocacheprog/version)" >> "$GITHUB_OUTPUT"
 
     - name: Cache Go modules
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -58,23 +61,110 @@ runs:
         restore-keys: |
           gomod-${{ runner.os }}-${{ inputs.go-version }}-
 
-    - name: Cache Go build output
-      if: inputs.save-build-cache == 'true'
+    - name: Cache gobuildcache
+      if: inputs.r2-endpoint != '' && inputs.r2-access-key-id != '' && inputs.r2-secret-access-key != ''
+      id: gobuildcache-bin
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
-        path: ${{ steps.paths.outputs.build }}
-        key: gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-${{ github.sha }}
-        restore-keys: |
-          gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-
+        path: ${{ runner.temp }}/gobuildcache-bin
+        key: gobuildcache-${{ runner.os }}-${{ runner.arch }}-${{ steps.paths.outputs.gobuildcache-version }}
 
-    - name: Restore Go build output
-      if: inputs.save-build-cache != 'true'
-      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: ${{ steps.paths.outputs.build }}
-        key: gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-${{ github.sha }}
-        restore-keys: |
-          gobuild-${{ runner.os }}-${{ inputs.go-version }}-${{ inputs.cache-key }}-
+    # Its go.mod needs a newer Go than the builds use; GOTOOLCHAIN=auto fetches
+    # it for this install only, and the binary does not depend on it.
+    - name: Install gobuildcache
+      if: inputs.r2-endpoint != '' && inputs.r2-access-key-id != '' && inputs.r2-secret-access-key != '' && steps.gobuildcache-bin.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ runner.temp }}
+      env:
+        GOBIN: ${{ runner.temp }}/gobuildcache-bin
+        GOTOOLCHAIN: auto
+        GOFLAGS: ""
+        GOWORK: "off"
+        VERSION: ${{ steps.paths.outputs.gobuildcache-version }}
+      run: go install "github.com/richardartoul/gobuildcache@${VERSION}"
+
+    # The endpoint and keys go to a file only the wrapper reads, never into the
+    # job environment: the go command passes its environment to every test
+    # binary, and AWS_ENDPOINT_URL_S3 there would redirect any AWS SDK client a
+    # test builds. Writing is decided here, not by the caller's choice of key.
+    - name: Use the shared build cache
+      if: inputs.r2-endpoint != '' && inputs.r2-access-key-id != '' && inputs.r2-secret-access-key != ''
+      shell: bash
+      env:
+        ENDPOINT: ${{ inputs.r2-endpoint }}
+        ACCESS_KEY_ID: ${{ inputs.r2-access-key-id }}
+        SECRET_ACCESS_KEY: ${{ inputs.r2-secret-access-key }}
+        WRITE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/go-remote-cache"
+        mkdir -p "$dir"
+        umask 077
+        {
+          echo "R2_BUILD_CACHE_ENDPOINT=$ENDPOINT"
+          echo "R2_BUILD_CACHE_ACCESS_KEY_ID=$ACCESS_KEY_ID"
+          echo "R2_BUILD_CACHE_SECRET_ACCESS_KEY=$SECRET_ACCESS_KEY"
+          echo "GO_REMOTE_CACHE_WRITE=$WRITE"
+        } > "$dir/credentials.env"
+        {
+          echo "GO_REMOTE_CACHE_CREDENTIALS=$dir/credentials.env"
+          echo "GOBUILDCACHE_BIN=$RUNNER_TEMP/gobuildcache-bin/gobuildcache"
+          echo "GOBUILDCACHE_CACHE_DIR=$dir/cache"
+          echo "GOCACHEPROG=$GITHUB_WORKSPACE/services/tms/scripts/gocacheprog/gocacheprog.sh"
+          # The module index lives in the build cache under each package's
+          # path and file times, so with a cache program every fresh checkout
+          # pays one remote miss per first-party package for it.
+          echo "GODEBUG=goindex=0"
+        } >> "$GITHUB_ENV"
+        if [ "$WRITE" = true ]; then mode=read-write; else mode=read-only; fi
+        echo "Go build cache: shared (R2, $mode)" >> "$GITHUB_STEP_SUMMARY"
+
+    # The wrapper falls back to a local cache when the bucket is unreachable,
+    # so an expired, revoked or under-permitted token would only make builds
+    # slower. Probe the bucket once per job (and, where the job writes, write
+    # and delete a probe object) and say so on the run page when it fails.
+    - name: Check the shared build cache
+      if: inputs.r2-endpoint != '' && inputs.r2-access-key-id != '' && inputs.r2-secret-access-key != ''
+      shell: bash
+      env:
+        ENDPOINT: ${{ inputs.r2-endpoint }}
+        ACCESS_KEY_ID: ${{ inputs.r2-access-key-id }}
+        SECRET_ACCESS_KEY: ${{ inputs.r2-secret-access-key }}
+        WRITE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        set -uo pipefail
+        bucket="${ENDPOINT%/}/trenova-go-build-cache"
+        r2() {
+          curl -fsS -o /dev/null --max-time 15 --aws-sigv4 "aws:amz:auto:s3" \
+            -K <(printf 'user = "%s:%s"\n' "$ACCESS_KEY_ID" "$SECRET_ACCESS_KEY") "$@" </dev/null
+        }
+        warn() {
+          echo "::warning title=Go build cache unavailable::$1 This job builds from a local cache only. Check that the R2_BUILD_CACHE_* secrets hold a current token for trenova-go-build-cache (docs/engineering/go-build-cache.md)."
+          echo "Go build cache: **unavailable**: $1" >> "$GITHUB_STEP_SUMMARY"
+        }
+        if ! r2 -I "$bucket"; then
+          warn "The bucket did not answer with this job's token: it may have expired or been revoked."
+          exit 0
+        fi
+        if [ "$WRITE" = true ]; then
+          probe="$bucket/ci-probe/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
+          if ! r2 -X PUT --data-binary "probe" "$probe"; then
+            warn "The token can read the bucket but not write it, so this push to master does not fill the cache."
+            exit 0
+          fi
+          r2 -X DELETE "$probe" || true
+        fi
+        echo "Go build cache: R2 reachable"
+
+    - name: Warn when the build cache secrets are missing
+      if: >-
+        (inputs.r2-endpoint == '' || inputs.r2-access-key-id == '' || inputs.r2-secret-access-key == '') &&
+        github.event.pull_request.head.repo.fork != true &&
+        github.actor != 'dependabot[bot]'
+      shell: bash
+      run: |
+        echo "::warning title=Go build cache off::The R2_BUILD_CACHE_* secrets were not passed to this job, so it builds from a cold local cache."
+        echo "Go build cache: **off** (no secrets)" >> "$GITHUB_STEP_SUMMARY"
 
     - name: Download dependencies
       shell: bash

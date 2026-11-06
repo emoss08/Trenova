@@ -187,6 +187,10 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-go
+        with:
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
       - name: buf lint
         working-directory: services/proto
         run: go run "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}" lint
