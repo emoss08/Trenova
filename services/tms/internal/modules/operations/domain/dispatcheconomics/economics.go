@@ -45,16 +45,15 @@ func (p Preference) IsValid() bool {
 }
 
 const (
-	maxCentsPerUnit             = int64(1_000_000)
-	maxPreferenceCents          = int64(1_000_000)
-	maxCoverageCents            = int64(100_000_000)
-	maxEarlyGraceMinutes        = int64(24 * 60)
-	maxHomeTimeTargetDays       = int64(60)
-	maxCoverageMargin           = int64(100)
-	minCandidatesPerMove        = 5
-	maxCandidatesPerMove        = 200
-	defaultCandidatesCount      = 40
-	defaultAnticipationMaxCents = int64(40_000)
+	maxCentsPerUnit        = int64(1_000_000)
+	maxPreferenceCents     = int64(1_000_000)
+	maxCoverageCents       = int64(100_000_000)
+	maxEarlyGraceMinutes   = int64(24 * 60)
+	maxHomeTimeTargetDays  = int64(60)
+	maxCoverageMargin      = int64(100)
+	minCandidatesPerMove   = 5
+	maxCandidatesPerMove   = 200
+	defaultCandidatesCount = 40
 )
 
 var (
@@ -99,7 +98,6 @@ func Default() Economics {
 		DueNowPremiumCents:    75_000,
 		CandidatesPerMove:     defaultCandidatesCount,
 		ReplanChangeCents:     2_500,
-		AnticipationMaxCents:  defaultAnticipationMaxCents,
 	}
 }
 
@@ -136,9 +134,6 @@ func (e *Economics) Normalized() Economics {
 	}
 	if out.CandidatesPerMove == 0 {
 		out.CandidatesPerMove = defaultCandidatesCount
-	}
-	if out.AnticipationMaxCents == 0 {
-		out.AnticipationMaxCents = defaultAnticipationMaxCents
 	}
 
 	return out

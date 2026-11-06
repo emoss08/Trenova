@@ -18,7 +18,7 @@
   "Automated resource assignment": "Asignación automática de recursos",
   "Average miss": "Error promedio",
   "Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.": "Los candidatos que estén a más de esta cantidad de millas vacías de la recogida nunca se asignan automáticamente. Déjelo vacío para no poner límite.",
-  "Caps what ending near likely freight can be worth on one move.": "Limita cuánto puede valer en un tramo terminar cerca de carga probable.",
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": "Limita cuánto puede valer en un tramo terminar cerca de carga probable. Déjelo vacío para usar lo que vale para usted una carga típica, según sus ingresos y su porcentaje de los ingresos.",
   "Carrier tenders": "Ofertas de carga a transportistas",
   "Carriers can answer an offer with a rate of their own instead of only accepting or declining.": "Los transportistas pueden responder a una oferta con su propia tarifa en lugar de solo aceptarla o rechazarla.",
   "Changing a planned driver": "Cambiar un conductor planificado",

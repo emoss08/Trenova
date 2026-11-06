@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b76892c9917d3a5cfeb17e4807b6782d8d46c14b3d032131e1c6383f09fbe4ab",
+  "version": "sha256:2fa463561c818c5b7aae457fd05a0a1b3ab7c702eef7ae3551cc255776b91235",
   "modules": [
     {
       "id": "home",
@@ -4227,7 +4227,7 @@
           "steps": [
             "Open [Dispatch controls](/admin/dispatch-controls).",
             "In **Automated resource assignment**, turn on **Anticipate freight**. Plans then credit a move that leaves its driver near freight your history says is likely to appear in the twelve hours after the driver is free, beyond what other drivers expected there can take, less what the driver was worth staying where they are. A move that takes a driver out of an area about to get busy costs the plan instead. The first extra driver in a busy area is worth much more than the fifth, and two drivers are not both credited for the same likely load.",
-            "In **Costs and prices**, set **Most a likely load is worth**: the most ending near likely freight, or staying near it, can be worth on one move.",
+            "In **Costs and prices**, set **Most a likely load is worth**: the most ending near likely freight, or staying near it, can be worth on one move. Leave it empty (it shows **Automatic**) to use what a typical load is worth to you, from its revenue and your share of revenue.",
             "Select **Save changes**.",
             "Check **Freight forecast**: plans use the forecast only while it says **Ready**. Until then the card says **Anticipate freight is on, but plans ignore the forecast until it is Ready.** and plans run as if the setting were off.",
             "On a planned move, the **Where they end up** line of the driver's cost in the [Console](/dispatch/console) says which likely loads the credit is for and, when staying put was worth something, how much the move adds or costs against it."

@@ -5224,7 +5224,7 @@
   "Caps and minimums": "上限與下限",
   "Caps lock": "大寫鎖定",
   "Caps the contract places on a single stop, day, or shipment": "合約對單一停靠點、單日或單筆運單所設的上限",
-  "Caps what ending near likely freight can be worth on one move.": "限制單一運程結束於可能貨源附近時所能計入的最高價值。",
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": "限制單一運程結束於可能貨源附近時所能計入的最高價值。留空則使用一般貨載對您的價值，依其營收與您的營收比例計算。",
   "Capture": "擷取",
   "Capture Device": "擷取裝置",
   "Capture Profile": "擷取設定檔",

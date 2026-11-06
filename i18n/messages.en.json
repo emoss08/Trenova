@@ -38703,7 +38703,7 @@
     ]
   },
   "Automatic": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -38712,7 +38712,8 @@
       "apps/web/lib",
       "go/other",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-control"
     ]
   },
   "Automatic (require when certificates are configured)": {
@@ -48854,7 +48855,7 @@
       "routes/detention-policy"
     ]
   },
-  "Caps what ending near likely freight can be worth on one move.": {
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": {
     "sites": 1,
     "scope": [
       "ts"

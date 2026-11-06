@@ -280,16 +280,50 @@ func TestCredit_DoesNotCountTheDriverItValues(t *testing.T) {
 	assert.Zero(t, value.Reason.DriversExpected)
 }
 
-func TestCredit_IsCapped(t *testing.T) {
+func TestCredit_IsCappedByTheSetting(t *testing.T) {
 	t.Parallel()
 
 	w := dallasWorld(t)
 	w.areas[0].MedianRevenueCents = 10_000_000
+	f := demandforecast.NewForecaster(&demandforecast.ForecasterParams{
+		Now: w.now, Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+		Rates: w.rates, Areas: w.areas, Curves: w.curves, MarginPercent: 80, CapCents: 40_000,
+	})
 
-	value, ok := w.forecaster().Value(demandforecast.Query{Point: dallas, FreeAt: w.window})
+	value, ok := f.Value(demandforecast.Query{Point: dallas, FreeAt: w.window})
 
 	require.True(t, ok)
-	assert.Equal(t, demandforecast.DefaultCapCents, value.Cents)
+	assert.Equal(t, int64(40_000), value.Cents)
+}
+
+/*
+A fixed $400 default capped every area of a fleet whose loads earn thousands, so every window
+read $400 and the forecast could not say which area mattered more. Unset, the cap is what a
+typical load is worth to the organization: its load-weighted median revenue times its margin.
+*/
+func TestAutomaticCap_IsWhatATypicalLoadIsWorth(t *testing.T) {
+	t.Parallel()
+
+	areas := []*demandforecast.Area{
+		{Cell: 1, MedianRevenueCents: 100_000, Loads: 10},
+		{Cell: 2, MedianRevenueCents: 300_000, Loads: 70},
+		{Cell: 3, MedianRevenueCents: 900_000, Loads: 20},
+		{Cell: 4, MedianRevenueCents: 0, Loads: 500},
+	}
+
+	assert.Equal(t, int64(90_000), demandforecast.AutomaticCapCents(areas, 30),
+		"the typical load earns $3,000 and the margin is 30%%")
+	assert.Zero(t, demandforecast.AutomaticCapCents(nil, 30))
+	assert.Equal(t, int64(30_000), demandforecast.AutomaticCapCents(
+		[]*demandforecast.Area{{Cell: 9, MedianRevenueCents: 100_000}}, 30,
+	), "an area with no load count still counts once")
+
+	w := dallasWorld(t)
+	f := w.forecaster()
+	value, ok := f.Value(demandforecast.Query{Point: dallas, FreeAt: w.window})
+	require.True(t, ok)
+	assert.Equal(t, int64(36_000), f.CapCents(), "one area: its own $450 at an 80%% margin")
+	assert.Less(t, value.Cents, f.CapCents(), "the typical area is never held at the cap")
 }
 
 func TestCredit_BookedButUnplannedLoadsAreDemandTooUnlessBeingPlanned(t *testing.T) {

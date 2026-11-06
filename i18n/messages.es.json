@@ -5224,7 +5224,7 @@
   "Caps and minimums": "Topes y mínimos",
   "Caps lock": "Bloq Mayús",
   "Caps the contract places on a single stop, day, or shipment": "Límites que el contrato impone a una sola parada, día o envío",
-  "Caps what ending near likely freight can be worth on one move.": "Limita cuánto puede valer en un tramo terminar cerca de carga probable.",
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": "Limita cuánto puede valer en un tramo terminar cerca de carga probable. Déjelo vacío para usar lo que vale para usted una carga típica, según sus ingresos y su porcentaje de los ingresos.",
   "Capture": "Capture",
   "Capture Device": "Dispositivo de captura",
   "Capture Profile": "Perfil de captura",

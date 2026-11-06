@@ -150,7 +150,7 @@ describe("dispatchControlSchema economics", () => {
     expect(parsed.learnDispatchStyle).toBe(false);
     expect(parsed.planForEndMarket).toBe(false);
     expect(parsed.anticipateFreight).toBe(false);
-    expect(parsed.economics.anticipationMaxCents).toBe(40_000);
+    expect(parsed.economics.anticipationMaxCents).toBe(0);
   });
 
   it("keeps anticipating freight and the most a likely load is worth as the server sent them", () => {
@@ -165,7 +165,7 @@ describe("dispatchControlSchema economics", () => {
     expect(dispatchControlSchema.parse(parsed)).toEqual(parsed);
   });
 
-  it("gives economics saved without a likely-load cap the server's default cap", () => {
+  it("reads economics saved without a likely-load cap as the automatic cap", () => {
     const withoutCap: Record<string, unknown> = { ...DEFAULT_DISPATCH_ECONOMICS };
     delete withoutCap.anticipationMaxCents;
     const parsed = dispatchControlSchema.parse({
@@ -173,7 +173,7 @@ describe("dispatchControlSchema economics", () => {
       economics: { ...withoutCap, emptyMileCents: 250 },
     });
 
-    expect(parsed.economics.anticipationMaxCents).toBe(40_000);
+    expect(parsed.economics.anticipationMaxCents).toBe(0);
     expect(parsed.economics.emptyMileCents).toBe(250);
   });
 

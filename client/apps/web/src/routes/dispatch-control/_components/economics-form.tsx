@@ -120,7 +120,11 @@ export function EconomicsForm() {
               control={control}
               name="economics.anticipationMaxCents"
               label={t("Most a likely load is worth")}
-              description={t("Caps what ending near likely freight can be worth on one move.")}
+              placeholder={t("Automatic")}
+              blankZero
+              description={t(
+                "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.",
+              )}
             />
           </FormControl>
         </FormGroup>

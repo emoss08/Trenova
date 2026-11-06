@@ -18,7 +18,7 @@
   "Automated resource assignment": "资源自动指派",
   "Average miss": "平均误差",
   "Candidates beyond this many empty miles from the pickup are never auto-assigned. Leave empty for no cap.": "距取货点空驶里程超过此数值的候选人绝不会被自动指派。留空则不设上限。",
-  "Caps what ending near likely freight can be worth on one move.": "限制单个运程结束于可能货源附近时所能计入的最高价值。",
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": "限制单个运程结束于可能货源附近时所能计入的最高价值。留空则使用一般货载对您的价值，依其收入与您的收入比例计算。",
   "Carrier tenders": "承运商派车要约",
   "Carriers can answer an offer with a rate of their own instead of only accepting or declining.": "承运商除了接受或拒绝，也可以提出自己的运价回复要约。",
   "Changing a planned driver": "更换已规划的司机",

@@ -67,7 +67,7 @@ export const DEFAULT_DISPATCH_ECONOMICS = {
   dueNowPremiumCents: 75_000,
   candidatesPerMove: 40,
   replanChangeCents: 2_500,
-  anticipationMaxCents: 40_000,
+  anticipationMaxCents: 0,
 } as const satisfies DispatchEconomics;
 
 export const dispatchEconomicsSchema = z.object({
@@ -101,7 +101,7 @@ export const dispatchEconomicsSchema = z.object({
     .min(5, { error: () => translate("Candidates per move must be at least 5") })
     .max(200, { error: () => translate("Candidates per move cannot exceed 200") }),
   replanChangeCents: centsSchema("Replan change cost"),
-  anticipationMaxCents: centsSchema("Likely load value", 200_000).default(40_000),
+  anticipationMaxCents: centsSchema("Likely load value", 200_000).default(0),
 });
 
 export type DispatchEconomics = z.infer<typeof dispatchEconomicsSchema>;

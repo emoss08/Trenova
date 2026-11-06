@@ -12,7 +12,6 @@ import (
 const (
 	WindowSlots       = 3
 	FutureDiscount    = 0.8
-	DefaultCapCents   = int64(40_000)
 	slotMidSeconds    = dispatchmarket.SlotSeconds / 2
 	maxReasonCustomer = 2
 	minCustomerMean   = 0.5
@@ -83,10 +82,13 @@ func NewForecaster(p *ForecasterParams) *Forecaster {
 		solving:   make(map[absoluteKey]int, len(p.Solving)),
 		names:     p.CustomerNames,
 		margin:    p.MarginPercent,
-		cap:       cmp.Or(p.CapCents, DefaultCapCents),
+		cap:       p.CapCents,
 	}
 	for _, area := range p.Areas {
 		f.areas[area.Cell] = area
+	}
+	if f.cap <= 0 {
+		f.cap = AutomaticCapCents(p.Areas, p.MarginPercent)
 	}
 	for _, rate := range p.Rates {
 		key := rateKey{cell: rate.Cell, slot: rate.Slot}
@@ -346,4 +348,42 @@ func (f *Forecaster) Cells() []int64 {
 	slices.Sort(cells)
 
 	return cells
+}
+
+func AutomaticCapCents(areas []*Area, marginPercent int64) int64 {
+	priced := make([]*Area, 0, len(areas))
+	total := int64(0)
+	for _, area := range areas {
+		if area.MedianRevenueCents > 0 {
+			priced = append(priced, area)
+			total += areaWeight(area)
+		}
+	}
+	if total == 0 {
+		return 0
+	}
+	slices.SortFunc(priced, func(a, b *Area) int {
+		return cmp.Compare(a.MedianRevenueCents, b.MedianRevenueCents)
+	})
+	seen := int64(0)
+	for _, area := range priced {
+		seen += areaWeight(area)
+		if 2*seen >= total {
+			return area.MedianRevenueCents * marginPercent / 100
+		}
+	}
+
+	return priced[len(priced)-1].MedianRevenueCents * marginPercent / 100
+}
+
+func (f *Forecaster) CapCents() int64 {
+	if f == nil {
+		return 0
+	}
+
+	return f.cap
+}
+
+func areaWeight(area *Area) int64 {
+	return max(int64(area.Loads), 1)
 }

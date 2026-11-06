@@ -56,7 +56,9 @@ Keywords: anticipatory dispatch, position drivers ahead of freight, forecast fre
    get busy costs the plan instead. The first extra driver in a busy area is worth much more than
    the fifth, and two drivers are not both credited for the same likely load.
 3. In **Costs and prices**, set **Most a likely load is worth**: the most ending near likely
-   freight, or staying near it, can be worth on one move.
+   freight, or staying near it, can be worth on one move. Leave it empty (it shows
+   **Automatic**) to use what a typical load is worth to you, from its revenue and your share
+   of revenue.
 4. Select **Save changes**.
 5. Check **Freight forecast**: plans use the forecast only while it says **Ready**. Until then the
    card says **Anticipate freight is on, but plans ignore the forecast until it is Ready.** and

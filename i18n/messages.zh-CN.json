@@ -5224,7 +5224,7 @@
   "Caps and minimums": "上限与下限",
   "Caps lock": "大写锁定",
   "Caps the contract places on a single stop, day, or shipment": "合同对单一停靠点、单日或单笔运单所设的上限",
-  "Caps what ending near likely freight can be worth on one move.": "限制单个运程结束于可能货源附近时所能计入的最高价值。",
+  "Caps what ending near likely freight can be worth on one move. Leave empty to use what a typical load is worth to you, from its revenue and your share of revenue.": "限制单个运程结束于可能货源附近时所能计入的最高价值。留空则使用一般货载对您的价值，依其收入与您的收入比例计算。",
   "Capture": "采集",
   "Capture Device": "采集设备",
   "Capture Profile": "采集配置文件",

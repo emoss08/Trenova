@@ -207,8 +207,11 @@ the one cost model:
 - **Value** (`Forecaster.ValueAt`, one window):
   `round(0.8 × median revenue × margin × P(open booked + unbooked > k))`, where median
   revenue is the area's (`demand_forecast_areas`), margin is the organization's coverage
-  margin, and the result is capped by the economics setting `anticipationMaxCents` (default
-  $400). Worked example: unbooked mean 3.4, $360 of value, one other driver expected gives
+  margin, and the result is capped by the economics setting `anticipationMaxCents`. Unset
+  (0) the cap is automatic: what a typical load is worth to the organization, its
+  load-weighted median area revenue × margin (`AutomaticCapCents`), so it binds only on areas
+  richer than typical; a fixed $400 default once held every window of a high-revenue fleet at
+  $400. Worked example: unbooked mean 3.4, $360 of value, one other driver expected gives
   `0.8 × 360 × 0.86 = $248`; with four others it falls to $72.
 - **Credit** (`endMarketOf` in `dispatchcandidateservice`): drop value − stay value. The drop
   window is in the move's destination area from the driver's projected free time; the stay
