@@ -613,6 +613,7 @@ modules:
       - shipmentsuggestion
       - shipmentvocab
       - stopeta
+      - stopactual
       - stopvisit
       - tender
       - trackingevent

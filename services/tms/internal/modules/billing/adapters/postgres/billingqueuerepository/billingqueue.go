@@ -3,6 +3,8 @@ package billingqueuerepository
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/searchtext"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -70,7 +72,7 @@ func shipmentNamed(query string) keel.Pred {
 		sh.ID.EqCol(bq.ShipmentID),
 		sh.OrganizationID.EqCol(bq.OrganizationID),
 		sh.BusinessUnitID.EqCol(bq.BusinessUnitID),
-		listquery.MatchVector(sh.SearchVector, query),
+		searchtext.MatchVector(sh.SearchVector, query),
 	))
 }
 

@@ -1,34 +1,35 @@
-package shipment
+package stopactual
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type StopActualChange struct {
+type Change struct {
 	StopID    pulid.ID
 	Arrival   *int64
 	Departure *int64
 }
 
-func (c StopActualChange) Empty() bool {
+func (c Change) Empty() bool {
 	return c.Arrival == nil && c.Departure == nil
 }
 
-func (m *ShipmentMove) ApplyStopActualChanges(changes []StopActualChange) ([]*Stop, error) {
+func Apply(m *shipment.ShipmentMove, changes []Change) ([]*shipment.Stop, error) {
 	if m.Status == shipmentvocab.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load has been canceled")
 	}
 
 	stops := m.ActiveStopsBySequence()
-	byID := make(map[pulid.ID]*Stop, len(stops))
+	byID := make(map[pulid.ID]*shipment.Stop, len(stops))
 	for _, stop := range stops {
 		byID[stop.ID] = stop
 	}
 
 	changed := make(map[pulid.ID]struct{}, len(changes))
-	touched := make([]*Stop, 0, len(changes))
+	touched := make([]*shipment.Stop, 0, len(changes))
 	for _, change := range changes {
 		if change.Empty() {
 			continue
@@ -67,7 +68,7 @@ func (m *ShipmentMove) ApplyStopActualChanges(changes []StopActualChange) ([]*St
 	return touched, nil
 }
 
-func validateStopTimeline(stops []*Stop, changed map[pulid.ID]struct{}) error {
+func validateStopTimeline(stops []*shipment.Stop, changed map[pulid.ID]struct{}) error {
 	var previousDeparture *int64
 	earlierOpen := false
 	previousChanged := false
@@ -101,7 +102,7 @@ func validateStopTimeline(stops []*Stop, changed map[pulid.ID]struct{}) error {
 	return nil
 }
 
-func validateStopDeparture(stop *Stop) error {
+func validateStopDeparture(stop *shipment.Stop) error {
 	if stop.ActualArrival == nil {
 		return errortypes.NewBusinessError("Arrive at this stop before departing")
 	}

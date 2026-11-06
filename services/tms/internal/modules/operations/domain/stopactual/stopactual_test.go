@@ -1,7 +1,9 @@
-package shipment_test
+package stopactual_test
 
 import (
 	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -16,14 +18,14 @@ func changeMove(stops ...*shipment.Stop) *shipment.ShipmentMove {
 
 func at(v int64) *int64 { return &v }
 
-func TestApplyStopActualChangesSetsTimesAndStatuses(t *testing.T) {
+func TestApplySetsTimesAndStatuses(t *testing.T) {
 	t.Parallel()
 
 	first := visitStop(1, pulid.MustNew("loc_"), false, false)
 	second := visitStop(2, pulid.MustNew("loc_"), false, false)
 	move := changeMove(first, second)
 
-	touched, err := move.ApplyStopActualChanges([]shipment.StopActualChange{
+	touched, err := stopactual.Apply(move, []stopactual.Change{
 		{StopID: first.ID, Arrival: at(100), Departure: at(200)},
 		{StopID: second.ID, Arrival: at(300)},
 	})
@@ -35,25 +37,25 @@ func TestApplyStopActualChangesSetsTimesAndStatuses(t *testing.T) {
 	assert.Equal(t, at(300), second.ActualArrival)
 }
 
-func TestApplyStopActualChangesRefusesABrokenTimeline(t *testing.T) {
+func TestApplyRefusesABrokenTimeline(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		name    string
-		changes func(first, second *shipment.Stop) []shipment.StopActualChange
+		changes func(first, second *shipment.Stop) []stopactual.Change
 		message string
 	}{
 		{
 			name: "a later stop before the earlier one finishes",
-			changes: func(_, second *shipment.Stop) []shipment.StopActualChange {
-				return []shipment.StopActualChange{{StopID: second.ID, Arrival: at(300)}}
+			changes: func(_, second *shipment.Stop) []stopactual.Change {
+				return []stopactual.Change{{StopID: second.ID, Arrival: at(300)}}
 			},
 			message: "Complete the earlier stops on this load first",
 		},
 		{
 			name: "a departure before the arrival",
-			changes: func(first, _ *shipment.Stop) []shipment.StopActualChange {
-				return []shipment.StopActualChange{
+			changes: func(first, _ *shipment.Stop) []stopactual.Change {
+				return []stopactual.Change{
 					{StopID: first.ID, Arrival: at(200), Departure: at(100)},
 				}
 			},
@@ -61,8 +63,8 @@ func TestApplyStopActualChangesRefusesABrokenTimeline(t *testing.T) {
 		},
 		{
 			name: "an arrival before the previous departure",
-			changes: func(first, second *shipment.Stop) []shipment.StopActualChange {
-				return []shipment.StopActualChange{
+			changes: func(first, second *shipment.Stop) []stopactual.Change {
+				return []stopactual.Change{
 					{StopID: first.ID, Arrival: at(100), Departure: at(500)},
 					{StopID: second.ID, Arrival: at(400)},
 				}
@@ -71,8 +73,8 @@ func TestApplyStopActualChangesRefusesABrokenTimeline(t *testing.T) {
 		},
 		{
 			name: "a departure without an arrival",
-			changes: func(first, _ *shipment.Stop) []shipment.StopActualChange {
-				return []shipment.StopActualChange{{StopID: first.ID, Departure: at(100)}}
+			changes: func(first, _ *shipment.Stop) []stopactual.Change {
+				return []stopactual.Change{{StopID: first.ID, Departure: at(100)}}
 			},
 			message: "Arrive at this stop before departing",
 		},
@@ -85,7 +87,7 @@ func TestApplyStopActualChangesRefusesABrokenTimeline(t *testing.T) {
 			second := visitStop(2, pulid.MustNew("loc_"), false, false)
 			move := changeMove(first, second)
 
-			_, err := move.ApplyStopActualChanges(tc.changes(first, second))
+			_, err := stopactual.Apply(move, tc.changes(first, second))
 
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tc.message)
@@ -93,34 +95,34 @@ func TestApplyStopActualChangesRefusesABrokenTimeline(t *testing.T) {
 	}
 }
 
-func TestApplyStopActualChangesRefusesACanceledLoadOrAMissingStop(t *testing.T) {
+func TestApplyRefusesACanceledLoadOrAMissingStop(t *testing.T) {
 	t.Parallel()
 
 	stop := visitStop(1, pulid.MustNew("loc_"), false, false)
 	canceled := changeMove(stop)
 	canceled.Status = shipmentvocab.MoveStatusCanceled
-	_, err := canceled.ApplyStopActualChanges(
-		[]shipment.StopActualChange{{StopID: stop.ID, Arrival: at(1)}},
+	_, err := stopactual.Apply(canceled,
+		[]stopactual.Change{{StopID: stop.ID, Arrival: at(1)}},
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "This load has been canceled")
 
-	_, err = changeMove(stop).ApplyStopActualChanges(
-		[]shipment.StopActualChange{{StopID: pulid.MustNew("stp_"), Arrival: at(1)}},
+	_, err = stopactual.Apply(changeMove(stop), 
+		[]stopactual.Change{{StopID: pulid.MustNew("stp_"), Arrival: at(1)}},
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Stop not found on this load")
 }
 
-func TestApplyStopActualChangesCorrectsACompletedLoad(t *testing.T) {
+func TestApplyCorrectsACompletedLoad(t *testing.T) {
 	t.Parallel()
 
 	stop := visitStop(1, pulid.MustNew("loc_"), true, true)
 	move := changeMove(stop)
 	move.Status = shipmentvocab.MoveStatusCompleted
 
-	_, err := move.ApplyStopActualChanges(
-		[]shipment.StopActualChange{{StopID: stop.ID, Arrival: at(50)}},
+	_, err := stopactual.Apply(move,
+		[]stopactual.Change{{StopID: stop.ID, Arrival: at(50)}},
 	)
 
 	require.NoError(t, err)
