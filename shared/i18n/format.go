@@ -154,7 +154,7 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 		return stringifyIn(locale, value), true
 	}
 
-	chosen, ok := pluralBranch(forms, selectPlural(locale, number))
+	chosen, ok := pluralBranch(forms, selectPlural(locale, number), number)
 	if !ok {
 		return stringifyIn(locale, value), true
 	}
@@ -162,9 +162,10 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 	return strings.ReplaceAll(unquote(chosen), "#", FormatNumber(locale, number)), true
 }
 
-func pluralBranch(forms string, want pluralForm) (string, bool) {
-	var fallback string
-	var haveFallback bool
+func pluralBranch(forms string, want pluralForm, n float64) (string, bool) {
+	var fallback, category string
+	var haveFallback, haveCategory bool
+	exact := pluralForm("=" + strconv.FormatFloat(n, 'f', -1, 64))
 
 	for i := 0; i < len(forms); {
 		if forms[i] == ' ' || forms[i] == '\t' || forms[i] == '\n' {
@@ -186,15 +187,19 @@ func pluralBranch(forms string, want pluralForm) (string, bool) {
 		}
 
 		body := forms[open+1 : end]
-		if name == want {
+		switch {
+		case name == exact:
 			return body, true
-		}
-		if name == pluralOther {
-			fallback = body
-			haveFallback = true
+		case name == want && !haveCategory:
+			category, haveCategory = body, true
+		case name == pluralOther:
+			fallback, haveFallback = body, true
 		}
 
 		i = end + 1
+	}
+	if haveCategory {
+		return category, true
 	}
 
 	return fallback, haveFallback

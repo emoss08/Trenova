@@ -3,7 +3,8 @@
 // The same catalog entry is rendered by the Go services and by the browser, so the two
 // formatters have to agree exactly: a message that reads "3 shipments" from the API and
 // "3 shipment" in the UI is a bug that no test on either side alone would catch. Keeping
-// the supported syntax small — positional placeholders and plurals — is what makes that
+// the supported syntax small — positional placeholders and plurals with exact (=0) and category
+// branches — is what makes that
 // agreement checkable by reading both files.
 import type { Locale } from "@trenova/shared/i18n/generated/locales";
 import { intlTag } from "@trenova/shared/i18n/intl-tags";
@@ -54,7 +55,7 @@ function readQuoted(text: string, i: number): [string, number] {
 function unquote(text: string): string {
   if (!text.includes("'")) return text;
   let out = "";
-  for (let i = 0; i < text.length; ) {
+  for (let i = 0; i < text.length;) {
     if (text[i] === "'") {
       const [literal, next] = readQuoted(text, i);
       out += literal;
@@ -70,11 +71,7 @@ function unquote(text: string): string {
 function stringify(value: unknown): string {
   if (typeof value === "string") return value;
   if (value === null || value === undefined) return "";
-  if (
-    typeof value === "number" ||
-    typeof value === "boolean" ||
-    typeof value === "bigint"
-  ) {
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
     return String(value);
   }
   if (value instanceof Date) return value.toISOString();
@@ -98,10 +95,12 @@ function formatCount(locale: Locale, value: number): string {
   return formatter.format(value);
 }
 
-function pluralBranch(forms: string, want: PluralForm): string | null {
+function pluralBranch(forms: string, want: PluralForm, count: number): string | null {
+  const exact = `=${count}`;
   let fallback: string | null = null;
+  let category: string | null = null;
 
-  for (let i = 0; i < forms.length; ) {
+  for (let i = 0; i < forms.length;) {
     const char = forms[i];
     if (char === " " || char === "\t" || char === "\n") {
       i++;
@@ -117,56 +116,43 @@ function pluralBranch(forms: string, want: PluralForm): string | null {
     if (end < 0) break;
 
     const body = forms.slice(open + 1, end);
-    if (name === want) return body;
+    if (name === exact) return body;
+    if (name === want && category === null) category = body;
     if (name === "other") fallback = body;
 
     i = end + 1;
   }
 
-  return fallback;
+  return category ?? fallback;
 }
 
-function renderPlaceholder(
-  locale: Locale,
-  body: string,
-  args: unknown[],
-): string | null {
+function renderPlaceholder(locale: Locale, body: string, args: unknown[]): string | null {
   const comma = body.indexOf(",");
   const indexPart = comma === -1 ? body : body.slice(0, comma);
 
   const index = Number.parseInt(indexPart.trim(), 10);
-  if (!Number.isInteger(index) || index < 0 || index >= args.length)
-    return null;
+  if (!Number.isInteger(index) || index < 0 || index >= args.length) return null;
 
   const value = args[index];
   if (comma === -1) return stringify(value);
 
   const rest = body.slice(comma + 1).trim();
   const kindEnd = rest.indexOf(",");
-  if (kindEnd === -1 || rest.slice(0, kindEnd).trim() !== "plural")
-    return stringify(value);
-  if (typeof value !== "number" || !Number.isFinite(value))
-    return stringify(value);
+  if (kindEnd === -1 || rest.slice(0, kindEnd).trim() !== "plural") return stringify(value);
+  if (typeof value !== "number" || !Number.isFinite(value)) return stringify(value);
 
-  const chosen = pluralBranch(
-    rest.slice(kindEnd + 1),
-    selectPlural(locale, value),
-  );
+  const chosen = pluralBranch(rest.slice(kindEnd + 1), selectPlural(locale, value), value);
   if (chosen === null) return stringify(value);
 
   return unquote(chosen).split("#").join(formatCount(locale, value));
 }
 
-export function formatMessage(
-  locale: Locale,
-  message: string,
-  args: unknown[],
-): string {
+export function formatMessage(locale: Locale, message: string, args: unknown[]): string {
   const quoted = message.includes("'");
   if (!quoted && (args.length === 0 || !message.includes("{"))) return message;
 
   let out = "";
-  for (let i = 0; i < message.length; ) {
+  for (let i = 0; i < message.length;) {
     if (message[i] === "'") {
       const [literal, next] = readQuoted(message, i);
       out += literal;
