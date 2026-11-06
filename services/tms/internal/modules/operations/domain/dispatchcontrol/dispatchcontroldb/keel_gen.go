@@ -95,6 +95,7 @@ var dispatchControlsTable = schema.Table{
 	Ptr:          ptrDispatchControl,
 	Value:        valueDispatchControl,
 	BeforeCreate: beforeCreateDispatchControl,
+	AfterLoad:    afterLoadDispatchControl,
 }
 
 var dispatchControlsRef = keel.Ref{Table: &dispatchControlsTable}
@@ -906,6 +907,10 @@ func valueDispatchControl(p unsafe.Pointer, c int32) any {
 
 func beforeCreateDispatchControl(ctx context.Context, p unsafe.Pointer) error {
 	return (*dispatchcontrol.DispatchControl)(p).BeforeCreate(ctx)
+}
+
+func afterLoadDispatchControl(ctx context.Context, p unsafe.Pointer) error {
+	return (*dispatchcontrol.DispatchControl)(p).AfterLoad(ctx)
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

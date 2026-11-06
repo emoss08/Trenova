@@ -748,3 +748,13 @@ func TestResolvedEconomics_FillsAnUnsetOrganizationWithDefaults(t *testing.T) {
 	var nothing *DispatchControl
 	assert.Equal(t, dispatcheconomics.Default(), nothing.ResolvedEconomics())
 }
+
+func TestAfterLoad_ReadsAStoredEmptyEconomicsAsTheDefaults(t *testing.T) {
+	t.Parallel()
+
+	dc := &DispatchControl{}
+	require.NoError(t, dc.AfterLoad(t.Context()))
+
+	assert.Equal(t, dispatcheconomics.Default(), dc.Economics,
+		"a row stored before economics existed reads as the defaults, never as zeros")
+}

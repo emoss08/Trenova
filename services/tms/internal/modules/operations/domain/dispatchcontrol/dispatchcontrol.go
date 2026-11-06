@@ -713,6 +713,12 @@ func (dc *DispatchControl) GetBusinessUnitID() pulid.ID {
 	return dc.BusinessUnitID
 }
 
+func (dc *DispatchControl) AfterLoad(_ context.Context) error {
+	dc.Economics = dc.Economics.Normalized()
+
+	return nil
+}
+
 func (dc *DispatchControl) BeforeCreate(ctx context.Context) error {
 	dc.Economics = dc.Economics.Normalized()
 	if dc.EtaRiskThresholdMinutes == 0 {
