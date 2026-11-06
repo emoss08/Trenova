@@ -68,6 +68,7 @@ function candidate(workerId: string, workerName: string, costCents: number): Dis
     hosProjectedShiftMs: 27_000_000,
     hosProjectedCycleMs: 171_000_000,
     findings: [],
+    endMarket: null,
   } as DispatchCandidate;
 }
 

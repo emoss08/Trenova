@@ -10,8 +10,9 @@ import {
 
 const assignmentSections: readonly SettingsSectionSpec[] = [
   { title: "lg", fields: ["switch"] },
-  { title: "lg", description: 3, cols: 2, fields: [{ kind: "input", count: 13 }] },
+  { title: "lg", description: 3, cols: 2, fields: [{ kind: "input", count: 14 }] },
   { title: "lg", description: 2, fields: [{ kind: "input", count: 3 }] },
+  { title: "md", description: 2, fields: [{ kind: "input", count: 3 }] },
 ];
 
 const monitoringSections: readonly SettingsSectionSpec[] = [

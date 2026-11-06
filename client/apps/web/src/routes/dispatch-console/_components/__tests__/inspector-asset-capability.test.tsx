@@ -66,6 +66,7 @@ function candidate(index: number, workerName: string): DispatchCandidate {
     hosProjectedShiftMs: 27_000_000,
     hosProjectedCycleMs: 171_000_000,
     findings: [],
+    endMarket: null,
   } as DispatchCandidate;
 }
 

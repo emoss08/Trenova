@@ -17,12 +17,12 @@ export const serviceIncidentTypeSchema = z.enum([
 
 export type ServiceIncidentType = z.infer<typeof serviceIncidentTypeSchema>;
 
-const centsSchema = (label: string) =>
+const centsSchema = (label: string, max = 1_000_000) =>
   z
     .number()
     .int()
     .min(0, { error: () => translate("{0} cannot be negative", label) })
-    .max(1_000_000, { error: () => translate("{0} is too large", label) });
+    .max(max, { error: () => translate("{0} is too large", label) });
 
 const coverageCentsSchema = (label: string) =>
   z
@@ -67,6 +67,7 @@ export const DEFAULT_DISPATCH_ECONOMICS = {
   dueNowPremiumCents: 75_000,
   candidatesPerMove: 40,
   replanChangeCents: 2_500,
+  anticipationMaxCents: 40_000,
 } as const satisfies DispatchEconomics;
 
 export const dispatchEconomicsSchema = z.object({
@@ -100,6 +101,7 @@ export const dispatchEconomicsSchema = z.object({
     .min(5, { error: () => translate("Candidates per move must be at least 5") })
     .max(200, { error: () => translate("Candidates per move cannot exceed 200") }),
   replanChangeCents: centsSchema("Replan change cost"),
+  anticipationMaxCents: centsSchema("Likely load value", 200_000).default(40_000),
 });
 
 export type DispatchEconomics = z.infer<typeof dispatchEconomicsSchema>;
@@ -208,6 +210,7 @@ export const dispatchControlSchema = z
     economics: dispatchEconomicsSchema.default(DEFAULT_DISPATCH_ECONOMICS),
     learnDispatchStyle: z.boolean().default(false),
     planForEndMarket: z.boolean().default(false),
+    anticipateFreight: z.boolean().default(false),
     autoAssignConfidenceThreshold: z.coerce
       .number()
       .min(0, { error: () => translate("Confidence threshold must be at least 0") })

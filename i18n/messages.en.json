@@ -29982,6 +29982,24 @@
       "api/handlers"
     ]
   },
+  "Anticipate freight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Anticipate freight is on, but plans ignore the forecast until it is Ready.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Any": {
     "sites": 9,
     "scope": [
@@ -33510,12 +33528,13 @@
     ]
   },
   "Area": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "routes/dispatch-console",
       "routes/insights",
       "routes/shipment"
     ]
@@ -39284,6 +39303,15 @@
     ],
     "areas": [
       "routes/cost-control"
+    ]
+  },
+  "Average miss": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Average number of employees over the year, as OSHA Form 300A asks for it; required before the summary can be certified.": {
@@ -48824,6 +48852,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Caps what ending near likely freight can be worth on one move.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Capture": {
@@ -88293,6 +88330,15 @@
       "routes/dash-control"
     ]
   },
+  "Drivers cover the freight ahead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.": {
     "sites": 1,
     "scope": [
@@ -88311,8 +88357,26 @@
       "routes/random-testing"
     ]
   },
+  "Drivers expected": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Drivers for this move": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Drivers free here have been worth this to past plans.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -112396,6 +112460,15 @@
       "apps/web/components"
     ]
   },
+  "Fit one organization's freight forecast now": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fit page": {
     "sites": 2,
     "scope": [
@@ -113852,6 +113925,24 @@
       "routes/carrier"
     ]
   },
+  "Forecast figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Forecast freight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Foregone Amount": {
     "sites": 1,
     "scope": [
@@ -115179,6 +115270,33 @@
       "routes/invoice"
     ]
   },
+  "Freight forecast": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Freight forecast fitting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Freight forecast: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Freight invoice": {
     "sites": 3,
     "scope": [
@@ -115217,6 +115335,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "Freight outlook": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Freight retired, not rebilled": {
@@ -115262,6 +115389,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Freight your history says is likely near the drop, less what is booked and the other drivers expected there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Freight {0}": {
@@ -122298,7 +122434,7 @@
     ]
   },
   "History": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -122309,6 +122445,7 @@
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/collections",
+      "routes/dispatch-control",
       "routes/driver-settlement",
       "routes/formula-library",
       "routes/order",
@@ -138580,6 +138717,15 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Last fitted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Last four digits": {
     "sites": 1,
     "scope": [
@@ -142056,6 +142202,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Likely loads": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Limit cannot exceed 500": {
@@ -145768,6 +145923,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the freight forecast": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Loading the freight outlook": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Loading the fuel card…": {
@@ -156570,6 +156743,15 @@
       "go/other"
     ]
   },
+  "Most a likely load is worth": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Most cargo weight is near the doors. Move heavier items toward the nose to improve traction on the drive axle.": {
     "sites": 1,
     "scope": [
@@ -156676,6 +156858,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Mostly from {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Motion": {
@@ -159353,6 +159544,33 @@
       "routes/shipment-tracking-public"
     ]
   },
+  "Near {0}: up to {1, plural, one {# load usually appears} other {# loads usually appear}} {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Near {0}: {1, plural, one {# load usually appears} other {# loads usually appear}} {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Near {0}: {1}–{2} loads usually appear {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nearest band": {
     "sites": 1,
     "scope": [
@@ -161738,6 +161956,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Next 48 hours, most short of drivers first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Next 7 days": {
@@ -164709,6 +164936,15 @@
       "routes/customer-statement"
     ]
   },
+  "No customer stands out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No customers yet": {
     "sites": 1,
     "scope": [
@@ -166030,6 +166266,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "No freight expected beyond your drivers in the next 48 hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No fuel indices yet": {
@@ -172175,6 +172420,15 @@
       "routes/admin"
     ]
   },
+  "Not better than last week yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Not billable": {
     "sites": 6,
     "scope": [
@@ -172403,6 +172657,15 @@
       "routes/desk"
     ]
   },
+  "Not enough history yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Not enrolled": {
     "sites": 1,
     "scope": [
@@ -172507,6 +172770,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Not fitted yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Not found": {
@@ -180744,6 +181016,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "One more driver": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "One notice per obligation": {
@@ -189644,6 +189925,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Outlook": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Output": {
@@ -201242,6 +201532,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Position drivers for freight your history says is coming, before it is booked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Position is invalid": {
@@ -212955,7 +213254,7 @@
     ]
   },
   "Ready": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -238693,6 +238992,15 @@
       "template/notification.dash.dispute_resolved"
     ]
   },
+  "See the forecast in Dispatch controls": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "See the run": {
     "sites": 2,
     "scope": [
@@ -248971,6 +249279,15 @@
       "routes/customer"
     ]
   },
+  "Short by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Short context explaining when to apply this reason; use customer-safe wording.": {
     "sites": 1,
     "scope": [
@@ -256943,6 +257260,60 @@
       "packages/shared/components"
     ]
   },
+  "Staying near {0} was worth {1}, as much as ending here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Staying near {0} was worth {1}, more than ending here, so the move costs {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Staying near {0} was worth {1}, so the move adds {2}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Staying where they are was worth {0}, as much as ending here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Staying where they are was worth {0}, more than ending here, so the move costs {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Staying where they are was worth {0}, so the move adds {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Stays as proposed: a change can't point this at a different record.": {
     "sites": 1,
     "scope": [
@@ -264106,6 +264477,24 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Tested on your last {0, plural, one {week} other {# weeks}}, it missed by {1} loads per area and slot, against {2} for repeating last week. Plans ignore it until it does better; it is tested again every night.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Tested on your last {0, plural, one {week} other {# weeks}}: {1} of actual counts fell inside the forecast range; {2} more accurate than repeating last week.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Testing": {
@@ -273274,6 +273663,24 @@
       "go/other"
     ]
   },
+  "The forecast is fitted every night from your shipment history.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The forecast needs 8 weeks and 200 loads of history; it has {0, plural, one {# week} other {# weeks}} and {1, plural, one {# load} other {# loads}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The formatted cell value.": {
     "sites": 1,
     "scope": [
@@ -273353,6 +273760,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The freight forecast could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "The freight lines add up to {0}: freight cannot be below zero": {
@@ -277784,6 +278200,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The outlook and Anticipate freight use the forecast only once it is Ready, so drivers are not moved for freight it cannot yet predict.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The outlook didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "The outstanding balance will no longer be recovered from future settlements.": {
@@ -291257,6 +291691,15 @@
       "routes/dispatch-console"
     ]
   },
+  "This isn't an empty outlook: freight may still be coming where drivers are short.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "This isn't an empty roster: drivers may still be free for work.": {
     "sites": 1,
     "scope": [
@@ -301970,7 +302413,7 @@
     ]
   },
   "Try again": {
-    "sites": 77,
+    "sites": 78,
     "scope": [
       "ts"
     ],
@@ -304115,12 +304558,13 @@
     ]
   },
   "Under way": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/dispatch-console"
     ]
   },
   "Under {0}": {
@@ -319849,6 +320293,15 @@
       "routes/desk"
     ]
   },
+  "Where freight usually appears, learned from your shipment history and tested every night on the weeks it has not seen. Anticipate freight changes plans only while the forecast is Ready.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Where funding, reserve releases and chargebacks are booked. Nothing is booked for this factor until the accounts its treatment needs are set.": {
     "sites": 1,
     "scope": [
@@ -323410,7 +323863,7 @@
     ]
   },
   "Window": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -323421,6 +323874,7 @@
       "routes/agent-control",
       "routes/desk",
       "routes/detention-intelligence",
+      "routes/dispatch-console",
       "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
@@ -347093,6 +347547,15 @@
       "routes/edi"
     ]
   },
+  "{0, plural, one {# week} other {# weeks}}, {1, plural, one {# load} other {# loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "{0, plural, one {# without a record} other {# without a record}}": {
     "sites": 1,
     "scope": [
@@ -349554,6 +350017,24 @@
       "routes/dispatch-console"
     ]
   },
+  "{0, plural, other {# booked}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "{0, plural, other {# booked}}; {1, plural, =0 {no other driver expected} one {# other driver expected} other {# other drivers expected}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} (Day)": {
     "sites": 1,
     "scope": [
@@ -349606,6 +350087,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "{0} (about {1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} (and {1} more)": {
@@ -357724,6 +358214,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0} loads per area and slot, against {1} repeating last week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "{0} location": {
     "sites": 1,
     "scope": [
@@ -361620,6 +362119,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} still owed": {

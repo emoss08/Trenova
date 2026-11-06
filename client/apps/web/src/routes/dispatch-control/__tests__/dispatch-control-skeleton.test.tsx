@@ -44,6 +44,26 @@ vi.mock("@/lib/queries/dispatch-style", () => ({
   },
 }));
 
+vi.mock("@/lib/queries/dispatch-console", () => ({
+  dispatchConsoleQueries: {
+    forecastQuality: () => ({
+      queryKey: ["dispatch-forecast-quality"],
+      queryFn: async () => ({
+        status: "InsufficientHistory",
+        historyWeeks: 3,
+        historyLoads: 41,
+        weeksTested: 0,
+        loadsTested: 0,
+        intervalCoverage: 0,
+        meanAbsoluteError: 0,
+        naiveMeanAbsoluteError: 0,
+        skill: 0,
+        fittedAt: 1_793_577_600,
+      }),
+    }),
+  },
+}));
+
 vi.mock("@/hooks/use-optimistic-mutation", () => ({
   useOptimisticMutation: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -93,10 +113,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(9);
+    expect(cardCount(skeleton)).toBe(10);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(9);
+    expect(await loadedFormCardCount()).toBe(10);
   });
 
   it("leaves out the fleet's cards for a brokerage, as the form does", async () => {
@@ -113,10 +133,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: false, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(8);
+    expect(cardCount(skeleton)).toBe(9);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(8);
+    expect(await loadedFormCardCount()).toBe(9);
   });
 
   it("is announced once as loading", () => {

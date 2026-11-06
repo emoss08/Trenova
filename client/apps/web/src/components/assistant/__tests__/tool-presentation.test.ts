@@ -69,10 +69,16 @@ describe("describeToolCall", () => {
       }),
     ).toEqual({ title: "Match bank receipt", subject: "brcpt_1" });
     expect(
-      describeToolCall("receivable_post_customer_payment", { customerId: "cus_1", amount: "1250.00" }),
+      describeToolCall("receivable_post_customer_payment", {
+        customerId: "cus_1",
+        amount: "1250.00",
+      }),
     ).toEqual({ title: "Record customer payment", subject: "cus_1" });
     expect(
-      describeToolCall("receivable_resolve_bank_receipt_work_item", { workItemId: "brwi_1", note: "x" }),
+      describeToolCall("receivable_resolve_bank_receipt_work_item", {
+        workItemId: "brwi_1",
+        note: "x",
+      }),
     ).toEqual({ title: "Close reconciliation item", subject: "brwi_1" });
     expect(describeToolCall("receivable_list_bank_receipt_exceptions", {})).toEqual({
       title: "List unmatched receipts",
@@ -87,6 +93,13 @@ describe("describeToolCall", () => {
   it("leaves the subject empty when there is nothing to name", () => {
     expect(describeToolCall("list_terminals", {})).toEqual({
       title: "List terminals",
+      subject: "",
+    });
+  });
+
+  it("names the freight forecast without reading its look-ahead as a subject", () => {
+    expect(describeToolCall("dispatch_forecast_demand", { hoursAhead: 48, limit: 20 })).toEqual({
+      title: "Forecast freight",
       subject: "",
     });
   });

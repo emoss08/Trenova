@@ -5,6 +5,7 @@ import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { SelectField } from "@/components/fields/select-field";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { EconomicsForm } from "./economics-form";
+import { FreightForecastCard } from "./freight-forecast-card";
 import { LearnedStyleCard } from "./learned-style-card";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
@@ -79,6 +80,7 @@ export default function DispatchControlForm() {
             <AutoAssignmentForm />
             <EconomicsForm />
             <LearnedStyleCard />
+            <FreightForecastCard />
           </CapabilityGate>
           <ServiceFailureForm />
           <CheckCallMonitoringForm />
@@ -161,6 +163,17 @@ function AutoAssignmentForm() {
                   label={t("Plan for where drivers end up")}
                   description={t(
                     "Credits a move that leaves its driver where drivers have been worth more to the plan at that time of the week, learned from the planner's own history.",
+                  )}
+                  position="left"
+                />
+              </FormControl>
+              <FormControl className="min-h-[3em] pl-10">
+                <SwitchField
+                  control={control}
+                  name="anticipateFreight"
+                  label={t("Anticipate freight")}
+                  description={t(
+                    "Position drivers for freight your history says is coming, before it is booked.",
                   )}
                   position="left"
                 />

@@ -115,6 +115,14 @@ export function EconomicsForm() {
               )}
             />
           </FormControl>
+          <FormControl>
+            <MoneyField
+              control={control}
+              name="economics.anticipationMaxCents"
+              label={t("Most a likely load is worth")}
+              description={t("Caps what ending near likely freight can be worth on one move.")}
+            />
+          </FormControl>
         </FormGroup>
 
         <div className="flex flex-col gap-2">

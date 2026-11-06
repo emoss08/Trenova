@@ -12,6 +12,7 @@ import { DRIVER_GRID_CLASS, DriverQueue } from "./driver-queue";
 import { QUEUE_GRID_CLASS } from "./console-skeletons";
 import { ExceptionList } from "./exception-list";
 import { MoveQueue, QUEUE_COLUMNS, QueueEmpty, QueueOutcome, type QueueRead } from "./move-queue";
+import { OutlookList } from "./outlook-list";
 import type { DispatchOutcome } from "./use-dispatch-actions";
 import { useDispatchRail, type QueueTab } from "./url-state";
 
@@ -97,7 +98,8 @@ function KeyLegend() {
 
 /**
  * The console's main surface: the moves that need a decision, the exceptions covered moves
- * still raise, and the drivers. One tab at a time, so the queue keeps its height.
+ * still raise, the drivers, and the freight likely to appear beyond the drivers expected
+ * for it. One tab at a time, so the queue keeps its height.
  */
 export function QueuePane({
   tab,
@@ -150,7 +152,9 @@ export function QueuePane({
 }) {
   const t = useT();
 
-  const activeTab: QueueTab = tab === "drivers" && !showsDrivers ? "moves" : tab;
+  // Drivers and the freight outlook are about employed drivers, so only a fleet sees them.
+  const activeTab: QueueTab =
+    (tab === "drivers" || tab === "outlook") && !showsDrivers ? "moves" : tab;
   const { capacityFilter, driverSearch, setCapacityFilter, setDriverSearch } = useDispatchRail();
   // The column heading and the key legend belong to rows; the skeleton, the error sheet
   // and the empty sheet draw their own.
@@ -201,11 +205,22 @@ export function QueuePane({
             onSelect={onTab}
           />
         ) : null}
+        {showsDrivers ? (
+          <TabButton
+            id="outlook"
+            active={activeTab === "outlook"}
+            label={t("Outlook")}
+            count={null}
+            onSelect={onTab}
+          />
+        ) : null}
         <span className="text-muted-foreground mb-3 ml-auto flex items-center gap-1.5 text-2xs">
           {activeTab === "moves" ? (
             t("Ordered by the next decision")
           ) : activeTab === "exceptions" ? (
             t("Soonest due first, from the Watchtower")
+          ) : activeTab === "outlook" ? (
+            t("Next 48 hours, most short of drivers first")
           ) : capacityFilter !== "all" ? (
             <>
               {t("Showing {0} only", t(capacityLabel(capacityFilter)))}
@@ -272,6 +287,8 @@ export function QueuePane({
           </>
         ) : activeTab === "exceptions" ? (
           <ExceptionList items={exceptions} hasMore={exceptionsMore} read={exceptionsRead} />
+        ) : activeTab === "outlook" ? (
+          <OutlookList />
         ) : (
           <>
             {!read.isPending && drivers.length > 0 ? (

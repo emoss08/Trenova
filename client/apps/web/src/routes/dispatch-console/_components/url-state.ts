@@ -69,7 +69,7 @@ export function resolveCenterMode(
 const ZOOM_VALUES: readonly TimelineZoomDays[] = TIMELINE_ZOOM_OPTIONS.map((option) => option.id);
 const CAPACITY_FILTER_IDS: readonly CapacityFilter[] = CAPACITY_FILTERS.map((filter) => filter.id);
 
-const QUEUE_TABS = ["moves", "exceptions", "drivers"] as const;
+const QUEUE_TABS = ["moves", "exceptions", "drivers", "outlook"] as const;
 export type QueueTab = (typeof QUEUE_TABS)[number];
 
 /**

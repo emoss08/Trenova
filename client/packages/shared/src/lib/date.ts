@@ -770,6 +770,26 @@ export function formatUnixDateTimeShort(
   return formatUnixShape(value, { ...MONTH_DAY, ...CLOCK_TIME }, options);
 }
 
+/**
+ * A span of hours named by its weekday, as the reader's language writes a range: "Tue 6:00 AM –
+ * 6:00 PM", or "Tue 6:00 PM – Wed 6:00 AM" when it crosses midnight in the user's timezone.
+ */
+export function formatUnixDayTimeRange(
+  start: number | null | undefined,
+  end: number | null | undefined,
+  { timezone, timeFormat, fallback = "N/A" }: UnixFormatOptions = {},
+): string {
+  const startDate = start ? toDate(start) : undefined;
+  const endDate = end ? toDate(end) : undefined;
+  if (!startDate || !endDate) {
+    return fallback;
+  }
+  return zonedFormatter({ weekday: "short", ...CLOCK_TIME, timezone, timeFormat }).formatRange(
+    startDate,
+    endDate,
+  );
+}
+
 export function formatUnixDateTimeOrDash(
   value: number | null | undefined,
   options?: UnixFormatOptions,

@@ -1,14 +1,15 @@
 import type { DispatchCandidate } from "@/lib/graphql/dispatch-console";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { costComponentLabel, costLineFact, formatCents } from "./cost-vocabulary";
+import { costComponentLabel, costLineFact, endMarketReason, formatCents } from "./cost-vocabulary";
 
 /**
  * What a driver taking a move costs, line by line, in money. The planner picks the plan
  * that costs least overall, so this is the same arithmetic it ran, not a summary of it.
  * Hard costs decide whether a move is worth covering; preferences only choose between
- * drivers, so they sit apart. A credit (a move that leaves the driver where drivers are
- * worth more) reads as a negative line.
+ * drivers, so they sit apart. Where the driver ends up is a credit, a negative line, when the
+ * move leaves them somewhere worth more than where they are, and a cost when it pulls them
+ * from somewhere busier; why it is worth that sits under it.
  */
 export function CostBreakdown({
   candidate,
@@ -78,6 +79,7 @@ function CostLines({
   candidate: DispatchCandidate;
   largest: number;
 }) {
+  const t = useT();
   if (lines.length === 0) return null;
 
   return (
@@ -112,6 +114,13 @@ function CostLines({
                   style={{ width: `${share}%` }}
                 />
               </div>
+              {line.component === "endMarket" && candidate.endMarket ? (
+                <div className="text-muted-foreground mt-0.5 flex flex-col text-2xs">
+                  {endMarketReason(candidate.endMarket, t).map((sentence) => (
+                    <p key={sentence}>{sentence}</p>
+                  ))}
+                </div>
+              ) : null}
             </li>
           );
         })}

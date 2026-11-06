@@ -63,6 +63,26 @@ vi.mock("@/lib/queries/dispatch-style", () => ({
   },
 }));
 
+vi.mock("@/lib/queries/dispatch-console", () => ({
+  dispatchConsoleQueries: {
+    forecastQuality: () => ({
+      queryKey: ["dispatch-forecast-quality"],
+      queryFn: async () => ({
+        status: "InsufficientHistory",
+        historyWeeks: 3,
+        historyLoads: 41,
+        weeksTested: 0,
+        loadsTested: 0,
+        intervalCoverage: 0,
+        meanAbsoluteError: 0,
+        naiveMeanAbsoluteError: 0,
+        skill: 0,
+        fittedAt: 1_793_577_600,
+      }),
+    }),
+  },
+}));
+
 vi.mock("@/hooks/use-optimistic-mutation", () => ({
   useOptimisticMutation: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -72,8 +92,11 @@ const DRIVER_COMPLIANCE_LABELS = [
   "Enable automated assignment",
   "Learn our dispatch style",
   "Plan for where drivers end up",
+  "Anticipate freight",
   "Costs and prices",
+  "Most a likely load is worth",
   "Learned dispatch style",
+  "Freight forecast",
   "Enable DOT compliance enforcement",
   "Medical certification validation",
   "Driver qualification verification",
