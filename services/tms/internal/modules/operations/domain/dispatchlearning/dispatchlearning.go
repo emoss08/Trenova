@@ -43,11 +43,20 @@ type LearnedWeight struct {
 
 func New(orgID, buID pulid.ID, now int64) *DispatchStyle {
 	return &DispatchStyle{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		Weights:        map[dispatcheconomics.Component]Weight{},
-		LearningSince:  now,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		Weights:           map[dispatcheconomics.Component]Weight{},
+		LearningSince:     now,
+		ObservedThroughAt: now,
 	}
+}
+
+func (s *DispatchStyle) StartObserving(now int64) {
+	if now <= s.ObservedThroughAt {
+		return
+	}
+	s.ObservedThroughAt = now
+	s.ObservedThroughID = pulid.Nil
 }
 
 func (s *DispatchStyle) Multipliers() map[dispatcheconomics.Component]float64 {

@@ -67,6 +67,24 @@ func (s *Service) Multipliers(
 	return style.Multipliers(), nil
 }
 
+func (s *Service) StartLearning(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	now := s.clock()
+	style, err := s.repo.GetOrCreate(
+		ctx,
+		dispatchlearning.New(tenantInfo.OrgID, tenantInfo.BuID, now),
+	)
+	if err != nil {
+		return err
+	}
+	if now <= style.ObservedThroughAt {
+		return nil
+	}
+	style.StartObserving(now)
+	_, err = s.repo.Save(ctx, style)
+
+	return err
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req *dispatchlearningports.GetStyleRequest,

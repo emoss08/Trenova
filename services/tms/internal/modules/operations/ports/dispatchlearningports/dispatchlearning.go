@@ -52,6 +52,10 @@ type Repository interface {
 	) ([]pagination.TenantInfo, error)
 }
 
+type LearningStarter interface {
+	StartLearning(ctx context.Context, tenantInfo pagination.TenantInfo) error
+}
+
 type MultiplierSource interface {
 	Multipliers(
 		ctx context.Context,

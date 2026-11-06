@@ -203,6 +203,7 @@ func SharedOptions() fx.Option {
 				dispatchlearningservice.New,
 				fx.As(fx.Self()),
 				fx.As(new(dispatchlearningports.MultiplierSource)),
+				fx.As(new(dispatchlearningports.LearningStarter)),
 				fx.As(new(dispatchlearningports.Service)),
 			),
 			fx.Annotate(

@@ -152,12 +152,12 @@ func TestLearn_LearnsEachPageAndSavesTheCursorWithTheWeights(t *testing.T) {
 		{
 			Decisions: []*dispatchlearning.Decision{overrideDecision(pulid.ID("se_1"))},
 			Scanned:   200,
-			Last:      dispatchlearningports.DecisionCursor{At: 1_000, ID: pulid.ID("se_200")},
+			Last:      dispatchlearningports.DecisionCursor{At: 61_000, ID: pulid.ID("se_200")},
 		},
 		{
 			Decisions: []*dispatchlearning.Decision{overrideDecision(pulid.ID("se_201"))},
 			Scanned:   3,
-			Last:      dispatchlearningports.DecisionCursor{At: 2_000, ID: pulid.ID("se_203")},
+			Last:      dispatchlearningports.DecisionCursor{At: 62_000, ID: pulid.ID("se_203")},
 		},
 	}}
 	svc, _ := newService(t, repo, &dispatchcontrol.DispatchControl{LearnDispatchStyle: true})
@@ -169,17 +169,18 @@ func TestLearn_LearnsEachPageAndSavesTheCursorWithTheWeights(t *testing.T) {
 	assert.Equal(t, 2, result.Overrides)
 	assert.Equal(t, 203, result.Scanned)
 	require.Len(t, repo.asked, 2, "a short page ends the run")
-	assert.Equal(t, dispatchlearningports.DecisionCursor{}, repo.asked[0])
+	assert.Equal(t, dispatchlearningports.DecisionCursor{At: 50_000}, repo.asked[0],
+		"a new style reads only decisions made after learning started")
 	assert.Equal(
 		t,
-		dispatchlearningports.DecisionCursor{At: 1_000, ID: pulid.ID("se_200")},
+		dispatchlearningports.DecisionCursor{At: 61_000, ID: pulid.ID("se_200")},
 		repo.asked[1],
 	)
 
 	require.Len(t, repo.saved, 2, "each page saves its weights with its cursor")
-	assert.Equal(t, int64(1_000), repo.saved[0].ObservedThroughAt)
+	assert.Equal(t, int64(61_000), repo.saved[0].ObservedThroughAt)
 	assert.Equal(t, int64(1), repo.saved[0].Decisions)
-	assert.Equal(t, int64(2_000), repo.saved[1].ObservedThroughAt)
+	assert.Equal(t, int64(62_000), repo.saved[1].ObservedThroughAt)
 	assert.Equal(t, int64(2), repo.saved[1].Decisions)
 	assert.Greater(t, repo.style.Weights[dispatcheconomics.ComponentHomeTime].Multiplier, 1.0)
 	assert.Equal(t, int64(50_000), repo.style.LearningSince)
@@ -286,4 +287,42 @@ func TestReset_WithNothingLearnedWritesNothing(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, style.Enabled)
 	assert.Zero(t, repo.saves)
+}
+
+func TestStartLearning_LearnsOnlyFromDecisionsMadeFromNowOn(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{style: &dispatchlearning.DispatchStyle{
+		OrganizationID:    tenant.OrgID,
+		BusinessUnitID:    tenant.BuID,
+		ObservedThroughAt: 10_000,
+		ObservedThroughID: pulid.ID("sev_old"),
+		Weights: map[dispatcheconomics.Component]dispatchlearning.Weight{
+			dispatcheconomics.ComponentHomeTime: {Multiplier: 1.6, Samples: 12},
+		},
+	}}
+	svc, _ := newService(t, repo, &dispatchcontrol.DispatchControl{LearnDispatchStyle: true})
+
+	require.NoError(t, svc.StartLearning(t.Context(), tenant))
+
+	require.Equal(t, 1, repo.saves)
+	assert.Equal(t, int64(50_000), repo.style.ObservedThroughAt,
+		"decisions made while learning was off are skipped")
+	assert.True(t, repo.style.ObservedThroughID.IsNil())
+	assert.InDelta(t, 1.6, repo.style.Weights[dispatcheconomics.ComponentHomeTime].Multiplier, 0.001,
+		"what was already learned is kept")
+}
+
+func TestStartLearning_ANewStyleStartsAtNow(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	svc, _ := newService(t, repo, &dispatchcontrol.DispatchControl{LearnDispatchStyle: true})
+
+	require.NoError(t, svc.StartLearning(t.Context(), tenant))
+
+	require.NotNil(t, repo.style)
+	assert.Equal(t, int64(50_000), repo.style.ObservedThroughAt,
+		"history from before learning was turned on is never swept")
+	assert.Zero(t, repo.saves, "a style created at now needs no second write")
 }

@@ -281,3 +281,16 @@ func TestValidate_RefusesAnImpossibleStyle(t *testing.T) {
 		})
 	}
 }
+
+func TestStartObserving_NeverMovesTheCursorBack(t *testing.T) {
+	t.Parallel()
+
+	style := New(pulid.ID("org_1"), pulid.ID("bu_1"), 500)
+	assert.Equal(t, int64(500), style.ObservedThroughAt)
+
+	style.Advance(900, pulid.ID("sev_9"))
+	style.StartObserving(700)
+
+	assert.Equal(t, int64(900), style.ObservedThroughAt)
+	assert.Equal(t, pulid.ID("sev_9"), style.ObservedThroughID)
+}
