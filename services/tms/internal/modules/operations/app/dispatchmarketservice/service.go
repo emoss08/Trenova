@@ -59,10 +59,9 @@ func (s *Service) Record(ctx context.Context, req *dispatchmarketports.RecordReq
 	}
 
 	return s.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
-		existing, err := s.repo.ListByCells(ctx, &dispatchmarketports.ListByCellsRequest{
+		existing, err := s.repo.LockByCells(ctx, &dispatchmarketports.ListByCellsRequest{
 			TenantInfo: req.TenantInfo,
 			Cells:      dispatchmarket.SampleCells(samples),
-			ForUpdate:  true,
 		})
 		if err != nil {
 			return err

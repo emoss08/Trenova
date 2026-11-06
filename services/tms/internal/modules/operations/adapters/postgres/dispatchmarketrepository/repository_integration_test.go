@@ -88,10 +88,9 @@ func TestUpsert_InsertsNewCellsAndFoldsIntoExistingOnes(t *testing.T) {
 		dispatchmarket.DriverValue{Start: chicago, AvailableAt: mondayMidnight, ValueCents: 4_000},
 	)))
 
-	again, err := repo.ListByCells(own.ctx, &dispatchmarketports.ListByCellsRequest{
+	again, err := repo.LockByCells(own.ctx, &dispatchmarketports.ListByCellsRequest{
 		TenantInfo: own.tenant,
 		Cells:      []int64{chicagoCell},
-		ForUpdate:  true,
 	})
 	require.NoError(t, err)
 	require.Len(t, again, 1, "the second fold updates the cell rather than adding a row")

@@ -41,25 +41,40 @@ func (r *repository) ListByCells(
 		return []*dispatchmarket.MarketValue{}, nil
 	}
 
-	list := func(ctx context.Context) ([]*dispatchmarket.MarketValue, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*dispatchmarket.MarketValue, error) {
+		return listed(cellsQuery(req.Cells).List(ctx, r.db.Keel(ctx)))
+	})
+}
+
+func (r *repository) LockByCells(
+	ctx context.Context,
+	req *dispatchmarketports.ListByCellsRequest,
+) ([]*dispatchmarket.MarketValue, error) {
+	if len(req.Cells) == 0 {
+		return []*dispatchmarket.MarketValue{}, nil
+	}
+
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*dispatchmarket.MarketValue, error) {
 		m := dispatchmarketdb.MarketValues
-		q := m.Where(m.Cell.In(req.Cells...)).
-			Limit(len(req.Cells) * int(dispatchmarket.SlotsPerWeek))
-		if req.ForUpdate {
-			q = q.Order(m.Cell.Asc(), m.Slot.Asc()).Lock(keel.ForUpdate)
-		}
-		rows, err := q.List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list market values by cell: %w", err)
-		}
+		return listed(cellsQuery(req.Cells).
+			Order(m.Cell.Asc(), m.Slot.Asc()).
+			Lock(keel.ForUpdate).
+			List(ctx, r.db.Keel(ctx)))
+	})
+}
 
-		return rows, nil
-	}
-	if req.ForUpdate {
-		return dbtx.Write(ctx, r.db, list)
+func cellsQuery(cells []int64) keel.Query[*dispatchmarket.MarketValue] {
+	m := dispatchmarketdb.MarketValues
+
+	return m.Where(m.Cell.In(cells...)).Limit(len(cells) * int(dispatchmarket.SlotsPerWeek))
+}
+
+func listed(rows []*dispatchmarket.MarketValue, err error) ([]*dispatchmarket.MarketValue, error) {
+	if err != nil {
+		return nil, fmt.Errorf("list market values by cell: %w", err)
 	}
 
-	return dbtx.Read(ctx, r.db, list)
+	return rows, nil
 }
 
 func (r *repository) Upsert(ctx context.Context, values []*dispatchmarket.MarketValue) error {

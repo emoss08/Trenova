@@ -10,11 +10,14 @@ import (
 type ListByCellsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Cells      []int64
-	ForUpdate  bool
 }
 
 type Repository interface {
 	ListByCells(
+		ctx context.Context,
+		req *ListByCellsRequest,
+	) ([]*dispatchmarket.MarketValue, error)
+	LockByCells(
 		ctx context.Context,
 		req *ListByCellsRequest,
 	) ([]*dispatchmarket.MarketValue, error)

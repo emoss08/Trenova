@@ -28,6 +28,7 @@ type fakeRepo struct {
 	asked    [][]int64
 	upserted []*dispatchmarket.MarketValue
 	upserts  int
+	locked   bool
 }
 
 func (f *fakeRepo) ListByCells(
@@ -36,6 +37,14 @@ func (f *fakeRepo) ListByCells(
 ) ([]*dispatchmarket.MarketValue, error) {
 	f.asked = append(f.asked, req.Cells)
 	return f.stored, nil
+}
+
+func (f *fakeRepo) LockByCells(
+	ctx context.Context,
+	req *dispatchmarketports.ListByCellsRequest,
+) ([]*dispatchmarket.MarketValue, error) {
+	f.locked = true
+	return f.ListByCells(ctx, req)
 }
 
 func (f *fakeRepo) Upsert(_ context.Context, values []*dispatchmarket.MarketValue) error {
@@ -68,6 +77,7 @@ func TestRecord_FoldsEachSolveIntoTheCellsItsDriversStartIn(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, repo.asked, 1, "one read of the cells the solve touched")
+	assert.True(t, repo.locked, "the fold locks the rows it rewrites")
 	assert.Len(t, repo.asked[0], 2)
 	require.Len(t, repo.upserted, 2, "one statement writes every changed cell")
 	for _, value := range repo.upserted {
