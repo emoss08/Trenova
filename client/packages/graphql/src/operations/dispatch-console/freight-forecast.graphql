@@ -1,0 +1,45 @@
+fragment DispatchForecastQualityFields on DispatchForecastQuality {
+  status
+  historyWeeks
+  historyLoads
+  weeksTested
+  loadsTested
+  intervalCoverage
+  meanAbsoluteError
+  naiveMeanAbsoluteError
+  skill
+  fittedAt
+}
+
+query DispatchFreightOutlook($hours: Int, $limit: Int) {
+  dispatchFreightOutlook(hours: $hours, limit: $limit) {
+    generatedAt
+    quality {
+      ...DispatchForecastQualityFields
+    }
+    windows {
+      areaLabel
+      windowStart
+      windowEnd
+      typicalLow
+      typicalHigh
+      booked
+      expectedUnbooked
+      driversExpected
+      shortfall
+      valueCents
+      customers {
+        customerId
+        name
+        expectedLoads
+      }
+      explanation
+    }
+  }
+}
+
+query DispatchForecastQuality {
+  dispatchForecastQuality {
+    ...DispatchForecastQualityFields
+  }
+}

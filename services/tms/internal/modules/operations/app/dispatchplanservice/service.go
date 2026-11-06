@@ -104,6 +104,7 @@ func (s *Service) Plan(
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 		Now:          now,
 	})
 	if err != nil {
@@ -175,11 +176,9 @@ func (s *Service) solve(ctx context.Context, p *solveParams) error {
 		})
 	}
 
-	planImmediate(ctx, p.Plan, p.Graph, stabilityOf(
-		p.Graph,
-		standing,
-		p.Snapshot.Model.Economics().ReplanChangeCents,
-	))
+	stab := stabilityOf(p.Graph, standing, p.Snapshot.Model.Economics().ReplanChangeCents)
+	reanticipate(p.Graph, p.Snapshot, stab)
+	planImmediate(ctx, p.Plan, p.Graph, stab)
 
 	return nil
 }

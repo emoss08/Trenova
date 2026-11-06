@@ -57,6 +57,7 @@ type evaluation struct {
 	projection *hosprojection.Result
 	findings   []dispatchfinding.Finding
 	features   dispatchcost.Features
+	endMarket  *dispatchplanports.EndMarket
 	verdict    string
 }
 
@@ -389,12 +390,9 @@ func featuresFor(
 		HaulFit:           haulFit(profile.driver.DriverType, t.emptyMiles+t.loadedMiles),
 		TimeOffBuffer:     timeOffBuffer(profile, t.freeAt),
 	}
-	if move.DestinationLatitude != nil && move.DestinationLongitude != nil {
-		features.EndMarketCents = snapshot.EndMarket.EndMarketCents(
-			*move.DestinationLatitude,
-			*move.DestinationLongitude,
-			t.freeAt,
-		)
+	eval.endMarket = endMarketOf(snapshot, profile.driver.WorkerID, move, t.freeAt)
+	if eval.endMarket != nil {
+		features.EndMarketCents = eval.endMarket.Cents
 	}
 
 	return features

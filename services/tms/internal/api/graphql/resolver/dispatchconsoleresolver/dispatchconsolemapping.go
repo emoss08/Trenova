@@ -423,6 +423,7 @@ func mapDispatchCandidate(
 		HosProjectedShiftMs:    int(score.HOSProjectedShiftMs),
 		HosProjectedCycleMs:    int(score.HOSProjectedCycleMs),
 		Findings:               mapDispatchFindings(score.Findings),
+		EndMarket:              mapDispatchEndMarket(score.EndMarket),
 	}
 }
 

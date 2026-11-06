@@ -3,6 +3,8 @@ package dispatchcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -25,6 +27,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	Fields       permissionports.FieldAccess
 	Learning     dispatchlearningports.LearningStarter
+	Forecasts    demandforecastports.FitStarter
 }
 
 type Service struct {
@@ -34,9 +37,10 @@ type Service struct {
 	auditService auditports.AuditService
 	fields       permissionports.FieldAccess
 	learning     dispatchlearningports.LearningStarter
+	forecasts    demandforecastports.FitStarter
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
 	return &Service{
 		l:            p.Logger.Named("service.dispatchcontrol"),
 		repo:         p.Repo,
@@ -44,6 +48,7 @@ func New(p Params) *Service {
 		auditService: p.AuditService,
 		fields:       p.Fields,
 		learning:     p.Learning,
+		forecasts:    p.Forecasts,
 	}
 }
 
@@ -96,6 +101,15 @@ func (s *Service) Update(
 		}); err != nil {
 			log.Error("failed to start learning the dispatch style", zap.Error(err))
 			return nil, err
+		}
+	}
+
+	if updatedEntity.AnticipateFreight && !original.AnticipateFreight {
+		if err = s.forecasts.StartFitting(ctx, pagination.TenantInfo{
+			OrgID: updatedEntity.OrganizationID,
+			BuID:  updatedEntity.BusinessUnitID,
+		}); err != nil {
+			log.Warn("the freight forecast will be fitted tonight instead of now", zap.Error(err))
 		}
 	}
 

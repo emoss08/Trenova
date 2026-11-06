@@ -3,6 +3,7 @@ package jobs
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/checkcalljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/demandforecastjobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/detentionjobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/dispatchlearningjobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs"
@@ -19,6 +20,7 @@ func WorkerOptions() fx.Option {
 		customertrackingjobs.Module,
 		detentionjobs.Module,
 		dispatchlearningjobs.Module,
+		demandforecastjobs.Module,
 		etajobs.Module,
 		shipmentjobs.Module,
 		recurringshipmentjobs.Module,

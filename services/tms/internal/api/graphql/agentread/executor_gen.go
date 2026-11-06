@@ -217,6 +217,7 @@ import (
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	customertrackingports "github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	demandforecastports "github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -350,6 +351,7 @@ type ResolverParams struct {
 	CustomerService                   *customerservice.Service
 	CustomerTrackingService           customertrackingports.CustomerTrackingService
 	DashControlService                *dashcontrolservice.Service
+	DemandForecastService             demandforecastports.Service
 	DetentionIntelligenceService      *detentionintelligence.Service
 	DetentionNotices                  *detentionnoticeservice.Service
 	DetentionPolicyService            *detentionpolicyservice.Service
@@ -1406,6 +1408,7 @@ func NewSchema(p ResolverParams) Schema {
 		CarrierAssignmentService:  p.CarrierAssignmentService,
 		DispatchConsoleService:    p.DispatchConsoleService,
 		DispatchAutoAssignService: p.DispatchAutoAssignService,
+		DemandForecastService:     p.DemandForecastService,
 		AssignmentService:         p.AssignmentService,
 	}
 	documenttypeDeps := &documenttyperesolver.Deps{

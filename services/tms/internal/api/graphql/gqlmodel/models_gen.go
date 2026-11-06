@@ -4679,6 +4679,8 @@ type DispatchCandidate struct {
 	HosProjectedShiftMs  int                `json:"hosProjectedShiftMs"`
 	HosProjectedCycleMs  int                `json:"hosProjectedCycleMs"`
 	Findings             []*DispatchFinding `json:"findings"`
+	// Why the endMarket cost line is what it is; null when the move leaves the driver nowhere the plan values.
+	EndMarket *DispatchEndMarket `json:"endMarket,omitempty"`
 }
 
 type DispatchCarrierAccessorialInput struct {
@@ -4754,6 +4756,33 @@ type DispatchDriverPlannedMove struct {
 	GeneratedAt int `json:"generatedAt"`
 }
 
+// The reason behind a candidate's endMarket credit. The forecast fields are set only when the
+// source is Forecast.
+type DispatchEndMarket struct {
+	Source DispatchEndMarketSource `json:"source"`
+	// The credit, in cents: the negative of the endMarket cost line. Negative when the move takes the driver from somewhere worth more than where it leaves them.
+	ValueCents int `json:"valueCents"`
+	// What the driver is worth where the move leaves them, in cents.
+	DropValueCents int `json:"dropValueCents"`
+	// What the driver was worth staying where they are, in cents; the credit is the drop value less this.
+	StayValueCents int `json:"stayValueCents"`
+	// The area the driver would leave, when the forecast values it.
+	StayAreaLabel *string `json:"stayAreaLabel,omitempty"`
+	// The area the drop is in, named for its busiest origin, such as Dallas, TX.
+	AreaLabel *string `json:"areaLabel,omitempty"`
+	// The twelve hours after the driver is free in which the forecast looks for freight.
+	WindowStart *int `json:"windowStart,omitempty"`
+	WindowEnd   *int `json:"windowEnd,omitempty"`
+	// The usual range of loads in the window (10th to 90th percentile).
+	TypicalLow  *int `json:"typicalLow,omitempty"`
+	TypicalHigh *int `json:"typicalHigh,omitempty"`
+	// Loads already booked for the window.
+	Booked *int `json:"booked,omitempty"`
+	// Other drivers expected to be free in the area by the end of the window.
+	DriversExpected *int                        `json:"driversExpected,omitempty"`
+	Customers       []*DispatchForecastCustomer `json:"customers"`
+}
+
 // A single eligibility observation about pairing a driver with a move. Block findings
 // disqualify the pairing; Warn findings are advisory; Info findings describe gaps in the
 // telematics feed rather than problems with the driver.
@@ -4763,6 +4792,65 @@ type DispatchFinding struct {
 	Field      string  `json:"field"`
 	Message    string  `json:"message"`
 	Regulation *string `json:"regulation,omitempty"`
+}
+
+// One customer behind a freight forecast, with the loads it usually brings in the window.
+type DispatchForecastCustomer struct {
+	CustomerID    string  `json:"customerId"`
+	Name          string  `json:"name"`
+	ExpectedLoads float64 `json:"expectedLoads"`
+}
+
+// How the freight forecast did when it was tested on the last weeks of the organization's own
+// history: each week forecast from the weeks before it, then compared with what came.
+type DispatchForecastQuality struct {
+	Status DispatchForecastStatus `json:"status"`
+	// Weeks of history the forecast learns from.
+	HistoryWeeks int `json:"historyWeeks"`
+	HistoryLoads int `json:"historyLoads"`
+	WeeksTested  int `json:"weeksTested"`
+	LoadsTested  int `json:"loadsTested"`
+	// Share of actual counts that fell inside the forecast's 80% range.
+	IntervalCoverage float64 `json:"intervalCoverage"`
+	// Average miss per area and four-hour slot, in loads.
+	MeanAbsoluteError float64 `json:"meanAbsoluteError"`
+	// The same average miss for repeating the same slot of the week before.
+	NaiveMeanAbsoluteError float64 `json:"naiveMeanAbsoluteError"`
+	// How much better than repeating last week the forecast is: 0.3 is 30% smaller misses.
+	Skill float64 `json:"skill"`
+	// When it was last fitted; null before the first fit.
+	FittedAt *int `json:"fittedAt,omitempty"`
+}
+
+type DispatchFreightOutlook struct {
+	Quality     *DispatchForecastQuality `json:"quality"`
+	GeneratedAt int                      `json:"generatedAt"`
+	// The windows ahead, most short of drivers first.
+	Windows []*DispatchFreightWindow `json:"windows"`
+}
+
+// Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
+// there.
+type DispatchFreightWindow struct {
+	AreaLabel   string `json:"areaLabel"`
+	WindowStart int    `json:"windowStart"`
+	WindowEnd   int    `json:"windowEnd"`
+	// The usual range of loads in the window (10th to 90th percentile).
+	TypicalLow  int `json:"typicalLow"`
+	TypicalHigh int `json:"typicalHigh"`
+	// Loads already booked for the window.
+	Booked int `json:"booked"`
+	// Loads still expected to be booked for the window.
+	ExpectedUnbooked float64 `json:"expectedUnbooked"`
+	// Drivers expected to be free in the area by the end of the window.
+	DriversExpected int `json:"driversExpected"`
+	// Expected loads beyond the drivers expected; zero when the area is covered.
+	Shortfall float64 `json:"shortfall"`
+	// What one more driver ending there is worth to the plan, in cents.
+	ValueCents int                         `json:"valueCents"`
+	Customers  []*DispatchForecastCustomer `json:"customers"`
+	// The same window in a sentence.
+	Explanation string `json:"explanation"`
 }
 
 type DispatchMoveCandidatesInput struct {
@@ -14413,6 +14501,125 @@ func (e *DetentionSegmentTarget) UnmarshalJSON(b []byte) error {
 }
 
 func (e DetentionSegmentTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where the endMarket credit comes from. Forecast: freight the organization's own history says is
+// likely to appear near the drop, net of what is booked and of the other drivers expected there.
+// History: what drivers free there have been worth to past plans.
+type DispatchEndMarketSource string
+
+const (
+	DispatchEndMarketSourceForecast DispatchEndMarketSource = "Forecast"
+	DispatchEndMarketSourceHistory  DispatchEndMarketSource = "History"
+)
+
+var AllDispatchEndMarketSource = []DispatchEndMarketSource{
+	DispatchEndMarketSourceForecast,
+	DispatchEndMarketSourceHistory,
+}
+
+func (e DispatchEndMarketSource) IsValid() bool {
+	switch e {
+	case DispatchEndMarketSourceForecast, DispatchEndMarketSourceHistory:
+		return true
+	}
+	return false
+}
+
+func (e DispatchEndMarketSource) String() string {
+	return string(e)
+}
+
+func (e *DispatchEndMarketSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchEndMarketSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchEndMarketSource", str)
+	}
+	return nil
+}
+
+func (e DispatchEndMarketSource) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchEndMarketSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchEndMarketSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether the organization's freight forecast has proven itself on its own history. Plans use the
+// forecast only when it is Ready.
+type DispatchForecastStatus string
+
+const (
+	// Fewer than 8 weeks or 200 loads of history.
+	DispatchForecastStatusInsufficientHistory DispatchForecastStatus = "InsufficientHistory"
+	// Tested, but not clearly better than repeating last week.
+	DispatchForecastStatusNoSkill DispatchForecastStatus = "NoSkill"
+	DispatchForecastStatusReady   DispatchForecastStatus = "Ready"
+)
+
+var AllDispatchForecastStatus = []DispatchForecastStatus{
+	DispatchForecastStatusInsufficientHistory,
+	DispatchForecastStatusNoSkill,
+	DispatchForecastStatusReady,
+}
+
+func (e DispatchForecastStatus) IsValid() bool {
+	switch e {
+	case DispatchForecastStatusInsufficientHistory, DispatchForecastStatusNoSkill, DispatchForecastStatusReady:
+		return true
+	}
+	return false
+}
+
+func (e DispatchForecastStatus) String() string {
+	return string(e)
+}
+
+func (e *DispatchForecastStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchForecastStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchForecastStatus", str)
+	}
+	return nil
+}
+
+func (e DispatchForecastStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchForecastStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchForecastStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -13,12 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -117,6 +120,22 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 						WorkerID: pulid.MustNew("wrk_").String(),
 					},
 				)
+				return err
+			},
+		},
+		{
+			name:      "the freight outlook requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchFreightOutlook(ctx, nil, nil)
+				return err
+			},
+		},
+		{
+			name:      "the forecast quality requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchForecastQuality(ctx)
 				return err
 			},
 		},
@@ -451,4 +470,126 @@ func TestDispatchBoard_LeavesProposalsOffForSomeoneWhoMayNotSeeThem(t *testing.T
 
 	assert.Nil(t, board.Moves[0].PendingProposal)
 	autoAssign.AssertNotCalled(t, "CoverageProposals", mock.Anything, mock.Anything)
+}
+
+func allowAllCore() *resolvercore.Core {
+	return &resolvercore.Core{PermissionEngine: &mocks.AllowAllPermissionEngine{}}
+}
+
+type forecastService struct {
+	demandforecastports.Service
+
+	outlookRequest *demandforecastports.OutlookRequest
+	qualityTenant  pagination.TenantInfo
+	quality        *demandforecast.Quality
+}
+
+func (s *forecastService) Outlook(
+	_ context.Context,
+	req *demandforecastports.OutlookRequest,
+) (*demandforecastports.Outlook, error) {
+	s.outlookRequest = req
+	return &demandforecastports.Outlook{
+		Quality:     s.quality,
+		GeneratedAt: 1_800_000_000,
+		Windows: []*demandforecastports.OutlookWindow{{
+			AreaLabel:   "Dallas, TX",
+			WindowStart: 1_800_000_000,
+			WindowEnd:   1_800_014_400,
+			Explanation: "Ending near Dallas, TX is worth $610.00.",
+		}},
+	}, nil
+}
+
+func (s *forecastService) Quality(
+	_ context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*demandforecast.Quality, error) {
+	s.qualityTenant = tenantInfo
+	return s.quality, nil
+}
+
+func TestDispatchFreightOutlook_ReadsTheCallersTenantWithTheirWindow(t *testing.T) {
+	t.Parallel()
+
+	ctx := dispatchAuthContext(t)
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: 1},
+	}
+
+	outlook, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchFreightOutlook(ctx, new(72), new(10))
+	require.NoError(t, err)
+
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	require.True(t, ok)
+	require.NotNil(t, service.outlookRequest)
+	assert.Equal(t, authCtx.OrganizationID, service.outlookRequest.TenantInfo.OrgID)
+	assert.Equal(t, authCtx.BusinessUnitID, service.outlookRequest.TenantInfo.BuID)
+	assert.Equal(t, 72, service.outlookRequest.Hours)
+	assert.Equal(t, 10, service.outlookRequest.Limit)
+	assert.Equal(t, gqlmodel.DispatchForecastStatusReady, outlook.Quality.Status)
+	require.Len(t, outlook.Windows, 1)
+	assert.Equal(t, "Dallas, TX", outlook.Windows[0].AreaLabel)
+}
+
+func TestDispatchFreightOutlook_LeavesTheDefaultsToTheService(t *testing.T) {
+	t.Parallel()
+
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+	}
+
+	_, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	require.NoError(t, err)
+
+	require.NotNil(t, service.outlookRequest)
+	assert.Zero(t, service.outlookRequest.Hours)
+	assert.Zero(t, service.outlookRequest.Limit)
+}
+
+func TestDispatchForecastQuality_ReadsTheCallersTenant(t *testing.T) {
+	t.Parallel()
+
+	ctx := dispatchAuthContext(t)
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill, Skill: 0.02},
+	}
+
+	quality, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchForecastQuality(ctx)
+	require.NoError(t, err)
+
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	require.True(t, ok)
+	assert.Equal(t, authCtx.OrganizationID, service.qualityTenant.OrgID)
+	assert.Equal(t, authCtx.BusinessUnitID, service.qualityTenant.BuID)
+	assert.Equal(t, gqlmodel.DispatchForecastStatusNoSkill, quality.Status)
+	assert.InDelta(t, 0.02, quality.Skill, 0.0001)
+	assert.Nil(t, quality.FittedAt)
+}
+
+func TestDispatchForecastResolvers_DeniedReadNeverReachesTheService(t *testing.T) {
+	t.Parallel()
+
+	service := &forecastService{}
+	resolver := &QueryResolver{&Deps{
+		Core:                  &resolvercore.Core{PermissionEngine: &denyingPermissionEngine{}},
+		DemandForecastService: service,
+	}}
+
+	_, err := resolver.DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	require.Error(t, err)
+	_, err = resolver.DispatchForecastQuality(dispatchAuthContext(t))
+	require.Error(t, err)
+
+	assert.Nil(t, service.outlookRequest)
+	assert.True(t, service.qualityTenant.OrgID.IsNil())
 }

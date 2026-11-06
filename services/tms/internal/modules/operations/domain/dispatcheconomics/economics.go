@@ -45,15 +45,16 @@ func (p Preference) IsValid() bool {
 }
 
 const (
-	maxCentsPerUnit        = int64(1_000_000)
-	maxPreferenceCents     = int64(1_000_000)
-	maxCoverageCents       = int64(100_000_000)
-	maxEarlyGraceMinutes   = int64(24 * 60)
-	maxHomeTimeTargetDays  = int64(60)
-	maxCoverageMargin      = int64(100)
-	minCandidatesPerMove   = 5
-	maxCandidatesPerMove   = 200
-	defaultCandidatesCount = 40
+	maxCentsPerUnit             = int64(1_000_000)
+	maxPreferenceCents          = int64(1_000_000)
+	maxCoverageCents            = int64(100_000_000)
+	maxEarlyGraceMinutes        = int64(24 * 60)
+	maxHomeTimeTargetDays       = int64(60)
+	maxCoverageMargin           = int64(100)
+	minCandidatesPerMove        = 5
+	maxCandidatesPerMove        = 200
+	defaultCandidatesCount      = 40
+	defaultAnticipationMaxCents = int64(40_000)
 )
 
 var (
@@ -79,6 +80,7 @@ type Economics struct {
 	DueNowPremiumCents    int64                `json:"dueNowPremiumCents"`
 	CandidatesPerMove     int                  `json:"candidatesPerMove"`
 	ReplanChangeCents     int64                `json:"replanChangeCents"`
+	AnticipationMaxCents  int64                `json:"anticipationMaxCents"`
 }
 
 func Default() Economics {
@@ -97,6 +99,7 @@ func Default() Economics {
 		DueNowPremiumCents:    75_000,
 		CandidatesPerMove:     defaultCandidatesCount,
 		ReplanChangeCents:     2_500,
+		AnticipationMaxCents:  defaultAnticipationMaxCents,
 	}
 }
 
@@ -117,7 +120,7 @@ func (e *Economics) IsZero() bool {
 		e.EarlyGraceMinutes == 0 && e.HomeTimeTargetDays == 0 && e.HomeTimeDayCents == 0 &&
 		e.FairnessMileCents == 0 && len(e.Preferences) == 0 && e.CoverageMarginPercent == 0 &&
 		e.CoverageFloorCents == 0 && e.LatePremiumCents == 0 && e.DueNowPremiumCents == 0 &&
-		e.CandidatesPerMove == 0 && e.ReplanChangeCents == 0
+		e.CandidatesPerMove == 0 && e.ReplanChangeCents == 0 && e.AnticipationMaxCents == 0
 }
 
 func (e *Economics) Normalized() Economics {
@@ -133,6 +136,9 @@ func (e *Economics) Normalized() Economics {
 	}
 	if out.CandidatesPerMove == 0 {
 		out.CandidatesPerMove = defaultCandidatesCount
+	}
+	if out.AnticipationMaxCents == 0 {
+		out.AnticipationMaxCents = defaultAnticipationMaxCents
 	}
 
 	return out
@@ -159,7 +165,9 @@ func (e *Economics) Validate() error {
 			return ErrOutOfRange
 		}
 	}
-	coverage := []int64{e.CoverageFloorCents, e.LatePremiumCents, e.DueNowPremiumCents}
+	coverage := []int64{
+		e.CoverageFloorCents, e.LatePremiumCents, e.DueNowPremiumCents, e.AnticipationMaxCents,
+	}
 	for _, value := range coverage {
 		if value < 0 {
 			return ErrNegative

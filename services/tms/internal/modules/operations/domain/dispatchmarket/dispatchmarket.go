@@ -14,7 +14,7 @@ const (
 	SlotSeconds  = int64(4 * 3600)
 	SlotsPerWeek = int16(42)
 	WeekSeconds  = int64(7 * 24 * 3600)
-	mondayOffset = int64(4 * 24 * 3600)
+	MondayOffset = int64(4 * 24 * 3600)
 	minAlpha     = 0.2
 )
 
@@ -65,11 +65,15 @@ func CellOf(p Point) (int64, bool) {
 }
 
 func SlotOf(at int64) int16 {
-	return int16(max(at-mondayOffset, 0) % WeekSeconds / SlotSeconds)
+	return int16(max(at-MondayOffset, 0) % WeekSeconds / SlotSeconds)
+}
+
+func SlotStart(at int64) int64 {
+	return at - max(at-MondayOffset, 0)%SlotSeconds
 }
 
 func WeekOf(at int64) int64 {
-	return max(at-mondayOffset, 0) / WeekSeconds
+	return max(at-MondayOffset, 0) / WeekSeconds
 }
 
 func KeyOf(p Point, at int64) (Key, bool) {

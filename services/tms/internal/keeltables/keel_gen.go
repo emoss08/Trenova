@@ -147,6 +147,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast/demandforecastdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
@@ -429,6 +430,10 @@ func All() []*schema.Table {
 		dashcontroldb.DashControlsSchema(),
 		dataentrycontroldb.DataEntryControlsSchema(),
 		dataretentiondb.DataRetentionsSchema(),
+		demandforecastdb.BookingCurvesSchema(),
+		demandforecastdb.AreasSchema(),
+		demandforecastdb.QualitiesSchema(),
+		demandforecastdb.RatesSchema(),
 		detentionevidencedb.DetentionEvidencesSchema(),
 		detentionnoticedb.DetentionNoticesSchema(),
 		detentiondb.DetentionOccurrencesSchema(),

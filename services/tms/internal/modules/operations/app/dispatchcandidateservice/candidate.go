@@ -20,6 +20,7 @@ func candidateFrom(snapshot *FleetSnapshot, eval *evaluation) *dispatchplanports
 		TrailerID:           eval.trailerID,
 		MoveID:              eval.move.MoveID,
 		Cost:                snapshot.Model.Explain(&eval.features),
+		EndMarket:           eval.endMarket,
 		HardCents:           hard,
 		SoftCents:           soft,
 		Verdict:             eval.verdict,

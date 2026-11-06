@@ -105,6 +105,7 @@ var allowed = map[string]string{
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/facts.go:factRepository.ListNotifyingTenants":                                     "list organizations whose customers receive status emails",
 	"internal/modules/operations/adapters/postgres/customertrackingrepository/notification.go:notificationRepository.ListTenantsWithDue":                        "list organizations with customer status emails due",
 	"internal/modules/operations/adapters/postgres/dispatchlearningrepository/repository.go:repository.ListLearningTenants":                                     "list organizations that learn their dispatch style",
+	"internal/modules/operations/adapters/postgres/demandforecastrepository/tenants.go:repository.ListTenants":                                                  "list the organizations whose freight forecast is fitted nightly",
 	"internal/modules/operations/adapters/postgres/dispatchcontrolrepository/dispatchcontrol.go:repository.ListCoveragePlanningTenants":                         "list organizations that plan coverage on a schedule",
 	"internal/modules/documents/adapters/postgres/documentcontentrepository/content.go:repository.ListPendingExtractionTenants":                                 "list organizations with documents awaiting extraction",
 	"internal/modules/documents/adapters/postgres/documentrepository/document.go:repository.ListPendingPreviewReconciliationTenants":                            "list organizations with document previews to reconcile",

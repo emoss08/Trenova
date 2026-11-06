@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -444,4 +445,44 @@ func (r *QueryResolver) DispatchMove(ctx context.Context, moveID string) (*gqlmo
 	}
 
 	return mapped, nil
+}
+
+func (r *QueryResolver) DispatchFreightOutlook(ctx context.Context, hours *int, limit *int) (*gqlmodel.DispatchFreightOutlook, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	outlook, err := r.DemandForecastService.Outlook(ctx, &demandforecastports.OutlookRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Hours:      gqlscalar.IntValue(hours),
+		Limit:      gqlscalar.IntValue(limit),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchFreightOutlook(outlook), nil
+}
+
+func (r *QueryResolver) DispatchForecastQuality(ctx context.Context) (*gqlmodel.DispatchForecastQuality, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	quality, err := r.DemandForecastService.Quality(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchForecastQuality(quality), nil
 }

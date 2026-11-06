@@ -13901,6 +13901,10 @@ type DispatchCandidate {
   deadheadMiles: Float
   deliveryLateMinutes: Int!
   driveRemainingMs: Int!
+  """
+  Why the endMarket cost line is what it is; null when the move leaves the driver nowhere the plan values.
+  """
+  endMarket: DispatchEndMarket
   estimatedDriveMs: Int!
   findings: [DispatchFinding!]!
   """
@@ -14030,6 +14034,55 @@ type DispatchDriverPlannedMove {
 }
 
 """
+The reason behind a candidate's endMarket credit. The forecast fields are set only when the
+source is Forecast.
+"""
+type DispatchEndMarket {
+  """
+  The area the drop is in, named for its busiest origin, such as Dallas, TX.
+  """
+  areaLabel: String
+  """Loads already booked for the window."""
+  booked: Int
+  customers: [DispatchForecastCustomer!]!
+  """
+  Other drivers expected to be free in the area by the end of the window.
+  """
+  driversExpected: Int
+  """What the driver is worth where the move leaves them, in cents."""
+  dropValueCents: Int!
+  source: DispatchEndMarketSource!
+  """The area the driver would leave, when the forecast values it."""
+  stayAreaLabel: String
+  """
+  What the driver was worth staying where they are, in cents; the credit is the drop value less this.
+  """
+  stayValueCents: Int!
+  typicalHigh: Int
+  """The usual range of loads in the window (10th to 90th percentile)."""
+  typicalLow: Int
+  """
+  The credit, in cents: the negative of the endMarket cost line. Negative when the move takes the driver from somewhere worth more than where it leaves them.
+  """
+  valueCents: Int!
+  windowEnd: Timestamp
+  """
+  The twelve hours after the driver is free in which the forecast looks for freight.
+  """
+  windowStart: Timestamp
+}
+
+"""
+Where the endMarket credit comes from. Forecast: freight the organization's own history says is
+likely to appear near the drop, net of what is booked and of the other drivers expected there.
+History: what drivers free there have been worth to past plans.
+"""
+enum DispatchEndMarketSource {
+  Forecast
+  History
+}
+
+"""
 A single eligibility observation about pairing a driver with a move. Block findings
 disqualify the pairing; Warn findings are advisory; Info findings describe gaps in the
 telematics feed rather than problems with the driver.
@@ -14040,6 +14093,87 @@ type DispatchFinding {
   message: String!
   regulation: String
   severity: String!
+}
+
+"""
+One customer behind a freight forecast, with the loads it usually brings in the window.
+"""
+type DispatchForecastCustomer {
+  customerId: ID!
+  expectedLoads: Float!
+  name: String!
+}
+
+"""
+How the freight forecast did when it was tested on the last weeks of the organization's own
+history: each week forecast from the weeks before it, then compared with what came.
+"""
+type DispatchForecastQuality {
+  """When it was last fitted; null before the first fit."""
+  fittedAt: Timestamp
+  historyLoads: Int!
+  """Weeks of history the forecast learns from."""
+  historyWeeks: Int!
+  """Share of actual counts that fell inside the forecast's 80% range."""
+  intervalCoverage: Float!
+  loadsTested: Int!
+  """Average miss per area and four-hour slot, in loads."""
+  meanAbsoluteError: Float!
+  """The same average miss for repeating the same slot of the week before."""
+  naiveMeanAbsoluteError: Float!
+  """
+  How much better than repeating last week the forecast is: 0.3 is 30% smaller misses.
+  """
+  skill: Float!
+  status: DispatchForecastStatus!
+  weeksTested: Int!
+}
+
+"""
+Whether the organization's freight forecast has proven itself on its own history. Plans use the
+forecast only when it is Ready.
+"""
+enum DispatchForecastStatus {
+  """Fewer than 8 weeks or 200 loads of history."""
+  InsufficientHistory
+  """Tested, but not clearly better than repeating last week."""
+  NoSkill
+  Ready
+}
+
+type DispatchFreightOutlook {
+  generatedAt: Timestamp!
+  quality: DispatchForecastQuality!
+  """The windows ahead, most short of drivers first."""
+  windows: [DispatchFreightWindow!]!
+}
+
+"""
+Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
+there.
+"""
+type DispatchFreightWindow {
+  areaLabel: String!
+  """Loads already booked for the window."""
+  booked: Int!
+  customers: [DispatchForecastCustomer!]!
+  """Drivers expected to be free in the area by the end of the window."""
+  driversExpected: Int!
+  """Loads still expected to be booked for the window."""
+  expectedUnbooked: Float!
+  """The same window in a sentence."""
+  explanation: String!
+  """
+  Expected loads beyond the drivers expected; zero when the area is covered.
+  """
+  shortfall: Float!
+  typicalHigh: Int!
+  """The usual range of loads in the window (10th to 90th percentile)."""
+  typicalLow: Int!
+  """What one more driver ending there is worth to the plan, in cents."""
+  valueCents: Int!
+  windowEnd: Timestamp!
+  windowStart: Timestamp!
 }
 
 input DispatchMoveCandidatesInput {
@@ -26211,6 +26345,11 @@ type Query {
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
   dispatchCarrierAssignmentPreview(input: DispatchCarrierAssignmentPreviewInput!): DispatchCarrierEligibility!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
+  dispatchForecastQuality: DispatchForecastQuality!
+  """
+  Freight likely to appear in the hours ahead, by area, against the drivers expected there.
+  """
+  dispatchFreightOutlook(hours: Int, limit: Int): DispatchFreightOutlook!
   """
   One move as the board draws it, whatever window it falls in, so a selection that points
   outside the window on screen still opens. Carries its pending proposal like the board.

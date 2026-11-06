@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/demandforecastrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
@@ -46,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerstatustrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/demandforecastservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionintelligence"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
@@ -105,9 +107,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/weatheralertservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/demandforecastjobs/demandforecastcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs/etacontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchmarketports"
@@ -199,6 +203,16 @@ func SharedOptions() fx.Option {
 			dispatchplanpricerepository.New,
 			dispatchlearningrepository.New,
 			dispatchmarketrepository.New,
+			fx.Annotate(
+				demandforecastrepository.New,
+				fx.As(fx.Self()),
+				fx.As(new(demandforecastports.TenantLister)),
+			),
+			fx.Annotate(
+				demandforecastservice.New,
+				fx.As(new(demandforecastports.Service)),
+			),
+			demandforecastcontract.NewStarter,
 			fx.Annotate(
 				dispatchlearningservice.New,
 				fx.As(fx.Self()),

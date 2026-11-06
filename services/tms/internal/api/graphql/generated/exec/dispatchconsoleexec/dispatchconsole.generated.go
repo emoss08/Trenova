@@ -32,7 +32,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "DispatchCostLine", Implementors: []string{"DispatchCostLine"}},
 		{Name: "DispatchDriverMoveMatch", Implementors: []string{"DispatchDriverMoveMatch"}},
 		{Name: "DispatchDriverPlannedMove", Implementors: []string{"DispatchDriverPlannedMove"}},
+		{Name: "DispatchEndMarket", Implementors: []string{"DispatchEndMarket"}},
 		{Name: "DispatchFinding", Implementors: []string{"DispatchFinding"}},
+		{Name: "DispatchForecastCustomer", Implementors: []string{"DispatchForecastCustomer"}},
+		{Name: "DispatchForecastQuality", Implementors: []string{"DispatchForecastQuality"}},
+		{Name: "DispatchFreightOutlook", Implementors: []string{"DispatchFreightOutlook"}},
+		{Name: "DispatchFreightWindow", Implementors: []string{"DispatchFreightWindow"}},
 		{Name: "DispatchMoveFailedProposal", Implementors: []string{"DispatchMoveFailedProposal"}},
 		{Name: "DispatchMovePlanPrice", Implementors: []string{"DispatchMovePlanPrice"}},
 		{Name: "DispatchMoveProposal", Implementors: []string{"DispatchMoveProposal"}},
@@ -1711,6 +1716,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ),
 			},
+			{
+				Name:      "endMarket",
+				HasChild:  true,
+				ChildType: "DispatchEndMarket",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchCandidate)
+					return obj.EndMarket, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODispatchEndMarket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchEndMarket),
+			},
 		}},
 		{Object: "DispatchCarrierEligibility", Fields: []*gqlexec.Field{
 			{
@@ -1951,6 +1966,131 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 		}},
+		{Object: "DispatchEndMarket", Fields: []*gqlexec.Field{
+			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchEndMarketSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchEndMarketSource),
+			},
+			{
+				Name:     "valueCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.ValueCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dropValueCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.DropValueCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "stayValueCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.StayValueCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "stayAreaLabel",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.StayAreaLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "areaLabel",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.AreaLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "windowStart",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.WindowStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "windowEnd",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.WindowEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "typicalLow",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.TypicalLow, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "typicalHigh",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.TypicalHigh, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "booked",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.Booked, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "driversExpected",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.DriversExpected, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:      "customers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DispatchForecastCustomer",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchEndMarket)
+					return obj.Customers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchForecastCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastCustomerᚄ),
+			},
+		}},
 		{Object: "DispatchFinding", Fields: []*gqlexec.Field{
 			{
 				Name:     "code",
@@ -2000,6 +2140,296 @@ var Shard = &gqlexec.Shard{
 					return obj.Regulation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "DispatchForecastCustomer", Fields: []*gqlexec.Field{
+			{
+				Name:     "customerId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastCustomer)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastCustomer)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "expectedLoads",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastCustomer)
+					return obj.ExpectedLoads, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+		}},
+		{Object: "DispatchForecastQuality", Fields: []*gqlexec.Field{
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchForecastStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastStatus),
+			},
+			{
+				Name:     "historyWeeks",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.HistoryWeeks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "historyLoads",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.HistoryLoads, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "weeksTested",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.WeeksTested, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "loadsTested",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.LoadsTested, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "intervalCoverage",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.IntervalCoverage, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "meanAbsoluteError",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.MeanAbsoluteError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "naiveMeanAbsoluteError",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.NaiveMeanAbsoluteError, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "skill",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.Skill, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "fittedAt",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.FittedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+		}},
+		{Object: "DispatchFreightOutlook", Fields: []*gqlexec.Field{
+			{
+				Name:      "quality",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DispatchForecastQuality",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightOutlook)
+					return obj.Quality, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchForecastQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastQuality),
+			},
+			{
+				Name:     "generatedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightOutlook)
+					return obj.GeneratedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:      "windows",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DispatchFreightWindow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightOutlook)
+					return obj.Windows, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchFreightWindow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightWindowᚄ),
+			},
+		}},
+		{Object: "DispatchFreightWindow", Fields: []*gqlexec.Field{
+			{
+				Name:     "areaLabel",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.AreaLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "windowStart",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.WindowStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "windowEnd",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.WindowEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "typicalLow",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.TypicalLow, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "typicalHigh",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.TypicalHigh, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "booked",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.Booked, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "expectedUnbooked",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.ExpectedUnbooked, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "driversExpected",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.DriversExpected, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "shortfall",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.Shortfall, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "valueCents",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.ValueCents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "customers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DispatchForecastCustomer",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.Customers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchForecastCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastCustomerᚄ),
+			},
+			{
+				Name:     "explanation",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightWindow)
+					return obj.Explanation, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "DispatchMoveFailedProposal", Fields: []*gqlexec.Field{
@@ -2116,7 +2546,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "uncoveredReason",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchMovePlanPrice)
 					return obj.UncoveredReason, nil
@@ -2709,7 +3139,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DispatchUncoveredMove)
 					return obj.Reason, nil
@@ -2908,6 +3338,32 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchCarrierEligibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchCarrierEligibility),
 			},
+			{
+				Name:       "dispatchFreightOutlook",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DispatchFreightOutlook",
+				Args:       field_Query_dispatchFreightOutlook_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchFreightOutlook(ctx, fc.Args["hours"].(*int), fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchFreightOutlook2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightOutlook),
+			},
+			{
+				Name:       "dispatchForecastQuality",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DispatchForecastQuality",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[QueryResolver](ec, "Query@dispatchconsole").DispatchForecastQuality(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchForecastQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastQuality),
+			},
 		}},
 	},
 	Inputs: []gqlexec.Input{
@@ -2942,18 +3398,22 @@ type QueryResolver interface {
 	DispatchDriverMoves(ctx context.Context, input gqlmodel.DispatchDriverMovesInput) ([]*gqlmodel.DispatchDriverMoveMatch, error)
 	DispatchAssignmentPreview(ctx context.Context, input gqlmodel.DispatchAssignmentPreviewInput) (*gqlmodel.DispatchAssignmentPreview, error)
 	DispatchCarrierAssignmentPreview(ctx context.Context, input gqlmodel.DispatchCarrierAssignmentPreviewInput) (*gqlmodel.DispatchCarrierEligibility, error)
+	DispatchFreightOutlook(ctx context.Context, hours *int, limit *int) (*gqlmodel.DispatchFreightOutlook, error)
+	DispatchForecastQuality(ctx context.Context) (*gqlmodel.DispatchForecastQuality, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type Boolean does not have child fields")
-	errNoChild2 = errors.New("field of type String does not have child fields")
-	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type Float does not have child fields")
-	errNoChild6 = errors.New("field of type TenderStatus does not have child fields")
-	errNoChild7 = errors.New("field of type TenderMode does not have child fields")
-	errNoChild8 = errors.New("field of type DispatchUncoveredReason does not have child fields")
+	errNoChild0  = errors.New("field of type ID does not have child fields")
+	errNoChild1  = errors.New("field of type Boolean does not have child fields")
+	errNoChild2  = errors.New("field of type String does not have child fields")
+	errNoChild3  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild4  = errors.New("field of type Int does not have child fields")
+	errNoChild5  = errors.New("field of type Float does not have child fields")
+	errNoChild6  = errors.New("field of type TenderStatus does not have child fields")
+	errNoChild7  = errors.New("field of type TenderMode does not have child fields")
+	errNoChild8  = errors.New("field of type DispatchEndMarketSource does not have child fields")
+	errNoChild9  = errors.New("field of type DispatchForecastStatus does not have child fields")
+	errNoChild10 = errors.New("field of type DispatchUncoveredReason does not have child fields")
 )
 
 func field_Mutation_dispatchAssignMoves_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -3104,6 +3564,27 @@ func field_Query_dispatchCarrierAssignmentPreview_args(ctx context.Context, ec *
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func field_Query_dispatchFreightOutlook_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "hours",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["hours"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
 	return args, nil
 }
 
@@ -3954,6 +4435,10 @@ func marshalNDispatchDriverMoveMatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "DispatchDriverMoveMatch", v)
 }
 
+func marshalNDispatchEndMarketSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchEndMarketSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.DispatchEndMarketSource) graphql.Marshaler {
+	return v
+}
+
 func marshalNDispatchFinding2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFindingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DispatchFinding) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.DispatchFinding]{
 		Elem:        marshalNDispatchFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFinding,
@@ -3968,6 +4453,58 @@ func marshalNDispatchFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DispatchFinding", v)
+}
+
+func marshalNDispatchForecastCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DispatchForecastCustomer) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DispatchForecastCustomer]{
+		Elem:        marshalNDispatchForecastCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastCustomer,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDispatchForecastCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchForecastCustomer) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchForecastCustomer", v)
+}
+
+func marshalNDispatchForecastQuality2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastQuality(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchForecastQuality) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchForecastQuality", v)
+}
+
+func marshalNDispatchForecastStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchForecastStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.DispatchForecastStatus) graphql.Marshaler {
+	return v
+}
+
+func marshalNDispatchFreightOutlook2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightOutlook(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchFreightOutlook) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchFreightOutlook", v)
+}
+
+func marshalNDispatchFreightWindow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightWindowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DispatchFreightWindow) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DispatchFreightWindow]{
+		Elem:        marshalNDispatchFreightWindow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightWindow,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDispatchFreightWindow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightWindow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchFreightWindow) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchFreightWindow", v)
 }
 
 func marshalNDispatchPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchPlan(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchPlan) graphql.Marshaler {
@@ -4155,6 +4692,13 @@ func marshalODispatchDriverPlannedMove2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DispatchDriverPlannedMove", v)
+}
+
+func marshalODispatchEndMarket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchEndMarket(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchEndMarket) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchEndMarket", v)
 }
 
 func marshalODispatchMoveFailedProposal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchMoveFailedProposal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchMoveFailedProposal) graphql.Marshaler {

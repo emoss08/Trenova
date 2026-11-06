@@ -543,6 +543,7 @@ func FromServices(s *Services) *Resolver {
 		CarrierAssignmentService:  s.CarrierAssignmentService,
 		DispatchConsoleService:    s.DispatchConsoleService,
 		DispatchAutoAssignService: s.DispatchAutoAssignService,
+		DemandForecastService:     s.DemandForecastService,
 		AssignmentService:         s.AssignmentService,
 	}
 	dispatchstyleDeps := &dispatchstyleresolver.Deps{

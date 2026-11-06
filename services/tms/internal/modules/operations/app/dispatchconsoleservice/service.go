@@ -266,6 +266,7 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -374,6 +375,7 @@ func (s *Service) GetDriverMoves(
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -437,6 +439,7 @@ func (s *Service) PreviewAssignment(
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -514,6 +517,7 @@ func (s *Service) buildSnapshotForMoves(
 		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(p.Moves),
 		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(p.Moves),
 		Destinations: dispatchcandidateservice.DestinationsOf(p.Moves),
+		Solving:      dispatchcandidateservice.SolvingOf(p.Moves),
 	})
 }
 

@@ -3,6 +3,7 @@ package dispatchplanports
 import (
 	"cmp"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,6 +17,24 @@ const (
 	OriginPosition   = OriginSource("position")
 	OriginLastDrop   = OriginSource("lastDrop")
 )
+
+type EndMarketSource string
+
+const (
+	EndMarketForecast = EndMarketSource("forecast")
+	EndMarketHistory  = EndMarketSource("history")
+)
+
+type EndMarket struct {
+	Source     EndMarketSource          `json:"source"`
+	Cents      int64                    `json:"cents"`
+	DropCents  int64                    `json:"dropCents"`
+	StayCents  int64                    `json:"stayCents"`
+	Window     demandforecast.WindowKey `json:"window"`
+	StayWindow demandforecast.WindowKey `json:"stayWindow"`
+	Reason     *demandforecast.Reason   `json:"reason,omitempty"`
+	StayReason *demandforecast.Reason   `json:"stayReason,omitempty"`
+}
 
 type CandidateScore struct {
 	WorkerID   pulid.ID `json:"workerId"`
@@ -52,7 +71,8 @@ type CandidateScore struct {
 	HOSProjectedShiftMs  int64  `json:"hosProjectedShiftMs"`
 	HOSProjectedCycleMs  int64  `json:"hosProjectedCycleMs"`
 
-	Findings []dispatchfinding.Finding `json:"findings"`
+	Findings  []dispatchfinding.Finding `json:"findings"`
+	EndMarket *EndMarket                `json:"endMarket,omitempty"`
 }
 
 func (c *CandidateScore) Blocked() bool {

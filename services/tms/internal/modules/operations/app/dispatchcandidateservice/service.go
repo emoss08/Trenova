@@ -2,6 +2,10 @@ package dispatchcandidateservice
 
 import (
 	"context"
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -53,6 +57,7 @@ type Params struct {
 	RouteEstimator  routeestimateports.RouteEstimator
 	Style           dispatchlearningports.MultiplierSource
 	Market          dispatchmarketports.ValuerSource
+	Forecasts       demandforecastports.Service
 	Logger          *zap.Logger
 }
 
@@ -65,9 +70,10 @@ type Service struct {
 	routes          routeestimateports.RouteEstimator
 	style           dispatchlearningports.MultiplierSource
 	market          dispatchmarketports.ValuerSource
+	forecasts       demandforecastports.Service
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
 	return &Service{
 		l:               p.Logger.Named("service.dispatch-candidates"),
 		consoleRepo:     p.ConsoleRepo,
@@ -77,6 +83,7 @@ func New(p Params) *Service {
 		routes:          p.RouteEstimator,
 		style:           p.Style,
 		market:          p.Market,
+		forecasts:       p.Forecasts,
 	}
 }
 
@@ -102,6 +109,7 @@ type SnapshotRequest struct {
 	CustomerIDs  []pulid.ID
 	TrailerIDs   []pulid.ID
 	Destinations []dispatchmarket.Point
+	Solving      []demandforecast.Booked
 	Now          int64
 }
 
@@ -190,8 +198,56 @@ func (s *Service) BuildSnapshot(
 	}
 
 	snapshot.Prepare()
+	if err = s.anticipate(ctx, req, snapshot); err != nil {
+		return nil, err
+	}
 
 	return snapshot, nil
+}
+
+func forecastCells(destinations []dispatchmarket.Point, supply []demandforecast.Driver) []int64 {
+	cells := dispatchmarket.CellsOf(destinations)
+	seen := make(map[int64]struct{}, len(cells)+len(supply))
+	for _, cell := range cells {
+		seen[cell] = struct{}{}
+	}
+	for _, driver := range supply {
+		if _, dup := seen[driver.Cell]; dup {
+			continue
+		}
+		seen[driver.Cell] = struct{}{}
+		cells = append(cells, driver.Cell)
+	}
+	slices.Sort(cells)
+
+	return cells
+}
+
+func (s *Service) anticipate(
+	ctx context.Context,
+	req *SnapshotRequest,
+	snapshot *FleetSnapshot,
+) error {
+	if req.Control == nil || !req.Control.AnticipateFreight || len(req.Destinations) == 0 {
+		return nil
+	}
+	economics := req.Control.ResolvedEconomics()
+	supply := snapshot.Supply()
+	forecaster, err := s.forecasts.Forecaster(ctx, &demandforecastports.ForecasterRequest{
+		TenantInfo:    req.TenantInfo,
+		Now:           snapshot.Now,
+		Cells:         forecastCells(req.Destinations, supply),
+		Supply:        supply,
+		Solving:       req.Solving,
+		MarginPercent: economics.CoverageMarginPercent,
+		CapCents:      economics.AnticipationMaxCents,
+	})
+	if err != nil {
+		return err
+	}
+	snapshot.Forecast = forecaster
+
+	return nil
 }
 
 func (s *Service) loadPerformance(

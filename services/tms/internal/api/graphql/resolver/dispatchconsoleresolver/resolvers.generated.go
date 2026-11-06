@@ -6,6 +6,7 @@ import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	demandforecastports "github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 )
 
@@ -14,6 +15,7 @@ type Deps struct {
 	CarrierAssignmentService  *carrierassignmentservice.Service
 	DispatchConsoleService    dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService dispatchconsoleports.DispatchAutoAssignService
+	DemandForecastService     demandforecastports.Service
 	AssignmentService         assignmentports.AssignmentService
 }
 

@@ -3,6 +3,8 @@ package dispatchcandidateservice
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
+
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcost"
@@ -42,6 +44,7 @@ type FleetSnapshot struct {
 
 	Model     dispatchcost.Model
 	EndMarket EndMarketValuer
+	Forecast  *demandforecast.Forecaster
 
 	profiles        map[pulid.ID]*driverProfile
 	driverIndex     map[pulid.ID]int

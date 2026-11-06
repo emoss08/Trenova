@@ -107,6 +107,7 @@ type DispatchControl struct {
 	Economics                            dispatcheconomics.Economics `json:"economics"                            keel:"economics,jsonb"`
 	LearnDispatchStyle                   bool                        `json:"learnDispatchStyle"                   keel:"learn_dispatch_style"`
 	PlanForEndMarket                     bool                        `json:"planForEndMarket"                     keel:"plan_for_end_market"`
+	AnticipateFreight                    bool                        `json:"anticipateFreight"                    keel:"anticipate_freight"`
 	AutoAssignConfidenceThreshold        decimal.Decimal             `json:"autoAssignConfidenceThreshold"        keel:"auto_assign_confidence_threshold"`
 	AutoAssignMaxDeadheadMiles           *int32                      `json:"autoAssignMaxDeadheadMiles"           keel:"auto_assign_max_deadhead_miles"`
 	AutoAssignPlanningHorizonHours       int16                       `json:"autoAssignPlanningHorizonHours"       keel:"auto_assign_planning_horizon_hours"`

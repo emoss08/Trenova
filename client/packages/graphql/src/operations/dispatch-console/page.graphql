@@ -411,4 +411,23 @@ fragment DispatchCandidateFields on DispatchCandidate {
     message
     regulation
   }
+  endMarket {
+    source
+    valueCents
+    dropValueCents
+    stayValueCents
+    stayAreaLabel
+    areaLabel
+    windowStart
+    windowEnd
+    typicalLow
+    typicalHigh
+    booked
+    driversExpected
+    customers {
+      customerId
+      name
+      expectedLoads
+    }
+  }
 }
