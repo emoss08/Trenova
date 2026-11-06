@@ -518,14 +518,6 @@ func loadFuelCard(ctx context.Context, id *pulid.ID) (*fuelpurchase.FuelCard, er
 	return settlementloaders.FuelCardByID(ctx, id.String())
 }
 
-func epochPtr(value int64) *int {
-	if value == 0 {
-		return nil
-	}
-	converted := int(value)
-	return &converted
-}
-
 func fuelImportsRequestFromGraphQL(
 	connection *gqlconnection.GqlDataTableConnection,
 	input gqlmodel.FuelPurchaseImportsInput,

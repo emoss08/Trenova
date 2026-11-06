@@ -2,6 +2,7 @@ package reportresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 )
 
@@ -36,8 +37,8 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 			Value:       parameter.Value,
 			IsDefault:   parameter.IsDefault,
 			Entity:      nilIfEmpty(parameter.Entity),
-			WindowStart: nilIfZero(parameter.WindowStart),
-			WindowEnd:   nilIfZero(parameter.WindowEnd),
+			WindowStart: gqlscalar.NonZeroIntPtr(parameter.WindowStart),
+			WindowEnd:   gqlscalar.NonZeroIntPtr(parameter.WindowEnd),
 		})
 	}
 

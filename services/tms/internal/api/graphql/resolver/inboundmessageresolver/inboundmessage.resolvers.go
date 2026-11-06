@@ -417,7 +417,7 @@ func (r *InboundActivityResolver) Actor(ctx context.Context, obj *triage.Activit
 }
 
 func (r *InboundActivityResolver) Until(ctx context.Context, obj *triage.Activity) (*int, error) {
-	return unixPtr(obj.Until), nil
+	return gqlscalar.NonZeroIntPtr(obj.Until), nil
 }
 
 func (r *InboundActivityResolver) FromClassification(ctx context.Context, obj *triage.Activity) (*inboundmessage.Classification, error) {
@@ -445,7 +445,7 @@ func (r *InboundAttachmentResolver) FiledAs(ctx context.Context, obj *inboundmes
 }
 
 func (r *InboundAttachmentResolver) FiledAt(ctx context.Context, obj *inboundmessage.InboundAttachment) (*int, error) {
-	return unixPtr(obj.FiledAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.FiledAt), nil
 }
 
 func (r *InboundAttachmentResolver) Pages(ctx context.Context, obj *inboundmessage.InboundAttachment) ([]*inboundmessage.AttachmentPage, error) {
@@ -457,7 +457,7 @@ func (r *InboundAttachmentResolver) SplitDocuments(ctx context.Context, obj *inb
 }
 
 func (r *InboundMailboxResolver) LastReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
-	return unixPtr(obj.LastReceivedAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.LastReceivedAt), nil
 }
 
 func (r *InboundMailboxResolver) Health(ctx context.Context, obj *inboundmessage.Mailbox) (inboundmessage.SourceHealth, error) {
@@ -465,11 +465,11 @@ func (r *InboundMailboxResolver) Health(ctx context.Context, obj *inboundmessage
 }
 
 func (r *InboundMailboxResolver) TestSentAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
-	return unixPtr(obj.TestSentAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.TestSentAt), nil
 }
 
 func (r *InboundMailboxResolver) TestReceivedAt(ctx context.Context, obj *inboundmessage.Mailbox) (*int, error) {
-	return unixPtr(obj.TestReceivedAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.TestReceivedAt), nil
 }
 
 func (r *InboundMailboxResolver) BlockedSenders(ctx context.Context, obj *inboundmessage.Mailbox) ([]string, error) {
@@ -509,7 +509,7 @@ func (r *InboundMessageResolver) DueAt(ctx context.Context, obj *inboundmessage.
 		return nil, nil
 	}
 
-	return unixPtr(obj.DueAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.DueAt), nil
 }
 
 func (r *InboundMessageResolver) ResponseTargetMinutes(ctx context.Context, obj *inboundmessage.InboundMessage) (int, error) {
