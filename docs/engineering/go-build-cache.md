@@ -15,14 +15,21 @@ branch, tag set and checkout path shares one store.
   `~/.config/trenova/go-remote-cache.env`) or, in a cloud session, the environment's `R2_*`
   variables; drops every inherited `AWS_*` variable; sets the gobuildcache and AWS SDK variables in
   its own environment and execs gobuildcache. It is read-only unless the file says
-  `GO_REMOTE_CACHE_WRITE=true`. If it has no credentials or a signed `HEAD` on the bucket fails
-  (remembered for ten minutes), it runs as a local disk cache and says so on stderr, because
-  gobuildcache exits on an unreachable bucket and takes the go command with it.
+  `GO_REMOTE_CACHE_WRITE=true`. If it has no credentials or a signed `HEAD` on the bucket fails,
+  it runs as a local disk cache and says so on stderr, because gobuildcache exits on an
+  unreachable bucket and takes the go command with it. Either answer of the `HEAD` is remembered
+  for ten minutes, so an outage costs one timed-out check per ten minutes, not one per go command.
 - **`.github/actions/setup-go`** takes `r2-endpoint`, `r2-access-key-id` and
   `r2-secret-access-key`. With all three it installs gobuildcache (cached per version), writes the
   credentials file under `$RUNNER_TEMP`, and exports `GOCACHEPROG` and `GODEBUG=goindex=0`.
   Without them (forks, Dependabot) the job builds with a cold local `GOCACHE`. Every caller passes
-  the write pair on pushes to `master` and the read pair otherwise.
+  the write pair on pushes to `master` and the read pair otherwise. Because the fallback only makes
+  builds slower, the action probes the bucket once per job (on pushes to `master` it also writes and
+  deletes `ci-probe/<run>`) and raises a `::warning::` annotation and a job-summary line when the
+  token cannot read, or on `master` cannot write, the bucket, or when the secrets are missing on a
+  run that is not from a fork or Dependabot. An expired token shows up on every run's page.
+  Rotate the tokens before their expiry: create the new token, update the two secrets, delete the
+  old token.
 - **`.github/workflows/go-build-cache.yml`** runs `task build-watch-targets` (cmd/api, cmd/worker,
   cmd/cli with `WATCH_BUILD`'s flags and cgo off) for linux/amd64 and darwin/arm64 on every push to
   `master`. CI's test jobs build with other flags, so without this job no developer build would

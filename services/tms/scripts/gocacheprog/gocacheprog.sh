@@ -87,15 +87,22 @@ fi
 # gobuildcache exits when it cannot reach the bucket, and the go command fails
 # with it, so a revoked key or an R2 outage would break every build. Check the
 # bucket first (the key goes to curl through a descriptor, not its arguments)
-# and remember a success for ten minutes.
+# and remember the answer for ten minutes either way, so an outage costs one
+# timed-out check per ten minutes rather than one per go command.
 mkdir -p "$cache_root"
 reachable="$cache_root/.bucket-reachable"
+unreachable="$cache_root/.bucket-unreachable"
+if [ -n "$(find "$unreachable" -mmin -10 2>/dev/null)" ]; then
+	local_only "bucket $bucket was unreachable less than ten minutes ago"
+fi
 if [ -z "$(find "$reachable" -mmin -10 2>/dev/null)" ]; then
 	if ! curl -fsS -o /dev/null -I --max-time 10 --aws-sigv4 "aws:amz:auto:s3" \
 		-K <(printf 'user = "%s:%s"\n' "$access_key_id" "$secret_access_key") \
 		"${endpoint%/}/$bucket" </dev/null; then
+		touch "$unreachable"
 		local_only "cannot reach bucket $bucket"
 	fi
+	rm -f "$unreachable"
 	touch "$reachable"
 fi
 

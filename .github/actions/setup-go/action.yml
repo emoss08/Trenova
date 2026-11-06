@@ -119,6 +119,53 @@ runs:
         if [ "$WRITE" = true ]; then mode=read-write; else mode=read-only; fi
         echo "Go build cache: shared (R2, $mode)" >> "$GITHUB_STEP_SUMMARY"
 
+    # The wrapper falls back to a local cache when the bucket is unreachable,
+    # so an expired, revoked or under-permitted token would only make builds
+    # slower. Probe the bucket once per job (and, where the job writes, write
+    # and delete a probe object) and say so on the run page when it fails.
+    - name: Check the shared build cache
+      if: inputs.r2-endpoint != '' && inputs.r2-access-key-id != '' && inputs.r2-secret-access-key != ''
+      shell: bash
+      env:
+        ENDPOINT: ${{ inputs.r2-endpoint }}
+        ACCESS_KEY_ID: ${{ inputs.r2-access-key-id }}
+        SECRET_ACCESS_KEY: ${{ inputs.r2-secret-access-key }}
+        WRITE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: |
+        set -uo pipefail
+        bucket="${ENDPOINT%/}/trenova-go-build-cache"
+        r2() {
+          curl -fsS -o /dev/null --max-time 15 --aws-sigv4 "aws:amz:auto:s3" \
+            -K <(printf 'user = "%s:%s"\n' "$ACCESS_KEY_ID" "$SECRET_ACCESS_KEY") "$@" </dev/null
+        }
+        warn() {
+          echo "::warning title=Go build cache unavailable::$1 This job builds from a local cache only. Check that the R2_BUILD_CACHE_* secrets hold a current token for trenova-go-build-cache (docs/engineering/go-build-cache.md)."
+          echo "Go build cache: **unavailable**: $1" >> "$GITHUB_STEP_SUMMARY"
+        }
+        if ! r2 -I "$bucket"; then
+          warn "The bucket did not answer with this job's token: it may have expired or been revoked."
+          exit 0
+        fi
+        if [ "$WRITE" = true ]; then
+          probe="$bucket/ci-probe/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
+          if ! r2 -X PUT --data-binary "probe" "$probe"; then
+            warn "The token can read the bucket but not write it, so this push to master does not fill the cache."
+            exit 0
+          fi
+          r2 -X DELETE "$probe" || true
+        fi
+        echo "Go build cache: R2 reachable"
+
+    - name: Warn when the build cache secrets are missing
+      if: >-
+        (inputs.r2-endpoint == '' || inputs.r2-access-key-id == '' || inputs.r2-secret-access-key == '') &&
+        github.event.pull_request.head.repo.fork != true &&
+        github.actor != 'dependabot[bot]'
+      shell: bash
+      run: |
+        echo "::warning title=Go build cache off::The R2_BUILD_CACHE_* secrets were not passed to this job, so it builds from a cold local cache."
+        echo "Go build cache: **off** (no secrets)" >> "$GITHUB_STEP_SUMMARY"
+
     - name: Download dependencies
       shell: bash
       run: |
