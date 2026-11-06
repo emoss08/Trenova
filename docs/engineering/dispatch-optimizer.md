@@ -2,8 +2,8 @@
 
 How Trenova decides which driver takes which move: the cost model, the solve, the prices it
 publishes and where each piece lives. Read this before changing anything under
-`operations/app/dispatch*`, `operations/domain/dispatch*`, `shared/assignmentsolver`,
-`shared/dispatchplanner` or the dispatch economics settings.
+`operations/app/dispatch*`, `operations/domain/dispatch*`, `operations/*/demandforecast*`,
+`shared/assignmentsolver`, `shared/dispatchplanner` or the dispatch economics settings.
 
 ## The model
 
@@ -148,6 +148,155 @@ valuer credits a pairing `0.8 × value × n/(n+4)` for `n` observations, falling
 cell's average at half weight for an unseen slot. The fold is best-effort: a failed write is
 logged and the plan stands.
 
+## Anticipated freight
+
+End-market values look backward: what drivers free in a place were worth to past plans. With
+`anticipateFreight` on, the plan also looks forward. A per-organization freight forecast says
+where loads are likely to appear before they are booked, and the "where the driver ends up"
+component (`endMarket`) prices a move by the chance a load will need a driver nobody else
+covers where the move leaves them, against the same chance where they are now. The model is
+`operations/domain/demandforecast`; the service, repository and nightly job are
+`demandforecastservice`, `demandforecastrepository` and `demandforecastjobs`.
+
+Network-level demand forecasting and backward-looking driver values exist elsewhere; TMS
+dispatch screens rank drivers for booked loads only. What is new is the combination, inside
+the one cost model:
+
+1. **A nowcast from the booking curve.** What is already booked for a future window updates
+   the forecast for it, exactly (Poisson–Gamma), so a heavier week than usual is believed.
+2. **Supply-aware value.** A driver is worth the chance that demand exceeds the other drivers
+   expected there, so the first extra driver in an area is worth much more than the fifth.
+3. **Relative credit.** A move earns what the driver is worth where it leaves them less what
+   they were worth staying put, so pulling a truck out of an area about to get busy is a charge.
+4. **A two-pass solve** so two drivers are not both credited for the same likely load.
+5. **One currency, one component.** The credit is `endMarket`, in cents, explained in the
+   cost breakdown. The forecast replaces the history value where it covers the drop's area.
+6. **Proven before it acts.** A nightly backtest on the organization's own history decides
+   whether plans may use it, and Dispatch controls shows the evidence.
+
+### The model
+
+- **Load, area, slot.** A load is a non-canceled shipment move. Its origin is the first live
+  stop's location, its time that stop's scheduled window start, its booking time the
+  shipment's `created_at`. Carrier-covered moves count: they are freight that appeared. An
+  area is a zoom-8 map tile (`dispatchmarket.CellOf`, about 120 km across in the US) and a
+  slot one of the 42 four-hour blocks of the week (`SlotOf`, UTC, Monday 00:00 first), the
+  same keys as `dispatch_market_values`.
+- **Rate per area and slot** (`Fit`): empirical Bayes Poisson–Gamma over the last 26 weeks
+  (`HistoryWeeks`), each week weighted `0.5^(age / 8)` (`HalfLifeWeeks`). The prior mean is
+  the area's weekly total × the tenant's share of volume in that slot (its weekly rhythm), at
+  a strength of 2 pseudo-weeks (`PriorWeeks`): `α = 2·m0 + Σ r_w·y_w`, `β = 2 + Σ r_w`. A
+  sparse slot shrinks toward the area's rhythm instead of reading as zero.
+- **Customer series** `(customer, area, slot)` are fitted the same way, with the customer's
+  area total × the area's slot share as the prior. They do not change the area rate; they
+  name who drives a forecast ("Acme Foods about 3") and weight the booking curve.
+- **Booking curves** (`fitCurves`): `F_c(L)`, the share of a customer's loads booked at least
+  `L` hours before pickup, on the buckets `LeadHours` (0, 2, 4, 8, 12, 24, 36, 48, 72, 96,
+  120, 168, 336), shrunk to the tenant's curve with 20 pseudo-loads (`CurvePriorLoads`). A
+  slot's curve is its customers' curves weighted by their rates.
+- **Nowcast** (`Nowcast`): for a slot starting `L` hours ahead, the share still unbooked is
+  `u = 1 − F(L)`. With `b` loads already booked for it, `λ | b ~ Gamma(α + b, β + 1 − u)` and
+  the unbooked remainder is negative binomial with mean `(α + b)·u / (β + 1 − u)`. A fully
+  booked slot (`u = 0`) expects nothing more.
+- **Window.** A driver free at `t` can take loads in the slot containing `t` and the next two
+  (`WindowSlots`, twelve hours). Window demand is the booked loads still open (pickup in the
+  window, not covered, not in the current solve) plus the unbooked remainder of the three
+  slots, summed by moments.
+- **Supply** `k`: dispatchable drivers whose plan origin is in the area and who are free
+  before the window ends, never counting the driver being valued.
+- **Value** (`Forecaster.ValueAt`, one window):
+  `round(0.8 × median revenue × margin × P(open booked + unbooked > k))`, where median
+  revenue is the area's (`demand_forecast_areas`), margin is the organization's coverage
+  margin, and the result is capped by the economics setting `anticipationMaxCents` (default
+  $400). Worked example: unbooked mean 3.4, $360 of value, one other driver expected gives
+  `0.8 × 360 × 0.86 = $248`; with four others it falls to $72.
+- **Credit** (`endMarketOf` in `dispatchcandidateservice`): drop value − stay value. The drop
+  window is in the move's destination area from the driver's projected free time; the stay
+  window is in the area of the driver's current start (`FleetSnapshot.DriverStart`) from when
+  they are available, and counts as zero where the forecast does not cover that area. The net
+  can be negative: a move out of a busier area is a charge. The arc's `endMarket` line is the
+  negative of the net.
+- **Explanation** (`Explain`): "Ending near Dallas, TX is worth $248: 3–5 loads usually
+  appear there Tue 06:00–18:00 (Acme Foods about 3), 1 already booked, 1 other driver
+  expected." The candidate's `endMarket` reason (`DispatchEndMarket`, source `Forecast`)
+  carries the drop's fields plus `dropValueCents`, `stayValueCents` and `stayAreaLabel`;
+  `valueCents` is the net. The cost breakdown shows the drop sentence and, when staying was
+  worth something, what the move adds or costs against it.
+
+### The solve
+
+- **Forecast or history, never both.** Where the forecast is Ready and covers the drop's area
+  (it has a fitted area with a median revenue), `endMarket` comes from the forecast; elsewhere,
+  when `planForEndMarket` is on, it falls back to `dispatch_market_values` (drop value only).
+  A pairing is never credited twice.
+- **Two passes, immediate mode only** (`reanticipate` in `dispatchplanservice`, before
+  `planImmediate`). Pass 1 solves with arcs priced from the snapshot's supply. Supply is then
+  recounted from where that solve leaves every driver: an assigned driver at the move's
+  destination from their projected free time, an unassigned one at their start
+  (`Forecaster.WithSupply`). Every forecast arc's drop and stay values are repriced
+  (`dispatchcandidateservice.Reprice`) and the plan solves again with the new prices. A likely
+  single load in Dallas then credits one of two drivers sent there, not both. The extra solve
+  costs milliseconds. Horizon mode prices from the snapshot's supply and runs no second pass.
+- **Bounded reads.** The snapshot reads rates, areas and curves for the moves' destination
+  cells in one statement (`IN` on cell, index on organization, business unit and cell) and the
+  booked-but-unplanned counts per window in one grouped statement. Only those cells are
+  loaded, so a stay window in an area no move ends in values at zero.
+
+### Readiness
+
+Every night, per organization, a rolling-origin backtest (`Backtest`) refits on the weeks
+before each of the last 8 weeks (`BacktestWeeks`), predicts every area-slot count of that
+week and compares:
+
+- **Interval coverage**: the share of actual counts inside the forecast's 80% range (10th to
+  90th percentile), ideally near 0.8.
+- **Skill**: `1 − MAE / naive MAE`, where naive repeats the same slot of the week before.
+- **Status**: `InsufficientHistory` (fewer than 8 weeks or 200 loads, or nothing testable),
+  `NoSkill` (skill at most 0.05) or `Ready`. Plans use the forecast only when Ready; Dispatch
+  controls shows the status, the coverage, the skill and when it was last fitted.
+
+### Where it lives
+
+| Table | What |
+|---|---|
+| `demand_forecast_rates` | `alpha`, `beta` per area and slot; with `customer_id` for customer series |
+| `demand_forecast_areas` | per area: label (busiest origin city), median revenue, loads |
+| `demand_booking_curves` | booking shares per lead bucket; no `customer_id` is the tenant curve |
+| `demand_forecast_quality` | one row per organization: status and the backtest numbers |
+
+The Temporal schedule `demand-forecast-fit` (cron `15 3 * * *`, overlap skipped) fans out
+with a bounded concurrency over every tenant that has a dispatch controls row. Each tenant
+aggregates its history in one statement, fits, backtests and replaces its rows in one
+transaction. Turning `anticipateFreight` on starts `FitDemandForecastWorkflow` for that tenant
+(one workflow ID per tenant, an existing run reused); a failed start only logs a warning and
+the nightly run fits it. Nothing is fitted on a request path. `anticipateFreight` lives on
+dispatch controls and is off by default. The console's **Outlook** tab
+(`dispatchFreightOutlook`), the quality card (`dispatchForecastQuality`) and Nova's
+`dispatch_forecast_demand` read the same service (`demandforecastports.Service`).
+
+Where a driver starts, read in SQL, is one join in `adapters/postgres/driverstart`: the drop
+of their last open (assigned or in-transit) move, else a GPS position under 4 hours old, else
+the tractor's last drop. The Outlook's supply (`demandforecastrepository.ListDriverStarts`)
+and the console's nearest-driver order use the join; the console's filters and summary take
+its open move statuses and freshness from it. A new reader joins it instead of writing its
+own precedence.
+
+### Evidence
+
+`TestSimulation_AnticipationEarnsMoreWithoutLosingCoverage` (`simulation_test.go`) fits 16
+weeks of a steady rhythm in four Texas and Oklahoma cities, then plans 4 weeks with 10
+drivers and the real solver:
+
+| Credit | Covered | Contribution |
+|---|---|---|
+| Off | 378 of 488 (77.5%) | $276,261 |
+| Drop only | 392 (80.3%) | $283,273 |
+| Drop minus stay | 391 (80.1%) | $284,460 (+3.0%) |
+
+The win is covering loads a myopic plan leaves, which costs some empty driving (65.7 empty
+miles per load against 64.9 off). Measure contribution (revenue covered less empty miles at
+the organization's rate), not empty miles per load.
+
 ## Rules that bite
 
 - **One objective.** Don't add a score, a weight or a second ranking. A new consideration is
@@ -159,6 +308,21 @@ logged and the plan stands.
   driver-move pair, and never call the route estimator outside the top 8 per move.
 - **Snapshot reads stay sequential** ([scale.md](backend/scale.md): no goroutine fan-out of
   database reads). Parallelism is for pure evaluation.
+- **The forecast credits only when Ready.** `Forecaster.Covers` is false for any other
+  status, whatever `anticipateFreight` says. Every path that prices from the forecast goes
+  through it.
+- **Forecast or history, never both.** A drop's `endMarket` comes from one source. Adding the
+  forecast credit on top of `dispatch_market_values` counts the same future twice.
+- **The credit is relative.** A forecast `endMarket` is drop value minus stay value, and a
+  negative net is a charge. Crediting the drop alone pays a plan for pulling a driver out of
+  an area about to get busy; the simulation shows it earns less.
+- **Supply excludes the driver being valued.** Counting the driver among the others expected
+  in the area makes them compete with themselves and lowers their own credit. In immediate
+  mode the second pass recounts supply from where the first solve leaves every driver and
+  reprices both windows of every forecast arc; skipping it credits two drivers for one likely
+  load.
+- **Judge anticipation by contribution.** It covers more loads at a little more empty driving
+  each; empty miles per load alone reads a win as a loss.
 - **Change the solver only with its exactness tests.** `sparse_test.go` compares the optimum,
   `OverrideCost` and `ColumnValue` against brute force. A change that breaks them is wrong
   even if the plan looks fine.
