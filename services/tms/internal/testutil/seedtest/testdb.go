@@ -2,6 +2,7 @@ package seedtest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -77,28 +78,34 @@ func (e *seedEnvironment) key(kind Template) (string, error) {
 func chdirToServiceRoot(t *testing.T) {
 	t.Helper()
 
-	dir, err := os.Getwd()
+	origDir, err := os.Getwd()
 	require.NoError(t, err)
+	root, err := ServiceRoot()
+	require.NoError(t, err)
+	require.NoError(t, os.Chdir(root))
+	t.Cleanup(func() {
+		os.Chdir(origDir) //nolint:errcheck
+	})
+}
 
-	origDir := dir
+func ServiceRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
 	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			if _, err := os.Stat(filepath.Join(dir, "cmd", "cli")); err == nil {
-				require.NoError(t, os.Chdir(dir))
-				t.Cleanup(func() {
-					os.Chdir(origDir) //nolint:errcheck
-				})
-				return
+		if _, statErr := os.Stat(filepath.Join(dir, "go.mod")); statErr == nil {
+			if _, statErr = os.Stat(filepath.Join(dir, "cmd", "cli")); statErr == nil {
+				return dir, nil
 			}
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			break
+			return "", errors.New("could not find the TMS service root directory")
 		}
 		dir = parent
 	}
-
-	t.Fatal("could not find TMS service root directory")
 }
 
 func openDB(dsn string, maxOpen int, observers []keel.Observer) (*keel.DB, error) {

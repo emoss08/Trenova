@@ -104,6 +104,10 @@ func trustedPlatformHeader(platform string) string {
 	}
 }
 
+func (s *Server) Handler() http.Handler {
+	return s.httpServer.Handler
+}
+
 func (s *Server) Start(ctx context.Context) error {
 	s.l.Info(
 		"Starting HTTP server",
