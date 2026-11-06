@@ -104,14 +104,14 @@ type RateSimulationsTable struct {
 // RateSimulations references the rate_simulations table.
 var RateSimulations = &RateSimulationsTable{
 	TableBase:       keel.TableBase{Ref: &rateSimulationsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 2}}},
-	RateAgreementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 2}}},
+	RateAgreementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 3}}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 4}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 5}},
-	Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 6}}},
-	PartyType:       rateagreementdb.PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 7}}},
+	Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 6}}},
+	PartyType:       rateagreementdb.PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 7}}},
 	SampleFrom:      keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 8}},
 	SampleTo:        keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 9}},
 	SampleLimit:     keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 10}},
@@ -120,7 +120,7 @@ var RateSimulations = &RateSimulationsTable{
 	Error:           keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 13}},
 	StartedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 14}},
 	CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 15}},
-	RequestedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 16}}},
+	RequestedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 16}}},
 	WorkflowID:      keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 17}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 18}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 19}},
@@ -131,14 +131,14 @@ var RateSimulations = &RateSimulationsTable{
 func BuildRateSimulations(r *keel.Ref) *RateSimulationsTable {
 	return &RateSimulationsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		PartyType:       rateagreementdb.PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		PartyType:       rateagreementdb.PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		SampleFrom:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		SampleTo:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		SampleLimit:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -147,7 +147,7 @@ func BuildRateSimulations(r *keel.Ref) *RateSimulationsTable {
 		Error:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		StartedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		RequestedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		RequestedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		WorkflowID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -180,8 +180,6 @@ func (t *RateSimulationsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // RateSimulationsQuery is a query over ratesimulation.RateSimulation.
 type RateSimulationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratesimulation.RateSimulation] = (*RateSimulationsTable)(nil)
 
 var _ keel.Query[*ratesimulation.RateSimulation] = (*RateSimulationsQuery)(nil)
 
@@ -297,42 +295,42 @@ func (t *RateSimulationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *RateSimulationsTable) Create(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateSimulationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateSimulationsTable) Save(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateSimulationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateSimulationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateSimulationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateSimulationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateSimulationsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -504,37 +502,45 @@ func (q *RateSimulationsQuery) Clone() keel.Query[*ratesimulation.RateSimulation
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateSimulationsQuery) One(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulation, error) {
-	return keel.One[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratesimulation.RateSimulation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateSimulationsQuery) First(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulation, error) {
-	return keel.First[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratesimulation.RateSimulation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateSimulationsQuery) List(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulation, error) {
-	return keel.List[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratesimulation.RateSimulation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateSimulationsQuery) All(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulation, error) {
-	return keel.All[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratesimulation.RateSimulation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateSimulationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratesimulation.RateSimulation, error) {
-	return keel.UpdateReturning[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratesimulation.RateSimulation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateSimulationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratesimulation.RateSimulation], error) {
-	return keel.PageOf[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratesimulation.RateSimulation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateSimulationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratesimulation.RateSimulation) error) error {
-	return keel.Each[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratesimulation.RateSimulation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateSimulation() unsafe.Pointer { return unsafe.Pointer(new(ratesimulation.RateSimulation)) }
@@ -758,22 +764,22 @@ type RateSimulationResultsTable struct {
 // RateSimulationResults references the rate_simulation_results table.
 var RateSimulationResults = &RateSimulationResultsTable{
 	TableBase:        keel.TableBase{Ref: &rateSimulationResultsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 2}}},
-	RateSimulationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 3}}},
-	ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 4}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 2}}},
+	RateSimulationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 3}}},
+	ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 4}}},
 	ProNumber:        keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 5}},
-	CustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 6}}},
+	CustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 6}}},
 	LaneKey:          keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 7}},
-	EquipmentTypeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 8}}},
+	EquipmentTypeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 8}}},
 	BeforeAmount:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 9}}},
 	AfterAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 10}}},
 	Delta:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 11}}},
 	DeltaPercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 12}}},
-	Outcome:          ratequotedb.OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 13}}},
-	BeforeRuleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 14}}},
-	AfterRuleID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 15}}},
+	Outcome:          ratequotedb.OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 13}}},
+	BeforeRuleID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 14}}},
+	AfterRuleID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 15}}},
 	Error:            keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 16}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 17}},
 }
@@ -782,22 +788,22 @@ var RateSimulationResults = &RateSimulationResultsTable{
 func BuildRateSimulationResults(r *keel.Ref) *RateSimulationResultsTable {
 	return &RateSimulationResultsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateSimulationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateSimulationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ProNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		CustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		LaneKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		EquipmentTypeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		EquipmentTypeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		BeforeAmount:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
 		AfterAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Delta:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 11}}},
 		DeltaPercent:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Outcome:          ratequotedb.OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		BeforeRuleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		AfterRuleID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Outcome:          ratequotedb.OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		BeforeRuleID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		AfterRuleID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Error:            keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 	}
@@ -823,8 +829,6 @@ func (t *RateSimulationResultsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // RateSimulationResultsQuery is a query over ratesimulation.RateSimulationResult.
 type RateSimulationResultsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratesimulation.RateSimulationResult] = (*RateSimulationResultsTable)(nil)
 
 var _ keel.Query[*ratesimulation.RateSimulationResult] = (*RateSimulationResultsQuery)(nil)
 
@@ -940,42 +944,42 @@ func (t *RateSimulationResultsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *RateSimulationResultsTable) Create(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateSimulationResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateSimulationResultsTable) Save(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateSimulationResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateSimulationResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateSimulationResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateSimulationResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateSimulationResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1147,37 +1151,45 @@ func (q *RateSimulationResultsQuery) Clone() keel.Query[*ratesimulation.RateSimu
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateSimulationResultsQuery) One(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulationResult, error) {
-	return keel.One[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratesimulation.RateSimulationResult)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateSimulationResultsQuery) First(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulationResult, error) {
-	return keel.First[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratesimulation.RateSimulationResult)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateSimulationResultsQuery) List(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulationResult, error) {
-	return keel.List[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratesimulation.RateSimulationResult)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateSimulationResultsQuery) All(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulationResult, error) {
-	return keel.All[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratesimulation.RateSimulationResult)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateSimulationResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratesimulation.RateSimulationResult, error) {
-	return keel.UpdateReturning[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratesimulation.RateSimulationResult)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateSimulationResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratesimulation.RateSimulationResult], error) {
-	return keel.PageOf[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratesimulation.RateSimulationResult])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateSimulationResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratesimulation.RateSimulationResult) error) error {
-	return keel.Each[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratesimulation.RateSimulationResult)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateSimulationResult() unsafe.Pointer {
@@ -1334,24 +1346,24 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of ratesimulation.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v ratesimulation.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v ratesimulation.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v ratesimulation.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v ratesimulation.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v ratesimulation.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v ratesimulation.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v ratesimulation.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v ratesimulation.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v ratesimulation.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v ratesimulation.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v ratesimulation.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v ratesimulation.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v ratesimulation.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi ratesimulation.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v ratesimulation.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v ratesimulation.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...ratesimulation.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...ratesimulation.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

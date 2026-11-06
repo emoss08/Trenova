@@ -475,7 +475,7 @@ func searchQuery(req *retrievalports.VectorSearchRequest, plan searchPlan) keel.
 		Order(keel.Asc(distance())).
 		Limit(plan.candidates))
 
-	best := keel.CTE("best", rankedColumns, candidate.Query().
+	best := keel.CTE("best", rankedColumns, keel.RowsOf(candidate.TableRef()).
 		DistinctOn(candidate.Col(colSourceType), candidate.Col(colSourceID)).
 		Pick(
 			candidate.Col(colSourceType),
@@ -490,7 +490,7 @@ func searchQuery(req *retrievalports.VectorSearchRequest, plan searchPlan) keel.
 		))
 
 	similarity := keel.Float64(1).Sub(keel.Float64Of(best.Col("distance")))
-	outer := best.Query().
+	outer := keel.RowsOf(best.TableRef()).
 		With(candidate, best).
 		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).
 		Order(best.Col("distance").Asc(), best.Col(colSourceID).Asc()).

@@ -158,20 +158,20 @@ type InvoiceAdjustmentsTable struct {
 // InvoiceAdjustments references the invoice_adjustments table.
 var InvoiceAdjustments = &InvoiceAdjustmentsTable{
 	TableBase:                       keel.TableBase{Ref: &invoiceAdjustmentsRef},
-	ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 0}}},
-	OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 1}}},
-	BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 2}}},
-	CorrectionGroupID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 3}}},
-	OriginalInvoiceID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 4}}},
-	CreditMemoInvoiceID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 5}}},
-	ReplacementInvoiceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 6}}},
-	RebillQueueItemID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 7}}},
-	BatchID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 8}}},
-	Kind:                            KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 9}}},
-	Status:                          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 10}}},
-	ApprovalStatus:                  ApprovalStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 11}}},
-	ReplacementReviewStatus:         ReplacementReviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 12}}},
-	RebillStrategy:                  RebillStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 13}}},
+	ID:                              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 0}}},
+	OrganizationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 1}}},
+	BusinessUnitID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 2}}},
+	CorrectionGroupID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 3}}},
+	OriginalInvoiceID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 4}}},
+	CreditMemoInvoiceID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 5}}},
+	ReplacementInvoiceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 6}}},
+	RebillQueueItemID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 7}}},
+	BatchID:                         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 8}}},
+	Kind:                            KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 9}}},
+	Status:                          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 10}}},
+	ApprovalStatus:                  ApprovalStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 11}}},
+	ReplacementReviewStatus:         ReplacementReviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 12}}},
+	RebillStrategy:                  RebillStrategyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 13}}},
 	Reason:                          keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 14}},
 	PolicyReason:                    keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 15}},
 	IdempotencyKey:                  keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 16}},
@@ -186,11 +186,11 @@ var InvoiceAdjustments = &InvoiceAdjustmentsTable{
 	WouldCreateUnappliedCredit:      keel.BoolCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 25}},
 	RequiresReconciliationException: keel.BoolCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 26}},
 	ApprovalRequired:                keel.BoolCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 27}},
-	SubmittedByID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 28}}},
+	SubmittedByID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 28}}},
 	SubmittedAt:                     keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 29}},
-	ApprovedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 30}}},
+	ApprovedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 30}}},
 	ApprovedAt:                      keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 31}},
-	RejectedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 32}}},
+	RejectedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 32}}},
 	RejectedAt:                      keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 33}},
 	RejectionReason:                 keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 34}},
 	ExecutionError:                  keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentsRef, Index: 35}},
@@ -204,20 +204,20 @@ var InvoiceAdjustments = &InvoiceAdjustmentsTable{
 func BuildInvoiceAdjustments(r *keel.Ref) *InvoiceAdjustmentsTable {
 	return &InvoiceAdjustmentsTable{
 		TableBase:                       keel.TableBase{Ref: r},
-		ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CorrectionGroupID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OriginalInvoiceID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CreditMemoInvoiceID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ReplacementInvoiceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RebillQueueItemID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		BatchID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Kind:                            KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:                          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		ApprovalStatus:                  ApprovalStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ReplacementReviewStatus:         ReplacementReviewStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		RebillStrategy:                  RebillStrategyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ID:                              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CorrectionGroupID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OriginalInvoiceID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CreditMemoInvoiceID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ReplacementInvoiceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RebillQueueItemID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		BatchID:                         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Kind:                            KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:                          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ApprovalStatus:                  ApprovalStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ReplacementReviewStatus:         ReplacementReviewStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		RebillStrategy:                  RebillStrategyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		Reason:                          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		PolicyReason:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		IdempotencyKey:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
@@ -232,11 +232,11 @@ func BuildInvoiceAdjustments(r *keel.Ref) *InvoiceAdjustmentsTable {
 		WouldCreateUnappliedCredit:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 25}},
 		RequiresReconciliationException: keel.BoolCol{Col: keel.Col{Ref: r, Index: 26}},
 		ApprovalRequired:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
-		SubmittedByID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		SubmittedByID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		SubmittedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		ApprovedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		ApprovedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		ApprovedAt:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		RejectedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 32}}},
+		RejectedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
 		RejectedAt:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
 		RejectionReason:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
 		ExecutionError:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
@@ -317,8 +317,6 @@ func (t *InvoiceAdjustmentsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // InvoiceAdjustmentsQuery is a query over invoiceadjustment.InvoiceAdjustment.
 type InvoiceAdjustmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustment] = (*InvoiceAdjustmentsTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustment] = (*InvoiceAdjustmentsQuery)(nil)
 
@@ -434,42 +432,42 @@ func (t *InvoiceAdjustmentsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *InvoiceAdjustmentsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -641,37 +639,45 @@ func (q *InvoiceAdjustmentsQuery) Clone() keel.Query[*invoiceadjustment.InvoiceA
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustment, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustment, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustment, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustment], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustment) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustment() unsafe.Pointer {
@@ -1019,16 +1025,16 @@ type InvoiceAdjustmentBatchesTable struct {
 // InvoiceAdjustmentBatches references the invoice_adjustment_batches table.
 var InvoiceAdjustmentBatches = &InvoiceAdjustmentBatchesTable{
 	TableBase:        keel.TableBase{Ref: &invoiceAdjustmentBatchesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 2}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 2}}},
 	IdempotencyKey:   keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 3}},
-	Status:           BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 4}}},
+	Status:           BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 4}}},
 	TotalCount:       keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 5}},
 	ProcessedCount:   keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 6}},
 	SucceededCount:   keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 7}},
 	FailedCount:      keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 8}},
-	SubmittedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 9}}},
+	SubmittedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 9}}},
 	SubmittedAt:      keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 10}},
 	SubmittedByName:  keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 11}},
 	PendingCount:     keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentBatchesRef, Index: 12}},
@@ -1044,16 +1050,16 @@ var InvoiceAdjustmentBatches = &InvoiceAdjustmentBatchesTable{
 func BuildInvoiceAdjustmentBatches(r *keel.Ref) *InvoiceAdjustmentBatchesTable {
 	return &InvoiceAdjustmentBatchesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		IdempotencyKey:   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Status:           BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:           BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TotalCount:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		ProcessedCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		SucceededCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		FailedCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		SubmittedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SubmittedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		SubmittedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		SubmittedByName:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		PendingCount:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -1091,8 +1097,6 @@ func (t *InvoiceAdjustmentBatchesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // InvoiceAdjustmentBatchesQuery is a query over invoiceadjustment.InvoiceAdjustmentBatch.
 type InvoiceAdjustmentBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatch] = (*InvoiceAdjustmentBatchesTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentBatch] = (*InvoiceAdjustmentBatchesQuery)(nil)
 
@@ -1208,42 +1212,42 @@ func (t *InvoiceAdjustmentBatchesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *InvoiceAdjustmentBatchesTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentBatchesTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1415,37 +1419,45 @@ func (q *InvoiceAdjustmentBatchesQuery) Clone() keel.Query[*invoiceadjustment.In
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentBatchesQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentBatchesQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentBatch, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentBatch) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentBatch() unsafe.Pointer {
@@ -1635,14 +1647,14 @@ type InvoiceAdjustmentBatchItemsTable struct {
 // InvoiceAdjustmentBatchItems references the invoice_adjustment_batch_items table.
 var InvoiceAdjustmentBatchItems = &InvoiceAdjustmentBatchItemsTable{
 	TableBase:      keel.TableBase{Ref: &invoiceAdjustmentBatchItemsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 2}}},
-	BatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 3}}},
-	AdjustmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 4}}},
-	InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 2}}},
+	BatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 3}}},
+	AdjustmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 4}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 5}}},
 	IdempotencyKey: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 6}},
-	Status:         BatchItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 7}}},
+	Status:         BatchItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 7}}},
 	ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 8}},
 	RequestPayload: keel.JSONBCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 9}},
 	ResultPayload:  keel.JSONBCol{Col: keel.Col{Ref: &invoiceAdjustmentBatchItemsRef, Index: 10}},
@@ -1654,14 +1666,14 @@ var InvoiceAdjustmentBatchItems = &InvoiceAdjustmentBatchItemsTable{
 func BuildInvoiceAdjustmentBatchItems(r *keel.Ref) *InvoiceAdjustmentBatchItemsTable {
 	return &InvoiceAdjustmentBatchItemsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		AdjustmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AdjustmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		IdempotencyKey: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:         BatchItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:         BatchItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		RequestPayload: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		ResultPayload:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -1685,8 +1697,6 @@ func (t *InvoiceAdjustmentBatchItemsTable) Get(ctx context.Context, db *keel.DB,
 
 // InvoiceAdjustmentBatchItemsQuery is a query over invoiceadjustment.InvoiceAdjustmentBatchItem.
 type InvoiceAdjustmentBatchItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentBatchItem] = (*InvoiceAdjustmentBatchItemsTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentBatchItem] = (*InvoiceAdjustmentBatchItemsQuery)(nil)
 
@@ -1802,42 +1812,42 @@ func (t *InvoiceAdjustmentBatchItemsTable) Compute(col keel.Column, e keel.Expr)
 
 // Create inserts row.
 func (t *InvoiceAdjustmentBatchItemsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatchItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentBatchItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatchItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentBatchItemsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatchItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentBatchItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatchItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentBatchItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentBatchItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentBatchItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatchItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentBatchItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatchItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentBatchItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentBatchItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2009,37 +2019,45 @@ func (q *InvoiceAdjustmentBatchItemsQuery) Clone() keel.Query[*invoiceadjustment
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentBatchItemsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentBatchItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentBatchItemsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentBatchItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentBatchItemsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatchItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentBatchItemsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatchItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentBatchItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentBatchItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentBatchItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentBatchItem], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentBatchItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentBatchItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentBatchItem) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentBatchItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentBatchItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentBatchItem() unsafe.Pointer {
@@ -2186,11 +2204,11 @@ type InvoiceAdjustmentCorrectionGroupsTable struct {
 // InvoiceAdjustmentCorrectionGroups references the invoice_correction_groups table.
 var InvoiceAdjustmentCorrectionGroups = &InvoiceAdjustmentCorrectionGroupsTable{
 	TableBase:        keel.TableBase{Ref: &invoiceAdjustmentCorrectionGroupsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 2}}},
-	RootInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 3}}},
-	CurrentInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 4}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 2}}},
+	RootInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 3}}},
+	CurrentInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 4}}},
 	Metadata:         keel.JSONBCol{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 5}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 6}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentCorrectionGroupsRef, Index: 7}},
@@ -2200,11 +2218,11 @@ var InvoiceAdjustmentCorrectionGroups = &InvoiceAdjustmentCorrectionGroupsTable{
 func BuildInvoiceAdjustmentCorrectionGroups(r *keel.Ref) *InvoiceAdjustmentCorrectionGroupsTable {
 	return &InvoiceAdjustmentCorrectionGroupsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RootInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CurrentInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RootInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CurrentInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Metadata:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -2228,8 +2246,6 @@ func (t *InvoiceAdjustmentCorrectionGroupsTable) Get(ctx context.Context, db *ke
 
 // InvoiceAdjustmentCorrectionGroupsQuery is a query over invoiceadjustment.InvoiceAdjustmentCorrectionGroup.
 type InvoiceAdjustmentCorrectionGroupsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup] = (*InvoiceAdjustmentCorrectionGroupsTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup] = (*InvoiceAdjustmentCorrectionGroupsQuery)(nil)
 
@@ -2345,42 +2361,42 @@ func (t *InvoiceAdjustmentCorrectionGroupsTable) Compute(col keel.Column, e keel
 
 // Create inserts row.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentCorrectionGroupsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2552,37 +2568,45 @@ func (q *InvoiceAdjustmentCorrectionGroupsQuery) Clone() keel.Query[*invoiceadju
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentCorrectionGroupsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentCorrectionGroup](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentCorrectionGroup() unsafe.Pointer {
@@ -2718,12 +2742,12 @@ type InvoiceAdjustmentDocumentReferencesTable struct {
 // InvoiceAdjustmentDocumentReferences references the invoice_adjustment_document_references table.
 var InvoiceAdjustmentDocumentReferences = &InvoiceAdjustmentDocumentReferencesTable{
 	TableBase:            keel.TableBase{Ref: &invoiceAdjustmentDocumentReferencesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 2}}},
-	AdjustmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 3}}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 4}}},
-	SelectedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 5}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 2}}},
+	AdjustmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 3}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 4}}},
+	SelectedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 5}}},
 	SelectedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 6}},
 	SnapshotFileName:     keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 7}},
 	SnapshotOriginalName: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentDocumentReferencesRef, Index: 8}},
@@ -2739,12 +2763,12 @@ var InvoiceAdjustmentDocumentReferences = &InvoiceAdjustmentDocumentReferencesTa
 func BuildInvoiceAdjustmentDocumentReferences(r *keel.Ref) *InvoiceAdjustmentDocumentReferencesTable {
 	return &InvoiceAdjustmentDocumentReferencesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AdjustmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		SelectedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AdjustmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		SelectedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SelectedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		SnapshotFileName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SnapshotOriginalName: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -2779,8 +2803,6 @@ func (t *InvoiceAdjustmentDocumentReferencesTable) Get(ctx context.Context, db *
 
 // InvoiceAdjustmentDocumentReferencesQuery is a query over invoiceadjustment.InvoiceAdjustmentDocumentReference.
 type InvoiceAdjustmentDocumentReferencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentDocumentReference] = (*InvoiceAdjustmentDocumentReferencesTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentDocumentReference] = (*InvoiceAdjustmentDocumentReferencesQuery)(nil)
 
@@ -2896,42 +2918,42 @@ func (t *InvoiceAdjustmentDocumentReferencesTable) Compute(col keel.Column, e ke
 
 // Create inserts row.
 func (t *InvoiceAdjustmentDocumentReferencesTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentDocumentReference) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentDocumentReferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentDocumentReference) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentDocumentReferencesTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentDocumentReference, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentDocumentReferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentDocumentReference, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentDocumentReferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentDocumentReference) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentDocumentReferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentDocumentReference, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentDocumentReferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentDocumentReference, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentDocumentReferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentDocumentReference) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3103,37 +3125,45 @@ func (q *InvoiceAdjustmentDocumentReferencesQuery) Clone() keel.Query[*invoicead
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentDocumentReference)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentDocumentReference)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentDocumentReference)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentDocumentReference)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentDocumentReference)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentDocumentReference], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentDocumentReference])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentDocumentReferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentDocumentReference) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentDocumentReference](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentDocumentReference)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentDocumentReference() unsafe.Pointer {
@@ -3312,14 +3342,14 @@ type InvoiceAdjustmentLinesTable struct {
 // InvoiceAdjustmentLines references the invoice_adjustment_lines table.
 var InvoiceAdjustmentLines = &InvoiceAdjustmentLinesTable{
 	TableBase:               keel.TableBase{Ref: &invoiceAdjustmentLinesRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 0}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 1}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 2}}},
-	AdjustmentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 3}}},
-	OriginalInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 4}}},
-	OriginalLineID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 5}}},
-	CreditMemoLineID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 6}}},
-	ReplacementLineID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 7}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 0}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 1}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 2}}},
+	AdjustmentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 3}}},
+	OriginalInvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 4}}},
+	OriginalLineID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 5}}},
+	CreditMemoLineID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 6}}},
+	ReplacementLineID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 7}}},
 	LineNumber:              keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 8}},
 	Description:             keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 9}},
 	CreditQuantity:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceAdjustmentLinesRef, Index: 10}}},
@@ -3338,14 +3368,14 @@ var InvoiceAdjustmentLines = &InvoiceAdjustmentLinesTable{
 func BuildInvoiceAdjustmentLines(r *keel.Ref) *InvoiceAdjustmentLinesTable {
 	return &InvoiceAdjustmentLinesTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AdjustmentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OriginalInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		OriginalLineID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CreditMemoLineID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ReplacementLineID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AdjustmentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OriginalInvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		OriginalLineID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CreditMemoLineID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ReplacementLineID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		LineNumber:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		Description:             keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		CreditQuantity:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
@@ -3376,8 +3406,6 @@ func (t *InvoiceAdjustmentLinesTable) Get(ctx context.Context, db *keel.DB, key 
 
 // InvoiceAdjustmentLinesQuery is a query over invoiceadjustment.InvoiceAdjustmentLine.
 type InvoiceAdjustmentLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentLine] = (*InvoiceAdjustmentLinesTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentLine] = (*InvoiceAdjustmentLinesQuery)(nil)
 
@@ -3493,42 +3521,42 @@ func (t *InvoiceAdjustmentLinesTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *InvoiceAdjustmentLinesTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentLinesTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3700,37 +3728,45 @@ func (q *InvoiceAdjustmentLinesQuery) Clone() keel.Query[*invoiceadjustment.Invo
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentLinesQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentLine, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentLinesQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentLine, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentLinesQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentLine, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentLinesQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentLine, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentLine, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentLine], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentLine) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentLine() unsafe.Pointer {
@@ -3912,13 +3948,13 @@ type InvoiceAdjustmentReconciliationExceptionsTable struct {
 // InvoiceAdjustmentReconciliationExceptions references the invoice_reconciliation_exceptions table.
 var InvoiceAdjustmentReconciliationExceptions = &InvoiceAdjustmentReconciliationExceptionsTable{
 	TableBase:           keel.TableBase{Ref: &invoiceAdjustmentReconciliationExceptionsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 0}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 1}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 2}}},
-	AdjustmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 3}}},
-	InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 4}}},
-	CreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 5}}},
-	Status:              ExceptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 6}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 0}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 1}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 2}}},
+	AdjustmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 3}}},
+	InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 4}}},
+	CreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 5}}},
+	Status:              ExceptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 6}}},
 	Reason:              keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 7}},
 	Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 8}}},
 	Metadata:            keel.JSONBCol{Col: keel.Col{Ref: &invoiceAdjustmentReconciliationExceptionsRef, Index: 9}},
@@ -3930,13 +3966,13 @@ var InvoiceAdjustmentReconciliationExceptions = &InvoiceAdjustmentReconciliation
 func BuildInvoiceAdjustmentReconciliationExceptions(r *keel.Ref) *InvoiceAdjustmentReconciliationExceptionsTable {
 	return &InvoiceAdjustmentReconciliationExceptionsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AdjustmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:              ExceptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AdjustmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:              ExceptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Reason:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Metadata:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -3972,8 +4008,6 @@ func (t *InvoiceAdjustmentReconciliationExceptionsTable) Get(ctx context.Context
 
 // InvoiceAdjustmentReconciliationExceptionsQuery is a query over invoiceadjustment.InvoiceAdjustmentReconciliationException.
 type InvoiceAdjustmentReconciliationExceptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentReconciliationException] = (*InvoiceAdjustmentReconciliationExceptionsTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentReconciliationException] = (*InvoiceAdjustmentReconciliationExceptionsQuery)(nil)
 
@@ -4089,42 +4123,42 @@ func (t *InvoiceAdjustmentReconciliationExceptionsTable) Compute(col keel.Column
 
 // Create inserts row.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentReconciliationException) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentReconciliationException) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentReconciliationException, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentReconciliationException, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentReconciliationException) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentReconciliationException, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentReconciliationException, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentReconciliationExceptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentReconciliationException) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -4296,37 +4330,45 @@ func (q *InvoiceAdjustmentReconciliationExceptionsQuery) Clone() keel.Query[*inv
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentReconciliationException, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentReconciliationException)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentReconciliationException, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentReconciliationException)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentReconciliationException, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentReconciliationException)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentReconciliationException, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentReconciliationException)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentReconciliationException, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentReconciliationException)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentReconciliationException], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentReconciliationException])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentReconciliationExceptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentReconciliationException) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentReconciliationException](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentReconciliationException)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentReconciliationException() unsafe.Pointer {
@@ -4475,14 +4517,14 @@ type InvoiceAdjustmentSnapshotsTable struct {
 // InvoiceAdjustmentSnapshots references the invoice_adjustment_snapshots table.
 var InvoiceAdjustmentSnapshots = &InvoiceAdjustmentSnapshotsTable{
 	TableBase:      keel.TableBase{Ref: &invoiceAdjustmentSnapshotsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 2}}},
-	AdjustmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 3}}},
-	InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 4}}},
-	Kind:           SnapshotKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 2}}},
+	AdjustmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 3}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 4}}},
+	Kind:           SnapshotKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 5}}},
 	Payload:        keel.JSONBCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 6}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 7}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 7}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentSnapshotsRef, Index: 8}},
 }
 
@@ -4490,14 +4532,14 @@ var InvoiceAdjustmentSnapshots = &InvoiceAdjustmentSnapshotsTable{
 func BuildInvoiceAdjustmentSnapshots(r *keel.Ref) *InvoiceAdjustmentSnapshotsTable {
 	return &InvoiceAdjustmentSnapshotsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AdjustmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Kind:           SnapshotKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AdjustmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Kind:           SnapshotKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Payload:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}
 }
@@ -4517,8 +4559,6 @@ func (t *InvoiceAdjustmentSnapshotsTable) Get(ctx context.Context, db *keel.DB, 
 
 // InvoiceAdjustmentSnapshotsQuery is a query over invoiceadjustment.InvoiceAdjustmentSnapshot.
 type InvoiceAdjustmentSnapshotsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustment.InvoiceAdjustmentSnapshot] = (*InvoiceAdjustmentSnapshotsTable)(nil)
 
 var _ keel.Query[*invoiceadjustment.InvoiceAdjustmentSnapshot] = (*InvoiceAdjustmentSnapshotsQuery)(nil)
 
@@ -4634,42 +4674,42 @@ func (t *InvoiceAdjustmentSnapshotsTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *InvoiceAdjustmentSnapshotsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentSnapshot) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentSnapshotsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentSnapshot) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentSnapshotsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentSnapshot, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentSnapshotsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentSnapshot, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentSnapshotsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustment.InvoiceAdjustmentSnapshot) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentSnapshotsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentSnapshot, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentSnapshotsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentSnapshot, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentSnapshotsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustment.InvoiceAdjustmentSnapshot) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -4841,37 +4881,45 @@ func (q *InvoiceAdjustmentSnapshotsQuery) Clone() keel.Query[*invoiceadjustment.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentSnapshotsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentSnapshot, error) {
-	return keel.One[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentSnapshot)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentSnapshotsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustment.InvoiceAdjustmentSnapshot, error) {
-	return keel.First[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustment.InvoiceAdjustmentSnapshot)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentSnapshotsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentSnapshot, error) {
-	return keel.List[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentSnapshotsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustment.InvoiceAdjustmentSnapshot, error) {
-	return keel.All[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentSnapshotsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustment.InvoiceAdjustmentSnapshot, error) {
-	return keel.UpdateReturning[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustment.InvoiceAdjustmentSnapshot)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentSnapshotsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustment.InvoiceAdjustmentSnapshot], error) {
-	return keel.PageOf[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustment.InvoiceAdjustmentSnapshot])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentSnapshotsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustment.InvoiceAdjustmentSnapshot) error) error {
-	return keel.Each[*invoiceadjustment.InvoiceAdjustmentSnapshot](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustment.InvoiceAdjustmentSnapshot)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentSnapshot() unsafe.Pointer {
@@ -5050,306 +5098,298 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ApprovalStatusCol is a column of invoiceadjustment.ApprovalStatus values.
-type ApprovalStatusCol struct{ keel.StringCol }
+type ApprovalStatusCol struct{ keel.TypedStringCol }
 
 func (c ApprovalStatusCol) Eq(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalStatusCol) Ne(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalStatusCol) Gt(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalStatusCol) Gte(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalStatusCol) Lt(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalStatusCol) Lte(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalStatusCol) IsDistinctFrom(v invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalStatusCol) Between(lo, hi invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalStatusCol) To(v invoiceadjustment.ApprovalStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalStatusCol) In(vs ...invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalStatusCol) NotIn(vs ...invoiceadjustment.ApprovalStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // BatchItemStatusCol is a column of invoiceadjustment.BatchItemStatus values.
-type BatchItemStatusCol struct{ keel.StringCol }
+type BatchItemStatusCol struct{ keel.TypedStringCol }
 
 func (c BatchItemStatusCol) Eq(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c BatchItemStatusCol) Ne(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c BatchItemStatusCol) Gt(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c BatchItemStatusCol) Gte(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c BatchItemStatusCol) Lt(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c BatchItemStatusCol) Lte(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BatchItemStatusCol) IsDistinctFrom(v invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BatchItemStatusCol) Between(lo, hi invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BatchItemStatusCol) To(v invoiceadjustment.BatchItemStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BatchItemStatusCol) In(vs ...invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BatchItemStatusCol) NotIn(vs ...invoiceadjustment.BatchItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // BatchStatusCol is a column of invoiceadjustment.BatchStatus values.
-type BatchStatusCol struct{ keel.StringCol }
+type BatchStatusCol struct{ keel.TypedStringCol }
 
-func (c BatchStatusCol) Eq(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c BatchStatusCol) Ne(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c BatchStatusCol) Gt(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c BatchStatusCol) Eq(v invoiceadjustment.BatchStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c BatchStatusCol) Ne(v invoiceadjustment.BatchStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c BatchStatusCol) Gt(v invoiceadjustment.BatchStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c BatchStatusCol) Gte(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c BatchStatusCol) Lt(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c BatchStatusCol) Lt(v invoiceadjustment.BatchStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c BatchStatusCol) Lte(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BatchStatusCol) IsDistinctFrom(v invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BatchStatusCol) Between(lo, hi invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BatchStatusCol) To(v invoiceadjustment.BatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BatchStatusCol) In(vs ...invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BatchStatusCol) NotIn(vs ...invoiceadjustment.BatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExceptionStatusCol is a column of invoiceadjustment.ExceptionStatus values.
-type ExceptionStatusCol struct{ keel.StringCol }
+type ExceptionStatusCol struct{ keel.TypedStringCol }
 
 func (c ExceptionStatusCol) Eq(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExceptionStatusCol) Ne(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExceptionStatusCol) Gt(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExceptionStatusCol) Gte(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExceptionStatusCol) Lt(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExceptionStatusCol) Lte(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExceptionStatusCol) IsDistinctFrom(v invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExceptionStatusCol) Between(lo, hi invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExceptionStatusCol) To(v invoiceadjustment.ExceptionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExceptionStatusCol) In(vs ...invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExceptionStatusCol) NotIn(vs ...invoiceadjustment.ExceptionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // KindCol is a column of invoiceadjustment.Kind values.
-type KindCol struct{ keel.StringCol }
+type KindCol struct{ keel.TypedStringCol }
 
-func (c KindCol) Eq(v invoiceadjustment.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c KindCol) Ne(v invoiceadjustment.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c KindCol) Gt(v invoiceadjustment.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c KindCol) Gte(v invoiceadjustment.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c KindCol) Lt(v invoiceadjustment.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c KindCol) Lte(v invoiceadjustment.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c KindCol) Eq(v invoiceadjustment.Kind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v invoiceadjustment.Kind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v invoiceadjustment.Kind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v invoiceadjustment.Kind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v invoiceadjustment.Kind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v invoiceadjustment.Kind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c KindCol) IsDistinctFrom(v invoiceadjustment.Kind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KindCol) Between(lo, hi invoiceadjustment.Kind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c KindCol) To(v invoiceadjustment.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c KindCol) To(v invoiceadjustment.Kind) keel.Assignment { return c.Text().To(string(v)) }
 func (c KindCol) In(vs ...invoiceadjustment.Kind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c KindCol) NotIn(vs ...invoiceadjustment.Kind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RebillStrategyCol is a column of invoiceadjustment.RebillStrategy values.
-type RebillStrategyCol struct{ keel.StringCol }
+type RebillStrategyCol struct{ keel.TypedStringCol }
 
 func (c RebillStrategyCol) Eq(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RebillStrategyCol) Ne(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RebillStrategyCol) Gt(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RebillStrategyCol) Gte(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RebillStrategyCol) Lt(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RebillStrategyCol) Lte(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RebillStrategyCol) IsDistinctFrom(v invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RebillStrategyCol) Between(lo, hi invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RebillStrategyCol) To(v invoiceadjustment.RebillStrategy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RebillStrategyCol) In(vs ...invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RebillStrategyCol) NotIn(vs ...invoiceadjustment.RebillStrategy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReplacementReviewStatusCol is a column of invoiceadjustment.ReplacementReviewStatus values.
-type ReplacementReviewStatusCol struct{ keel.StringCol }
+type ReplacementReviewStatusCol struct{ keel.TypedStringCol }
 
 func (c ReplacementReviewStatusCol) Eq(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReplacementReviewStatusCol) Ne(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReplacementReviewStatusCol) Gt(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReplacementReviewStatusCol) Gte(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReplacementReviewStatusCol) Lt(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReplacementReviewStatusCol) Lte(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReplacementReviewStatusCol) IsDistinctFrom(v invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReplacementReviewStatusCol) Between(lo, hi invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReplacementReviewStatusCol) To(v invoiceadjustment.ReplacementReviewStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReplacementReviewStatusCol) In(vs ...invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReplacementReviewStatusCol) NotIn(vs ...invoiceadjustment.ReplacementReviewStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SnapshotKindCol is a column of invoiceadjustment.SnapshotKind values.
-type SnapshotKindCol struct{ keel.StringCol }
+type SnapshotKindCol struct{ keel.TypedStringCol }
 
 func (c SnapshotKindCol) Eq(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SnapshotKindCol) Ne(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SnapshotKindCol) Gt(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SnapshotKindCol) Gte(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SnapshotKindCol) Lt(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SnapshotKindCol) Lte(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SnapshotKindCol) IsDistinctFrom(v invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SnapshotKindCol) Between(lo, hi invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SnapshotKindCol) To(v invoiceadjustment.SnapshotKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SnapshotKindCol) In(vs ...invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SnapshotKindCol) NotIn(vs ...invoiceadjustment.SnapshotKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of invoiceadjustment.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v invoiceadjustment.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v invoiceadjustment.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v invoiceadjustment.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v invoiceadjustment.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v invoiceadjustment.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v invoiceadjustment.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v invoiceadjustment.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v invoiceadjustment.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v invoiceadjustment.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v invoiceadjustment.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v invoiceadjustment.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v invoiceadjustment.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v invoiceadjustment.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi invoiceadjustment.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v invoiceadjustment.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v invoiceadjustment.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...invoiceadjustment.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...invoiceadjustment.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

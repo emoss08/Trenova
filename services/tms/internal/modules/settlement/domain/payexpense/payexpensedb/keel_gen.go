@@ -105,23 +105,23 @@ type ExpensesTable struct {
 // Expenses references the driver_expenses table.
 var Expenses = &ExpensesTable{
 	TableBase:         keel.TableBase{Ref: &expensesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 2}}},
-	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 3}}},
-	ShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 4}}},
-	PayCodeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 5}}},
-	Status:            ExpenseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 6}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 2}}},
+	WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 3}}},
+	ShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 4}}},
+	PayCodeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 5}}},
+	Status:            ExpenseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 6}}},
 	AmountMinor:       keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 7}},
 	CurrencyCode:      keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 8}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 9}},
 	IncurredDate:      keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 10}},
-	ReceiptDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 11}}},
-	SubmittedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 12}}},
+	ReceiptDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 11}}},
+	SubmittedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 12}}},
 	ReviewNote:        keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 13}},
-	ReviewedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 14}}},
+	ReviewedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 14}}},
 	ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 15}},
-	SettlementLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 16}}},
+	SettlementLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &expensesRef, Index: 16}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 17}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 18}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 19}},
@@ -131,23 +131,23 @@ var Expenses = &ExpensesTable{
 func BuildExpenses(r *keel.Ref) *ExpensesTable {
 	return &ExpensesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PayCodeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:            ExpenseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		PayCodeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:            ExpenseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		AmountMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CurrencyCode:      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		IncurredDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		ReceiptDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		SubmittedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ReceiptDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		SubmittedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ReviewNote:        keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		ReviewedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ReviewedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		SettlementLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		SettlementLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -184,8 +184,6 @@ func (t *ExpensesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pa
 
 // ExpensesQuery is a query over payexpense.Expense.
 type ExpensesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*payexpense.Expense] = (*ExpensesTable)(nil)
 
 var _ keel.Query[*payexpense.Expense] = (*ExpensesQuery)(nil)
 
@@ -301,42 +299,42 @@ func (t *ExpensesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payexp
 
 // Create inserts row.
 func (t *ExpensesTable) Create(ctx context.Context, db *keel.DB, row *payexpense.Expense) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ExpensesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payexpense.Expense) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ExpensesTable) Save(ctx context.Context, db *keel.DB, row *payexpense.Expense, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ExpensesTable) SaveExcept(ctx context.Context, db *keel.DB, row *payexpense.Expense, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ExpensesTable) DeleteRow(ctx context.Context, db *keel.DB, row *payexpense.Expense) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ExpensesTable) Upsert(ctx context.Context, db *keel.DB, rows []*payexpense.Expense, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ExpensesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payexpense.Expense, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ExpensesTable) Copy(ctx context.Context, db *keel.DB, rows []*payexpense.Expense) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -508,37 +506,45 @@ func (q *ExpensesQuery) Clone() keel.Query[*payexpense.Expense] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ExpensesQuery) One(ctx context.Context, db *keel.DB) (*payexpense.Expense, error) {
-	return keel.One[*payexpense.Expense](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*payexpense.Expense)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ExpensesQuery) First(ctx context.Context, db *keel.DB) (*payexpense.Expense, error) {
-	return keel.First[*payexpense.Expense](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*payexpense.Expense)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ExpensesQuery) List(ctx context.Context, db *keel.DB) ([]*payexpense.Expense, error) {
-	return keel.List[*payexpense.Expense](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payexpense.Expense)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ExpensesQuery) All(ctx context.Context, db *keel.DB) ([]*payexpense.Expense, error) {
-	return keel.All[*payexpense.Expense](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payexpense.Expense)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ExpensesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payexpense.Expense, error) {
-	return keel.UpdateReturning[*payexpense.Expense](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*payexpense.Expense)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ExpensesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payexpense.Expense], error) {
-	return keel.PageOf[*payexpense.Expense](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*payexpense.Expense])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ExpensesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payexpense.Expense) error) error {
-	return keel.Each[*payexpense.Expense](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*payexpense.Expense)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newExpense() unsafe.Pointer { return unsafe.Pointer(new(payexpense.Expense)) }
@@ -693,30 +699,26 @@ var enumExpenseStatus = [...]schema.EnumValue{
 }
 
 // ExpenseStatusCol is a column of payexpense.ExpenseStatus values.
-type ExpenseStatusCol struct{ keel.StringCol }
+type ExpenseStatusCol struct{ keel.TypedStringCol }
 
-func (c ExpenseStatusCol) Eq(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ExpenseStatusCol) Ne(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ExpenseStatusCol) Gt(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ExpenseStatusCol) Gte(v payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ExpenseStatusCol) Lt(v payexpense.ExpenseStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ExpenseStatusCol) Lte(v payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ExpenseStatusCol) Eq(v payexpense.ExpenseStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ExpenseStatusCol) Ne(v payexpense.ExpenseStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ExpenseStatusCol) Gt(v payexpense.ExpenseStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ExpenseStatusCol) Gte(v payexpense.ExpenseStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ExpenseStatusCol) Lt(v payexpense.ExpenseStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ExpenseStatusCol) Lte(v payexpense.ExpenseStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ExpenseStatusCol) IsDistinctFrom(v payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExpenseStatusCol) Between(lo, hi payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExpenseStatusCol) To(v payexpense.ExpenseStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExpenseStatusCol) In(vs ...payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExpenseStatusCol) NotIn(vs ...payexpense.ExpenseStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

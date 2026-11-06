@@ -471,7 +471,7 @@ func billingProfileConflict() keel.Conflict {
 
 	return conflict.Set(cbp.CreditHoldAutomatic.ToExpr(keel.CaseBool().
 		When(
-			cbp.CreditStatus.IsDistinctFromExpr(keel.StringOf(cbp.CreditStatus.Excluded())),
+			cbp.CreditStatus.Text().IsDistinctFromExpr(keel.StringOf(cbp.CreditStatus.Excluded())),
 			keel.Bool(false),
 		).
 		Else(cbp.CreditHoldAutomatic)))

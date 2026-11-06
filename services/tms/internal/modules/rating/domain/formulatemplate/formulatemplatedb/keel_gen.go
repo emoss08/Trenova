@@ -112,9 +112,9 @@ type FormulaTemplatesTable struct {
 // FormulaTemplates references the formula_templates table.
 var FormulaTemplates = &FormulaTemplatesTable{
 	TableBase:            keel.TableBase{Ref: &formulaTemplatesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 2}}},
 	Name:                 keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 3}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 4}},
 	Source:               keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 5}},
@@ -122,17 +122,17 @@ var FormulaTemplates = &FormulaTemplatesTable{
 	Imports:              keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 7}},
 	Tables:               keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 8}},
 	TestCount:            keel.Int32Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 9}},
-	Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 10}}},
-	SubmittedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 11}}},
+	Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 10}}},
+	SubmittedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 11}}},
 	SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 12}},
-	ApprovedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 13}}},
+	ApprovedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 13}}},
 	ApprovedAt:           keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 14}},
 	ReviewComment:        keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 15}},
 	SearchVector:         keel.TSVectorCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 16}},
 	Rank:                 keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 17}},
 	Metadata:             keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 18}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 19}},
-	SourceTemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 20}}},
+	SourceTemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 20}}},
 	SourceVersionNumber:  keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 21}},
 	CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 22}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 23}},
@@ -143,9 +143,9 @@ var FormulaTemplates = &FormulaTemplatesTable{
 func BuildFormulaTemplates(r *keel.Ref) *FormulaTemplatesTable {
 	return &FormulaTemplatesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Source:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -153,17 +153,17 @@ func BuildFormulaTemplates(r *keel.Ref) *FormulaTemplatesTable {
 		Imports:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		Tables:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		TestCount:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
-		Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		SubmittedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SubmittedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ApprovedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ApprovedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		ApprovedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		ReviewComment:        keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		SearchVector:         keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 16}},
 		Rank:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		Metadata:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		SourceTemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		SourceTemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		SourceVersionNumber:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -196,8 +196,6 @@ func (t *FormulaTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // FormulaTemplatesQuery is a query over formulatemplate.FormulaTemplate.
 type FormulaTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*formulatemplate.FormulaTemplate] = (*FormulaTemplatesTable)(nil)
 
 var _ keel.Query[*formulatemplate.FormulaTemplate] = (*FormulaTemplatesQuery)(nil)
 
@@ -313,42 +311,42 @@ func (t *FormulaTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *FormulaTemplatesTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FormulaTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FormulaTemplatesTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FormulaTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FormulaTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FormulaTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FormulaTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FormulaTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -520,37 +518,45 @@ func (q *FormulaTemplatesQuery) Clone() keel.Query[*formulatemplate.FormulaTempl
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FormulaTemplatesQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplate, error) {
-	return keel.One[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.FormulaTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FormulaTemplatesQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplate, error) {
-	return keel.First[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.FormulaTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FormulaTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplate, error) {
-	return keel.List[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.FormulaTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FormulaTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplate, error) {
-	return keel.All[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.FormulaTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FormulaTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.FormulaTemplate, error) {
-	return keel.UpdateReturning[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*formulatemplate.FormulaTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FormulaTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.FormulaTemplate], error) {
-	return keel.PageOf[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*formulatemplate.FormulaTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FormulaTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.FormulaTemplate) error) error {
-	return keel.Each[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*formulatemplate.FormulaTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFormulaTemplate() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.FormulaTemplate)) }
@@ -814,10 +820,10 @@ type FormulaTemplateVersionsTable struct {
 // FormulaTemplateVersions references the formula_template_versions table.
 var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
 	TableBase:      keel.TableBase{Ref: &formulaTemplateVersionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 0}}},
-	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 2}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 0}}},
+	TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 2}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 3}}},
 	VersionNumber:  keel.Int64Col{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 4}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 5}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 6}},
@@ -826,13 +832,13 @@ var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
 	Imports:        keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 9}},
 	Tables:         keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 10}},
 	TestCount:      keel.Int32Col{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 11}},
-	Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 12}}},
+	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 12}}},
 	EffectiveFrom:  keel.Int64Col{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 13}},
 	Metadata:       keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 14}},
 	ChangeMessage:  keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 15}},
 	ChangeSummary:  keel.JSONBCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 16}},
 	Tags:           keel.StringArrayCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 17}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 18}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 18}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 19}},
 }
 
@@ -840,10 +846,10 @@ var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
 func BuildFormulaTemplateVersions(r *keel.Ref) *FormulaTemplateVersionsTable {
 	return &FormulaTemplateVersionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VersionNumber:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -852,13 +858,13 @@ func BuildFormulaTemplateVersions(r *keel.Ref) *FormulaTemplateVersionsTable {
 		Imports:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		Tables:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		TestCount:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 11}},
-		Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		EffectiveFrom:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		Metadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		ChangeMessage:  keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		ChangeSummary:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		Tags:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 17}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
@@ -883,8 +889,6 @@ func (t *FormulaTemplateVersionsTable) Get(ctx context.Context, db *keel.DB, key
 
 // FormulaTemplateVersionsQuery is a query over formulatemplate.FormulaTemplateVersion.
 type FormulaTemplateVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*formulatemplate.FormulaTemplateVersion] = (*FormulaTemplateVersionsTable)(nil)
 
 var _ keel.Query[*formulatemplate.FormulaTemplateVersion] = (*FormulaTemplateVersionsQuery)(nil)
 
@@ -1000,42 +1004,42 @@ func (t *FormulaTemplateVersionsTable) Compute(col keel.Column, e keel.Expr) kee
 
 // Create inserts row.
 func (t *FormulaTemplateVersionsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FormulaTemplateVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FormulaTemplateVersionsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FormulaTemplateVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FormulaTemplateVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FormulaTemplateVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FormulaTemplateVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FormulaTemplateVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1207,37 +1211,45 @@ func (q *FormulaTemplateVersionsQuery) Clone() keel.Query[*formulatemplate.Formu
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FormulaTemplateVersionsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplateVersion, error) {
-	return keel.One[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.FormulaTemplateVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FormulaTemplateVersionsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplateVersion, error) {
-	return keel.First[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.FormulaTemplateVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FormulaTemplateVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return keel.List[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.FormulaTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FormulaTemplateVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return keel.All[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.FormulaTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FormulaTemplateVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return keel.UpdateReturning[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*formulatemplate.FormulaTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FormulaTemplateVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.FormulaTemplateVersion], error) {
-	return keel.PageOf[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*formulatemplate.FormulaTemplateVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FormulaTemplateVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.FormulaTemplateVersion) error) error {
-	return keel.Each[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*formulatemplate.FormulaTemplateVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFormulaTemplateVersion() unsafe.Pointer {
@@ -1449,16 +1461,16 @@ type ReviewsTable struct {
 // Reviews references the formula_template_reviews table.
 var Reviews = &ReviewsTable{
 	TableBase:           keel.TableBase{Ref: &reviewsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 0}}},
-	TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 2}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 3}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 0}}},
+	TemplateID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 2}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 3}}},
 	Round:               keel.Int32Col{Col: keel.Col{Ref: &reviewsRef, Index: 4}},
-	Decision:            ReviewDecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 5}}},
-	ActorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 6}}},
+	Decision:            ReviewDecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 5}}},
+	ActorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 6}}},
 	Comment:             keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 7}},
 	BaseVersionNumber:   keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 8}},
-	RequestedReviewerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 9}}},
+	RequestedReviewerID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 9}}},
 	ReviewerNote:        keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 10}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 11}},
 }
@@ -1467,16 +1479,16 @@ var Reviews = &ReviewsTable{
 func BuildReviews(r *keel.Ref) *ReviewsTable {
 	return &ReviewsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		TemplateID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Round:               keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
-		Decision:            ReviewDecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ActorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Decision:            ReviewDecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ActorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Comment:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		BaseVersionNumber:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		RequestedReviewerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RequestedReviewerID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ReviewerNote:        keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
@@ -1503,8 +1515,6 @@ func (t *ReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*for
 
 // ReviewsQuery is a query over formulatemplate.Review.
 type ReviewsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*formulatemplate.Review] = (*ReviewsTable)(nil)
 
 var _ keel.Query[*formulatemplate.Review] = (*ReviewsQuery)(nil)
 
@@ -1620,42 +1630,42 @@ func (t *ReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formula
 
 // Create inserts row.
 func (t *ReviewsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.Review) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReviewsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.Review, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.Review, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.Review) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1827,37 +1837,45 @@ func (q *ReviewsQuery) Clone() keel.Query[*formulatemplate.Review] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReviewsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.Review, error) {
-	return keel.One[*formulatemplate.Review](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.Review)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReviewsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.Review, error) {
-	return keel.First[*formulatemplate.Review](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.Review)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.Review, error) {
-	return keel.List[*formulatemplate.Review](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.Review)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.Review, error) {
-	return keel.All[*formulatemplate.Review](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.Review)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.Review, error) {
-	return keel.UpdateReturning[*formulatemplate.Review](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*formulatemplate.Review)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.Review], error) {
-	return keel.PageOf[*formulatemplate.Review](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*formulatemplate.Review])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.Review) error) error {
-	return keel.Each[*formulatemplate.Review](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*formulatemplate.Review)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReview() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.Review)) }
@@ -2004,11 +2022,11 @@ type VersionImportsTable struct {
 // VersionImports references the formula_template_version_imports table.
 var VersionImports = &VersionImportsTable{
 	TableBase:            keel.TableBase{Ref: &versionImportsRef},
-	TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 0}}},
-	LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 2}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 3}}},
-	TemplateID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 4}}},
+	TemplateVersionID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 0}}},
+	LibraryID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 2}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 3}}},
+	TemplateID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 4}}},
 	TemplateVersion:      keel.Int64Col{Col: keel.Col{Ref: &versionImportsRef, Index: 5}},
 	LibraryVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &versionImportsRef, Index: 6}},
 	Path:                 keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 7}},
@@ -2018,11 +2036,11 @@ var VersionImports = &VersionImportsTable{
 func BuildVersionImports(r *keel.Ref) *VersionImportsTable {
 	return &VersionImportsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TemplateVersionID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		LibraryID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TemplateVersion:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		LibraryVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Path:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -2039,8 +2057,6 @@ func (t *VersionImportsTable) As(alias string) *VersionImportsTable {
 
 // VersionImportsQuery is a query over formulatemplate.VersionImport.
 type VersionImportsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*formulatemplate.VersionImport] = (*VersionImportsTable)(nil)
 
 var _ keel.Query[*formulatemplate.VersionImport] = (*VersionImportsQuery)(nil)
 
@@ -2156,42 +2172,42 @@ func (t *VersionImportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *VersionImportsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *VersionImportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *VersionImportsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *VersionImportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *VersionImportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *VersionImportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *VersionImportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *VersionImportsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2363,37 +2379,45 @@ func (q *VersionImportsQuery) Clone() keel.Query[*formulatemplate.VersionImport]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *VersionImportsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.VersionImport, error) {
-	return keel.One[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.VersionImport)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *VersionImportsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.VersionImport, error) {
-	return keel.First[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.VersionImport)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *VersionImportsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionImport, error) {
-	return keel.List[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.VersionImport)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *VersionImportsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionImport, error) {
-	return keel.All[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.VersionImport)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *VersionImportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.VersionImport, error) {
-	return keel.UpdateReturning[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*formulatemplate.VersionImport)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *VersionImportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.VersionImport], error) {
-	return keel.PageOf[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*formulatemplate.VersionImport])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *VersionImportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.VersionImport) error) error {
-	return keel.Each[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*formulatemplate.VersionImport)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newVersionImport() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.VersionImport)) }
@@ -2502,11 +2526,11 @@ type VersionTablesTable struct {
 // VersionTables references the formula_template_version_tables table.
 var VersionTables = &VersionTablesTable{
 	TableBase:           keel.TableBase{Ref: &versionTablesRef},
-	TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 0}}},
-	RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 2}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 3}}},
-	TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 4}}},
+	TemplateVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 0}}},
+	RateMatrixID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 2}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 3}}},
+	TemplateID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 4}}},
 	TemplateVersion:     keel.Int64Col{Col: keel.Col{Ref: &versionTablesRef, Index: 5}},
 	MatrixVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &versionTablesRef, Index: 6}},
 	Code:                keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 7}},
@@ -2516,11 +2540,11 @@ var VersionTables = &VersionTablesTable{
 func BuildVersionTables(r *keel.Ref) *VersionTablesTable {
 	return &VersionTablesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TemplateVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		RateMatrixID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TemplateVersion:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		MatrixVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Code:                keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -2537,8 +2561,6 @@ func (t *VersionTablesTable) As(alias string) *VersionTablesTable {
 
 // VersionTablesQuery is a query over formulatemplate.VersionTable.
 type VersionTablesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*formulatemplate.VersionTable] = (*VersionTablesTable)(nil)
 
 var _ keel.Query[*formulatemplate.VersionTable] = (*VersionTablesQuery)(nil)
 
@@ -2654,42 +2676,42 @@ func (t *VersionTablesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*f
 
 // Create inserts row.
 func (t *VersionTablesTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *VersionTablesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *VersionTablesTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *VersionTablesTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *VersionTablesTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *VersionTablesTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *VersionTablesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *VersionTablesTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2861,37 +2883,45 @@ func (q *VersionTablesQuery) Clone() keel.Query[*formulatemplate.VersionTable] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *VersionTablesQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.VersionTable, error) {
-	return keel.One[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.VersionTable)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *VersionTablesQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.VersionTable, error) {
-	return keel.First[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*formulatemplate.VersionTable)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *VersionTablesQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionTable, error) {
-	return keel.List[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.VersionTable)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *VersionTablesQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionTable, error) {
-	return keel.All[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*formulatemplate.VersionTable)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *VersionTablesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.VersionTable, error) {
-	return keel.UpdateReturning[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*formulatemplate.VersionTable)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *VersionTablesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.VersionTable], error) {
-	return keel.PageOf[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*formulatemplate.VersionTable])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *VersionTablesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.VersionTable) error) error {
-	return keel.Each[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*formulatemplate.VersionTable)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newVersionTable() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.VersionTable)) }
@@ -2970,61 +3000,61 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // ReviewDecisionCol is a column of formulatemplate.ReviewDecision values.
-type ReviewDecisionCol struct{ keel.StringCol }
+type ReviewDecisionCol struct{ keel.TypedStringCol }
 
 func (c ReviewDecisionCol) Eq(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReviewDecisionCol) Ne(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReviewDecisionCol) Gt(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReviewDecisionCol) Gte(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReviewDecisionCol) Lt(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReviewDecisionCol) Lte(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReviewDecisionCol) IsDistinctFrom(v formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReviewDecisionCol) Between(lo, hi formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReviewDecisionCol) To(v formulatemplate.ReviewDecision) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReviewDecisionCol) In(vs ...formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReviewDecisionCol) NotIn(vs ...formulatemplate.ReviewDecision) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of formulatemplate.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v formulatemplate.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v formulatemplate.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v formulatemplate.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v formulatemplate.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v formulatemplate.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v formulatemplate.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v formulatemplate.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v formulatemplate.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v formulatemplate.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v formulatemplate.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v formulatemplate.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v formulatemplate.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v formulatemplate.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi formulatemplate.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v formulatemplate.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v formulatemplate.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...formulatemplate.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...formulatemplate.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

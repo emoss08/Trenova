@@ -117,8 +117,6 @@ func (t *FleetCodesTable) Get(ctx context.Context, db *keel.DB, key string) (*ke
 // FleetCodesQuery is a query over keeltest.FleetCode.
 type FleetCodesQuery struct{ keel.QueryCore }
 
-var _ keel.Handle[*keeltest.FleetCode] = (*FleetCodesTable)(nil)
-
 var _ keel.Query[*keeltest.FleetCode] = (*FleetCodesQuery)(nil)
 
 // Query starts a query over the table.
@@ -233,42 +231,42 @@ func (t *FleetCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*keel
 
 // Create inserts row.
 func (t *FleetCodesTable) Create(ctx context.Context, db *keel.DB, row *keeltest.FleetCode) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FleetCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*keeltest.FleetCode) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FleetCodesTable) Save(ctx context.Context, db *keel.DB, row *keeltest.FleetCode, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FleetCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *keeltest.FleetCode, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FleetCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *keeltest.FleetCode) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FleetCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*keeltest.FleetCode, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FleetCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*keeltest.FleetCode, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FleetCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*keeltest.FleetCode) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -440,37 +438,45 @@ func (q *FleetCodesQuery) Clone() keel.Query[*keeltest.FleetCode] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FleetCodesQuery) One(ctx context.Context, db *keel.DB) (*keeltest.FleetCode, error) {
-	return keel.One[*keeltest.FleetCode](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*keeltest.FleetCode)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FleetCodesQuery) First(ctx context.Context, db *keel.DB) (*keeltest.FleetCode, error) {
-	return keel.First[*keeltest.FleetCode](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*keeltest.FleetCode)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FleetCodesQuery) List(ctx context.Context, db *keel.DB) ([]*keeltest.FleetCode, error) {
-	return keel.List[*keeltest.FleetCode](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*keeltest.FleetCode)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FleetCodesQuery) All(ctx context.Context, db *keel.DB) ([]*keeltest.FleetCode, error) {
-	return keel.All[*keeltest.FleetCode](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*keeltest.FleetCode)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FleetCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*keeltest.FleetCode, error) {
-	return keel.UpdateReturning[*keeltest.FleetCode](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*keeltest.FleetCode)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FleetCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*keeltest.FleetCode], error) {
-	return keel.PageOf[*keeltest.FleetCode](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*keeltest.FleetCode])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FleetCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*keeltest.FleetCode) error) error {
-	return keel.Each[*keeltest.FleetCode](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*keeltest.FleetCode)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFleetCode() unsafe.Pointer { return unsafe.Pointer(new(keeltest.FleetCode)) }

@@ -170,7 +170,7 @@ func (r *repository) ListPending(
 			entries, err := keel.Into[agentdecisionqueueports.PendingDecisionEntry](
 				ctx,
 				r.db.Keel(ctx),
-				q.Query().With(q).
+				keel.RowsOf(q.TableRef()).With(q).
 					Pick(q.Col("kind"), id, createdAt, q.Col("shadow")).
 					Where(after).
 					Order(createdAt.Desc(), id.Desc()).
@@ -202,7 +202,7 @@ func (r *repository) CountPending(
 ) (keel.RowCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
 		q := pendingQueue(req)
-		count, err := q.Query().With(q).
+		count, err := keel.RowsOf(q.TableRef()).With(q).
 			Where(keel.When(req.ActionableOnly, keel.Not(keel.BoolOf(q.Col("shadow"))))).
 			CountEstimate(ctx, r.db.Keel(ctx), pagination.ExactTotalUpTo)
 		if err != nil {
@@ -239,18 +239,18 @@ func (r *repository) Summary(
 			)
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.IntoValue(
-					q.Query().With(q).Pick(keel.Count(), q.Col("created_at").Min()),
+					keel.RowsOf(q.TableRef()).With(q).Pick(keel.Count(), q.Col("created_at").Min()),
 					&totals,
 				),
 				keel.IntoSlice(
-					q.Query().With(q).
+					keel.RowsOf(q.TableRef()).With(q).
 						Group(definitionID, agentName).
 						Pick(definitionID, agentName, keel.Count()).
 						Order(keel.Count().Desc(), agentName.Asc()),
 					&byAgent,
 				),
 				keel.IntoSlice(
-					q.Query().With(q).
+					keel.RowsOf(q.TableRef()).With(q).
 						Group(toolName).
 						Pick(toolName, keel.Count()).
 						Order(keel.Count().Desc(), toolName.Asc()),

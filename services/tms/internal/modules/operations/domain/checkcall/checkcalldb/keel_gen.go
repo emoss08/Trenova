@@ -101,15 +101,15 @@ type CheckCallsTable struct {
 // CheckCalls references the check_calls table.
 var CheckCalls = &CheckCallsTable{
 	TableBase:        keel.TableBase{Ref: &checkCallsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 2}}},
-	ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 3}}},
-	ShipmentMoveID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 4}}},
-	StopID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 5}}},
-	Source:           SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 6}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 2}}},
+	ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 3}}},
+	ShipmentMoveID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 4}}},
+	StopID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 5}}},
+	Source:           SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 6}}},
 	SourceKey:        keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 7}},
-	Kind:             KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 8}}},
+	Kind:             KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 8}}},
 	ReportedAt:       keel.Int64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 9}},
 	ReceivedAt:       keel.Int64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 10}},
 	Latitude:         keel.Float64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 11}},
@@ -121,9 +121,9 @@ var CheckCalls = &CheckCallsTable{
 	EstimatedArrival: keel.Int64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 17}},
 	Note:             keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 18}},
 	ContactName:      keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 19}},
-	ReportedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 20}}},
-	TrackingLinkID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 21}}},
-	TrackingEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 22}}},
+	ReportedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 20}}},
+	TrackingLinkID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 21}}},
+	TrackingEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checkCallsRef, Index: 22}}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &checkCallsRef, Index: 23}},
 }
 
@@ -131,15 +131,15 @@ var CheckCalls = &CheckCallsTable{
 func BuildCheckCalls(r *keel.Ref) *CheckCallsTable {
 	return &CheckCallsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		StopID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Source:           SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		StopID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Source:           SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SourceKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Kind:             KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Kind:             KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		ReportedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ReceivedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		Latitude:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -151,9 +151,9 @@ func BuildCheckCalls(r *keel.Ref) *CheckCallsTable {
 		EstimatedArrival: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		Note:             keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		ContactName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ReportedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		TrackingLinkID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		TrackingEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		ReportedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		TrackingLinkID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		TrackingEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 	}
 }
@@ -173,8 +173,6 @@ func (t *CheckCallsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // CheckCallsQuery is a query over checkcall.CheckCall.
 type CheckCallsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*checkcall.CheckCall] = (*CheckCallsTable)(nil)
 
 var _ keel.Query[*checkcall.CheckCall] = (*CheckCallsQuery)(nil)
 
@@ -290,42 +288,42 @@ func (t *CheckCallsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*chec
 
 // Create inserts row.
 func (t *CheckCallsTable) Create(ctx context.Context, db *keel.DB, row *checkcall.CheckCall) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CheckCallsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CheckCallsTable) Save(ctx context.Context, db *keel.DB, row *checkcall.CheckCall, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CheckCallsTable) SaveExcept(ctx context.Context, db *keel.DB, row *checkcall.CheckCall, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CheckCallsTable) DeleteRow(ctx context.Context, db *keel.DB, row *checkcall.CheckCall) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CheckCallsTable) Upsert(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CheckCallsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CheckCallsTable) Copy(ctx context.Context, db *keel.DB, rows []*checkcall.CheckCall) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -497,37 +495,45 @@ func (q *CheckCallsQuery) Clone() keel.Query[*checkcall.CheckCall] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CheckCallsQuery) One(ctx context.Context, db *keel.DB) (*checkcall.CheckCall, error) {
-	return keel.One[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*checkcall.CheckCall)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CheckCallsQuery) First(ctx context.Context, db *keel.DB) (*checkcall.CheckCall, error) {
-	return keel.First[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*checkcall.CheckCall)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CheckCallsQuery) List(ctx context.Context, db *keel.DB) ([]*checkcall.CheckCall, error) {
-	return keel.List[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*checkcall.CheckCall)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CheckCallsQuery) All(ctx context.Context, db *keel.DB) ([]*checkcall.CheckCall, error) {
-	return keel.All[*checkcall.CheckCall](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*checkcall.CheckCall)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CheckCallsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*checkcall.CheckCall, error) {
-	return keel.UpdateReturning[*checkcall.CheckCall](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*checkcall.CheckCall)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CheckCallsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*checkcall.CheckCall], error) {
-	return keel.PageOf[*checkcall.CheckCall](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*checkcall.CheckCall])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CheckCallsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*checkcall.CheckCall) error) error {
-	return keel.Each[*checkcall.CheckCall](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*checkcall.CheckCall)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCheckCall() unsafe.Pointer { return unsafe.Pointer(new(checkcall.CheckCall)) }
@@ -748,18 +754,18 @@ type TrackingLinksTable struct {
 // TrackingLinks references the carrier_tracking_links table.
 var TrackingLinks = &TrackingLinksTable{
 	TableBase:      keel.TableBase{Ref: &trackingLinksRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 2}}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 3}}},
-	ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 4}}},
-	CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 2}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 3}}},
+	ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 4}}},
+	CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 5}}},
 	TokenHash:      keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 6}},
 	RecipientEmail: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 7}},
 	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 8}},
 	RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 9}},
 	LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 10}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 11}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingLinksRef, Index: 11}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 12}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingLinksRef, Index: 13}},
 }
@@ -768,18 +774,18 @@ var TrackingLinks = &TrackingLinksTable{
 func BuildTrackingLinks(r *keel.Ref) *TrackingLinksTable {
 	return &TrackingLinksTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CarrierID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CarrierID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TokenHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		RecipientEmail: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 	}
@@ -800,8 +806,6 @@ func (t *TrackingLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // TrackingLinksQuery is a query over checkcall.TrackingLink.
 type TrackingLinksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*checkcall.TrackingLink] = (*TrackingLinksTable)(nil)
 
 var _ keel.Query[*checkcall.TrackingLink] = (*TrackingLinksQuery)(nil)
 
@@ -917,42 +921,42 @@ func (t *TrackingLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*c
 
 // Create inserts row.
 func (t *TrackingLinksTable) Create(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TrackingLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TrackingLinksTable) Save(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TrackingLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TrackingLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *checkcall.TrackingLink) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TrackingLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TrackingLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TrackingLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*checkcall.TrackingLink) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1124,37 +1128,45 @@ func (q *TrackingLinksQuery) Clone() keel.Query[*checkcall.TrackingLink] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TrackingLinksQuery) One(ctx context.Context, db *keel.DB) (*checkcall.TrackingLink, error) {
-	return keel.One[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*checkcall.TrackingLink)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TrackingLinksQuery) First(ctx context.Context, db *keel.DB) (*checkcall.TrackingLink, error) {
-	return keel.First[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*checkcall.TrackingLink)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TrackingLinksQuery) List(ctx context.Context, db *keel.DB) ([]*checkcall.TrackingLink, error) {
-	return keel.List[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*checkcall.TrackingLink)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TrackingLinksQuery) All(ctx context.Context, db *keel.DB) ([]*checkcall.TrackingLink, error) {
-	return keel.All[*checkcall.TrackingLink](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*checkcall.TrackingLink)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TrackingLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*checkcall.TrackingLink, error) {
-	return keel.UpdateReturning[*checkcall.TrackingLink](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*checkcall.TrackingLink)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TrackingLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*checkcall.TrackingLink], error) {
-	return keel.PageOf[*checkcall.TrackingLink](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*checkcall.TrackingLink])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TrackingLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*checkcall.TrackingLink) error) error {
-	return keel.Each[*checkcall.TrackingLink](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*checkcall.TrackingLink)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTrackingLink() unsafe.Pointer { return unsafe.Pointer(new(checkcall.TrackingLink)) }
@@ -1258,41 +1270,47 @@ var enumSource = [...]schema.EnumValue{
 }
 
 // KindCol is a column of checkcall.Kind values.
-type KindCol struct{ keel.StringCol }
+type KindCol struct{ keel.TypedStringCol }
 
-func (c KindCol) Eq(v checkcall.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c KindCol) Ne(v checkcall.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c KindCol) Gt(v checkcall.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c KindCol) Gte(v checkcall.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c KindCol) Lt(v checkcall.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c KindCol) Lte(v checkcall.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c KindCol) Eq(v checkcall.Kind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v checkcall.Kind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v checkcall.Kind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v checkcall.Kind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v checkcall.Kind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v checkcall.Kind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c KindCol) IsDistinctFrom(v checkcall.Kind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KindCol) Between(lo, hi checkcall.Kind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c KindCol) To(v checkcall.Kind) keel.Assignment  { return c.StringCol.To(string(v)) }
-func (c KindCol) In(vs ...checkcall.Kind) keel.Pred    { return c.StringCol.In(keel.Strings(vs)...) }
-func (c KindCol) NotIn(vs ...checkcall.Kind) keel.Pred { return c.StringCol.NotIn(keel.Strings(vs)...) }
+func (c KindCol) To(v checkcall.Kind) keel.Assignment { return c.Text().To(string(v)) }
+func (c KindCol) In(vs ...checkcall.Kind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c KindCol) NotIn(vs ...checkcall.Kind) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 
 // SourceCol is a column of checkcall.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v checkcall.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v checkcall.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v checkcall.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v checkcall.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v checkcall.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v checkcall.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v checkcall.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v checkcall.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v checkcall.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v checkcall.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v checkcall.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v checkcall.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v checkcall.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi checkcall.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v checkcall.Source) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c SourceCol) In(vs ...checkcall.Source) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c SourceCol) To(v checkcall.Source) keel.Assignment { return c.Text().To(string(v)) }
+func (c SourceCol) In(vs ...checkcall.Source) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c SourceCol) NotIn(vs ...checkcall.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

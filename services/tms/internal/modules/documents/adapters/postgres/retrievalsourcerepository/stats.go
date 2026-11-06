@@ -160,7 +160,7 @@ func (r *repository) AverageSourceChars(
 			out, err = keel.IntoOne[retrievalports.RetrievalSourceChars](
 				ctx,
 				r.db.Keel(ctx),
-				newest.Query().
+				keel.RowsOf(newest.TableRef()).
 					With(newest).
 					Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(newest.Col("chars").Avg()).Coalesce(0))),
 			)

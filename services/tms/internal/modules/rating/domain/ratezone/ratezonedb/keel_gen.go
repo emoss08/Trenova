@@ -84,14 +84,14 @@ type RateZonesTable struct {
 // RateZones references the rate_zones table.
 var RateZones = &RateZonesTable{
 	TableBase:      keel.TableBase{Ref: &rateZonesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 2}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 3}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 5}},
-	Kind:           ZoneKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 6}}},
-	Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 7}}},
+	Kind:           ZoneKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 6}}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 7}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &rateZonesRef, Index: 8}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rateZonesRef, Index: 9}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rateZonesRef, Index: 10}},
@@ -103,14 +103,14 @@ var RateZones = &RateZonesTable{
 func BuildRateZones(r *keel.Ref) *RateZonesTable {
 	return &RateZonesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:           ZoneKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:           ZoneKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -139,8 +139,6 @@ func (t *RateZonesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*r
 
 // RateZonesQuery is a query over ratezone.RateZone.
 type RateZonesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratezone.RateZone] = (*RateZonesTable)(nil)
 
 var _ keel.Query[*ratezone.RateZone] = (*RateZonesQuery)(nil)
 
@@ -256,42 +254,42 @@ func (t *RateZonesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratez
 
 // Create inserts row.
 func (t *RateZonesTable) Create(ctx context.Context, db *keel.DB, row *ratezone.RateZone) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateZonesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateZonesTable) Save(ctx context.Context, db *keel.DB, row *ratezone.RateZone, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateZonesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratezone.RateZone, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateZonesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratezone.RateZone) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateZonesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateZonesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateZonesTable) Copy(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -463,37 +461,45 @@ func (q *RateZonesQuery) Clone() keel.Query[*ratezone.RateZone] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateZonesQuery) One(ctx context.Context, db *keel.DB) (*ratezone.RateZone, error) {
-	return keel.One[*ratezone.RateZone](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratezone.RateZone)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateZonesQuery) First(ctx context.Context, db *keel.DB) (*ratezone.RateZone, error) {
-	return keel.First[*ratezone.RateZone](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratezone.RateZone)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateZonesQuery) List(ctx context.Context, db *keel.DB) ([]*ratezone.RateZone, error) {
-	return keel.List[*ratezone.RateZone](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratezone.RateZone)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateZonesQuery) All(ctx context.Context, db *keel.DB) ([]*ratezone.RateZone, error) {
-	return keel.All[*ratezone.RateZone](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratezone.RateZone)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateZonesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratezone.RateZone, error) {
-	return keel.UpdateReturning[*ratezone.RateZone](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratezone.RateZone)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateZonesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratezone.RateZone], error) {
-	return keel.PageOf[*ratezone.RateZone](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratezone.RateZone])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateZonesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratezone.RateZone) error) error {
-	return keel.Each[*ratezone.RateZone](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratezone.RateZone)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateZone() unsafe.Pointer { return unsafe.Pointer(new(ratezone.RateZone)) }
@@ -649,11 +655,11 @@ type RateZoneMembersTable struct {
 // RateZoneMembers references the rate_zone_members table.
 var RateZoneMembers = &RateZoneMembersTable{
 	TableBase:      keel.TableBase{Ref: &rateZoneMembersRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 2}}},
-	RateZoneID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 3}}},
-	ScopeType:      keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 2}}},
+	RateZoneID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 3}}},
+	ScopeType:      keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 4}}},
 	ScopeValue:     keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 5}},
 	City:           keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 6}},
 	MatchKey:       keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 7}},
@@ -665,11 +671,11 @@ var RateZoneMembers = &RateZoneMembersTable{
 func BuildRateZoneMembers(r *keel.Ref) *RateZoneMembersTable {
 	return &RateZoneMembersTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateZoneID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ScopeType:      keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateZoneID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ScopeType:      keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ScopeValue:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		City:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		MatchKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -696,8 +702,6 @@ func (t *RateZoneMembersTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // RateZoneMembersQuery is a query over ratezone.RateZoneMember.
 type RateZoneMembersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratezone.RateZoneMember] = (*RateZoneMembersTable)(nil)
 
 var _ keel.Query[*ratezone.RateZoneMember] = (*RateZoneMembersQuery)(nil)
 
@@ -813,42 +817,42 @@ func (t *RateZoneMembersTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *RateZoneMembersTable) Create(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateZoneMembersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateZoneMembersTable) Save(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateZoneMembersTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateZoneMembersTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateZoneMembersTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateZoneMembersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateZoneMembersTable) Copy(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1020,37 +1024,45 @@ func (q *RateZoneMembersQuery) Clone() keel.Query[*ratezone.RateZoneMember] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateZoneMembersQuery) One(ctx context.Context, db *keel.DB) (*ratezone.RateZoneMember, error) {
-	return keel.One[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratezone.RateZoneMember)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateZoneMembersQuery) First(ctx context.Context, db *keel.DB) (*ratezone.RateZoneMember, error) {
-	return keel.First[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratezone.RateZoneMember)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateZoneMembersQuery) List(ctx context.Context, db *keel.DB) ([]*ratezone.RateZoneMember, error) {
-	return keel.List[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratezone.RateZoneMember)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateZoneMembersQuery) All(ctx context.Context, db *keel.DB) ([]*ratezone.RateZoneMember, error) {
-	return keel.All[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratezone.RateZoneMember)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateZoneMembersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratezone.RateZoneMember, error) {
-	return keel.UpdateReturning[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratezone.RateZoneMember)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateZoneMembersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratezone.RateZoneMember], error) {
-	return keel.PageOf[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratezone.RateZoneMember])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateZoneMembersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratezone.RateZoneMember) error) error {
-	return keel.Each[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratezone.RateZoneMember)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateZoneMember() unsafe.Pointer { return unsafe.Pointer(new(ratezone.RateZoneMember)) }
@@ -1166,24 +1178,24 @@ var enumZoneKind = [...]schema.EnumValue{
 }
 
 // ZoneKindCol is a column of ratezone.ZoneKind values.
-type ZoneKindCol struct{ keel.StringCol }
+type ZoneKindCol struct{ keel.TypedStringCol }
 
-func (c ZoneKindCol) Eq(v ratezone.ZoneKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ZoneKindCol) Ne(v ratezone.ZoneKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ZoneKindCol) Gt(v ratezone.ZoneKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ZoneKindCol) Gte(v ratezone.ZoneKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ZoneKindCol) Lt(v ratezone.ZoneKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ZoneKindCol) Lte(v ratezone.ZoneKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ZoneKindCol) Eq(v ratezone.ZoneKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ZoneKindCol) Ne(v ratezone.ZoneKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ZoneKindCol) Gt(v ratezone.ZoneKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ZoneKindCol) Gte(v ratezone.ZoneKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ZoneKindCol) Lt(v ratezone.ZoneKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ZoneKindCol) Lte(v ratezone.ZoneKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ZoneKindCol) IsDistinctFrom(v ratezone.ZoneKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ZoneKindCol) Between(lo, hi ratezone.ZoneKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ZoneKindCol) To(v ratezone.ZoneKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ZoneKindCol) To(v ratezone.ZoneKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c ZoneKindCol) In(vs ...ratezone.ZoneKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ZoneKindCol) NotIn(vs ...ratezone.ZoneKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

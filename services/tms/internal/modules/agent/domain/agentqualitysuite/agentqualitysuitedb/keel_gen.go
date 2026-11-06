@@ -118,18 +118,18 @@ type SuiteRunsTable struct {
 // SuiteRuns references the agent_suite_runs table.
 var SuiteRuns = &SuiteRunsTable{
 	TableBase:          keel.TableBase{Ref: &suiteRunsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 2}}},
-	AgentDefinitionID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 3}}},
-	Trigger:            SuiteRunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 2}}},
+	AgentDefinitionID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 3}}},
+	Trigger:            SuiteRunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 4}}},
 	SweepKey:           keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 5}},
 	Fingerprint:        keel.JSONBCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 6}},
 	FingerprintHash:    keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 7}},
 	FingerprintChanges: keel.JSONBCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 8}},
 	SuiteRevision:      keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 9}},
 	SampleSeed:         keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 10}},
-	Status:             SuiteRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 11}}},
+	Status:             SuiteRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 11}}},
 	CasesTotal:         keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 12}},
 	CasesPassed:        keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 13}},
 	CasesFailed:        keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 14}},
@@ -139,14 +139,14 @@ var SuiteRuns = &SuiteRunsTable{
 	JudgeScore:         keel.Float64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 18}},
 	QualityScore:       keel.Float64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 19}},
 	BaselineScore:      keel.Float64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 20}},
-	BaselineRunID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 21}}},
+	BaselineRunID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 21}}},
 	Regression:         keel.BoolCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 22}},
 	CostUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 23}}},
 	StartedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 24}},
 	FinishedAt:         keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 25}},
 	Comments:           keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 26}},
 	WorkflowID:         keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 27}},
-	RequestedByUserID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 28}}},
+	RequestedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 28}}},
 	Version:            keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 29}},
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 30}},
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 31}},
@@ -156,18 +156,18 @@ var SuiteRuns = &SuiteRunsTable{
 func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 	return &SuiteRunsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Trigger:            SuiteRunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Trigger:            SuiteRunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		SweepKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Fingerprint:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
 		FingerprintHash:    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		FingerprintChanges: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		SuiteRevision:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		SampleSeed:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		Status:             SuiteRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:             SuiteRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		CasesTotal:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CasesPassed:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CasesFailed:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -177,14 +177,14 @@ func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 		JudgeScore:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 18}},
 		QualityScore:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 19}},
 		BaselineScore:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 20}},
-		BaselineRunID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		BaselineRunID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		Regression:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 22}},
 		CostUSD:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
 		StartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		FinishedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		Comments:           keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		WorkflowID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		RequestedByUserID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		RequestedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -206,8 +206,6 @@ func (t *SuiteRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*a
 
 // SuiteRunsQuery is a query over agentqualitysuite.SuiteRun.
 type SuiteRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentqualitysuite.SuiteRun] = (*SuiteRunsTable)(nil)
 
 var _ keel.Query[*agentqualitysuite.SuiteRun] = (*SuiteRunsQuery)(nil)
 
@@ -323,42 +321,42 @@ func (t *SuiteRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agent
 
 // Create inserts row.
 func (t *SuiteRunsTable) Create(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SuiteRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SuiteRunsTable) Save(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SuiteRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SuiteRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentqualitysuite.SuiteRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SuiteRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SuiteRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SuiteRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentqualitysuite.SuiteRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -530,37 +528,45 @@ func (q *SuiteRunsQuery) Clone() keel.Query[*agentqualitysuite.SuiteRun] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SuiteRunsQuery) One(ctx context.Context, db *keel.DB) (*agentqualitysuite.SuiteRun, error) {
-	return keel.One[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentqualitysuite.SuiteRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SuiteRunsQuery) First(ctx context.Context, db *keel.DB) (*agentqualitysuite.SuiteRun, error) {
-	return keel.First[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentqualitysuite.SuiteRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SuiteRunsQuery) List(ctx context.Context, db *keel.DB) ([]*agentqualitysuite.SuiteRun, error) {
-	return keel.List[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentqualitysuite.SuiteRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SuiteRunsQuery) All(ctx context.Context, db *keel.DB) ([]*agentqualitysuite.SuiteRun, error) {
-	return keel.All[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentqualitysuite.SuiteRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SuiteRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentqualitysuite.SuiteRun, error) {
-	return keel.UpdateReturning[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentqualitysuite.SuiteRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SuiteRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentqualitysuite.SuiteRun], error) {
-	return keel.PageOf[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentqualitysuite.SuiteRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SuiteRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentqualitysuite.SuiteRun) error) error {
-	return keel.Each[*agentqualitysuite.SuiteRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentqualitysuite.SuiteRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSuiteRun() unsafe.Pointer { return unsafe.Pointer(new(agentqualitysuite.SuiteRun)) }
@@ -768,75 +774,75 @@ var enumSuiteRunTrigger = [...]schema.EnumValue{
 }
 
 // SuiteRunStatusCol is a column of agentqualitysuite.SuiteRunStatus values.
-type SuiteRunStatusCol struct{ keel.StringCol }
+type SuiteRunStatusCol struct{ keel.TypedStringCol }
 
 func (c SuiteRunStatusCol) Eq(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SuiteRunStatusCol) Ne(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SuiteRunStatusCol) Gt(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SuiteRunStatusCol) Gte(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SuiteRunStatusCol) Lt(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SuiteRunStatusCol) Lte(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SuiteRunStatusCol) IsDistinctFrom(v agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SuiteRunStatusCol) Between(lo, hi agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SuiteRunStatusCol) To(v agentqualitysuite.SuiteRunStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SuiteRunStatusCol) In(vs ...agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SuiteRunStatusCol) NotIn(vs ...agentqualitysuite.SuiteRunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SuiteRunTriggerCol is a column of agentqualitysuite.SuiteRunTrigger values.
-type SuiteRunTriggerCol struct{ keel.StringCol }
+type SuiteRunTriggerCol struct{ keel.TypedStringCol }
 
 func (c SuiteRunTriggerCol) Eq(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SuiteRunTriggerCol) Ne(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SuiteRunTriggerCol) Gt(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SuiteRunTriggerCol) Gte(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SuiteRunTriggerCol) Lt(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SuiteRunTriggerCol) Lte(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SuiteRunTriggerCol) IsDistinctFrom(v agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SuiteRunTriggerCol) Between(lo, hi agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SuiteRunTriggerCol) To(v agentqualitysuite.SuiteRunTrigger) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SuiteRunTriggerCol) In(vs ...agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SuiteRunTriggerCol) NotIn(vs ...agentqualitysuite.SuiteRunTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

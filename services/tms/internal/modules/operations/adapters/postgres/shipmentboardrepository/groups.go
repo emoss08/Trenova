@@ -87,13 +87,13 @@ func endStopID(types []shipmentvocab.StopType, last bool) keel.Expr {
 	order := []keel.Order{
 		sm.Sequence.Asc(),
 		st.Sequence.Asc(),
-		st.ID.Collate("C").Asc(),
+		st.ID.Text().Collate("C").Asc(),
 	}
 	if last {
 		order = []keel.Order{
 			sm.Sequence.Desc(),
 			st.Sequence.Desc(),
-			st.ID.Collate("C").Desc(),
+			st.ID.Text().Collate("C").Desc(),
 		}
 	}
 

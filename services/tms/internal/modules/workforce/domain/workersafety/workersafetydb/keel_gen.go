@@ -123,13 +123,13 @@ type WorkerSafetyEventsTable struct {
 // WorkerSafetyEvents references the worker_safety_events table.
 var WorkerSafetyEvents = &WorkerSafetyEventsTable{
 	TableBase:        keel.TableBase{Ref: &workerSafetyEventsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 3}}},
-	Kind:             SafetyEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 4}}},
-	Severity:         SafetySeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 5}}},
-	Status:           SafetyEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 6}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 3}}},
+	Kind:             SafetyEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 4}}},
+	Severity:         SafetySeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 5}}},
+	Status:           SafetyEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 6}}},
 	OccurredAt:       keel.Int64Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 7}},
 	Location:         keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 8}},
 	Description:      keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 9}},
@@ -137,15 +137,15 @@ var WorkerSafetyEvents = &WorkerSafetyEventsTable{
 	Points:           keel.Int32Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 11}},
 	PointsExpireAt:   keel.Int64Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 12}},
 	ReferenceNumber:  keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 13}},
-	ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 14}}},
+	ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 14}}},
 	InspectionLevel:  keel.Int16Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 15}},
-	InspectionResult: InspectionResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 16}}},
+	InspectionResult: InspectionResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 16}}},
 	OutOfService:     keel.BoolCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 17}},
 	FineAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 18}}},
 	CostAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 19}}},
-	DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 20}}},
-	RecordedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 21}}},
-	ClosedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 22}}},
+	DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 20}}},
+	RecordedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 21}}},
+	ClosedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 22}}},
 	ClosedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 23}},
 	Resolution:       keel.StringCol{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 24}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &workerSafetyEventsRef, Index: 25}},
@@ -157,13 +157,13 @@ var WorkerSafetyEvents = &WorkerSafetyEventsTable{
 func BuildWorkerSafetyEvents(r *keel.Ref) *WorkerSafetyEventsTable {
 	return &WorkerSafetyEventsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:             SafetyEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Severity:         SafetySeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:           SafetyEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:             SafetyEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Severity:         SafetySeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:           SafetyEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		OccurredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Location:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Description:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -171,15 +171,15 @@ func BuildWorkerSafetyEvents(r *keel.Ref) *WorkerSafetyEventsTable {
 		Points:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 11}},
 		PointsExpireAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ReferenceNumber:  keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		InspectionLevel:  keel.Int16Col{Col: keel.Col{Ref: r, Index: 15}},
-		InspectionResult: InspectionResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		InspectionResult: InspectionResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		OutOfService:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		FineAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CostAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
-		DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		RecordedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		ClosedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		RecordedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		ClosedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		ClosedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		Resolution:       keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
@@ -223,8 +223,6 @@ func (t *WorkerSafetyEventsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // WorkerSafetyEventsQuery is a query over workersafety.WorkerSafetyEvent.
 type WorkerSafetyEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workersafety.WorkerSafetyEvent] = (*WorkerSafetyEventsTable)(nil)
 
 var _ keel.Query[*workersafety.WorkerSafetyEvent] = (*WorkerSafetyEventsQuery)(nil)
 
@@ -340,42 +338,42 @@ func (t *WorkerSafetyEventsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *WorkerSafetyEventsTable) Create(ctx context.Context, db *keel.DB, row *workersafety.WorkerSafetyEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerSafetyEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workersafety.WorkerSafetyEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerSafetyEventsTable) Save(ctx context.Context, db *keel.DB, row *workersafety.WorkerSafetyEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerSafetyEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workersafety.WorkerSafetyEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerSafetyEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workersafety.WorkerSafetyEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerSafetyEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workersafety.WorkerSafetyEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerSafetyEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workersafety.WorkerSafetyEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerSafetyEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*workersafety.WorkerSafetyEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -547,37 +545,45 @@ func (q *WorkerSafetyEventsQuery) Clone() keel.Query[*workersafety.WorkerSafetyE
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerSafetyEventsQuery) One(ctx context.Context, db *keel.DB) (*workersafety.WorkerSafetyEvent, error) {
-	return keel.One[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workersafety.WorkerSafetyEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerSafetyEventsQuery) First(ctx context.Context, db *keel.DB) (*workersafety.WorkerSafetyEvent, error) {
-	return keel.First[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workersafety.WorkerSafetyEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerSafetyEventsQuery) List(ctx context.Context, db *keel.DB) ([]*workersafety.WorkerSafetyEvent, error) {
-	return keel.List[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workersafety.WorkerSafetyEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerSafetyEventsQuery) All(ctx context.Context, db *keel.DB) ([]*workersafety.WorkerSafetyEvent, error) {
-	return keel.All[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workersafety.WorkerSafetyEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerSafetyEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workersafety.WorkerSafetyEvent, error) {
-	return keel.UpdateReturning[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workersafety.WorkerSafetyEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerSafetyEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workersafety.WorkerSafetyEvent], error) {
-	return keel.PageOf[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workersafety.WorkerSafetyEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerSafetyEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workersafety.WorkerSafetyEvent) error) error {
-	return keel.Each[*workersafety.WorkerSafetyEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workersafety.WorkerSafetyEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerSafetyEvent() unsafe.Pointer {
@@ -801,149 +807,141 @@ var enumSafetySeverity = [...]schema.EnumValue{
 }
 
 // InspectionResultCol is a column of workersafety.InspectionResult values.
-type InspectionResultCol struct{ keel.StringCol }
+type InspectionResultCol struct{ keel.TypedStringCol }
 
 func (c InspectionResultCol) Eq(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InspectionResultCol) Ne(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InspectionResultCol) Gt(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InspectionResultCol) Gte(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InspectionResultCol) Lt(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InspectionResultCol) Lte(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InspectionResultCol) IsDistinctFrom(v workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InspectionResultCol) Between(lo, hi workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InspectionResultCol) To(v workersafety.InspectionResult) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InspectionResultCol) In(vs ...workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InspectionResultCol) NotIn(vs ...workersafety.InspectionResult) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SafetyEventKindCol is a column of workersafety.SafetyEventKind values.
-type SafetyEventKindCol struct{ keel.StringCol }
+type SafetyEventKindCol struct{ keel.TypedStringCol }
 
 func (c SafetyEventKindCol) Eq(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SafetyEventKindCol) Ne(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SafetyEventKindCol) Gt(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SafetyEventKindCol) Gte(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SafetyEventKindCol) Lt(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SafetyEventKindCol) Lte(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SafetyEventKindCol) IsDistinctFrom(v workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SafetyEventKindCol) Between(lo, hi workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SafetyEventKindCol) To(v workersafety.SafetyEventKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SafetyEventKindCol) In(vs ...workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SafetyEventKindCol) NotIn(vs ...workersafety.SafetyEventKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SafetyEventStatusCol is a column of workersafety.SafetyEventStatus values.
-type SafetyEventStatusCol struct{ keel.StringCol }
+type SafetyEventStatusCol struct{ keel.TypedStringCol }
 
 func (c SafetyEventStatusCol) Eq(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SafetyEventStatusCol) Ne(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SafetyEventStatusCol) Gt(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SafetyEventStatusCol) Gte(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SafetyEventStatusCol) Lt(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SafetyEventStatusCol) Lte(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SafetyEventStatusCol) IsDistinctFrom(v workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SafetyEventStatusCol) Between(lo, hi workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SafetyEventStatusCol) To(v workersafety.SafetyEventStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SafetyEventStatusCol) In(vs ...workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SafetyEventStatusCol) NotIn(vs ...workersafety.SafetyEventStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SafetySeverityCol is a column of workersafety.SafetySeverity values.
-type SafetySeverityCol struct{ keel.StringCol }
+type SafetySeverityCol struct{ keel.TypedStringCol }
 
-func (c SafetySeverityCol) Eq(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SafetySeverityCol) Ne(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SafetySeverityCol) Gt(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c SafetySeverityCol) Eq(v workersafety.SafetySeverity) keel.Pred { return c.Text().Eq(string(v)) }
+func (c SafetySeverityCol) Ne(v workersafety.SafetySeverity) keel.Pred { return c.Text().Ne(string(v)) }
+func (c SafetySeverityCol) Gt(v workersafety.SafetySeverity) keel.Pred { return c.Text().Gt(string(v)) }
 func (c SafetySeverityCol) Gte(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c SafetySeverityCol) Lt(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c SafetySeverityCol) Lt(v workersafety.SafetySeverity) keel.Pred { return c.Text().Lt(string(v)) }
 func (c SafetySeverityCol) Lte(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SafetySeverityCol) IsDistinctFrom(v workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SafetySeverityCol) Between(lo, hi workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SafetySeverityCol) To(v workersafety.SafetySeverity) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SafetySeverityCol) In(vs ...workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SafetySeverityCol) NotIn(vs ...workersafety.SafetySeverity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

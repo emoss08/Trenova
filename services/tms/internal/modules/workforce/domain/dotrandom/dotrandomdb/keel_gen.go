@@ -109,14 +109,14 @@ type DOTRandomDrawsTable struct {
 // DOTRandomDraws references the dot_random_draws table.
 var DOTRandomDraws = &DOTRandomDrawsTable{
 	TableBase:       keel.TableBase{Ref: &dOTRandomDrawsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 2}}},
-	PoolID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 2}}},
+	PoolID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 3}}},
 	PeriodKey:       keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 4}},
 	PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 5}},
 	PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 6}},
-	Status:          RandomDrawStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 7}}},
+	Status:          RandomDrawStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 7}}},
 	PoolSize:        keel.Int32Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 8}},
 	DrugTarget:      keel.Int32Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 9}},
 	AlcoholTarget:   keel.Int32Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 10}},
@@ -126,7 +126,7 @@ var DOTRandomDraws = &DOTRandomDrawsTable{
 	Method:          keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 14}},
 	Notes:           keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 15}},
 	DrawnAt:         keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 16}},
-	DrawnByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 17}}},
+	DrawnByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 17}}},
 	FinalizedAt:     keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 18}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 19}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawsRef, Index: 20}},
@@ -137,14 +137,14 @@ var DOTRandomDraws = &DOTRandomDrawsTable{
 func BuildDOTRandomDraws(r *keel.Ref) *DOTRandomDrawsTable {
 	return &DOTRandomDrawsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PoolID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PoolID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PeriodKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		Status:          RandomDrawStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:          RandomDrawStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		PoolSize:        keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
 		DrugTarget:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
 		AlcoholTarget:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -154,7 +154,7 @@ func BuildDOTRandomDraws(r *keel.Ref) *DOTRandomDrawsTable {
 		Method:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		DrawnAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		DrawnByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		DrawnByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		FinalizedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -192,8 +192,6 @@ func (t *DOTRandomDrawsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // DOTRandomDrawsQuery is a query over dotrandom.DOTRandomDraw.
 type DOTRandomDrawsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dotrandom.DOTRandomDraw] = (*DOTRandomDrawsTable)(nil)
 
 var _ keel.Query[*dotrandom.DOTRandomDraw] = (*DOTRandomDrawsQuery)(nil)
 
@@ -309,42 +307,42 @@ func (t *DOTRandomDrawsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *DOTRandomDrawsTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DOTRandomDrawsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DOTRandomDrawsTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DOTRandomDrawsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DOTRandomDrawsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDraw) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DOTRandomDrawsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DOTRandomDrawsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DOTRandomDrawsTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDraw) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -516,37 +514,45 @@ func (q *DOTRandomDrawsQuery) Clone() keel.Query[*dotrandom.DOTRandomDraw] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DOTRandomDrawsQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDraw, error) {
-	return keel.One[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomDraw)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DOTRandomDrawsQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDraw, error) {
-	return keel.First[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomDraw)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DOTRandomDrawsQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDraw, error) {
-	return keel.List[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomDraw)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DOTRandomDrawsQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDraw, error) {
-	return keel.All[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomDraw)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DOTRandomDrawsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomDraw, error) {
-	return keel.UpdateReturning[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dotrandom.DOTRandomDraw)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DOTRandomDrawsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomDraw], error) {
-	return keel.PageOf[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dotrandom.DOTRandomDraw])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DOTRandomDrawsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomDraw) error) error {
-	return keel.Each[*dotrandom.DOTRandomDraw](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dotrandom.DOTRandomDraw)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDOTRandomDraw() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomDraw)) }
@@ -757,17 +763,17 @@ type DOTRandomDrawEntriesTable struct {
 // DOTRandomDrawEntries references the dot_random_draw_entries table.
 var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
 	TableBase:      keel.TableBase{Ref: &dOTRandomDrawEntriesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 2}}},
-	DrawID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 3}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 4}}},
-	Substance:      workerdotdb.DOTTestSubstanceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 2}}},
+	DrawID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 3}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 4}}},
+	Substance:      workerdotdb.DOTTestSubstanceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 5}}},
 	Rank:           keel.Int32Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 6}},
-	Status:         RandomEntryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 7}}},
+	Status:         RandomEntryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 7}}},
 	NotifiedAt:     keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 8}},
 	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 9}},
-	TestID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 10}}},
+	TestID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 10}}},
 	ExcuseReason:   keel.StringCol{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 11}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 12}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dOTRandomDrawEntriesRef, Index: 13}},
@@ -778,17 +784,17 @@ var DOTRandomDrawEntries = &DOTRandomDrawEntriesTable{
 func BuildDOTRandomDrawEntries(r *keel.Ref) *DOTRandomDrawEntriesTable {
 	return &DOTRandomDrawEntriesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DrawID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Substance:      workerdotdb.DOTTestSubstanceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DrawID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Substance:      workerdotdb.DOTTestSubstanceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Rank:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 6}},
-		Status:         RandomEntryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:         RandomEntryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		NotifiedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		TestID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		TestID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ExcuseReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -821,8 +827,6 @@ func (t *DOTRandomDrawEntriesTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // DOTRandomDrawEntriesQuery is a query over dotrandom.DOTRandomDrawEntry.
 type DOTRandomDrawEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dotrandom.DOTRandomDrawEntry] = (*DOTRandomDrawEntriesTable)(nil)
 
 var _ keel.Query[*dotrandom.DOTRandomDrawEntry] = (*DOTRandomDrawEntriesQuery)(nil)
 
@@ -938,42 +942,42 @@ func (t *DOTRandomDrawEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *DOTRandomDrawEntriesTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DOTRandomDrawEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DOTRandomDrawEntriesTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DOTRandomDrawEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DOTRandomDrawEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomDrawEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DOTRandomDrawEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DOTRandomDrawEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DOTRandomDrawEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomDrawEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1145,37 +1149,45 @@ func (q *DOTRandomDrawEntriesQuery) Clone() keel.Query[*dotrandom.DOTRandomDrawE
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DOTRandomDrawEntriesQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDrawEntry, error) {
-	return keel.One[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomDrawEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DOTRandomDrawEntriesQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomDrawEntry, error) {
-	return keel.First[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomDrawEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DOTRandomDrawEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDrawEntry, error) {
-	return keel.List[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomDrawEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DOTRandomDrawEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomDrawEntry, error) {
-	return keel.All[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomDrawEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DOTRandomDrawEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomDrawEntry, error) {
-	return keel.UpdateReturning[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dotrandom.DOTRandomDrawEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DOTRandomDrawEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomDrawEntry], error) {
-	return keel.PageOf[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dotrandom.DOTRandomDrawEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DOTRandomDrawEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomDrawEntry) error) error {
-	return keel.Each[*dotrandom.DOTRandomDrawEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dotrandom.DOTRandomDrawEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDOTRandomDrawEntry() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomDrawEntry)) }
@@ -1359,14 +1371,14 @@ type DOTRandomPoolsTable struct {
 // DOTRandomPools references the dot_random_pools table.
 var DOTRandomPools = &DOTRandomPoolsTable{
 	TableBase:           keel.TableBase{Ref: &dOTRandomPoolsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 2}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 2}}},
 	Code:                keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 3}},
 	Name:                keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 4}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 5}},
-	Status:              keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 6}}},
-	Period:              RandomPeriodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 7}}},
+	Status:              keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 6}}},
+	Period:              RandomPeriodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 7}}},
 	DrugRatePercent:     keel.Int16Col{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 8}},
 	AlcoholRatePercent:  keel.Int16Col{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 9}},
 	IncludedDriverTypes: keel.JSONBCol{Col: keel.Col{Ref: &dOTRandomPoolsRef, Index: 10}},
@@ -1382,14 +1394,14 @@ var DOTRandomPools = &DOTRandomPoolsTable{
 func BuildDOTRandomPools(r *keel.Ref) *DOTRandomPoolsTable {
 	return &DOTRandomPoolsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:                keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:                keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:              keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Period:              RandomPeriodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:              keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Period:              RandomPeriodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DrugRatePercent:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 8}},
 		AlcoholRatePercent:  keel.Int16Col{Col: keel.Col{Ref: r, Index: 9}},
 		IncludedDriverTypes: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -1417,8 +1429,6 @@ func (t *DOTRandomPoolsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // DOTRandomPoolsQuery is a query over dotrandom.DOTRandomPool.
 type DOTRandomPoolsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dotrandom.DOTRandomPool] = (*DOTRandomPoolsTable)(nil)
 
 var _ keel.Query[*dotrandom.DOTRandomPool] = (*DOTRandomPoolsQuery)(nil)
 
@@ -1534,42 +1544,42 @@ func (t *DOTRandomPoolsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *DOTRandomPoolsTable) Create(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DOTRandomPoolsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DOTRandomPoolsTable) Save(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DOTRandomPoolsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DOTRandomPoolsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotrandom.DOTRandomPool) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DOTRandomPoolsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DOTRandomPoolsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DOTRandomPoolsTable) Copy(ctx context.Context, db *keel.DB, rows []*dotrandom.DOTRandomPool) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1741,37 +1751,45 @@ func (q *DOTRandomPoolsQuery) Clone() keel.Query[*dotrandom.DOTRandomPool] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DOTRandomPoolsQuery) One(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomPool, error) {
-	return keel.One[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomPool)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DOTRandomPoolsQuery) First(ctx context.Context, db *keel.DB) (*dotrandom.DOTRandomPool, error) {
-	return keel.First[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dotrandom.DOTRandomPool)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DOTRandomPoolsQuery) List(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomPool, error) {
-	return keel.List[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomPool)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DOTRandomPoolsQuery) All(ctx context.Context, db *keel.DB) ([]*dotrandom.DOTRandomPool, error) {
-	return keel.All[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotrandom.DOTRandomPool)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DOTRandomPoolsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotrandom.DOTRandomPool, error) {
-	return keel.UpdateReturning[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dotrandom.DOTRandomPool)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DOTRandomPoolsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotrandom.DOTRandomPool], error) {
-	return keel.PageOf[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dotrandom.DOTRandomPool])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DOTRandomPoolsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotrandom.DOTRandomPool) error) error {
-	return keel.Each[*dotrandom.DOTRandomPool](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dotrandom.DOTRandomPool)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDOTRandomPool() unsafe.Pointer { return unsafe.Pointer(new(dotrandom.DOTRandomPool)) }
@@ -1916,100 +1934,98 @@ var enumWorkerdotDOTTestSubstance = [...]schema.EnumValue{
 }
 
 // RandomDrawStatusCol is a column of dotrandom.RandomDrawStatus values.
-type RandomDrawStatusCol struct{ keel.StringCol }
+type RandomDrawStatusCol struct{ keel.TypedStringCol }
 
 func (c RandomDrawStatusCol) Eq(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RandomDrawStatusCol) Ne(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RandomDrawStatusCol) Gt(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RandomDrawStatusCol) Gte(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RandomDrawStatusCol) Lt(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RandomDrawStatusCol) Lte(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RandomDrawStatusCol) IsDistinctFrom(v dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RandomDrawStatusCol) Between(lo, hi dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RandomDrawStatusCol) To(v dotrandom.RandomDrawStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RandomDrawStatusCol) In(vs ...dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RandomDrawStatusCol) NotIn(vs ...dotrandom.RandomDrawStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RandomEntryStatusCol is a column of dotrandom.RandomEntryStatus values.
-type RandomEntryStatusCol struct{ keel.StringCol }
+type RandomEntryStatusCol struct{ keel.TypedStringCol }
 
 func (c RandomEntryStatusCol) Eq(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RandomEntryStatusCol) Ne(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RandomEntryStatusCol) Gt(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RandomEntryStatusCol) Gte(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RandomEntryStatusCol) Lt(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RandomEntryStatusCol) Lte(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RandomEntryStatusCol) IsDistinctFrom(v dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RandomEntryStatusCol) Between(lo, hi dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RandomEntryStatusCol) To(v dotrandom.RandomEntryStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RandomEntryStatusCol) In(vs ...dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RandomEntryStatusCol) NotIn(vs ...dotrandom.RandomEntryStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RandomPeriodCol is a column of dotrandom.RandomPeriod values.
-type RandomPeriodCol struct{ keel.StringCol }
+type RandomPeriodCol struct{ keel.TypedStringCol }
 
-func (c RandomPeriodCol) Eq(v dotrandom.RandomPeriod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RandomPeriodCol) Ne(v dotrandom.RandomPeriod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RandomPeriodCol) Gt(v dotrandom.RandomPeriod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RandomPeriodCol) Gte(v dotrandom.RandomPeriod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RandomPeriodCol) Lt(v dotrandom.RandomPeriod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RandomPeriodCol) Lte(v dotrandom.RandomPeriod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RandomPeriodCol) Eq(v dotrandom.RandomPeriod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RandomPeriodCol) Ne(v dotrandom.RandomPeriod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RandomPeriodCol) Gt(v dotrandom.RandomPeriod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RandomPeriodCol) Gte(v dotrandom.RandomPeriod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RandomPeriodCol) Lt(v dotrandom.RandomPeriod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RandomPeriodCol) Lte(v dotrandom.RandomPeriod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RandomPeriodCol) IsDistinctFrom(v dotrandom.RandomPeriod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RandomPeriodCol) Between(lo, hi dotrandom.RandomPeriod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RandomPeriodCol) To(v dotrandom.RandomPeriod) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RandomPeriodCol) To(v dotrandom.RandomPeriod) keel.Assignment { return c.Text().To(string(v)) }
 func (c RandomPeriodCol) In(vs ...dotrandom.RandomPeriod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RandomPeriodCol) NotIn(vs ...dotrandom.RandomPeriod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

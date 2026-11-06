@@ -75,13 +75,13 @@ type ChecklistTemplatesTable struct {
 // ChecklistTemplates references the case_checklist_templates table.
 var ChecklistTemplates = &ChecklistTemplatesTable{
 	TableBase:      keel.TableBase{Ref: &checklistTemplatesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 2}}},
-	Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 3}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 2}}},
+	Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 3}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 4}}},
 	Items:          keel.JSONBCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 5}},
-	UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 6}}},
+	UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 6}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 7}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 8}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 9}},
@@ -92,13 +92,13 @@ var ChecklistTemplates = &ChecklistTemplatesTable{
 func BuildChecklistTemplates(r *keel.Ref) *ChecklistTemplatesTable {
 	return &ChecklistTemplatesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Items:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
-		UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -121,8 +121,6 @@ func (t *ChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // ChecklistTemplatesQuery is a query over deskcase.ChecklistTemplate.
 type ChecklistTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*deskcase.ChecklistTemplate] = (*ChecklistTemplatesTable)(nil)
 
 var _ keel.Query[*deskcase.ChecklistTemplate] = (*ChecklistTemplatesQuery)(nil)
 
@@ -238,42 +236,42 @@ func (t *ChecklistTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *ChecklistTemplatesTable) Create(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ChecklistTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ChecklistTemplatesTable) Save(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ChecklistTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ChecklistTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ChecklistTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ChecklistTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ChecklistTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -445,37 +443,45 @@ func (q *ChecklistTemplatesQuery) Clone() keel.Query[*deskcase.ChecklistTemplate
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ChecklistTemplatesQuery) One(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTemplate, error) {
-	return keel.One[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*deskcase.ChecklistTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ChecklistTemplatesQuery) First(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTemplate, error) {
-	return keel.First[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*deskcase.ChecklistTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ChecklistTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTemplate, error) {
-	return keel.List[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*deskcase.ChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ChecklistTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTemplate, error) {
-	return keel.All[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*deskcase.ChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ChecklistTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*deskcase.ChecklistTemplate, error) {
-	return keel.UpdateReturning[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*deskcase.ChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ChecklistTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*deskcase.ChecklistTemplate], error) {
-	return keel.PageOf[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*deskcase.ChecklistTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ChecklistTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*deskcase.ChecklistTemplate) error) error {
-	return keel.Each[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*deskcase.ChecklistTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newChecklistTemplate() unsafe.Pointer { return unsafe.Pointer(new(deskcase.ChecklistTemplate)) }
@@ -608,13 +614,13 @@ type ChecklistTicksTable struct {
 // ChecklistTicks references the case_checklist_ticks table.
 var ChecklistTicks = &ChecklistTicksTable{
 	TableBase:      keel.TableBase{Ref: &checklistTicksRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 2}}},
 	SubjectType:    keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 3}},
-	SubjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 4}}},
-	ItemKey:        ItemKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 5}}},
-	TickedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 6}}},
+	SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 4}}},
+	ItemKey:        ItemKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 5}}},
+	TickedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 6}}},
 	TickedAt:       keel.Int64Col{Col: keel.Col{Ref: &checklistTicksRef, Index: 7}},
 	TickedByName:   keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 8}},
 }
@@ -623,13 +629,13 @@ var ChecklistTicks = &ChecklistTicksTable{
 func BuildChecklistTicks(r *keel.Ref) *ChecklistTicksTable {
 	return &ChecklistTicksTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		SubjectType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		SubjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ItemKey:        ItemKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TickedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ItemKey:        ItemKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		TickedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		TickedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		TickedByName:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 	}
@@ -650,8 +656,6 @@ func (t *ChecklistTicksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // ChecklistTicksQuery is a query over deskcase.ChecklistTick.
 type ChecklistTicksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*deskcase.ChecklistTick] = (*ChecklistTicksTable)(nil)
 
 var _ keel.Query[*deskcase.ChecklistTick] = (*ChecklistTicksQuery)(nil)
 
@@ -767,42 +771,42 @@ func (t *ChecklistTicksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *ChecklistTicksTable) Create(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ChecklistTicksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ChecklistTicksTable) Save(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ChecklistTicksTable) SaveExcept(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ChecklistTicksTable) DeleteRow(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ChecklistTicksTable) Upsert(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ChecklistTicksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ChecklistTicksTable) Copy(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -974,37 +978,45 @@ func (q *ChecklistTicksQuery) Clone() keel.Query[*deskcase.ChecklistTick] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ChecklistTicksQuery) One(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTick, error) {
-	return keel.One[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*deskcase.ChecklistTick)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ChecklistTicksQuery) First(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTick, error) {
-	return keel.First[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*deskcase.ChecklistTick)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ChecklistTicksQuery) List(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTick, error) {
-	return keel.List[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*deskcase.ChecklistTick)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ChecklistTicksQuery) All(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTick, error) {
-	return keel.All[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*deskcase.ChecklistTick)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ChecklistTicksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*deskcase.ChecklistTick, error) {
-	return keel.UpdateReturning[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*deskcase.ChecklistTick)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ChecklistTicksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*deskcase.ChecklistTick], error) {
-	return keel.PageOf[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*deskcase.ChecklistTick])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ChecklistTicksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*deskcase.ChecklistTick) error) error {
-	return keel.Each[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*deskcase.ChecklistTick)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newChecklistTick() unsafe.Pointer { return unsafe.Pointer(new(deskcase.ChecklistTick)) }
@@ -1084,72 +1096,70 @@ var enumItemKey = [...]schema.EnumValue{
 }
 
 // ChecklistKindCol is a column of deskcase.ChecklistKind values.
-type ChecklistKindCol struct{ keel.StringCol }
+type ChecklistKindCol struct{ keel.TypedStringCol }
 
-func (c ChecklistKindCol) Eq(v deskcase.ChecklistKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ChecklistKindCol) Ne(v deskcase.ChecklistKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ChecklistKindCol) Gt(v deskcase.ChecklistKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ChecklistKindCol) Gte(v deskcase.ChecklistKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ChecklistKindCol) Lt(v deskcase.ChecklistKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ChecklistKindCol) Lte(v deskcase.ChecklistKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ChecklistKindCol) Eq(v deskcase.ChecklistKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ChecklistKindCol) Ne(v deskcase.ChecklistKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ChecklistKindCol) Gt(v deskcase.ChecklistKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ChecklistKindCol) Gte(v deskcase.ChecklistKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ChecklistKindCol) Lt(v deskcase.ChecklistKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ChecklistKindCol) Lte(v deskcase.ChecklistKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ChecklistKindCol) IsDistinctFrom(v deskcase.ChecklistKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistKindCol) Between(lo, hi deskcase.ChecklistKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ChecklistKindCol) To(v deskcase.ChecklistKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c ChecklistKindCol) To(v deskcase.ChecklistKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c ChecklistKindCol) In(vs ...deskcase.ChecklistKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistKindCol) NotIn(vs ...deskcase.ChecklistKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ItemKeyCol is a column of deskcase.ItemKey values.
-type ItemKeyCol struct{ keel.StringCol }
+type ItemKeyCol struct{ keel.TypedStringCol }
 
-func (c ItemKeyCol) Eq(v deskcase.ItemKey) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ItemKeyCol) Ne(v deskcase.ItemKey) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ItemKeyCol) Gt(v deskcase.ItemKey) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ItemKeyCol) Gte(v deskcase.ItemKey) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ItemKeyCol) Lt(v deskcase.ItemKey) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ItemKeyCol) Lte(v deskcase.ItemKey) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ItemKeyCol) Eq(v deskcase.ItemKey) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ItemKeyCol) Ne(v deskcase.ItemKey) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ItemKeyCol) Gt(v deskcase.ItemKey) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ItemKeyCol) Gte(v deskcase.ItemKey) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ItemKeyCol) Lt(v deskcase.ItemKey) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ItemKeyCol) Lte(v deskcase.ItemKey) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ItemKeyCol) IsDistinctFrom(v deskcase.ItemKey) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ItemKeyCol) Between(lo, hi deskcase.ItemKey) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ItemKeyCol) To(v deskcase.ItemKey) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ItemKeyCol) In(vs ...deskcase.ItemKey) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c ItemKeyCol) To(v deskcase.ItemKey) keel.Assignment { return c.Text().To(string(v)) }
+func (c ItemKeyCol) In(vs ...deskcase.ItemKey) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c ItemKeyCol) NotIn(vs ...deskcase.ItemKey) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SnoozeAnchorCol is a column of deskcase.SnoozeAnchor values.
-type SnoozeAnchorCol struct{ keel.StringCol }
+type SnoozeAnchorCol struct{ keel.TypedStringCol }
 
-func (c SnoozeAnchorCol) Eq(v deskcase.SnoozeAnchor) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SnoozeAnchorCol) Ne(v deskcase.SnoozeAnchor) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SnoozeAnchorCol) Gt(v deskcase.SnoozeAnchor) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SnoozeAnchorCol) Gte(v deskcase.SnoozeAnchor) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SnoozeAnchorCol) Lt(v deskcase.SnoozeAnchor) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SnoozeAnchorCol) Lte(v deskcase.SnoozeAnchor) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SnoozeAnchorCol) Eq(v deskcase.SnoozeAnchor) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SnoozeAnchorCol) Ne(v deskcase.SnoozeAnchor) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SnoozeAnchorCol) Gt(v deskcase.SnoozeAnchor) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SnoozeAnchorCol) Gte(v deskcase.SnoozeAnchor) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SnoozeAnchorCol) Lt(v deskcase.SnoozeAnchor) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SnoozeAnchorCol) Lte(v deskcase.SnoozeAnchor) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SnoozeAnchorCol) IsDistinctFrom(v deskcase.SnoozeAnchor) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SnoozeAnchorCol) Between(lo, hi deskcase.SnoozeAnchor) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SnoozeAnchorCol) To(v deskcase.SnoozeAnchor) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c SnoozeAnchorCol) To(v deskcase.SnoozeAnchor) keel.Assignment { return c.Text().To(string(v)) }
 func (c SnoozeAnchorCol) In(vs ...deskcase.SnoozeAnchor) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SnoozeAnchorCol) NotIn(vs ...deskcase.SnoozeAnchor) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

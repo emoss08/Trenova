@@ -75,12 +75,12 @@ type QuestionsTable struct {
 // Questions references the assistant_palette_questions table.
 var Questions = &QuestionsTable{
 	TableBase:      keel.TableBase{Ref: &questionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 3}}},
-	Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 4}}},
-	KeptThreadID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &questionsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 3}}},
+	Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 4}}},
+	KeptThreadID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &questionsRef, Index: 5}}},
 	KeepClaimedAt:  keel.Int64Col{Col: keel.Col{Ref: &questionsRef, Index: 6}},
 	FinishedAt:     keel.Int64Col{Col: keel.Col{Ref: &questionsRef, Index: 7}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &questionsRef, Index: 8}},
@@ -92,12 +92,12 @@ var Questions = &QuestionsTable{
 func BuildQuestions(r *keel.Ref) *QuestionsTable {
 	return &QuestionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:         StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		KeptThreadID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:         StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		KeptThreadID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		KeepClaimedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		FinishedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -121,8 +121,6 @@ func (t *QuestionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*p
 
 // QuestionsQuery is a query over palettequestion.Question.
 type QuestionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*palettequestion.Question] = (*QuestionsTable)(nil)
 
 var _ keel.Query[*palettequestion.Question] = (*QuestionsQuery)(nil)
 
@@ -238,42 +236,42 @@ func (t *QuestionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*palet
 
 // Create inserts row.
 func (t *QuestionsTable) Create(ctx context.Context, db *keel.DB, row *palettequestion.Question) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *QuestionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*palettequestion.Question) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *QuestionsTable) Save(ctx context.Context, db *keel.DB, row *palettequestion.Question, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *QuestionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *palettequestion.Question, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *QuestionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *palettequestion.Question) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *QuestionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*palettequestion.Question, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *QuestionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*palettequestion.Question, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *QuestionsTable) Copy(ctx context.Context, db *keel.DB, rows []*palettequestion.Question) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -445,37 +443,45 @@ func (q *QuestionsQuery) Clone() keel.Query[*palettequestion.Question] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *QuestionsQuery) One(ctx context.Context, db *keel.DB) (*palettequestion.Question, error) {
-	return keel.One[*palettequestion.Question](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*palettequestion.Question)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *QuestionsQuery) First(ctx context.Context, db *keel.DB) (*palettequestion.Question, error) {
-	return keel.First[*palettequestion.Question](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*palettequestion.Question)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *QuestionsQuery) List(ctx context.Context, db *keel.DB) ([]*palettequestion.Question, error) {
-	return keel.List[*palettequestion.Question](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*palettequestion.Question)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *QuestionsQuery) All(ctx context.Context, db *keel.DB) ([]*palettequestion.Question, error) {
-	return keel.All[*palettequestion.Question](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*palettequestion.Question)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *QuestionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*palettequestion.Question, error) {
-	return keel.UpdateReturning[*palettequestion.Question](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*palettequestion.Question)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *QuestionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*palettequestion.Question], error) {
-	return keel.PageOf[*palettequestion.Question](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*palettequestion.Question])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *QuestionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*palettequestion.Question) error) error {
-	return keel.Each[*palettequestion.Question](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*palettequestion.Question)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newQuestion() unsafe.Pointer { return unsafe.Pointer(new(palettequestion.Question)) }
@@ -630,11 +636,11 @@ type ToolCallsTable struct {
 // ToolCalls references the assistant_palette_tool_calls table.
 var ToolCalls = &ToolCallsTable{
 	TableBase:      keel.TableBase{Ref: &toolCallsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 2}}},
-	QuestionID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 3}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 2}}},
+	QuestionID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 4}}},
 	CallID:         keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 5}},
 	Sequence:       keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 6}},
 	Model:          keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 7}},
@@ -642,7 +648,7 @@ var ToolCalls = &ToolCallsTable{
 	Arguments:      keel.JSONBCol{Col: keel.Col{Ref: &toolCallsRef, Index: 9}},
 	Read:           keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 10}},
 	Params:         keel.JSONBCol{Col: keel.Col{Ref: &toolCallsRef, Index: 11}},
-	Outcome:        ToolCallOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 12}}},
+	Outcome:        ToolCallOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 12}}},
 	Reason:         keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 13}},
 	Summary:        keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 14}},
 	Records:        keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 15}},
@@ -656,11 +662,11 @@ var ToolCalls = &ToolCallsTable{
 func BuildToolCalls(r *keel.Ref) *ToolCallsTable {
 	return &ToolCallsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		QuestionID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		QuestionID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CallID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Sequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Model:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -668,7 +674,7 @@ func BuildToolCalls(r *keel.Ref) *ToolCallsTable {
 		Arguments:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		Read:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Params:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		Outcome:        ToolCallOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Outcome:        ToolCallOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Summary:        keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Records:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -694,8 +700,6 @@ func (t *ToolCallsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*p
 
 // ToolCallsQuery is a query over palettequestion.ToolCall.
 type ToolCallsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*palettequestion.ToolCall] = (*ToolCallsTable)(nil)
 
 var _ keel.Query[*palettequestion.ToolCall] = (*ToolCallsQuery)(nil)
 
@@ -811,42 +815,42 @@ func (t *ToolCallsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*palet
 
 // Create inserts row.
 func (t *ToolCallsTable) Create(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ToolCallsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ToolCallsTable) Save(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ToolCallsTable) SaveExcept(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ToolCallsTable) DeleteRow(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ToolCallsTable) Upsert(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ToolCallsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ToolCallsTable) Copy(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1018,37 +1022,45 @@ func (q *ToolCallsQuery) Clone() keel.Query[*palettequestion.ToolCall] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ToolCallsQuery) One(ctx context.Context, db *keel.DB) (*palettequestion.ToolCall, error) {
-	return keel.One[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*palettequestion.ToolCall)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ToolCallsQuery) First(ctx context.Context, db *keel.DB) (*palettequestion.ToolCall, error) {
-	return keel.First[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*palettequestion.ToolCall)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ToolCallsQuery) List(ctx context.Context, db *keel.DB) ([]*palettequestion.ToolCall, error) {
-	return keel.List[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*palettequestion.ToolCall)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ToolCallsQuery) All(ctx context.Context, db *keel.DB) ([]*palettequestion.ToolCall, error) {
-	return keel.All[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*palettequestion.ToolCall)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ToolCallsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*palettequestion.ToolCall, error) {
-	return keel.UpdateReturning[*palettequestion.ToolCall](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*palettequestion.ToolCall)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ToolCallsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*palettequestion.ToolCall], error) {
-	return keel.PageOf[*palettequestion.ToolCall](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*palettequestion.ToolCall])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ToolCallsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*palettequestion.ToolCall) error) error {
-	return keel.Each[*palettequestion.ToolCall](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*palettequestion.ToolCall)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newToolCall() unsafe.Pointer { return unsafe.Pointer(new(palettequestion.ToolCall)) }
@@ -1186,61 +1198,61 @@ var enumToolCallOutcome = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of palettequestion.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v palettequestion.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v palettequestion.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v palettequestion.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v palettequestion.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v palettequestion.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v palettequestion.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v palettequestion.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v palettequestion.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v palettequestion.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v palettequestion.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v palettequestion.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v palettequestion.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v palettequestion.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi palettequestion.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v palettequestion.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v palettequestion.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...palettequestion.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...palettequestion.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ToolCallOutcomeCol is a column of palettequestion.ToolCallOutcome values.
-type ToolCallOutcomeCol struct{ keel.StringCol }
+type ToolCallOutcomeCol struct{ keel.TypedStringCol }
 
 func (c ToolCallOutcomeCol) Eq(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ToolCallOutcomeCol) Ne(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ToolCallOutcomeCol) Gt(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ToolCallOutcomeCol) Gte(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ToolCallOutcomeCol) Lt(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ToolCallOutcomeCol) Lte(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ToolCallOutcomeCol) IsDistinctFrom(v palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ToolCallOutcomeCol) Between(lo, hi palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ToolCallOutcomeCol) To(v palettequestion.ToolCallOutcome) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ToolCallOutcomeCol) In(vs ...palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ToolCallOutcomeCol) NotIn(vs ...palettequestion.ToolCallOutcome) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

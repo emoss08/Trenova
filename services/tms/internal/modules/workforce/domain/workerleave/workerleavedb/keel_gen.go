@@ -86,10 +86,10 @@ type LeaveControlsTable struct {
 // LeaveControls references the leave_controls table.
 var LeaveControls = &LeaveControlsTable{
 	TableBase:              keel.TableBase{Ref: &leaveControlsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 2}}},
-	MeasurementMethod:      LeaveMeasurementMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 3}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 2}}},
+	MeasurementMethod:      LeaveMeasurementMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 3}}},
 	EntitlementWeeks:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 4}}},
 	MilitaryCaregiverWeeks: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 5}}},
 	WorkweekHours:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &leaveControlsRef, Index: 6}}},
@@ -105,10 +105,10 @@ var LeaveControls = &LeaveControlsTable{
 func BuildLeaveControls(r *keel.Ref) *LeaveControlsTable {
 	return &LeaveControlsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MeasurementMethod:      LeaveMeasurementMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MeasurementMethod:      LeaveMeasurementMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		EntitlementWeeks:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 4}}},
 		MilitaryCaregiverWeeks: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		WorkweekHours:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
@@ -136,8 +136,6 @@ func (t *LeaveControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // LeaveControlsQuery is a query over workerleave.LeaveControl.
 type LeaveControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerleave.LeaveControl] = (*LeaveControlsTable)(nil)
 
 var _ keel.Query[*workerleave.LeaveControl] = (*LeaveControlsQuery)(nil)
 
@@ -253,42 +251,42 @@ func (t *LeaveControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*w
 
 // Create inserts row.
 func (t *LeaveControlsTable) Create(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LeaveControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LeaveControlsTable) Save(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LeaveControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LeaveControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.LeaveControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LeaveControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LeaveControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LeaveControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.LeaveControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -460,37 +458,45 @@ func (q *LeaveControlsQuery) Clone() keel.Query[*workerleave.LeaveControl] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LeaveControlsQuery) One(ctx context.Context, db *keel.DB) (*workerleave.LeaveControl, error) {
-	return keel.One[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerleave.LeaveControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LeaveControlsQuery) First(ctx context.Context, db *keel.DB) (*workerleave.LeaveControl, error) {
-	return keel.First[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerleave.LeaveControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LeaveControlsQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.LeaveControl, error) {
-	return keel.List[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.LeaveControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LeaveControlsQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.LeaveControl, error) {
-	return keel.All[*workerleave.LeaveControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.LeaveControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LeaveControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.LeaveControl, error) {
-	return keel.UpdateReturning[*workerleave.LeaveControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerleave.LeaveControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LeaveControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.LeaveControl], error) {
-	return keel.PageOf[*workerleave.LeaveControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerleave.LeaveControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LeaveControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.LeaveControl) error) error {
-	return keel.Each[*workerleave.LeaveControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerleave.LeaveControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLeaveControl() unsafe.Pointer { return unsafe.Pointer(new(workerleave.LeaveControl)) }
@@ -675,13 +681,13 @@ type WorkerLeaveCasesTable struct {
 // WorkerLeaveCases references the worker_leave_cases table.
 var WorkerLeaveCases = &WorkerLeaveCasesTable{
 	TableBase:                keel.TableBase{Ref: &workerLeaveCasesRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 2}}},
-	WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 3}}},
-	LeaveType:                workerdb.LeaveTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 4}}},
-	Status:                   LeaveCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 5}}},
-	Frequency:                LeaveFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 6}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 2}}},
+	WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 3}}},
+	LeaveType:                workerdb.LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 4}}},
+	Status:                   LeaveCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 5}}},
+	Frequency:                LeaveFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 6}}},
 	Reason:                   keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 7}},
 	FMLADesignated:           keel.BoolCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 8}},
 	MilitaryCaregiver:        keel.BoolCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 9}},
@@ -690,17 +696,17 @@ var WorkerLeaveCases = &WorkerLeaveCasesTable{
 	EndsAt:                   keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 12}},
 	DecidedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 13}},
 	ClosedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 14}},
-	CertificationStatus:      LeaveCertificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 15}}},
+	CertificationStatus:      LeaveCertificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 15}}},
 	CertificationRequestedAt: keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 16}},
 	CertificationDueAt:       keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 17}},
 	CertificationReceivedAt:  keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 18}},
 	RecertificationDueAt:     keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 19}},
 	EligibilityHoursWorked:   keel.Int32Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 20}},
-	EmploymentEventID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 21}}},
-	DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 22}}},
+	EmploymentEventID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 21}}},
+	DocumentID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 22}}},
 	Notes:                    keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 23}},
-	DecidedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 24}}},
-	RecordedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 25}}},
+	DecidedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 24}}},
+	RecordedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 25}}},
 	Version:                  keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 26}},
 	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 27}},
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveCasesRef, Index: 28}},
@@ -710,13 +716,13 @@ var WorkerLeaveCases = &WorkerLeaveCasesTable{
 func BuildWorkerLeaveCases(r *keel.Ref) *WorkerLeaveCasesTable {
 	return &WorkerLeaveCasesTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		LeaveType:                workerdb.LeaveTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                   LeaveCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Frequency:                LeaveFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		LeaveType:                workerdb.LeaveTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                   LeaveCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Frequency:                LeaveFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Reason:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		FMLADesignated:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		MilitaryCaregiver:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -725,17 +731,17 @@ func BuildWorkerLeaveCases(r *keel.Ref) *WorkerLeaveCasesTable {
 		EndsAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		DecidedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ClosedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		CertificationStatus:      LeaveCertificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CertificationStatus:      LeaveCertificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		CertificationRequestedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CertificationDueAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		CertificationReceivedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		RecertificationDueAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		EligibilityHoursWorked:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 20}},
-		EmploymentEventID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		EmploymentEventID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		DocumentID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		Notes:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		DecidedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		RecordedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		DecidedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		RecordedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -777,8 +783,6 @@ func (t *WorkerLeaveCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // WorkerLeaveCasesQuery is a query over workerleave.WorkerLeaveCase.
 type WorkerLeaveCasesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerleave.WorkerLeaveCase] = (*WorkerLeaveCasesTable)(nil)
 
 var _ keel.Query[*workerleave.WorkerLeaveCase] = (*WorkerLeaveCasesQuery)(nil)
 
@@ -894,42 +898,42 @@ func (t *WorkerLeaveCasesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *WorkerLeaveCasesTable) Create(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerLeaveCasesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerLeaveCasesTable) Save(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerLeaveCasesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerLeaveCasesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveCase) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerLeaveCasesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerLeaveCasesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerLeaveCasesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveCase) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1101,37 +1105,45 @@ func (q *WorkerLeaveCasesQuery) Clone() keel.Query[*workerleave.WorkerLeaveCase]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerLeaveCasesQuery) One(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveCase, error) {
-	return keel.One[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerleave.WorkerLeaveCase)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerLeaveCasesQuery) First(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveCase, error) {
-	return keel.First[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerleave.WorkerLeaveCase)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerLeaveCasesQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveCase, error) {
-	return keel.List[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.WorkerLeaveCase)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerLeaveCasesQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveCase, error) {
-	return keel.All[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.WorkerLeaveCase)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerLeaveCasesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.WorkerLeaveCase, error) {
-	return keel.UpdateReturning[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerleave.WorkerLeaveCase)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerLeaveCasesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.WorkerLeaveCase], error) {
-	return keel.PageOf[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerleave.WorkerLeaveCase])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerLeaveCasesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.WorkerLeaveCase) error) error {
-	return keel.Each[*workerleave.WorkerLeaveCase](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerleave.WorkerLeaveCase)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerLeaveCase() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveCase)) }
@@ -1402,17 +1414,17 @@ type WorkerLeaveEntriesTable struct {
 // WorkerLeaveEntries references the worker_leave_entries table.
 var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
 	TableBase:                keel.TableBase{Ref: &workerLeaveEntriesRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 2}}},
-	WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 3}}},
-	LeaveCaseID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 4}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 2}}},
+	WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 3}}},
+	LeaveCaseID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 4}}},
 	UsedOn:                   keel.Int64Col{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 5}},
 	Hours:                    keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 6}}},
 	CountsAgainstEntitlement: keel.BoolCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 7}},
-	PTOID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 8}}},
+	PTOID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 8}}},
 	Notes:                    keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 9}},
-	RecordedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 10}}},
+	RecordedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 10}}},
 	Version:                  keel.Int64Col{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 11}},
 	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 12}},
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerLeaveEntriesRef, Index: 13}},
@@ -1422,17 +1434,17 @@ var WorkerLeaveEntries = &WorkerLeaveEntriesTable{
 func BuildWorkerLeaveEntries(r *keel.Ref) *WorkerLeaveEntriesTable {
 	return &WorkerLeaveEntriesTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		LeaveCaseID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		LeaveCaseID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		UsedOn:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Hours:                    keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CountsAgainstEntitlement: keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		PTOID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		PTOID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Notes:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		RecordedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		RecordedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -1459,8 +1471,6 @@ func (t *WorkerLeaveEntriesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // WorkerLeaveEntriesQuery is a query over workerleave.WorkerLeaveEntry.
 type WorkerLeaveEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerleave.WorkerLeaveEntry] = (*WorkerLeaveEntriesTable)(nil)
 
 var _ keel.Query[*workerleave.WorkerLeaveEntry] = (*WorkerLeaveEntriesQuery)(nil)
 
@@ -1576,42 +1586,42 @@ func (t *WorkerLeaveEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *WorkerLeaveEntriesTable) Create(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerLeaveEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerLeaveEntriesTable) Save(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerLeaveEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerLeaveEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerleave.WorkerLeaveEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerLeaveEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerLeaveEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerLeaveEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerleave.WorkerLeaveEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1783,37 +1793,45 @@ func (q *WorkerLeaveEntriesQuery) Clone() keel.Query[*workerleave.WorkerLeaveEnt
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerLeaveEntriesQuery) One(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveEntry, error) {
-	return keel.One[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerleave.WorkerLeaveEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerLeaveEntriesQuery) First(ctx context.Context, db *keel.DB) (*workerleave.WorkerLeaveEntry, error) {
-	return keel.First[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerleave.WorkerLeaveEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerLeaveEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveEntry, error) {
-	return keel.List[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.WorkerLeaveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerLeaveEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*workerleave.WorkerLeaveEntry, error) {
-	return keel.All[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerleave.WorkerLeaveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerLeaveEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerleave.WorkerLeaveEntry, error) {
-	return keel.UpdateReturning[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerleave.WorkerLeaveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerLeaveEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerleave.WorkerLeaveEntry], error) {
-	return keel.PageOf[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerleave.WorkerLeaveEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerLeaveEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerleave.WorkerLeaveEntry) error) error {
-	return keel.Each[*workerleave.WorkerLeaveEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerleave.WorkerLeaveEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerLeaveEntry() unsafe.Pointer { return unsafe.Pointer(new(workerleave.WorkerLeaveEntry)) }
@@ -1956,149 +1974,141 @@ var enumWorkerLeaveType = [...]schema.EnumValue{
 }
 
 // LeaveCaseStatusCol is a column of workerleave.LeaveCaseStatus values.
-type LeaveCaseStatusCol struct{ keel.StringCol }
+type LeaveCaseStatusCol struct{ keel.TypedStringCol }
 
 func (c LeaveCaseStatusCol) Eq(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LeaveCaseStatusCol) Ne(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LeaveCaseStatusCol) Gt(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LeaveCaseStatusCol) Gte(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LeaveCaseStatusCol) Lt(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LeaveCaseStatusCol) Lte(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LeaveCaseStatusCol) IsDistinctFrom(v workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LeaveCaseStatusCol) Between(lo, hi workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LeaveCaseStatusCol) To(v workerleave.LeaveCaseStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LeaveCaseStatusCol) In(vs ...workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LeaveCaseStatusCol) NotIn(vs ...workerleave.LeaveCaseStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LeaveCertificationStatusCol is a column of workerleave.LeaveCertificationStatus values.
-type LeaveCertificationStatusCol struct{ keel.StringCol }
+type LeaveCertificationStatusCol struct{ keel.TypedStringCol }
 
 func (c LeaveCertificationStatusCol) Eq(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LeaveCertificationStatusCol) Ne(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LeaveCertificationStatusCol) Gt(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LeaveCertificationStatusCol) Gte(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LeaveCertificationStatusCol) Lt(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LeaveCertificationStatusCol) Lte(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LeaveCertificationStatusCol) IsDistinctFrom(v workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LeaveCertificationStatusCol) Between(lo, hi workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LeaveCertificationStatusCol) To(v workerleave.LeaveCertificationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LeaveCertificationStatusCol) In(vs ...workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LeaveCertificationStatusCol) NotIn(vs ...workerleave.LeaveCertificationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LeaveFrequencyCol is a column of workerleave.LeaveFrequency values.
-type LeaveFrequencyCol struct{ keel.StringCol }
+type LeaveFrequencyCol struct{ keel.TypedStringCol }
 
-func (c LeaveFrequencyCol) Eq(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c LeaveFrequencyCol) Ne(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c LeaveFrequencyCol) Gt(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c LeaveFrequencyCol) Eq(v workerleave.LeaveFrequency) keel.Pred { return c.Text().Eq(string(v)) }
+func (c LeaveFrequencyCol) Ne(v workerleave.LeaveFrequency) keel.Pred { return c.Text().Ne(string(v)) }
+func (c LeaveFrequencyCol) Gt(v workerleave.LeaveFrequency) keel.Pred { return c.Text().Gt(string(v)) }
 func (c LeaveFrequencyCol) Gte(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c LeaveFrequencyCol) Lt(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c LeaveFrequencyCol) Lt(v workerleave.LeaveFrequency) keel.Pred { return c.Text().Lt(string(v)) }
 func (c LeaveFrequencyCol) Lte(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LeaveFrequencyCol) IsDistinctFrom(v workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LeaveFrequencyCol) Between(lo, hi workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LeaveFrequencyCol) To(v workerleave.LeaveFrequency) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LeaveFrequencyCol) In(vs ...workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LeaveFrequencyCol) NotIn(vs ...workerleave.LeaveFrequency) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LeaveMeasurementMethodCol is a column of workerleave.LeaveMeasurementMethod values.
-type LeaveMeasurementMethodCol struct{ keel.StringCol }
+type LeaveMeasurementMethodCol struct{ keel.TypedStringCol }
 
 func (c LeaveMeasurementMethodCol) Eq(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LeaveMeasurementMethodCol) Ne(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LeaveMeasurementMethodCol) Gt(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LeaveMeasurementMethodCol) Gte(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LeaveMeasurementMethodCol) Lt(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LeaveMeasurementMethodCol) Lte(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LeaveMeasurementMethodCol) IsDistinctFrom(v workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LeaveMeasurementMethodCol) Between(lo, hi workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LeaveMeasurementMethodCol) To(v workerleave.LeaveMeasurementMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LeaveMeasurementMethodCol) In(vs ...workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LeaveMeasurementMethodCol) NotIn(vs ...workerleave.LeaveMeasurementMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -92,14 +92,14 @@ type CostCategoriesTable struct {
 // CostCategories references the cost_categories table.
 var CostCategories = &CostCategoriesTable{
 	TableBase:            keel.TableBase{Ref: &costCategoriesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 2}}},
-	CostingControlID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 3}}},
-	Category:             CategoryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 2}}},
+	CostingControlID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 3}}},
+	Category:             CategoryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 4}}},
 	Name:                 keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 5}},
-	CostBehavior:         CostBehaviorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 6}}},
-	RateSource:           RateSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 7}}},
+	CostBehavior:         CostBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 6}}},
+	RateSource:           RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 7}}},
 	BenchmarkRatePerMile: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 8}}},
 	OverrideRatePerMile:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 9}}},
 	IsActive:             keel.BoolCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 10}},
@@ -113,14 +113,14 @@ var CostCategories = &CostCategoriesTable{
 func BuildCostCategories(r *keel.Ref) *CostCategoriesTable {
 	return &CostCategoriesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CostingControlID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Category:             CategoryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CostingControlID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Category:             CategoryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Name:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		CostBehavior:         CostBehaviorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RateSource:           RateSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CostBehavior:         CostBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RateSource:           RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		BenchmarkRatePerMile: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		OverrideRatePerMile:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
 		IsActive:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -151,8 +151,6 @@ func (t *CostCategoriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // CostCategoriesQuery is a query over costingcontrol.CostCategory.
 type CostCategoriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*costingcontrol.CostCategory] = (*CostCategoriesTable)(nil)
 
 var _ keel.Query[*costingcontrol.CostCategory] = (*CostCategoriesQuery)(nil)
 
@@ -268,42 +266,42 @@ func (t *CostCategoriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *CostCategoriesTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CostCategoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CostCategoriesTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CostCategoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CostCategoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CostCategoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CostCategoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CostCategoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -475,37 +473,45 @@ func (q *CostCategoriesQuery) Clone() keel.Query[*costingcontrol.CostCategory] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CostCategoriesQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategory, error) {
-	return keel.One[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostCategory)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CostCategoriesQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategory, error) {
-	return keel.First[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostCategory)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CostCategoriesQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategory, error) {
-	return keel.List[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostCategory)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CostCategoriesQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategory, error) {
-	return keel.All[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostCategory)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CostCategoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostCategory, error) {
-	return keel.UpdateReturning[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*costingcontrol.CostCategory)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CostCategoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostCategory], error) {
-	return keel.PageOf[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*costingcontrol.CostCategory])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CostCategoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostCategory) error) error {
-	return keel.Each[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*costingcontrol.CostCategory)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCostCategory() unsafe.Pointer { return unsafe.Pointer(new(costingcontrol.CostCategory)) }
@@ -654,11 +660,11 @@ type CostCategoryGLAccountsTable struct {
 // CostCategoryGLAccounts references the cost_category_gl_accounts table.
 var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
 	TableBase:      keel.TableBase{Ref: &costCategoryGLAccountsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 2}}},
-	CostCategoryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 3}}},
-	GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 2}}},
+	CostCategoryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 3}}},
+	GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 4}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 5}},
 }
 
@@ -666,11 +672,11 @@ var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
 func BuildCostCategoryGLAccounts(r *keel.Ref) *CostCategoryGLAccountsTable {
 	return &CostCategoryGLAccountsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CostCategoryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CostCategoryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 	}
 }
@@ -695,8 +701,6 @@ func (t *CostCategoryGLAccountsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // CostCategoryGLAccountsQuery is a query over costingcontrol.CostCategoryGLAccount.
 type CostCategoryGLAccountsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*costingcontrol.CostCategoryGLAccount] = (*CostCategoryGLAccountsTable)(nil)
 
 var _ keel.Query[*costingcontrol.CostCategoryGLAccount] = (*CostCategoryGLAccountsQuery)(nil)
 
@@ -812,42 +816,42 @@ func (t *CostCategoryGLAccountsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *CostCategoryGLAccountsTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CostCategoryGLAccountsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CostCategoryGLAccountsTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CostCategoryGLAccountsTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CostCategoryGLAccountsTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CostCategoryGLAccountsTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CostCategoryGLAccountsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CostCategoryGLAccountsTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1019,37 +1023,45 @@ func (q *CostCategoryGLAccountsQuery) Clone() keel.Query[*costingcontrol.CostCat
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CostCategoryGLAccountsQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategoryGLAccount, error) {
-	return keel.One[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostCategoryGLAccount)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CostCategoryGLAccountsQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategoryGLAccount, error) {
-	return keel.First[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostCategoryGLAccount)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CostCategoryGLAccountsQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategoryGLAccount, error) {
-	return keel.List[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostCategoryGLAccount)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CostCategoryGLAccountsQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategoryGLAccount, error) {
-	return keel.All[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostCategoryGLAccount)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CostCategoryGLAccountsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostCategoryGLAccount, error) {
-	return keel.UpdateReturning[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*costingcontrol.CostCategoryGLAccount)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CostCategoryGLAccountsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostCategoryGLAccount], error) {
-	return keel.PageOf[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*costingcontrol.CostCategoryGLAccount])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CostCategoryGLAccountsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostCategoryGLAccount) error) error {
-	return keel.Each[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*costingcontrol.CostCategoryGLAccount)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCostCategoryGLAccount() unsafe.Pointer {
@@ -1178,10 +1190,10 @@ type CostingControlsTable struct {
 // CostingControls references the costing_controls table.
 var CostingControls = &CostingControlsTable{
 	TableBase:            keel.TableBase{Ref: &costingControlsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 2}}},
-	FuelIndexID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 2}}},
+	FuelIndexID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 3}}},
 	UseLiveFuelPrice:     keel.BoolCol{Col: keel.Col{Ref: &costingControlsRef, Index: 4}},
 	MilesPerGallon:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &costingControlsRef, Index: 5}}},
 	IncludeDeadheadMiles: keel.BoolCol{Col: keel.Col{Ref: &costingControlsRef, Index: 6}},
@@ -1198,10 +1210,10 @@ var CostingControls = &CostingControlsTable{
 func BuildCostingControls(r *keel.Ref) *CostingControlsTable {
 	return &CostingControlsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FuelIndexID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FuelIndexID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		UseLiveFuelPrice:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
 		MilesPerGallon:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		IncludeDeadheadMiles: keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -1240,8 +1252,6 @@ func (t *CostingControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // CostingControlsQuery is a query over costingcontrol.CostingControl.
 type CostingControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*costingcontrol.CostingControl] = (*CostingControlsTable)(nil)
 
 var _ keel.Query[*costingcontrol.CostingControl] = (*CostingControlsQuery)(nil)
 
@@ -1357,42 +1367,42 @@ func (t *CostingControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *CostingControlsTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CostingControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CostingControlsTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CostingControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CostingControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CostingControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CostingControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CostingControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1564,37 +1574,45 @@ func (q *CostingControlsQuery) Clone() keel.Query[*costingcontrol.CostingControl
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CostingControlsQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostingControl, error) {
-	return keel.One[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostingControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CostingControlsQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostingControl, error) {
-	return keel.First[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*costingcontrol.CostingControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CostingControlsQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostingControl, error) {
-	return keel.List[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostingControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CostingControlsQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostingControl, error) {
-	return keel.All[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*costingcontrol.CostingControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CostingControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostingControl, error) {
-	return keel.UpdateReturning[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*costingcontrol.CostingControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CostingControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostingControl], error) {
-	return keel.PageOf[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*costingcontrol.CostingControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CostingControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostingControl) error) error {
-	return keel.Each[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*costingcontrol.CostingControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCostingControl() unsafe.Pointer { return unsafe.Pointer(new(costingcontrol.CostingControl)) }
@@ -1726,100 +1744,74 @@ var enumRateSource = [...]schema.EnumValue{
 }
 
 // CategoryTypeCol is a column of costingcontrol.CategoryType values.
-type CategoryTypeCol struct{ keel.StringCol }
+type CategoryTypeCol struct{ keel.TypedStringCol }
 
-func (c CategoryTypeCol) Eq(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CategoryTypeCol) Ne(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CategoryTypeCol) Gt(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CategoryTypeCol) Gte(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CategoryTypeCol) Lt(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CategoryTypeCol) Lte(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c CategoryTypeCol) Eq(v costingcontrol.CategoryType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CategoryTypeCol) Ne(v costingcontrol.CategoryType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CategoryTypeCol) Gt(v costingcontrol.CategoryType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CategoryTypeCol) Gte(v costingcontrol.CategoryType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CategoryTypeCol) Lt(v costingcontrol.CategoryType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CategoryTypeCol) Lte(v costingcontrol.CategoryType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CategoryTypeCol) IsDistinctFrom(v costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CategoryTypeCol) Between(lo, hi costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CategoryTypeCol) To(v costingcontrol.CategoryType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CategoryTypeCol) In(vs ...costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CategoryTypeCol) NotIn(vs ...costingcontrol.CategoryType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CostBehaviorCol is a column of costingcontrol.CostBehavior values.
-type CostBehaviorCol struct{ keel.StringCol }
+type CostBehaviorCol struct{ keel.TypedStringCol }
 
-func (c CostBehaviorCol) Eq(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c CostBehaviorCol) Ne(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c CostBehaviorCol) Gt(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c CostBehaviorCol) Gte(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CostBehaviorCol) Lt(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c CostBehaviorCol) Lte(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c CostBehaviorCol) Eq(v costingcontrol.CostBehavior) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CostBehaviorCol) Ne(v costingcontrol.CostBehavior) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CostBehaviorCol) Gt(v costingcontrol.CostBehavior) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CostBehaviorCol) Gte(v costingcontrol.CostBehavior) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CostBehaviorCol) Lt(v costingcontrol.CostBehavior) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CostBehaviorCol) Lte(v costingcontrol.CostBehavior) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CostBehaviorCol) IsDistinctFrom(v costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CostBehaviorCol) Between(lo, hi costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CostBehaviorCol) To(v costingcontrol.CostBehavior) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CostBehaviorCol) In(vs ...costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CostBehaviorCol) NotIn(vs ...costingcontrol.CostBehavior) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateSourceCol is a column of costingcontrol.RateSource values.
-type RateSourceCol struct{ keel.StringCol }
+type RateSourceCol struct{ keel.TypedStringCol }
 
-func (c RateSourceCol) Eq(v costingcontrol.RateSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RateSourceCol) Ne(v costingcontrol.RateSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RateSourceCol) Gt(v costingcontrol.RateSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RateSourceCol) Gte(v costingcontrol.RateSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RateSourceCol) Lt(v costingcontrol.RateSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RateSourceCol) Lte(v costingcontrol.RateSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RateSourceCol) Eq(v costingcontrol.RateSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateSourceCol) Ne(v costingcontrol.RateSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateSourceCol) Gt(v costingcontrol.RateSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateSourceCol) Gte(v costingcontrol.RateSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateSourceCol) Lt(v costingcontrol.RateSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateSourceCol) Lte(v costingcontrol.RateSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateSourceCol) IsDistinctFrom(v costingcontrol.RateSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateSourceCol) Between(lo, hi costingcontrol.RateSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RateSourceCol) To(v costingcontrol.RateSource) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RateSourceCol) To(v costingcontrol.RateSource) keel.Assignment { return c.Text().To(string(v)) }
 func (c RateSourceCol) In(vs ...costingcontrol.RateSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateSourceCol) NotIn(vs ...costingcontrol.RateSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

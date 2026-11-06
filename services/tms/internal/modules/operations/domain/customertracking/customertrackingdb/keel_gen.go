@@ -83,19 +83,19 @@ type LinksTable struct {
 // Links references the customer_tracking_links table.
 var Links = &LinksTable{
 	TableBase:      keel.TableBase{Ref: &linksRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 2}}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 3}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 2}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 3}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 4}}},
 	TokenHash:      keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 5}},
-	Purpose:        LinkPurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 6}}},
+	Purpose:        LinkPurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 6}}},
 	RecipientEmail: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 7}},
 	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 8}},
 	RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 9}},
 	LastViewedAt:   keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 10}},
 	ViewCount:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 11}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 12}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &linksRef, Index: 12}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 13}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 14}},
 }
@@ -104,19 +104,19 @@ var Links = &LinksTable{
 func BuildLinks(r *keel.Ref) *LinksTable {
 	return &LinksTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TokenHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Purpose:        LinkPurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Purpose:        LinkPurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		RecipientEmail: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		LastViewedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ViewCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 	}
@@ -135,8 +135,6 @@ func (t *LinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*custo
 
 // LinksQuery is a query over customertracking.Link.
 type LinksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customertracking.Link] = (*LinksTable)(nil)
 
 var _ keel.Query[*customertracking.Link] = (*LinksQuery)(nil)
 
@@ -252,42 +250,42 @@ func (t *LinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customert
 
 // Create inserts row.
 func (t *LinksTable) Create(ctx context.Context, db *keel.DB, row *customertracking.Link) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customertracking.Link) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LinksTable) Save(ctx context.Context, db *keel.DB, row *customertracking.Link, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *customertracking.Link, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *customertracking.Link) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*customertracking.Link, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customertracking.Link, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LinksTable) Copy(ctx context.Context, db *keel.DB, rows []*customertracking.Link) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -459,37 +457,45 @@ func (q *LinksQuery) Clone() keel.Query[*customertracking.Link] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LinksQuery) One(ctx context.Context, db *keel.DB) (*customertracking.Link, error) {
-	return keel.One[*customertracking.Link](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customertracking.Link)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LinksQuery) First(ctx context.Context, db *keel.DB) (*customertracking.Link, error) {
-	return keel.First[*customertracking.Link](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customertracking.Link)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LinksQuery) List(ctx context.Context, db *keel.DB) ([]*customertracking.Link, error) {
-	return keel.List[*customertracking.Link](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customertracking.Link)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LinksQuery) All(ctx context.Context, db *keel.DB) ([]*customertracking.Link, error) {
-	return keel.All[*customertracking.Link](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customertracking.Link)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customertracking.Link, error) {
-	return keel.UpdateReturning[*customertracking.Link](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customertracking.Link)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customertracking.Link], error) {
-	return keel.PageOf[*customertracking.Link](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customertracking.Link])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customertracking.Link) error) error {
-	return keel.Each[*customertracking.Link](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customertracking.Link)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLink() unsafe.Pointer { return unsafe.Pointer(new(customertracking.Link)) }
@@ -666,21 +672,21 @@ type NotificationsTable struct {
 // Notifications references the customer_status_notifications table.
 var Notifications = &NotificationsTable{
 	TableBase:      keel.TableBase{Ref: &notificationsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 3}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 4}}},
-	Event:          EventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 3}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 4}}},
+	Event:          EventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 5}}},
 	SubjectKey:     keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 6}},
-	StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 7}}},
+	StopID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 7}}},
 	OccurredAt:     keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 8}},
 	EstimatedAt:    keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 9}},
-	Status:         NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 10}}},
-	SkipReason:     SkipReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 11}}},
+	Status:         NotificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 10}}},
+	SkipReason:     SkipReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 11}}},
 	Recipients:     keel.StringArrayCol{Col: keel.Col{Ref: &notificationsRef, Index: 12}},
-	LinkID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 13}}},
-	EmailMessageID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 14}}},
+	LinkID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 13}}},
+	EmailMessageID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 14}}},
 	Attempts:       keel.Int16Col{Col: keel.Col{Ref: &notificationsRef, Index: 15}},
 	LastError:      keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 16}},
 	NextAttemptAt:  keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 17}},
@@ -693,21 +699,21 @@ var Notifications = &NotificationsTable{
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Event:          EventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Event:          EventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SubjectKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		StopID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		OccurredAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		EstimatedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		Status:         NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		SkipReason:     SkipReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:         NotificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SkipReason:     SkipReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Recipients:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 12}},
-		LinkID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		EmailMessageID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		LinkID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		EmailMessageID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Attempts:       keel.Int16Col{Col: keel.Col{Ref: r, Index: 15}},
 		LastError:      keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		NextAttemptAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -732,8 +738,6 @@ func (t *NotificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // NotificationsQuery is a query over customertracking.Notification.
 type NotificationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customertracking.Notification] = (*NotificationsTable)(nil)
 
 var _ keel.Query[*customertracking.Notification] = (*NotificationsQuery)(nil)
 
@@ -849,42 +853,42 @@ func (t *NotificationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*c
 
 // Create inserts row.
 func (t *NotificationsTable) Create(ctx context.Context, db *keel.DB, row *customertracking.Notification) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *NotificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customertracking.Notification) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *NotificationsTable) Save(ctx context.Context, db *keel.DB, row *customertracking.Notification, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *NotificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customertracking.Notification, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *NotificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customertracking.Notification) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *NotificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customertracking.Notification, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *NotificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customertracking.Notification, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *NotificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customertracking.Notification) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1056,37 +1060,45 @@ func (q *NotificationsQuery) Clone() keel.Query[*customertracking.Notification] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *NotificationsQuery) One(ctx context.Context, db *keel.DB) (*customertracking.Notification, error) {
-	return keel.One[*customertracking.Notification](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customertracking.Notification)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *NotificationsQuery) First(ctx context.Context, db *keel.DB) (*customertracking.Notification, error) {
-	return keel.First[*customertracking.Notification](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customertracking.Notification)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *NotificationsQuery) List(ctx context.Context, db *keel.DB) ([]*customertracking.Notification, error) {
-	return keel.List[*customertracking.Notification](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customertracking.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *NotificationsQuery) All(ctx context.Context, db *keel.DB) ([]*customertracking.Notification, error) {
-	return keel.All[*customertracking.Notification](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customertracking.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *NotificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customertracking.Notification, error) {
-	return keel.UpdateReturning[*customertracking.Notification](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customertracking.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *NotificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customertracking.Notification], error) {
-	return keel.PageOf[*customertracking.Notification](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customertracking.Notification])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *NotificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customertracking.Notification) error) error {
-	return keel.Each[*customertracking.Notification](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customertracking.Notification)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newNotification() unsafe.Pointer { return unsafe.Pointer(new(customertracking.Notification)) }
@@ -1243,127 +1255,111 @@ var enumSkipReason = [...]schema.EnumValue{
 }
 
 // EventCol is a column of customertracking.Event values.
-type EventCol struct{ keel.StringCol }
+type EventCol struct{ keel.TypedStringCol }
 
-func (c EventCol) Eq(v customertracking.Event) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventCol) Ne(v customertracking.Event) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventCol) Gt(v customertracking.Event) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventCol) Gte(v customertracking.Event) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventCol) Lt(v customertracking.Event) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventCol) Lte(v customertracking.Event) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventCol) Eq(v customertracking.Event) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EventCol) Ne(v customertracking.Event) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EventCol) Gt(v customertracking.Event) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EventCol) Gte(v customertracking.Event) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EventCol) Lt(v customertracking.Event) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EventCol) Lte(v customertracking.Event) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EventCol) IsDistinctFrom(v customertracking.Event) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventCol) Between(lo, hi customertracking.Event) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EventCol) To(v customertracking.Event) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EventCol) To(v customertracking.Event) keel.Assignment { return c.Text().To(string(v)) }
 func (c EventCol) In(vs ...customertracking.Event) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventCol) NotIn(vs ...customertracking.Event) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LinkPurposeCol is a column of customertracking.LinkPurpose values.
-type LinkPurposeCol struct{ keel.StringCol }
+type LinkPurposeCol struct{ keel.TypedStringCol }
 
-func (c LinkPurposeCol) Eq(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c LinkPurposeCol) Ne(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c LinkPurposeCol) Gt(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c LinkPurposeCol) Gte(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c LinkPurposeCol) Lt(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c LinkPurposeCol) Lte(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c LinkPurposeCol) Eq(v customertracking.LinkPurpose) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c LinkPurposeCol) Ne(v customertracking.LinkPurpose) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c LinkPurposeCol) Gt(v customertracking.LinkPurpose) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c LinkPurposeCol) Gte(v customertracking.LinkPurpose) keel.Pred { return c.Text().Gte(string(v)) }
+func (c LinkPurposeCol) Lt(v customertracking.LinkPurpose) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c LinkPurposeCol) Lte(v customertracking.LinkPurpose) keel.Pred { return c.Text().Lte(string(v)) }
 func (c LinkPurposeCol) IsDistinctFrom(v customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LinkPurposeCol) Between(lo, hi customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LinkPurposeCol) To(v customertracking.LinkPurpose) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LinkPurposeCol) In(vs ...customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LinkPurposeCol) NotIn(vs ...customertracking.LinkPurpose) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // NotificationStatusCol is a column of customertracking.NotificationStatus values.
-type NotificationStatusCol struct{ keel.StringCol }
+type NotificationStatusCol struct{ keel.TypedStringCol }
 
 func (c NotificationStatusCol) Eq(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c NotificationStatusCol) Ne(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c NotificationStatusCol) Gt(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c NotificationStatusCol) Gte(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c NotificationStatusCol) Lt(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c NotificationStatusCol) Lte(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c NotificationStatusCol) IsDistinctFrom(v customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c NotificationStatusCol) Between(lo, hi customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c NotificationStatusCol) To(v customertracking.NotificationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c NotificationStatusCol) In(vs ...customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c NotificationStatusCol) NotIn(vs ...customertracking.NotificationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SkipReasonCol is a column of customertracking.SkipReason values.
-type SkipReasonCol struct{ keel.StringCol }
+type SkipReasonCol struct{ keel.TypedStringCol }
 
-func (c SkipReasonCol) Eq(v customertracking.SkipReason) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c SkipReasonCol) Ne(v customertracking.SkipReason) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c SkipReasonCol) Gt(v customertracking.SkipReason) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c SkipReasonCol) Gte(v customertracking.SkipReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SkipReasonCol) Lt(v customertracking.SkipReason) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c SkipReasonCol) Lte(v customertracking.SkipReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SkipReasonCol) Eq(v customertracking.SkipReason) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SkipReasonCol) Ne(v customertracking.SkipReason) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SkipReasonCol) Gt(v customertracking.SkipReason) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SkipReasonCol) Gte(v customertracking.SkipReason) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SkipReasonCol) Lt(v customertracking.SkipReason) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SkipReasonCol) Lte(v customertracking.SkipReason) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SkipReasonCol) IsDistinctFrom(v customertracking.SkipReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SkipReasonCol) Between(lo, hi customertracking.SkipReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SkipReasonCol) To(v customertracking.SkipReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SkipReasonCol) In(vs ...customertracking.SkipReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SkipReasonCol) NotIn(vs ...customertracking.SkipReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

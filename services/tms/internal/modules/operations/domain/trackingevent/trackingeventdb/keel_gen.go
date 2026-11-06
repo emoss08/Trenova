@@ -95,24 +95,24 @@ type TrackingEventsTable struct {
 // TrackingEvents references the tracking_events table.
 var TrackingEvents = &TrackingEventsTable{
 	TableBase:      keel.TableBase{Ref: &trackingEventsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 2}}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 3}}},
-	ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 4}}},
-	StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 5}}},
-	Source:         SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 2}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 3}}},
+	ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 4}}},
+	StopID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 5}}},
+	Source:         SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 6}}},
 	SourceKey:      keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 7}},
-	Kind:           keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 8}}},
-	MatchMethod:    MatchMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 9}}},
+	Kind:           keelkinds.ShipmentvocabVisitKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 8}}},
+	MatchMethod:    MatchMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 9}}},
 	EventAt:        keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 10}},
 	ReceivedAt:     keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 11}},
 	Latitude:       keel.Float64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 12}},
 	Longitude:      keel.Float64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 13}},
 	SourceStatus:   keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 14}},
 	RawReference:   keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 15}},
-	ReportedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 16}}},
-	Outcome:        OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 17}}},
+	ReportedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 16}}},
+	Outcome:        OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 17}}},
 	OutcomeReason:  keel.StringCol{Col: keel.Col{Ref: &trackingEventsRef, Index: 18}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 19}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &trackingEventsRef, Index: 20}},
@@ -122,24 +122,24 @@ var TrackingEvents = &TrackingEventsTable{
 func BuildTrackingEvents(r *keel.Ref) *TrackingEventsTable {
 	return &TrackingEventsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		StopID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Source:         SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		StopID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Source:         SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SourceKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Kind:           keelkinds.ShipmentvocabVisitKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		MatchMethod:    MatchMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Kind:           keelkinds.ShipmentvocabVisitKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		MatchMethod:    MatchMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		EventAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ReceivedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		Latitude:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 12}},
 		Longitude:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 13}},
 		SourceStatus:   keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		RawReference:   keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		ReportedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		Outcome:        OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ReportedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		Outcome:        OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		OutcomeReason:  keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -161,8 +161,6 @@ func (t *TrackingEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // TrackingEventsQuery is a query over trackingevent.TrackingEvent.
 type TrackingEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*trackingevent.TrackingEvent] = (*TrackingEventsTable)(nil)
 
 var _ keel.Query[*trackingevent.TrackingEvent] = (*TrackingEventsQuery)(nil)
 
@@ -278,42 +276,42 @@ func (t *TrackingEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *TrackingEventsTable) Create(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TrackingEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TrackingEventsTable) Save(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TrackingEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TrackingEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *trackingevent.TrackingEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TrackingEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TrackingEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TrackingEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*trackingevent.TrackingEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -485,37 +483,45 @@ func (q *TrackingEventsQuery) Clone() keel.Query[*trackingevent.TrackingEvent] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TrackingEventsQuery) One(ctx context.Context, db *keel.DB) (*trackingevent.TrackingEvent, error) {
-	return keel.One[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*trackingevent.TrackingEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TrackingEventsQuery) First(ctx context.Context, db *keel.DB) (*trackingevent.TrackingEvent, error) {
-	return keel.First[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*trackingevent.TrackingEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TrackingEventsQuery) List(ctx context.Context, db *keel.DB) ([]*trackingevent.TrackingEvent, error) {
-	return keel.List[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*trackingevent.TrackingEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TrackingEventsQuery) All(ctx context.Context, db *keel.DB) ([]*trackingevent.TrackingEvent, error) {
-	return keel.All[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*trackingevent.TrackingEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TrackingEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*trackingevent.TrackingEvent, error) {
-	return keel.UpdateReturning[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*trackingevent.TrackingEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TrackingEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*trackingevent.TrackingEvent], error) {
-	return keel.PageOf[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*trackingevent.TrackingEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TrackingEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*trackingevent.TrackingEvent) error) error {
-	return keel.Each[*trackingevent.TrackingEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*trackingevent.TrackingEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTrackingEvent() unsafe.Pointer { return unsafe.Pointer(new(trackingevent.TrackingEvent)) }
@@ -671,72 +677,72 @@ var enumSource = [...]schema.EnumValue{
 }
 
 // MatchMethodCol is a column of trackingevent.MatchMethod values.
-type MatchMethodCol struct{ keel.StringCol }
+type MatchMethodCol struct{ keel.TypedStringCol }
 
-func (c MatchMethodCol) Eq(v trackingevent.MatchMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MatchMethodCol) Ne(v trackingevent.MatchMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MatchMethodCol) Gt(v trackingevent.MatchMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MatchMethodCol) Gte(v trackingevent.MatchMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MatchMethodCol) Lt(v trackingevent.MatchMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MatchMethodCol) Lte(v trackingevent.MatchMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MatchMethodCol) Eq(v trackingevent.MatchMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MatchMethodCol) Ne(v trackingevent.MatchMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MatchMethodCol) Gt(v trackingevent.MatchMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MatchMethodCol) Gte(v trackingevent.MatchMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MatchMethodCol) Lt(v trackingevent.MatchMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MatchMethodCol) Lte(v trackingevent.MatchMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MatchMethodCol) IsDistinctFrom(v trackingevent.MatchMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MatchMethodCol) Between(lo, hi trackingevent.MatchMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MatchMethodCol) To(v trackingevent.MatchMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MatchMethodCol) In(vs ...trackingevent.MatchMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MatchMethodCol) NotIn(vs ...trackingevent.MatchMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OutcomeCol is a column of trackingevent.Outcome values.
-type OutcomeCol struct{ keel.StringCol }
+type OutcomeCol struct{ keel.TypedStringCol }
 
-func (c OutcomeCol) Eq(v trackingevent.Outcome) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c OutcomeCol) Ne(v trackingevent.Outcome) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c OutcomeCol) Gt(v trackingevent.Outcome) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c OutcomeCol) Gte(v trackingevent.Outcome) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c OutcomeCol) Lt(v trackingevent.Outcome) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c OutcomeCol) Lte(v trackingevent.Outcome) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c OutcomeCol) Eq(v trackingevent.Outcome) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c OutcomeCol) Ne(v trackingevent.Outcome) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c OutcomeCol) Gt(v trackingevent.Outcome) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c OutcomeCol) Gte(v trackingevent.Outcome) keel.Pred { return c.Text().Gte(string(v)) }
+func (c OutcomeCol) Lt(v trackingevent.Outcome) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c OutcomeCol) Lte(v trackingevent.Outcome) keel.Pred { return c.Text().Lte(string(v)) }
 func (c OutcomeCol) IsDistinctFrom(v trackingevent.Outcome) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OutcomeCol) Between(lo, hi trackingevent.Outcome) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c OutcomeCol) To(v trackingevent.Outcome) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c OutcomeCol) To(v trackingevent.Outcome) keel.Assignment { return c.Text().To(string(v)) }
 func (c OutcomeCol) In(vs ...trackingevent.Outcome) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OutcomeCol) NotIn(vs ...trackingevent.Outcome) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceCol is a column of trackingevent.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v trackingevent.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v trackingevent.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v trackingevent.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v trackingevent.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v trackingevent.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v trackingevent.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v trackingevent.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v trackingevent.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v trackingevent.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v trackingevent.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v trackingevent.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v trackingevent.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v trackingevent.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi trackingevent.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v trackingevent.Source) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SourceCol) To(v trackingevent.Source) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceCol) In(vs ...trackingevent.Source) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceCol) NotIn(vs ...trackingevent.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

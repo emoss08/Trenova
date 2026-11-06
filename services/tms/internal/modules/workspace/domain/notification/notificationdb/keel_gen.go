@@ -105,13 +105,13 @@ type NotificationsTable struct {
 // Notifications references the notifications table.
 var Notifications = &NotificationsTable{
 	TableBase:       keel.TableBase{Ref: &notificationsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
-	TargetUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
+	TargetUserID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 3}}},
 	EventType:       keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 4}},
-	Priority:        PriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 5}}},
-	Channel:         ChannelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 6}}},
+	Priority:        PriorityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 5}}},
+	Channel:         ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 6}}},
 	Title:           keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 7}},
 	Message:         keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 8}},
 	Data:            keel.JSONBCol{Col: keel.Col{Ref: &notificationsRef, Index: 9}},
@@ -123,7 +123,7 @@ var Notifications = &NotificationsTable{
 	DismissedAt:     keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 15}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 16}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 17}},
-	DeliveryStatus:  DeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 18}}},
+	DeliveryStatus:  DeliveryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 18}}},
 	RetryCount:      keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 19}},
 	MaxRetries:      keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 20}},
 	Source:          keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 21}},
@@ -137,13 +137,13 @@ var Notifications = &NotificationsTable{
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TargetUserID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TargetUserID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		EventType:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Priority:        PriorityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Channel:         ChannelCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Priority:        PriorityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Channel:         ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Title:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Message:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Data:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -155,7 +155,7 @@ func BuildNotifications(r *keel.Ref) *NotificationsTable {
 		DismissedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		DeliveryStatus:  DeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		DeliveryStatus:  DeliveryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		RetryCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		MaxRetries:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		Source:          keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
@@ -181,8 +181,6 @@ func (t *NotificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // NotificationsQuery is a query over notification.Notification.
 type NotificationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*notification.Notification] = (*NotificationsTable)(nil)
 
 var _ keel.Query[*notification.Notification] = (*NotificationsQuery)(nil)
 
@@ -298,42 +296,42 @@ func (t *NotificationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*n
 
 // Create inserts row.
 func (t *NotificationsTable) Create(ctx context.Context, db *keel.DB, row *notification.Notification) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *NotificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.Notification) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *NotificationsTable) Save(ctx context.Context, db *keel.DB, row *notification.Notification, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *NotificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.Notification, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *NotificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.Notification) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *NotificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.Notification, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *NotificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.Notification, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *NotificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.Notification) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -505,37 +503,45 @@ func (q *NotificationsQuery) Clone() keel.Query[*notification.Notification] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *NotificationsQuery) One(ctx context.Context, db *keel.DB) (*notification.Notification, error) {
-	return keel.One[*notification.Notification](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*notification.Notification)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *NotificationsQuery) First(ctx context.Context, db *keel.DB) (*notification.Notification, error) {
-	return keel.First[*notification.Notification](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*notification.Notification)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *NotificationsQuery) List(ctx context.Context, db *keel.DB) ([]*notification.Notification, error) {
-	return keel.List[*notification.Notification](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *NotificationsQuery) All(ctx context.Context, db *keel.DB) ([]*notification.Notification, error) {
-	return keel.All[*notification.Notification](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *NotificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.Notification, error) {
-	return keel.UpdateReturning[*notification.Notification](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*notification.Notification)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *NotificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.Notification], error) {
-	return keel.PageOf[*notification.Notification](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*notification.Notification])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *NotificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.Notification) error) error {
-	return keel.Each[*notification.Notification](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*notification.Notification)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newNotification() unsafe.Pointer { return unsafe.Pointer(new(notification.Notification)) }
@@ -778,13 +784,13 @@ type PreferencesTable struct {
 // Preferences references the user_notification_preferences table.
 var Preferences = &PreferencesTable{
 	TableBase:             keel.TableBase{Ref: &preferencesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 2}}},
-	UserID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 2}}},
+	UserID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 3}}},
 	DisabledEventTypes:    keel.StringArrayCol{Col: keel.Col{Ref: &preferencesRef, Index: 4}},
-	DesktopMode:           DeliveryModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 5}}},
-	EmailMode:             DeliveryModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &preferencesRef, Index: 6}}},
+	DesktopMode:           DeliveryModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 5}}},
+	EmailMode:             DeliveryModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &preferencesRef, Index: 6}}},
 	EmailDigest:           keel.BoolCol{Col: keel.Col{Ref: &preferencesRef, Index: 7}},
 	Sound:                 keel.BoolCol{Col: keel.Col{Ref: &preferencesRef, Index: 8}},
 	QuietHoursEnabled:     keel.BoolCol{Col: keel.Col{Ref: &preferencesRef, Index: 9}},
@@ -803,13 +809,13 @@ var Preferences = &PreferencesTable{
 func BuildPreferences(r *keel.Ref) *PreferencesTable {
 	return &PreferencesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DisabledEventTypes:    keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 4}},
-		DesktopMode:           DeliveryModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		EmailMode:             DeliveryModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		DesktopMode:           DeliveryModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EmailMode:             DeliveryModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		EmailDigest:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		Sound:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		QuietHoursEnabled:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -840,8 +846,6 @@ func (t *PreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PreferencesQuery is a query over notification.Preference.
 type PreferencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*notification.Preference] = (*PreferencesTable)(nil)
 
 var _ keel.Query[*notification.Preference] = (*PreferencesQuery)(nil)
 
@@ -957,42 +961,42 @@ func (t *PreferencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*not
 
 // Create inserts row.
 func (t *PreferencesTable) Create(ctx context.Context, db *keel.DB, row *notification.Preference) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.Preference) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PreferencesTable) Save(ctx context.Context, db *keel.DB, row *notification.Preference, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.Preference, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.Preference) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.Preference, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.Preference, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.Preference) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1164,37 +1168,45 @@ func (q *PreferencesQuery) Clone() keel.Query[*notification.Preference] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PreferencesQuery) One(ctx context.Context, db *keel.DB) (*notification.Preference, error) {
-	return keel.One[*notification.Preference](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*notification.Preference)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PreferencesQuery) First(ctx context.Context, db *keel.DB) (*notification.Preference, error) {
-	return keel.First[*notification.Preference](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*notification.Preference)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*notification.Preference, error) {
-	return keel.List[*notification.Preference](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.Preference)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*notification.Preference, error) {
-	return keel.All[*notification.Preference](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.Preference)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.Preference, error) {
-	return keel.UpdateReturning[*notification.Preference](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*notification.Preference)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.Preference], error) {
-	return keel.PageOf[*notification.Preference](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*notification.Preference])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.Preference) error) error {
-	return keel.Each[*notification.Preference](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*notification.Preference)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPreference() unsafe.Pointer { return unsafe.Pointer(new(notification.Preference)) }
@@ -1363,10 +1375,10 @@ type PushSubscriptionsTable struct {
 // PushSubscriptions references the user_push_subscriptions table.
 var PushSubscriptions = &PushSubscriptionsTable{
 	TableBase:      keel.TableBase{Ref: &pushSubscriptionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 3}}},
 	Endpoint:       keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 4}},
 	P256dh:         keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 5}},
 	Auth:           keel.StringCol{Col: keel.Col{Ref: &pushSubscriptionsRef, Index: 6}},
@@ -1379,10 +1391,10 @@ var PushSubscriptions = &PushSubscriptionsTable{
 func BuildPushSubscriptions(r *keel.Ref) *PushSubscriptionsTable {
 	return &PushSubscriptionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Endpoint:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		P256dh:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Auth:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -1407,8 +1419,6 @@ func (t *PushSubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // PushSubscriptionsQuery is a query over notification.PushSubscription.
 type PushSubscriptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*notification.PushSubscription] = (*PushSubscriptionsTable)(nil)
 
 var _ keel.Query[*notification.PushSubscription] = (*PushSubscriptionsQuery)(nil)
 
@@ -1524,42 +1534,42 @@ func (t *PushSubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *PushSubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *notification.PushSubscription) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PushSubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PushSubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *notification.PushSubscription, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PushSubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *notification.PushSubscription, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PushSubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *notification.PushSubscription) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PushSubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PushSubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PushSubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*notification.PushSubscription) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1731,37 +1741,45 @@ func (q *PushSubscriptionsQuery) Clone() keel.Query[*notification.PushSubscripti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PushSubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*notification.PushSubscription, error) {
-	return keel.One[*notification.PushSubscription](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*notification.PushSubscription)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PushSubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*notification.PushSubscription, error) {
-	return keel.First[*notification.PushSubscription](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*notification.PushSubscription)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PushSubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*notification.PushSubscription, error) {
-	return keel.List[*notification.PushSubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.PushSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PushSubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*notification.PushSubscription, error) {
-	return keel.All[*notification.PushSubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*notification.PushSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PushSubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*notification.PushSubscription, error) {
-	return keel.UpdateReturning[*notification.PushSubscription](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*notification.PushSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PushSubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*notification.PushSubscription], error) {
-	return keel.PageOf[*notification.PushSubscription](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*notification.PushSubscription])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PushSubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*notification.PushSubscription) error) error {
-	return keel.Each[*notification.PushSubscription](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*notification.PushSubscription)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPushSubscription() unsafe.Pointer { return unsafe.Pointer(new(notification.PushSubscription)) }
@@ -1857,113 +1875,101 @@ var enumPriority = [...]schema.EnumValue{
 }
 
 // ChannelCol is a column of notification.Channel values.
-type ChannelCol struct{ keel.StringCol }
+type ChannelCol struct{ keel.TypedStringCol }
 
-func (c ChannelCol) Eq(v notification.Channel) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ChannelCol) Ne(v notification.Channel) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ChannelCol) Gt(v notification.Channel) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ChannelCol) Gte(v notification.Channel) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ChannelCol) Lt(v notification.Channel) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ChannelCol) Lte(v notification.Channel) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ChannelCol) Eq(v notification.Channel) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ChannelCol) Ne(v notification.Channel) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ChannelCol) Gt(v notification.Channel) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ChannelCol) Gte(v notification.Channel) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ChannelCol) Lt(v notification.Channel) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ChannelCol) Lte(v notification.Channel) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ChannelCol) IsDistinctFrom(v notification.Channel) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChannelCol) Between(lo, hi notification.Channel) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ChannelCol) To(v notification.Channel) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ChannelCol) To(v notification.Channel) keel.Assignment { return c.Text().To(string(v)) }
 func (c ChannelCol) In(vs ...notification.Channel) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChannelCol) NotIn(vs ...notification.Channel) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeliveryModeCol is a column of notification.DeliveryMode values.
-type DeliveryModeCol struct{ keel.StringCol }
+type DeliveryModeCol struct{ keel.TypedStringCol }
 
-func (c DeliveryModeCol) Eq(v notification.DeliveryMode) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c DeliveryModeCol) Ne(v notification.DeliveryMode) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c DeliveryModeCol) Gt(v notification.DeliveryMode) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c DeliveryModeCol) Gte(v notification.DeliveryMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DeliveryModeCol) Lt(v notification.DeliveryMode) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c DeliveryModeCol) Lte(v notification.DeliveryMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DeliveryModeCol) Eq(v notification.DeliveryMode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DeliveryModeCol) Ne(v notification.DeliveryMode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DeliveryModeCol) Gt(v notification.DeliveryMode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DeliveryModeCol) Gte(v notification.DeliveryMode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DeliveryModeCol) Lt(v notification.DeliveryMode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DeliveryModeCol) Lte(v notification.DeliveryMode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DeliveryModeCol) IsDistinctFrom(v notification.DeliveryMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeliveryModeCol) Between(lo, hi notification.DeliveryMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeliveryModeCol) To(v notification.DeliveryMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeliveryModeCol) In(vs ...notification.DeliveryMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeliveryModeCol) NotIn(vs ...notification.DeliveryMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeliveryStatusCol is a column of notification.DeliveryStatus values.
-type DeliveryStatusCol struct{ keel.StringCol }
+type DeliveryStatusCol struct{ keel.TypedStringCol }
 
-func (c DeliveryStatusCol) Eq(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DeliveryStatusCol) Ne(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DeliveryStatusCol) Gt(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c DeliveryStatusCol) Eq(v notification.DeliveryStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c DeliveryStatusCol) Ne(v notification.DeliveryStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c DeliveryStatusCol) Gt(v notification.DeliveryStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c DeliveryStatusCol) Gte(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c DeliveryStatusCol) Lt(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c DeliveryStatusCol) Lt(v notification.DeliveryStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c DeliveryStatusCol) Lte(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DeliveryStatusCol) IsDistinctFrom(v notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeliveryStatusCol) Between(lo, hi notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeliveryStatusCol) To(v notification.DeliveryStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeliveryStatusCol) In(vs ...notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeliveryStatusCol) NotIn(vs ...notification.DeliveryStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PriorityCol is a column of notification.Priority values.
-type PriorityCol struct{ keel.StringCol }
+type PriorityCol struct{ keel.TypedStringCol }
 
-func (c PriorityCol) Eq(v notification.Priority) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PriorityCol) Ne(v notification.Priority) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PriorityCol) Gt(v notification.Priority) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PriorityCol) Gte(v notification.Priority) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PriorityCol) Lt(v notification.Priority) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PriorityCol) Lte(v notification.Priority) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PriorityCol) Eq(v notification.Priority) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PriorityCol) Ne(v notification.Priority) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PriorityCol) Gt(v notification.Priority) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PriorityCol) Gte(v notification.Priority) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PriorityCol) Lt(v notification.Priority) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PriorityCol) Lte(v notification.Priority) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PriorityCol) IsDistinctFrom(v notification.Priority) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PriorityCol) Between(lo, hi notification.Priority) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PriorityCol) To(v notification.Priority) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PriorityCol) To(v notification.Priority) keel.Assignment { return c.Text().To(string(v)) }
 func (c PriorityCol) In(vs ...notification.Priority) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PriorityCol) NotIn(vs ...notification.Priority) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

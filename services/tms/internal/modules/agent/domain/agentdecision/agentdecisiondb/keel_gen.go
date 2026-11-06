@@ -104,13 +104,13 @@ type AgentDecisionsTable struct {
 // AgentDecisions references the agent_decisions table.
 var AgentDecisions = &AgentDecisionsTable{
 	TableBase:            keel.TableBase{Ref: &agentDecisionsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 2}}},
-	ProposalID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 3}}},
-	ExceptionID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 4}}},
-	DecidedByUserID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 5}}},
-	Decision:             DecisionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 6}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 2}}},
+	ProposalID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 3}}},
+	ExceptionID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 4}}},
+	DecidedByUserID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 5}}},
+	Decision:             DecisionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 6}}},
 	Modifications:        keel.JSONBCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 7}},
 	ReasonCode:           keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 8}},
 	Note:                 keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 9}},
@@ -122,7 +122,7 @@ var AgentDecisions = &AgentDecisionsTable{
 	CommitsAt:            keel.Int64Col{Col: keel.Col{Ref: &agentDecisionsRef, Index: 15}},
 	CommittedAt:          keel.Int64Col{Col: keel.Col{Ref: &agentDecisionsRef, Index: 16}},
 	UndoneAt:             keel.Int64Col{Col: keel.Col{Ref: &agentDecisionsRef, Index: 17}},
-	UndoneByUserID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 18}}},
+	UndoneByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 18}}},
 	CommitWorkflowID:     keel.StringCol{Col: keel.Col{Ref: &agentDecisionsRef, Index: 19}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &agentDecisionsRef, Index: 20}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &agentDecisionsRef, Index: 21}},
@@ -133,13 +133,13 @@ var AgentDecisions = &AgentDecisionsTable{
 func BuildAgentDecisions(r *keel.Ref) *AgentDecisionsTable {
 	return &AgentDecisionsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProposalID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ExceptionID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		DecidedByUserID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Decision:             DecisionTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProposalID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ExceptionID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		DecidedByUserID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Decision:             DecisionTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Modifications:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		ReasonCode:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Note:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -151,7 +151,7 @@ func BuildAgentDecisions(r *keel.Ref) *AgentDecisionsTable {
 		CommitsAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CommittedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UndoneAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		UndoneByUserID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		UndoneByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CommitWorkflowID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -179,8 +179,6 @@ func (t *AgentDecisionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // AgentDecisionsQuery is a query over agentdecision.AgentDecision.
 type AgentDecisionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentdecision.AgentDecision] = (*AgentDecisionsTable)(nil)
 
 var _ keel.Query[*agentdecision.AgentDecision] = (*AgentDecisionsQuery)(nil)
 
@@ -296,42 +294,42 @@ func (t *AgentDecisionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *AgentDecisionsTable) Create(ctx context.Context, db *keel.DB, row *agentdecision.AgentDecision) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgentDecisionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentdecision.AgentDecision) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgentDecisionsTable) Save(ctx context.Context, db *keel.DB, row *agentdecision.AgentDecision, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgentDecisionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentdecision.AgentDecision, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgentDecisionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentdecision.AgentDecision) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgentDecisionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentdecision.AgentDecision, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgentDecisionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentdecision.AgentDecision, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgentDecisionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentdecision.AgentDecision) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -503,37 +501,45 @@ func (q *AgentDecisionsQuery) Clone() keel.Query[*agentdecision.AgentDecision] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgentDecisionsQuery) One(ctx context.Context, db *keel.DB) (*agentdecision.AgentDecision, error) {
-	return keel.One[*agentdecision.AgentDecision](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentdecision.AgentDecision)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgentDecisionsQuery) First(ctx context.Context, db *keel.DB) (*agentdecision.AgentDecision, error) {
-	return keel.First[*agentdecision.AgentDecision](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentdecision.AgentDecision)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgentDecisionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentdecision.AgentDecision, error) {
-	return keel.List[*agentdecision.AgentDecision](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentdecision.AgentDecision)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgentDecisionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentdecision.AgentDecision, error) {
-	return keel.All[*agentdecision.AgentDecision](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentdecision.AgentDecision)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgentDecisionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentdecision.AgentDecision, error) {
-	return keel.UpdateReturning[*agentdecision.AgentDecision](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentdecision.AgentDecision)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgentDecisionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentdecision.AgentDecision], error) {
-	return keel.PageOf[*agentdecision.AgentDecision](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentdecision.AgentDecision])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgentDecisionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentdecision.AgentDecision) error) error {
-	return keel.Each[*agentdecision.AgentDecision](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentdecision.AgentDecision)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgentDecision() unsafe.Pointer { return unsafe.Pointer(new(agentdecision.AgentDecision)) }
@@ -706,30 +712,26 @@ var enumDecisionType = [...]schema.EnumValue{
 }
 
 // DecisionTypeCol is a column of agentdecision.DecisionType values.
-type DecisionTypeCol struct{ keel.StringCol }
+type DecisionTypeCol struct{ keel.TypedStringCol }
 
-func (c DecisionTypeCol) Eq(v agentdecision.DecisionType) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c DecisionTypeCol) Ne(v agentdecision.DecisionType) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c DecisionTypeCol) Gt(v agentdecision.DecisionType) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c DecisionTypeCol) Gte(v agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DecisionTypeCol) Lt(v agentdecision.DecisionType) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c DecisionTypeCol) Lte(v agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DecisionTypeCol) Eq(v agentdecision.DecisionType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DecisionTypeCol) Ne(v agentdecision.DecisionType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DecisionTypeCol) Gt(v agentdecision.DecisionType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DecisionTypeCol) Gte(v agentdecision.DecisionType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DecisionTypeCol) Lt(v agentdecision.DecisionType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DecisionTypeCol) Lte(v agentdecision.DecisionType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DecisionTypeCol) IsDistinctFrom(v agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DecisionTypeCol) Between(lo, hi agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DecisionTypeCol) To(v agentdecision.DecisionType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DecisionTypeCol) In(vs ...agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DecisionTypeCol) NotIn(vs ...agentdecision.DecisionType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

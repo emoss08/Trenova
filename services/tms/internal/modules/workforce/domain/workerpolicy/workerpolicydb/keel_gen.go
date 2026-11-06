@@ -91,20 +91,20 @@ type WorkerPoliciesTable struct {
 // WorkerPolicies references the worker_policies table.
 var WorkerPolicies = &WorkerPoliciesTable{
 	TableBase:         keel.TableBase{Ref: &workerPoliciesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 2}}},
-	Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 2}}},
+	Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 3}}},
 	Code:              keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 4}},
 	Title:             keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 5}},
 	Summary:           keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 6}},
 	Body:              keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 7}},
-	DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 8}}},
+	DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 8}}},
 	VersionLabel:      keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 9}},
 	RequiresSignature: keel.BoolCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 10}},
-	AppliesTo:         PolicyAudienceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 11}}},
+	AppliesTo:         PolicyAudienceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 11}}},
 	EffectiveFrom:     keel.Int64Col{Col: keel.Col{Ref: &workerPoliciesRef, Index: 12}},
-	CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 13}}},
+	CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPoliciesRef, Index: 13}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &workerPoliciesRef, Index: 14}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerPoliciesRef, Index: 15}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerPoliciesRef, Index: 16}},
@@ -114,20 +114,20 @@ var WorkerPolicies = &WorkerPoliciesTable{
 func BuildWorkerPolicies(r *keel.Ref) *WorkerPoliciesTable {
 	return &WorkerPoliciesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Title:             keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Summary:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Body:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		VersionLabel:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		RequiresSignature: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		AppliesTo:         PolicyAudienceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		AppliesTo:         PolicyAudienceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		EffectiveFrom:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
@@ -149,8 +149,6 @@ func (t *WorkerPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // WorkerPoliciesQuery is a query over workerpolicy.WorkerPolicy.
 type WorkerPoliciesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerpolicy.WorkerPolicy] = (*WorkerPoliciesTable)(nil)
 
 var _ keel.Query[*workerpolicy.WorkerPolicy] = (*WorkerPoliciesQuery)(nil)
 
@@ -266,42 +264,42 @@ func (t *WorkerPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *WorkerPoliciesTable) Create(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPoliciesTable) Save(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicy) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicy) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -473,37 +471,45 @@ func (q *WorkerPoliciesQuery) Clone() keel.Query[*workerpolicy.WorkerPolicy] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPoliciesQuery) One(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicy, error) {
-	return keel.One[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerpolicy.WorkerPolicy)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPoliciesQuery) First(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicy, error) {
-	return keel.First[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerpolicy.WorkerPolicy)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicy, error) {
-	return keel.List[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerpolicy.WorkerPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicy, error) {
-	return keel.All[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerpolicy.WorkerPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerpolicy.WorkerPolicy, error) {
-	return keel.UpdateReturning[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerpolicy.WorkerPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerpolicy.WorkerPolicy], error) {
-	return keel.PageOf[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerpolicy.WorkerPolicy])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerpolicy.WorkerPolicy) error) error {
-	return keel.Each[*workerpolicy.WorkerPolicy](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerpolicy.WorkerPolicy)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPolicy() unsafe.Pointer { return unsafe.Pointer(new(workerpolicy.WorkerPolicy)) }
@@ -684,11 +690,11 @@ type WorkerPolicyAcknowledgementsTable struct {
 // WorkerPolicyAcknowledgements references the worker_policy_acknowledgements table.
 var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
 	TableBase:          keel.TableBase{Ref: &workerPolicyAcknowledgementsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 2}}},
-	PolicyID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 3}}},
-	WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 2}}},
+	PolicyID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 3}}},
+	WorkerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 4}}},
 	VersionLabel:       keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 5}},
 	AcknowledgedAt:     keel.Int64Col{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 6}},
 	SignatureName:      keel.StringCol{Col: keel.Col{Ref: &workerPolicyAcknowledgementsRef, Index: 7}},
@@ -704,11 +710,11 @@ var WorkerPolicyAcknowledgements = &WorkerPolicyAcknowledgementsTable{
 func BuildWorkerPolicyAcknowledgements(r *keel.Ref) *WorkerPolicyAcknowledgementsTable {
 	return &WorkerPolicyAcknowledgementsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PolicyID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		WorkerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PolicyID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		WorkerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		VersionLabel:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		AcknowledgedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		SignatureName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -746,8 +752,6 @@ func (t *WorkerPolicyAcknowledgementsTable) Get(ctx context.Context, db *keel.DB
 
 // WorkerPolicyAcknowledgementsQuery is a query over workerpolicy.WorkerPolicyAcknowledgement.
 type WorkerPolicyAcknowledgementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerpolicy.WorkerPolicyAcknowledgement] = (*WorkerPolicyAcknowledgementsTable)(nil)
 
 var _ keel.Query[*workerpolicy.WorkerPolicyAcknowledgement] = (*WorkerPolicyAcknowledgementsQuery)(nil)
 
@@ -863,42 +867,42 @@ func (t *WorkerPolicyAcknowledgementsTable) Compute(col keel.Column, e keel.Expr
 
 // Create inserts row.
 func (t *WorkerPolicyAcknowledgementsTable) Create(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPolicyAcknowledgementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPolicyAcknowledgementsTable) Save(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPolicyAcknowledgementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPolicyAcknowledgementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerpolicy.WorkerPolicyAcknowledgement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPolicyAcknowledgementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPolicyAcknowledgementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPolicyAcknowledgementsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerpolicy.WorkerPolicyAcknowledgement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1070,37 +1074,45 @@ func (q *WorkerPolicyAcknowledgementsQuery) Clone() keel.Query[*workerpolicy.Wor
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPolicyAcknowledgementsQuery) One(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return keel.One[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerpolicy.WorkerPolicyAcknowledgement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPolicyAcknowledgementsQuery) First(ctx context.Context, db *keel.DB) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return keel.First[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerpolicy.WorkerPolicyAcknowledgement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPolicyAcknowledgementsQuery) List(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return keel.List[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerpolicy.WorkerPolicyAcknowledgement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPolicyAcknowledgementsQuery) All(ctx context.Context, db *keel.DB) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return keel.All[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerpolicy.WorkerPolicyAcknowledgement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPolicyAcknowledgementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
-	return keel.UpdateReturning[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerpolicy.WorkerPolicyAcknowledgement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPolicyAcknowledgementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerpolicy.WorkerPolicyAcknowledgement], error) {
-	return keel.PageOf[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerpolicy.WorkerPolicyAcknowledgement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPolicyAcknowledgementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerpolicy.WorkerPolicyAcknowledgement) error) error {
-	return keel.Each[*workerpolicy.WorkerPolicyAcknowledgement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerpolicy.WorkerPolicyAcknowledgement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPolicyAcknowledgement() unsafe.Pointer {
@@ -1224,38 +1236,30 @@ var enumPolicyAudience = [...]schema.EnumValue{
 }
 
 // PolicyAudienceCol is a column of workerpolicy.PolicyAudience values.
-type PolicyAudienceCol struct{ keel.StringCol }
+type PolicyAudienceCol struct{ keel.TypedStringCol }
 
-func (c PolicyAudienceCol) Eq(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PolicyAudienceCol) Ne(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PolicyAudienceCol) Gt(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PolicyAudienceCol) Eq(v workerpolicy.PolicyAudience) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PolicyAudienceCol) Ne(v workerpolicy.PolicyAudience) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PolicyAudienceCol) Gt(v workerpolicy.PolicyAudience) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PolicyAudienceCol) Gte(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PolicyAudienceCol) Lt(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PolicyAudienceCol) Lt(v workerpolicy.PolicyAudience) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PolicyAudienceCol) Lte(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PolicyAudienceCol) IsDistinctFrom(v workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PolicyAudienceCol) Between(lo, hi workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PolicyAudienceCol) To(v workerpolicy.PolicyAudience) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PolicyAudienceCol) In(vs ...workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PolicyAudienceCol) NotIn(vs ...workerpolicy.PolicyAudience) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

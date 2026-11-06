@@ -128,14 +128,14 @@ type WorkerDOTTestsTable struct {
 // WorkerDOTTests references the worker_dot_tests table.
 var WorkerDOTTests = &WorkerDOTTestsTable{
 	TableBase:            keel.TableBase{Ref: &workerDOTTestsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 2}}},
-	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 3}}},
-	TestType:             DOTTestTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 4}}},
-	Substance:            DOTTestSubstanceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 5}}},
-	Status:               DOTTestStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 6}}},
-	Result:               DOTTestResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 7}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 2}}},
+	WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 3}}},
+	TestType:             DOTTestTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 4}}},
+	Substance:            DOTTestSubstanceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 5}}},
+	Status:               DOTTestStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 6}}},
+	Result:               DOTTestResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 7}}},
 	IsDOT:                keel.BoolCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 8}},
 	Reason:               keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 9}},
 	ScheduledAt:          keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 10}},
@@ -148,12 +148,12 @@ var WorkerDOTTests = &WorkerDOTTestsTable{
 	MROName:              keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 17}},
 	MROVerifiedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 18}},
 	AlcoholConcentration: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 19}}},
-	SafetyEventID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 20}}},
-	DrawEntryID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 21}}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 22}}},
+	SafetyEventID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 20}}},
+	DrawEntryID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 21}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 22}}},
 	Notes:                keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 23}},
-	OrderedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 24}}},
-	RecordedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 25}}},
+	OrderedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 24}}},
+	RecordedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 25}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 26}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 27}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerDOTTestsRef, Index: 28}},
@@ -163,14 +163,14 @@ var WorkerDOTTests = &WorkerDOTTestsTable{
 func BuildWorkerDOTTests(r *keel.Ref) *WorkerDOTTestsTable {
 	return &WorkerDOTTestsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TestType:             DOTTestTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Substance:            DOTTestSubstanceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:               DOTTestStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Result:               DOTTestResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TestType:             DOTTestTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Substance:            DOTTestSubstanceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:               DOTTestStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Result:               DOTTestResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		IsDOT:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		Reason:               keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ScheduledAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -183,12 +183,12 @@ func BuildWorkerDOTTests(r *keel.Ref) *WorkerDOTTestsTable {
 		MROName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		MROVerifiedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		AlcoholConcentration: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
-		SafetyEventID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		DrawEntryID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		SafetyEventID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		DrawEntryID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		Notes:                keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		OrderedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		RecordedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		OrderedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		RecordedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -235,8 +235,6 @@ func (t *WorkerDOTTestsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // WorkerDOTTestsQuery is a query over workerdot.WorkerDOTTest.
 type WorkerDOTTestsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerdot.WorkerDOTTest] = (*WorkerDOTTestsTable)(nil)
 
 var _ keel.Query[*workerdot.WorkerDOTTest] = (*WorkerDOTTestsQuery)(nil)
 
@@ -352,42 +350,42 @@ func (t *WorkerDOTTestsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *WorkerDOTTestsTable) Create(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerDOTTestsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerDOTTestsTable) Save(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerDOTTestsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerDOTTestsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTTest) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerDOTTestsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerDOTTestsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerDOTTestsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTTest) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -559,37 +557,45 @@ func (q *WorkerDOTTestsQuery) Clone() keel.Query[*workerdot.WorkerDOTTest] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerDOTTestsQuery) One(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTTest, error) {
-	return keel.One[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerdot.WorkerDOTTest)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerDOTTestsQuery) First(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTTest, error) {
-	return keel.First[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerdot.WorkerDOTTest)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerDOTTestsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTTest, error) {
-	return keel.List[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerdot.WorkerDOTTest)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerDOTTestsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTTest, error) {
-	return keel.All[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerdot.WorkerDOTTest)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerDOTTestsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdot.WorkerDOTTest, error) {
-	return keel.UpdateReturning[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerdot.WorkerDOTTest)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerDOTTestsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdot.WorkerDOTTest], error) {
-	return keel.PageOf[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerdot.WorkerDOTTest])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerDOTTestsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdot.WorkerDOTTest) error) error {
-	return keel.Each[*workerdot.WorkerDOTTest](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerdot.WorkerDOTTest)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerDOTTest() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTTest)) }
@@ -895,27 +901,27 @@ type WorkerDOTViolationsTable struct {
 // WorkerDOTViolations references the worker_dot_violations table.
 var WorkerDOTViolations = &WorkerDOTViolationsTable{
 	TableBase:                 keel.TableBase{Ref: &workerDOTViolationsRef},
-	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 0}}},
-	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 1}}},
-	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 2}}},
-	WorkerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 3}}},
-	ViolationType:             DOTViolationTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 4}}},
-	Status:                    DOTViolationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 5}}},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 0}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 1}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 2}}},
+	WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 3}}},
+	ViolationType:             DOTViolationTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 4}}},
+	Status:                    DOTViolationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 5}}},
 	OccurredAt:                keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 6}},
-	SourceTestID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 7}}},
+	SourceTestID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 7}}},
 	ReportedToClearinghouseAt: keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 8}},
 	SAPName:                   keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 9}},
 	SAPReferredAt:             keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 10}},
 	SAPEvaluationCompletedAt:  keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 11}},
-	RTDTestID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 12}}},
+	RTDTestID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 12}}},
 	RTDCompletedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 13}},
 	FollowUpTestCount:         keel.Int32Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 14}},
 	FollowUpTestsCompleted:    keel.Int32Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 15}},
 	FollowUpEndsAt:            keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 16}},
 	ResolvedAt:                keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 17}},
-	DocumentID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 18}}},
+	DocumentID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 18}}},
 	Notes:                     keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 19}},
-	RecordedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 20}}},
+	RecordedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 20}}},
 	Version:                   keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 21}},
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 22}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &workerDOTViolationsRef, Index: 23}},
@@ -925,27 +931,27 @@ var WorkerDOTViolations = &WorkerDOTViolationsTable{
 func BuildWorkerDOTViolations(r *keel.Ref) *WorkerDOTViolationsTable {
 	return &WorkerDOTViolationsTable{
 		TableBase:                 keel.TableBase{Ref: r},
-		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ViolationType:             DOTViolationTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                    DOTViolationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ViolationType:             DOTViolationTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                    DOTViolationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		OccurredAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		SourceTestID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SourceTestID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ReportedToClearinghouseAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		SAPName:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		SAPReferredAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		SAPEvaluationCompletedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		RTDTestID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		RTDTestID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		RTDCompletedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		FollowUpTestCount:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 14}},
 		FollowUpTestsCompleted:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 15}},
 		FollowUpEndsAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		ResolvedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		DocumentID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		DocumentID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Notes:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		RecordedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		RecordedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -992,8 +998,6 @@ func (t *WorkerDOTViolationsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // WorkerDOTViolationsQuery is a query over workerdot.WorkerDOTViolation.
 type WorkerDOTViolationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerdot.WorkerDOTViolation] = (*WorkerDOTViolationsTable)(nil)
 
 var _ keel.Query[*workerdot.WorkerDOTViolation] = (*WorkerDOTViolationsQuery)(nil)
 
@@ -1109,42 +1113,42 @@ func (t *WorkerDOTViolationsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *WorkerDOTViolationsTable) Create(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerDOTViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerDOTViolationsTable) Save(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerDOTViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerDOTViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdot.WorkerDOTViolation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerDOTViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerDOTViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerDOTViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdot.WorkerDOTViolation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1316,37 +1320,45 @@ func (q *WorkerDOTViolationsQuery) Clone() keel.Query[*workerdot.WorkerDOTViolat
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerDOTViolationsQuery) One(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTViolation, error) {
-	return keel.One[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerdot.WorkerDOTViolation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerDOTViolationsQuery) First(ctx context.Context, db *keel.DB) (*workerdot.WorkerDOTViolation, error) {
-	return keel.First[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerdot.WorkerDOTViolation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerDOTViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTViolation, error) {
-	return keel.List[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerdot.WorkerDOTViolation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerDOTViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdot.WorkerDOTViolation, error) {
-	return keel.All[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerdot.WorkerDOTViolation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerDOTViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdot.WorkerDOTViolation, error) {
-	return keel.UpdateReturning[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerdot.WorkerDOTViolation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerDOTViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdot.WorkerDOTViolation], error) {
-	return keel.PageOf[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerdot.WorkerDOTViolation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerDOTViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdot.WorkerDOTViolation) error) error {
-	return keel.Each[*workerdot.WorkerDOTViolation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerdot.WorkerDOTViolation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerDOTViolation() unsafe.Pointer { return unsafe.Pointer(new(workerdot.WorkerDOTViolation)) }
@@ -1587,185 +1599,185 @@ var enumDOTViolationType = [...]schema.EnumValue{
 }
 
 // DOTTestResultCol is a column of workerdot.DOTTestResult values.
-type DOTTestResultCol struct{ keel.StringCol }
+type DOTTestResultCol struct{ keel.TypedStringCol }
 
-func (c DOTTestResultCol) Eq(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestResultCol) Ne(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestResultCol) Gt(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestResultCol) Gte(v workerdot.DOTTestResult) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestResultCol) Lt(v workerdot.DOTTestResult) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestResultCol) Lte(v workerdot.DOTTestResult) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestResultCol) Eq(v workerdot.DOTTestResult) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DOTTestResultCol) Ne(v workerdot.DOTTestResult) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DOTTestResultCol) Gt(v workerdot.DOTTestResult) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DOTTestResultCol) Gte(v workerdot.DOTTestResult) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DOTTestResultCol) Lt(v workerdot.DOTTestResult) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DOTTestResultCol) Lte(v workerdot.DOTTestResult) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DOTTestResultCol) IsDistinctFrom(v workerdot.DOTTestResult) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTTestResultCol) Between(lo, hi workerdot.DOTTestResult) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DOTTestResultCol) To(v workerdot.DOTTestResult) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DOTTestResultCol) In(vs ...workerdot.DOTTestResult) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTTestResultCol) NotIn(vs ...workerdot.DOTTestResult) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DOTTestStatusCol is a column of workerdot.DOTTestStatus values.
-type DOTTestStatusCol struct{ keel.StringCol }
+type DOTTestStatusCol struct{ keel.TypedStringCol }
 
-func (c DOTTestStatusCol) Eq(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestStatusCol) Ne(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestStatusCol) Gt(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestStatusCol) Gte(v workerdot.DOTTestStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestStatusCol) Lt(v workerdot.DOTTestStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestStatusCol) Lte(v workerdot.DOTTestStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestStatusCol) Eq(v workerdot.DOTTestStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DOTTestStatusCol) Ne(v workerdot.DOTTestStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DOTTestStatusCol) Gt(v workerdot.DOTTestStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DOTTestStatusCol) Gte(v workerdot.DOTTestStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DOTTestStatusCol) Lt(v workerdot.DOTTestStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DOTTestStatusCol) Lte(v workerdot.DOTTestStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DOTTestStatusCol) IsDistinctFrom(v workerdot.DOTTestStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTTestStatusCol) Between(lo, hi workerdot.DOTTestStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DOTTestStatusCol) To(v workerdot.DOTTestStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DOTTestStatusCol) In(vs ...workerdot.DOTTestStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTTestStatusCol) NotIn(vs ...workerdot.DOTTestStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DOTTestSubstanceCol is a column of workerdot.DOTTestSubstance values.
-type DOTTestSubstanceCol struct{ keel.StringCol }
+type DOTTestSubstanceCol struct{ keel.TypedStringCol }
 
 func (c DOTTestSubstanceCol) Eq(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DOTTestSubstanceCol) Ne(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DOTTestSubstanceCol) Gt(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DOTTestSubstanceCol) Gte(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DOTTestSubstanceCol) Lt(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DOTTestSubstanceCol) Lte(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DOTTestSubstanceCol) IsDistinctFrom(v workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTTestSubstanceCol) Between(lo, hi workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DOTTestSubstanceCol) To(v workerdot.DOTTestSubstance) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DOTTestSubstanceCol) In(vs ...workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTTestSubstanceCol) NotIn(vs ...workerdot.DOTTestSubstance) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DOTTestTypeCol is a column of workerdot.DOTTestType values.
-type DOTTestTypeCol struct{ keel.StringCol }
+type DOTTestTypeCol struct{ keel.TypedStringCol }
 
-func (c DOTTestTypeCol) Eq(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DOTTestTypeCol) Ne(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DOTTestTypeCol) Gt(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DOTTestTypeCol) Gte(v workerdot.DOTTestType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DOTTestTypeCol) Lt(v workerdot.DOTTestType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DOTTestTypeCol) Lte(v workerdot.DOTTestType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DOTTestTypeCol) Eq(v workerdot.DOTTestType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DOTTestTypeCol) Ne(v workerdot.DOTTestType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DOTTestTypeCol) Gt(v workerdot.DOTTestType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DOTTestTypeCol) Gte(v workerdot.DOTTestType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DOTTestTypeCol) Lt(v workerdot.DOTTestType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DOTTestTypeCol) Lte(v workerdot.DOTTestType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DOTTestTypeCol) IsDistinctFrom(v workerdot.DOTTestType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTTestTypeCol) Between(lo, hi workerdot.DOTTestType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DOTTestTypeCol) To(v workerdot.DOTTestType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DOTTestTypeCol) To(v workerdot.DOTTestType) keel.Assignment { return c.Text().To(string(v)) }
 func (c DOTTestTypeCol) In(vs ...workerdot.DOTTestType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTTestTypeCol) NotIn(vs ...workerdot.DOTTestType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DOTViolationStatusCol is a column of workerdot.DOTViolationStatus values.
-type DOTViolationStatusCol struct{ keel.StringCol }
+type DOTViolationStatusCol struct{ keel.TypedStringCol }
 
 func (c DOTViolationStatusCol) Eq(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DOTViolationStatusCol) Ne(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DOTViolationStatusCol) Gt(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DOTViolationStatusCol) Gte(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DOTViolationStatusCol) Lt(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DOTViolationStatusCol) Lte(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DOTViolationStatusCol) IsDistinctFrom(v workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTViolationStatusCol) Between(lo, hi workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DOTViolationStatusCol) To(v workerdot.DOTViolationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DOTViolationStatusCol) In(vs ...workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTViolationStatusCol) NotIn(vs ...workerdot.DOTViolationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DOTViolationTypeCol is a column of workerdot.DOTViolationType values.
-type DOTViolationTypeCol struct{ keel.StringCol }
+type DOTViolationTypeCol struct{ keel.TypedStringCol }
 
 func (c DOTViolationTypeCol) Eq(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DOTViolationTypeCol) Ne(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DOTViolationTypeCol) Gt(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DOTViolationTypeCol) Gte(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DOTViolationTypeCol) Lt(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DOTViolationTypeCol) Lte(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DOTViolationTypeCol) IsDistinctFrom(v workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DOTViolationTypeCol) Between(lo, hi workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DOTViolationTypeCol) To(v workerdot.DOTViolationType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DOTViolationTypeCol) In(vs ...workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DOTViolationTypeCol) NotIn(vs ...workerdot.DOTViolationType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -109,31 +109,31 @@ type FeedbacksTable struct {
 // Feedbacks references the ai_feedback table.
 var Feedbacks = &FeedbacksTable{
 	TableBase:         keel.TableBase{Ref: &feedbacksRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 2}}},
-	UserID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 3}}},
-	TargetType:        TargetTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 4}}},
-	TargetID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 2}}},
+	UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 3}}},
+	TargetType:        TargetTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 4}}},
+	TargetID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 5}}},
 	TargetPart:        keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 6}},
-	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 7}}},
-	TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 8}}},
-	RunID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 9}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 10}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 7}}},
+	TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 8}}},
+	RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 9}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 10}}},
 	DefinitionVersion: keel.Int64Col{Col: keel.Col{Ref: &feedbacksRef, Index: 11}},
 	DetectorKey:       keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 12}},
 	Task:              keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 13}},
 	Model:             keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 14}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 15}}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 15}}},
 	PromptHash:        keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 16}},
 	ToolSpecHash:      keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 17}},
-	FingerprintSource: FingerprintSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 18}}},
+	FingerprintSource: FingerprintSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 18}}},
 	Rating:            RatingCol{Int16Col: keel.Int16Col{Col: keel.Col{Ref: &feedbacksRef, Index: 19}}},
 	Reasons:           keel.StringArrayCol{Col: keel.Col{Ref: &feedbacksRef, Index: 20}},
 	Comment:           keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 21}},
 	TurnSnapshot:      keel.JSONBCol{Col: keel.Col{Ref: &feedbacksRef, Index: 22}},
 	PatternKey:        keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 23}},
-	EvalCaseID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 24}}},
+	EvalCaseID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 24}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &feedbacksRef, Index: 25}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &feedbacksRef, Index: 26}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &feedbacksRef, Index: 27}},
@@ -143,31 +143,31 @@ var Feedbacks = &FeedbacksTable{
 func BuildFeedbacks(r *keel.Ref) *FeedbacksTable {
 	return &FeedbacksTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TargetType:        TargetTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TargetID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TargetType:        TargetTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TargetID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TargetPart:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		RunID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		DefinitionVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		DetectorKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Task:              keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		PromptHash:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		ToolSpecHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		FingerprintSource: FingerprintSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		FingerprintSource: FingerprintSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Rating:            RatingCol{Int16Col: keel.Int16Col{Col: keel.Col{Ref: r, Index: 19}}},
 		Reasons:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 20}},
 		Comment:           keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		TurnSnapshot:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
 		PatternKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		EvalCaseID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		EvalCaseID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
@@ -189,8 +189,6 @@ func (t *FeedbacksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*a
 
 // FeedbacksQuery is a query over aifeedback.Feedback.
 type FeedbacksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*aifeedback.Feedback] = (*FeedbacksTable)(nil)
 
 var _ keel.Query[*aifeedback.Feedback] = (*FeedbacksQuery)(nil)
 
@@ -306,42 +304,42 @@ func (t *FeedbacksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aifee
 
 // Create inserts row.
 func (t *FeedbacksTable) Create(ctx context.Context, db *keel.DB, row *aifeedback.Feedback) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FeedbacksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FeedbacksTable) Save(ctx context.Context, db *keel.DB, row *aifeedback.Feedback, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FeedbacksTable) SaveExcept(ctx context.Context, db *keel.DB, row *aifeedback.Feedback, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FeedbacksTable) DeleteRow(ctx context.Context, db *keel.DB, row *aifeedback.Feedback) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FeedbacksTable) Upsert(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FeedbacksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FeedbacksTable) Copy(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -513,37 +511,45 @@ func (q *FeedbacksQuery) Clone() keel.Query[*aifeedback.Feedback] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FeedbacksQuery) One(ctx context.Context, db *keel.DB) (*aifeedback.Feedback, error) {
-	return keel.One[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*aifeedback.Feedback)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FeedbacksQuery) First(ctx context.Context, db *keel.DB) (*aifeedback.Feedback, error) {
-	return keel.First[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*aifeedback.Feedback)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FeedbacksQuery) List(ctx context.Context, db *keel.DB) ([]*aifeedback.Feedback, error) {
-	return keel.List[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aifeedback.Feedback)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FeedbacksQuery) All(ctx context.Context, db *keel.DB) ([]*aifeedback.Feedback, error) {
-	return keel.All[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aifeedback.Feedback)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FeedbacksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aifeedback.Feedback, error) {
-	return keel.UpdateReturning[*aifeedback.Feedback](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*aifeedback.Feedback)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FeedbacksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aifeedback.Feedback], error) {
-	return keel.PageOf[*aifeedback.Feedback](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*aifeedback.Feedback])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FeedbacksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aifeedback.Feedback) error) error {
-	return keel.Each[*aifeedback.Feedback](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*aifeedback.Feedback)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFeedback() unsafe.Pointer { return unsafe.Pointer(new(aifeedback.Feedback)) }
@@ -748,40 +754,40 @@ var enumTargetType = [...]schema.EnumValue{
 }
 
 // FingerprintSourceCol is a column of aifeedback.FingerprintSource values.
-type FingerprintSourceCol struct{ keel.StringCol }
+type FingerprintSourceCol struct{ keel.TypedStringCol }
 
 func (c FingerprintSourceCol) Eq(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c FingerprintSourceCol) Ne(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c FingerprintSourceCol) Gt(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c FingerprintSourceCol) Gte(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c FingerprintSourceCol) Lt(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c FingerprintSourceCol) Lte(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c FingerprintSourceCol) IsDistinctFrom(v aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FingerprintSourceCol) Between(lo, hi aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FingerprintSourceCol) To(v aifeedback.FingerprintSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FingerprintSourceCol) In(vs ...aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FingerprintSourceCol) NotIn(vs ...aifeedback.FingerprintSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RatingCol is a column of aifeedback.Rating values.
@@ -806,24 +812,24 @@ func (c RatingCol) NotIn(vs ...aifeedback.Rating) keel.Pred {
 }
 
 // TargetTypeCol is a column of aifeedback.TargetType values.
-type TargetTypeCol struct{ keel.StringCol }
+type TargetTypeCol struct{ keel.TypedStringCol }
 
-func (c TargetTypeCol) Eq(v aifeedback.TargetType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TargetTypeCol) Ne(v aifeedback.TargetType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TargetTypeCol) Gt(v aifeedback.TargetType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TargetTypeCol) Gte(v aifeedback.TargetType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TargetTypeCol) Lt(v aifeedback.TargetType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TargetTypeCol) Lte(v aifeedback.TargetType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TargetTypeCol) Eq(v aifeedback.TargetType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TargetTypeCol) Ne(v aifeedback.TargetType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TargetTypeCol) Gt(v aifeedback.TargetType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TargetTypeCol) Gte(v aifeedback.TargetType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TargetTypeCol) Lt(v aifeedback.TargetType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TargetTypeCol) Lte(v aifeedback.TargetType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TargetTypeCol) IsDistinctFrom(v aifeedback.TargetType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TargetTypeCol) Between(lo, hi aifeedback.TargetType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TargetTypeCol) To(v aifeedback.TargetType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c TargetTypeCol) To(v aifeedback.TargetType) keel.Assignment { return c.Text().To(string(v)) }
 func (c TargetTypeCol) In(vs ...aifeedback.TargetType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TargetTypeCol) NotIn(vs ...aifeedback.TargetType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

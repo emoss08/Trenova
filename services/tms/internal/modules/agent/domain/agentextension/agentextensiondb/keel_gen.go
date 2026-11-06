@@ -82,14 +82,14 @@ type ExtensionsTable struct {
 // Extensions references the agent_extensions table.
 var Extensions = &ExtensionsTable{
 	TableBase:      keel.TableBase{Ref: &extensionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 2}}},
-	Type:           TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 2}}},
+	Type:           TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 3}}},
 	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &extensionsRef, Index: 4}},
-	Availability:   AvailabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 5}}},
+	Availability:   AvailabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 5}}},
 	Configuration:  keel.JSONBCol{Col: keel.Col{Ref: &extensionsRef, Index: 6}},
-	EnabledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 7}}},
+	EnabledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionsRef, Index: 7}}},
 	EnabledAt:      keel.Int64Col{Col: keel.Col{Ref: &extensionsRef, Index: 8}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &extensionsRef, Index: 9}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extensionsRef, Index: 10}},
@@ -100,14 +100,14 @@ var Extensions = &ExtensionsTable{
 func BuildExtensions(r *keel.Ref) *ExtensionsTable {
 	return &ExtensionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Type:           TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Type:           TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
-		Availability:   AvailabilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Availability:   AvailabilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Configuration:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		EnabledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		EnabledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		EnabledAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -135,8 +135,6 @@ func (t *ExtensionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // ExtensionsQuery is a query over agentextension.Extension.
 type ExtensionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentextension.Extension] = (*ExtensionsTable)(nil)
 
 var _ keel.Query[*agentextension.Extension] = (*ExtensionsQuery)(nil)
 
@@ -252,42 +250,42 @@ func (t *ExtensionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agen
 
 // Create inserts row.
 func (t *ExtensionsTable) Create(ctx context.Context, db *keel.DB, row *agentextension.Extension) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ExtensionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentextension.Extension) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ExtensionsTable) Save(ctx context.Context, db *keel.DB, row *agentextension.Extension, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ExtensionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentextension.Extension, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ExtensionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentextension.Extension) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ExtensionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentextension.Extension, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ExtensionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentextension.Extension, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ExtensionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentextension.Extension) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -459,37 +457,45 @@ func (q *ExtensionsQuery) Clone() keel.Query[*agentextension.Extension] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ExtensionsQuery) One(ctx context.Context, db *keel.DB) (*agentextension.Extension, error) {
-	return keel.One[*agentextension.Extension](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentextension.Extension)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ExtensionsQuery) First(ctx context.Context, db *keel.DB) (*agentextension.Extension, error) {
-	return keel.First[*agentextension.Extension](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentextension.Extension)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ExtensionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentextension.Extension, error) {
-	return keel.List[*agentextension.Extension](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentextension.Extension)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ExtensionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentextension.Extension, error) {
-	return keel.All[*agentextension.Extension](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentextension.Extension)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ExtensionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentextension.Extension, error) {
-	return keel.UpdateReturning[*agentextension.Extension](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentextension.Extension)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ExtensionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentextension.Extension], error) {
-	return keel.PageOf[*agentextension.Extension](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentextension.Extension])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ExtensionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentextension.Extension) error) error {
-	return keel.Each[*agentextension.Extension](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentextension.Extension)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newExtension() unsafe.Pointer { return unsafe.Pointer(new(agentextension.Extension)) }
@@ -631,9 +637,9 @@ type ExtensionUsageDailiesTable struct {
 // ExtensionUsageDailies references the agent_extension_usage_daily table.
 var ExtensionUsageDailies = &ExtensionUsageDailiesTable{
 	TableBase:      keel.TableBase{Ref: &extensionUsageDailiesRef},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 1}}},
-	ExtensionType:  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 2}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 1}}},
+	ExtensionType:  TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 2}}},
 	Day:            keel.Int64Col{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 3}},
 	Requests:       keel.Int64Col{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 4}},
 	Failures:       keel.Int64Col{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 5}},
@@ -645,9 +651,9 @@ var ExtensionUsageDailies = &ExtensionUsageDailiesTable{
 func BuildExtensionUsageDailies(r *keel.Ref) *ExtensionUsageDailiesTable {
 	return &ExtensionUsageDailiesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		ExtensionType:  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		ExtensionType:  TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Day:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
 		Requests:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Failures:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
@@ -666,8 +672,6 @@ func (t *ExtensionUsageDailiesTable) As(alias string) *ExtensionUsageDailiesTabl
 
 // ExtensionUsageDailiesQuery is a query over agentextension.ExtensionUsageDaily.
 type ExtensionUsageDailiesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentextension.ExtensionUsageDaily] = (*ExtensionUsageDailiesTable)(nil)
 
 var _ keel.Query[*agentextension.ExtensionUsageDaily] = (*ExtensionUsageDailiesQuery)(nil)
 
@@ -783,42 +787,42 @@ func (t *ExtensionUsageDailiesTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *ExtensionUsageDailiesTable) Create(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ExtensionUsageDailiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ExtensionUsageDailiesTable) Save(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ExtensionUsageDailiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ExtensionUsageDailiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ExtensionUsageDailiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ExtensionUsageDailiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ExtensionUsageDailiesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -990,37 +994,45 @@ func (q *ExtensionUsageDailiesQuery) Clone() keel.Query[*agentextension.Extensio
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ExtensionUsageDailiesQuery) One(ctx context.Context, db *keel.DB) (*agentextension.ExtensionUsageDaily, error) {
-	return keel.One[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentextension.ExtensionUsageDaily)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ExtensionUsageDailiesQuery) First(ctx context.Context, db *keel.DB) (*agentextension.ExtensionUsageDaily, error) {
-	return keel.First[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentextension.ExtensionUsageDaily)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ExtensionUsageDailiesQuery) List(ctx context.Context, db *keel.DB) ([]*agentextension.ExtensionUsageDaily, error) {
-	return keel.List[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentextension.ExtensionUsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ExtensionUsageDailiesQuery) All(ctx context.Context, db *keel.DB) ([]*agentextension.ExtensionUsageDaily, error) {
-	return keel.All[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentextension.ExtensionUsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ExtensionUsageDailiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentextension.ExtensionUsageDaily, error) {
-	return keel.UpdateReturning[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentextension.ExtensionUsageDaily)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ExtensionUsageDailiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentextension.ExtensionUsageDaily], error) {
-	return keel.PageOf[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentextension.ExtensionUsageDaily])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ExtensionUsageDailiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentextension.ExtensionUsageDaily) error) error {
-	return keel.Each[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentextension.ExtensionUsageDaily)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newExtensionUsageDaily() unsafe.Pointer {
@@ -1096,59 +1108,49 @@ var enumType = [...]schema.EnumValue{
 }
 
 // AvailabilityCol is a column of agentextension.Availability values.
-type AvailabilityCol struct{ keel.StringCol }
+type AvailabilityCol struct{ keel.TypedStringCol }
 
-func (c AvailabilityCol) Eq(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AvailabilityCol) Ne(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AvailabilityCol) Gt(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c AvailabilityCol) Gte(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AvailabilityCol) Lt(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c AvailabilityCol) Lte(v agentextension.Availability) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AvailabilityCol) Eq(v agentextension.Availability) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AvailabilityCol) Ne(v agentextension.Availability) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AvailabilityCol) Gt(v agentextension.Availability) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AvailabilityCol) Gte(v agentextension.Availability) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AvailabilityCol) Lt(v agentextension.Availability) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AvailabilityCol) Lte(v agentextension.Availability) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AvailabilityCol) IsDistinctFrom(v agentextension.Availability) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AvailabilityCol) Between(lo, hi agentextension.Availability) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AvailabilityCol) To(v agentextension.Availability) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AvailabilityCol) In(vs ...agentextension.Availability) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AvailabilityCol) NotIn(vs ...agentextension.Availability) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TypeCol is a column of agentextension.Type values.
-type TypeCol struct{ keel.StringCol }
+type TypeCol struct{ keel.TypedStringCol }
 
-func (c TypeCol) Eq(v agentextension.Type) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TypeCol) Ne(v agentextension.Type) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TypeCol) Gt(v agentextension.Type) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TypeCol) Gte(v agentextension.Type) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TypeCol) Lt(v agentextension.Type) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TypeCol) Lte(v agentextension.Type) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c TypeCol) Eq(v agentextension.Type) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TypeCol) Ne(v agentextension.Type) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TypeCol) Gt(v agentextension.Type) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TypeCol) Gte(v agentextension.Type) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TypeCol) Lt(v agentextension.Type) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TypeCol) Lte(v agentextension.Type) keel.Pred { return c.Text().Lte(string(v)) }
 func (c TypeCol) IsDistinctFrom(v agentextension.Type) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TypeCol) Between(lo, hi agentextension.Type) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TypeCol) To(v agentextension.Type) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TypeCol) In(vs ...agentextension.Type) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c TypeCol) To(v agentextension.Type) keel.Assignment { return c.Text().To(string(v)) }
+func (c TypeCol) In(vs ...agentextension.Type) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c TypeCol) NotIn(vs ...agentextension.Type) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

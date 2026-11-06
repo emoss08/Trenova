@@ -147,19 +147,19 @@ type RateAgreementsTable struct {
 // RateAgreements references the rate_agreements table.
 var RateAgreements = &RateAgreementsTable{
 	TableBase:            keel.TableBase{Ref: &rateAgreementsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 2}}},
-	PartyType:            PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 3}}},
-	CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 4}}},
-	CarrierID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 5}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 2}}},
+	PartyType:            PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 3}}},
+	CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 4}}},
+	CarrierID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 5}}},
 	Code:                 keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 6}},
 	Name:                 keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 7}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 8}},
-	AgreementType:        AgreementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 9}}},
-	Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 10}}},
+	AgreementType:        AgreementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 9}}},
+	Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 10}}},
 	ContractRef:          keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 11}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 12}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 12}}},
 	Priority:             keel.Int16Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 13}},
 	EffectiveFrom:        keel.Int64Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 14}},
 	EffectiveTo:          keel.Int64Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 15}},
@@ -167,12 +167,12 @@ var RateAgreements = &RateAgreementsTable{
 	RenewalNoticeDays:    keel.Int16Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 17}},
 	Currency:             keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 18}},
 	Inputs:               keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 19}},
-	BillToCustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 20}}},
+	BillToCustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 20}}},
 	MarginFloorPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 21}}},
 	MaxPayPercentOfSell:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 22}}},
-	SubmittedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 23}}},
+	SubmittedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 23}}},
 	SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 24}},
-	ApprovedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 25}}},
+	ApprovedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 25}}},
 	ApprovedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 26}},
 	ReviewComment:        keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 27}},
 	CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &rateAgreementsRef, Index: 28}},
@@ -187,19 +187,19 @@ var RateAgreements = &RateAgreementsTable{
 func BuildRateAgreements(r *keel.Ref) *RateAgreementsTable {
 	return &RateAgreementsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PartyType:            PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CarrierID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PartyType:            PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CarrierID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Code:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Name:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		AgreementType:        AgreementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		AgreementType:        AgreementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ContractRef:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Priority:             keel.Int16Col{Col: keel.Col{Ref: r, Index: 13}},
 		EffectiveFrom:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		EffectiveTo:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -207,12 +207,12 @@ func BuildRateAgreements(r *keel.Ref) *RateAgreementsTable {
 		RenewalNoticeDays:    keel.Int16Col{Col: keel.Col{Ref: r, Index: 17}},
 		Currency:             keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		Inputs:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
-		BillToCustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		BillToCustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		MarginFloorPercent:   keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 21}}},
 		MaxPayPercentOfSell:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
-		SubmittedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		SubmittedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		SubmittedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		ApprovedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ApprovedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		ApprovedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		ReviewComment:        keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
 		CurrentVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -274,8 +274,6 @@ func (t *RateAgreementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // RateAgreementsQuery is a query over rateagreement.RateAgreement.
 type RateAgreementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateagreement.RateAgreement] = (*RateAgreementsTable)(nil)
 
 var _ keel.Query[*rateagreement.RateAgreement] = (*RateAgreementsQuery)(nil)
 
@@ -391,42 +389,42 @@ func (t *RateAgreementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *RateAgreementsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateAgreementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateAgreementsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateAgreementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateAgreementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateAgreementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateAgreementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateAgreementsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -598,37 +596,45 @@ func (q *RateAgreementsQuery) Clone() keel.Query[*rateagreement.RateAgreement] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateAgreementsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreement, error) {
-	return keel.One[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateAgreementsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreement, error) {
-	return keel.First[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateAgreementsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreement, error) {
-	return keel.List[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateAgreementsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreement, error) {
-	return keel.All[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateAgreementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreement, error) {
-	return keel.UpdateReturning[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateagreement.RateAgreement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateAgreementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreement], error) {
-	return keel.PageOf[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateagreement.RateAgreement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateAgreementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreement) error) error {
-	return keel.Each[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateagreement.RateAgreement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateAgreement() unsafe.Pointer { return unsafe.Pointer(new(rateagreement.RateAgreement)) }
@@ -946,13 +952,13 @@ type RateAgreementAccessorialsTable struct {
 // RateAgreementAccessorials references the rate_agreement_accessorials table.
 var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
 	TableBase:           keel.TableBase{Ref: &rateAgreementAccessorialsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 2}}},
-	RateAgreementID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 3}}},
-	AccessorialChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 4}}},
-	Method:              accessorialchargedb.MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 5}}},
-	RateUnit:            accessorialchargedb.RateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 6}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 2}}},
+	RateAgreementID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 3}}},
+	AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 4}}},
+	Method:              accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 5}}},
+	RateUnit:            accessorialchargedb.RateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 6}}},
 	Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 7}}},
 	Waived:              keel.BoolCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 8}},
 	AutoApply:           keel.BoolCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 9}},
@@ -972,13 +978,13 @@ var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
 func BuildRateAgreementAccessorials(r *keel.Ref) *RateAgreementAccessorialsTable {
 	return &RateAgreementAccessorialsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		AccessorialChargeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Method:              accessorialchargedb.MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		RateUnit:            accessorialchargedb.RateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AccessorialChargeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Method:              accessorialchargedb.MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		RateUnit:            accessorialchargedb.RateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Amount:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Waived:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		AutoApply:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -1020,8 +1026,6 @@ func (t *RateAgreementAccessorialsTable) Get(ctx context.Context, db *keel.DB, k
 
 // RateAgreementAccessorialsQuery is a query over rateagreement.RateAgreementAccessorial.
 type RateAgreementAccessorialsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateagreement.RateAgreementAccessorial] = (*RateAgreementAccessorialsTable)(nil)
 
 var _ keel.Query[*rateagreement.RateAgreementAccessorial] = (*RateAgreementAccessorialsQuery)(nil)
 
@@ -1137,42 +1141,42 @@ func (t *RateAgreementAccessorialsTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *RateAgreementAccessorialsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateAgreementAccessorialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateAgreementAccessorialsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateAgreementAccessorialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateAgreementAccessorialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateAgreementAccessorialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateAgreementAccessorialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateAgreementAccessorialsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1344,37 +1348,45 @@ func (q *RateAgreementAccessorialsQuery) Clone() keel.Query[*rateagreement.RateA
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateAgreementAccessorialsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementAccessorial, error) {
-	return keel.One[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementAccessorial)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateAgreementAccessorialsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementAccessorial, error) {
-	return keel.First[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementAccessorial)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateAgreementAccessorialsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementAccessorial, error) {
-	return keel.List[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementAccessorial)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateAgreementAccessorialsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementAccessorial, error) {
-	return keel.All[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementAccessorial)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateAgreementAccessorialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementAccessorial, error) {
-	return keel.UpdateReturning[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateagreement.RateAgreementAccessorial)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateAgreementAccessorialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementAccessorial], error) {
-	return keel.PageOf[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateagreement.RateAgreementAccessorial])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateAgreementAccessorialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementAccessorial) error) error {
-	return keel.Each[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateagreement.RateAgreementAccessorial)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateAgreementAccessorial() unsafe.Pointer {
@@ -1587,11 +1599,11 @@ type RateAgreementFuelBindingsTable struct {
 // RateAgreementFuelBindings references the rate_agreement_fuel_bindings table.
 var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
 	TableBase:              keel.TableBase{Ref: &rateAgreementFuelBindingsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 2}}},
-	RateAgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 3}}},
-	FuelSurchargeProgramID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 2}}},
+	RateAgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 3}}},
+	FuelSurchargeProgramID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 4}}},
 	Waived:                 keel.BoolCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 5}},
 	PegPriceOverride:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 6}}},
 	IncrementRateOverride:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 7}}},
@@ -1605,11 +1617,11 @@ var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
 func BuildRateAgreementFuelBindings(r *keel.Ref) *RateAgreementFuelBindingsTable {
 	return &RateAgreementFuelBindingsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		FuelSurchargeProgramID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		FuelSurchargeProgramID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Waived:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		PegPriceOverride:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		IncrementRateOverride:  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
@@ -1645,8 +1657,6 @@ func (t *RateAgreementFuelBindingsTable) Get(ctx context.Context, db *keel.DB, k
 
 // RateAgreementFuelBindingsQuery is a query over rateagreement.RateAgreementFuelBinding.
 type RateAgreementFuelBindingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateagreement.RateAgreementFuelBinding] = (*RateAgreementFuelBindingsTable)(nil)
 
 var _ keel.Query[*rateagreement.RateAgreementFuelBinding] = (*RateAgreementFuelBindingsQuery)(nil)
 
@@ -1762,42 +1772,42 @@ func (t *RateAgreementFuelBindingsTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *RateAgreementFuelBindingsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateAgreementFuelBindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateAgreementFuelBindingsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateAgreementFuelBindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateAgreementFuelBindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateAgreementFuelBindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateAgreementFuelBindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateAgreementFuelBindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1969,37 +1979,45 @@ func (q *RateAgreementFuelBindingsQuery) Clone() keel.Query[*rateagreement.RateA
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateAgreementFuelBindingsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementFuelBinding, error) {
-	return keel.One[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementFuelBinding)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateAgreementFuelBindingsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementFuelBinding, error) {
-	return keel.First[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementFuelBinding)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateAgreementFuelBindingsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementFuelBinding, error) {
-	return keel.List[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementFuelBinding)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateAgreementFuelBindingsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementFuelBinding, error) {
-	return keel.All[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementFuelBinding)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateAgreementFuelBindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementFuelBinding, error) {
-	return keel.UpdateReturning[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateagreement.RateAgreementFuelBinding)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateAgreementFuelBindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementFuelBinding], error) {
-	return keel.PageOf[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateagreement.RateAgreementFuelBinding])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateAgreementFuelBindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementFuelBinding) error) error {
-	return keel.Each[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateagreement.RateAgreementFuelBinding)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateAgreementFuelBinding() unsafe.Pointer {
@@ -2234,22 +2252,22 @@ type RateAgreementRulesTable struct {
 // RateAgreementRules references the rate_agreement_rules table.
 var RateAgreementRules = &RateAgreementRulesTable{
 	TableBase:               keel.TableBase{Ref: &rateAgreementRulesRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 2}}},
-	RateAgreementID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 3}}},
-	PartyType:               PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 4}}},
-	PartyID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 5}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 2}}},
+	RateAgreementID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 3}}},
+	PartyType:               PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 4}}},
+	PartyID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 5}}},
 	Label:                   keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 6}},
-	Status:                  RuleStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 7}}},
-	OriginScopeType:         keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 8}}},
+	Status:                  RuleStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 7}}},
+	OriginScopeType:         keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 8}}},
 	OriginScopeValue:        keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 9}},
 	OriginCity:              keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 10}},
-	DestinationScopeType:    keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 11}}},
+	DestinationScopeType:    keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 11}}},
 	DestinationScopeValue:   keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 12}},
 	DestinationCity:         keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 13}},
 	LaneKey:                 keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 14}},
-	Direction:               DirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 15}}},
+	Direction:               DirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 15}}},
 	OriginRadiusMeters:      keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 16}},
 	DestinationRadiusMeters: keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 17}},
 	OriginLatitude:          keel.Float64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 18}},
@@ -2275,15 +2293,15 @@ var RateAgreementRules = &RateAgreementRulesTable{
 	DaysOfWeek:              keel.Int16Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 38}},
 	HazmatOnly:              keel.BoolCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 39}},
 	TempControlOnly:         keel.BoolCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 40}},
-	FormulaTemplateID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 41}}},
+	FormulaTemplateID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 41}}},
 	Inputs:                  keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 42}},
 	Currency:                keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 43}},
 	Priority:                keel.Int16Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 44}},
 	SpecificityScore:        keel.Int32Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 45}},
 	EffectiveFrom:           keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 46}},
 	EffectiveTo:             keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 47}},
-	SupersedesRuleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 48}}},
-	SourceImportRowID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 49}}},
+	SupersedesRuleID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 48}}},
+	SourceImportRowID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 49}}},
 	Version:                 keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 50}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 51}},
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 52}},
@@ -2293,22 +2311,22 @@ var RateAgreementRules = &RateAgreementRulesTable{
 func BuildRateAgreementRules(r *keel.Ref) *RateAgreementRulesTable {
 	return &RateAgreementRulesTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PartyType:               PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PartyID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PartyType:               PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		PartyID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Label:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:                  RuleStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		OriginScopeType:         keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:                  RuleStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		OriginScopeType:         keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		OriginScopeValue:        keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		OriginCity:              keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		DestinationScopeType:    keelkinds.RategeoScopeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		DestinationScopeType:    keelkinds.RategeoScopeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		DestinationScopeValue:   keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		DestinationCity:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		LaneKey:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		Direction:               DirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Direction:               DirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		OriginRadiusMeters:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 16}},
 		DestinationRadiusMeters: keel.Float64Col{Col: keel.Col{Ref: r, Index: 17}},
 		OriginLatitude:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -2334,15 +2352,15 @@ func BuildRateAgreementRules(r *keel.Ref) *RateAgreementRulesTable {
 		DaysOfWeek:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 38}},
 		HazmatOnly:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 39}},
 		TempControlOnly:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 40}},
-		FormulaTemplateID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		FormulaTemplateID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
 		Inputs:                  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
 		Currency:                keel.StringCol{Col: keel.Col{Ref: r, Index: 43}},
 		Priority:                keel.Int16Col{Col: keel.Col{Ref: r, Index: 44}},
 		SpecificityScore:        keel.Int32Col{Col: keel.Col{Ref: r, Index: 45}},
 		EffectiveFrom:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
 		EffectiveTo:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
-		SupersedesRuleID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
-		SourceImportRowID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 49}}},
+		SupersedesRuleID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		SourceImportRowID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 49}}},
 		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
 		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
@@ -2369,8 +2387,6 @@ func (t *RateAgreementRulesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // RateAgreementRulesQuery is a query over rateagreement.RateAgreementRule.
 type RateAgreementRulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateagreement.RateAgreementRule] = (*RateAgreementRulesTable)(nil)
 
 var _ keel.Query[*rateagreement.RateAgreementRule] = (*RateAgreementRulesQuery)(nil)
 
@@ -2486,42 +2502,42 @@ func (t *RateAgreementRulesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *RateAgreementRulesTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateAgreementRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateAgreementRulesTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateAgreementRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateAgreementRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateAgreementRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateAgreementRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateAgreementRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2693,37 +2709,45 @@ func (q *RateAgreementRulesQuery) Clone() keel.Query[*rateagreement.RateAgreemen
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateAgreementRulesQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementRule, error) {
-	return keel.One[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementRule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateAgreementRulesQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementRule, error) {
-	return keel.First[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementRule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateAgreementRulesQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementRule, error) {
-	return keel.List[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementRule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateAgreementRulesQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementRule, error) {
-	return keel.All[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementRule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateAgreementRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementRule, error) {
-	return keel.UpdateReturning[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateagreement.RateAgreementRule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateAgreementRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementRule], error) {
-	return keel.PageOf[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateagreement.RateAgreementRule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateAgreementRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementRule) error) error {
-	return keel.Each[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateagreement.RateAgreementRule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateAgreementRule() unsafe.Pointer {
@@ -3174,29 +3198,29 @@ type RateAgreementVersionsTable struct {
 // RateAgreementVersions references the rate_agreement_versions table.
 var RateAgreementVersions = &RateAgreementVersionsTable{
 	TableBase:              keel.TableBase{Ref: &rateAgreementVersionsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 2}}},
-	RateAgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 3}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 2}}},
+	RateAgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 3}}},
 	VersionNumber:          keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 4}},
 	EffectiveFrom:          keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 5}},
 	EffectiveTo:            keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 6}},
-	PartyType:              PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 7}}},
-	CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 8}}},
-	CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 9}}},
+	PartyType:              PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 7}}},
+	CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 8}}},
+	CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 9}}},
 	Code:                   keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 10}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 11}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 12}},
-	AgreementType:          AgreementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 13}}},
-	Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 14}}},
+	AgreementType:          AgreementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 13}}},
+	Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 14}}},
 	ContractRef:            keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 15}},
-	DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 16}}},
+	DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 16}}},
 	Priority:               keel.Int16Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 17}},
 	AgreementEffectiveFrom: keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 18}},
 	AgreementEffectiveTo:   keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 19}},
 	AutoRenew:              keel.BoolCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 20}},
 	RenewalNoticeDays:      keel.Int16Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 21}},
-	BillToCustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 22}}},
+	BillToCustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 22}}},
 	Currency:               keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 23}},
 	Inputs:                 keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 24}},
 	MarginFloorPercent:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 25}}},
@@ -3205,7 +3229,7 @@ var RateAgreementVersions = &RateAgreementVersionsTable{
 	FuelTerms:              keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 28}},
 	ChangeMessage:          keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 29}},
 	ChangeSummary:          keel.JSONBCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 30}},
-	CreatedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 31}}},
+	CreatedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 31}}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 32}},
 }
 
@@ -3213,29 +3237,29 @@ var RateAgreementVersions = &RateAgreementVersionsTable{
 func BuildRateAgreementVersions(r *keel.Ref) *RateAgreementVersionsTable {
 	return &RateAgreementVersionsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VersionNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		EffectiveFrom:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		EffectiveTo:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		PartyType:              PartyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		PartyType:              PartyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Code:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		AgreementType:          AgreementTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		AgreementType:          AgreementTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ContractRef:            keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		Priority:               keel.Int16Col{Col: keel.Col{Ref: r, Index: 17}},
 		AgreementEffectiveFrom: keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		AgreementEffectiveTo:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		AutoRenew:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		RenewalNoticeDays:      keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
-		BillToCustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		BillToCustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		Currency:               keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		Inputs:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
 		MarginFloorPercent:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 25}}},
@@ -3244,7 +3268,7 @@ func BuildRateAgreementVersions(r *keel.Ref) *RateAgreementVersionsTable {
 		FuelTerms:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
 		ChangeMessage:          keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
 		ChangeSummary:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		CreatedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 31}}},
+		CreatedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 31}}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
 	}
 }
@@ -3274,8 +3298,6 @@ func (t *RateAgreementVersionsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // RateAgreementVersionsQuery is a query over rateagreement.RateAgreementVersion.
 type RateAgreementVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateagreement.RateAgreementVersion] = (*RateAgreementVersionsTable)(nil)
 
 var _ keel.Query[*rateagreement.RateAgreementVersion] = (*RateAgreementVersionsQuery)(nil)
 
@@ -3391,42 +3413,42 @@ func (t *RateAgreementVersionsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *RateAgreementVersionsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateAgreementVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateAgreementVersionsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateAgreementVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateAgreementVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateAgreementVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateAgreementVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateAgreementVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3598,37 +3620,45 @@ func (q *RateAgreementVersionsQuery) Clone() keel.Query[*rateagreement.RateAgree
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateAgreementVersionsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementVersion, error) {
-	return keel.One[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateAgreementVersionsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementVersion, error) {
-	return keel.First[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateagreement.RateAgreementVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateAgreementVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementVersion, error) {
-	return keel.List[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateAgreementVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementVersion, error) {
-	return keel.All[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateagreement.RateAgreementVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateAgreementVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementVersion, error) {
-	return keel.UpdateReturning[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateagreement.RateAgreementVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateAgreementVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementVersion], error) {
-	return keel.PageOf[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateagreement.RateAgreementVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateAgreementVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementVersion) error) error {
-	return keel.Each[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateagreement.RateAgreementVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateAgreementVersion() unsafe.Pointer {
@@ -3950,132 +3980,122 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // AgreementTypeCol is a column of rateagreement.AgreementType values.
-type AgreementTypeCol struct{ keel.StringCol }
+type AgreementTypeCol struct{ keel.TypedStringCol }
 
-func (c AgreementTypeCol) Eq(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AgreementTypeCol) Ne(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AgreementTypeCol) Gt(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c AgreementTypeCol) Eq(v rateagreement.AgreementType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c AgreementTypeCol) Ne(v rateagreement.AgreementType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c AgreementTypeCol) Gt(v rateagreement.AgreementType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c AgreementTypeCol) Gte(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c AgreementTypeCol) Lt(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c AgreementTypeCol) Lt(v rateagreement.AgreementType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c AgreementTypeCol) Lte(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AgreementTypeCol) IsDistinctFrom(v rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AgreementTypeCol) Between(lo, hi rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AgreementTypeCol) To(v rateagreement.AgreementType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AgreementTypeCol) In(vs ...rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AgreementTypeCol) NotIn(vs ...rateagreement.AgreementType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DirectionCol is a column of rateagreement.Direction values.
-type DirectionCol struct{ keel.StringCol }
+type DirectionCol struct{ keel.TypedStringCol }
 
-func (c DirectionCol) Eq(v rateagreement.Direction) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DirectionCol) Ne(v rateagreement.Direction) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DirectionCol) Gt(v rateagreement.Direction) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DirectionCol) Gte(v rateagreement.Direction) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DirectionCol) Lt(v rateagreement.Direction) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DirectionCol) Lte(v rateagreement.Direction) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DirectionCol) Eq(v rateagreement.Direction) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DirectionCol) Ne(v rateagreement.Direction) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DirectionCol) Gt(v rateagreement.Direction) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DirectionCol) Gte(v rateagreement.Direction) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DirectionCol) Lt(v rateagreement.Direction) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DirectionCol) Lte(v rateagreement.Direction) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DirectionCol) IsDistinctFrom(v rateagreement.Direction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DirectionCol) Between(lo, hi rateagreement.Direction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DirectionCol) To(v rateagreement.Direction) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DirectionCol) To(v rateagreement.Direction) keel.Assignment { return c.Text().To(string(v)) }
 func (c DirectionCol) In(vs ...rateagreement.Direction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DirectionCol) NotIn(vs ...rateagreement.Direction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PartyTypeCol is a column of rateagreement.PartyType values.
-type PartyTypeCol struct{ keel.StringCol }
+type PartyTypeCol struct{ keel.TypedStringCol }
 
-func (c PartyTypeCol) Eq(v rateagreement.PartyType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PartyTypeCol) Ne(v rateagreement.PartyType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PartyTypeCol) Gt(v rateagreement.PartyType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PartyTypeCol) Gte(v rateagreement.PartyType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PartyTypeCol) Lt(v rateagreement.PartyType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PartyTypeCol) Lte(v rateagreement.PartyType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PartyTypeCol) Eq(v rateagreement.PartyType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PartyTypeCol) Ne(v rateagreement.PartyType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PartyTypeCol) Gt(v rateagreement.PartyType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PartyTypeCol) Gte(v rateagreement.PartyType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PartyTypeCol) Lt(v rateagreement.PartyType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PartyTypeCol) Lte(v rateagreement.PartyType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PartyTypeCol) IsDistinctFrom(v rateagreement.PartyType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PartyTypeCol) Between(lo, hi rateagreement.PartyType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PartyTypeCol) To(v rateagreement.PartyType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PartyTypeCol) To(v rateagreement.PartyType) keel.Assignment { return c.Text().To(string(v)) }
 func (c PartyTypeCol) In(vs ...rateagreement.PartyType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PartyTypeCol) NotIn(vs ...rateagreement.PartyType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RuleStatusCol is a column of rateagreement.RuleStatus values.
-type RuleStatusCol struct{ keel.StringCol }
+type RuleStatusCol struct{ keel.TypedStringCol }
 
-func (c RuleStatusCol) Eq(v rateagreement.RuleStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RuleStatusCol) Ne(v rateagreement.RuleStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RuleStatusCol) Gt(v rateagreement.RuleStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RuleStatusCol) Gte(v rateagreement.RuleStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RuleStatusCol) Lt(v rateagreement.RuleStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RuleStatusCol) Lte(v rateagreement.RuleStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RuleStatusCol) Eq(v rateagreement.RuleStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RuleStatusCol) Ne(v rateagreement.RuleStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RuleStatusCol) Gt(v rateagreement.RuleStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RuleStatusCol) Gte(v rateagreement.RuleStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RuleStatusCol) Lt(v rateagreement.RuleStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RuleStatusCol) Lte(v rateagreement.RuleStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RuleStatusCol) IsDistinctFrom(v rateagreement.RuleStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RuleStatusCol) Between(lo, hi rateagreement.RuleStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RuleStatusCol) To(v rateagreement.RuleStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RuleStatusCol) To(v rateagreement.RuleStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c RuleStatusCol) In(vs ...rateagreement.RuleStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RuleStatusCol) NotIn(vs ...rateagreement.RuleStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of rateagreement.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v rateagreement.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v rateagreement.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v rateagreement.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v rateagreement.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v rateagreement.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v rateagreement.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v rateagreement.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v rateagreement.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v rateagreement.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v rateagreement.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v rateagreement.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v rateagreement.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v rateagreement.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi rateagreement.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v rateagreement.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v rateagreement.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...rateagreement.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...rateagreement.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

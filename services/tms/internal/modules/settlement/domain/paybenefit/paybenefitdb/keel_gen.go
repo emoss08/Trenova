@@ -103,17 +103,17 @@ type BenefitPlansTable struct {
 // BenefitPlans references the benefit_plans table.
 var BenefitPlans = &BenefitPlansTable{
 	TableBase:         keel.TableBase{Ref: &benefitPlansRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 2}}},
-	Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 2}}},
+	Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 3}}},
 	Code:              keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 4}},
 	Name:              keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 5}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 6}},
-	PlanType:          BenefitPlanTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 7}}},
+	PlanType:          BenefitPlanTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 7}}},
 	Carrier:           keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 8}},
 	PolicyNumber:      keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 9}},
-	PayCodeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 10}}},
+	PayCodeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 10}}},
 	PlanYear:          keel.Int16Col{Col: keel.Col{Ref: &benefitPlansRef, Index: 11}},
 	EmployeeCostMinor: keel.Int64Col{Col: keel.Col{Ref: &benefitPlansRef, Index: 12}},
 	EmployerCostMinor: keel.Int64Col{Col: keel.Col{Ref: &benefitPlansRef, Index: 13}},
@@ -128,17 +128,17 @@ var BenefitPlans = &BenefitPlansTable{
 func BuildBenefitPlans(r *keel.Ref) *BenefitPlansTable {
 	return &BenefitPlansTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		PlanType:          BenefitPlanTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		PlanType:          BenefitPlanTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Carrier:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		PolicyNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		PayCodeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PayCodeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		PlanYear:          keel.Int16Col{Col: keel.Col{Ref: r, Index: 11}},
 		EmployeeCostMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		EmployerCostMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -170,8 +170,6 @@ func (t *BenefitPlansTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // BenefitPlansQuery is a query over paybenefit.BenefitPlan.
 type BenefitPlansQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*paybenefit.BenefitPlan] = (*BenefitPlansTable)(nil)
 
 var _ keel.Query[*paybenefit.BenefitPlan] = (*BenefitPlansQuery)(nil)
 
@@ -287,42 +285,42 @@ func (t *BenefitPlansTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pa
 
 // Create inserts row.
 func (t *BenefitPlansTable) Create(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BenefitPlansTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BenefitPlansTable) Save(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BenefitPlansTable) SaveExcept(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BenefitPlansTable) DeleteRow(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BenefitPlansTable) Upsert(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BenefitPlansTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BenefitPlansTable) Copy(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -494,37 +492,45 @@ func (q *BenefitPlansQuery) Clone() keel.Query[*paybenefit.BenefitPlan] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BenefitPlansQuery) One(ctx context.Context, db *keel.DB) (*paybenefit.BenefitPlan, error) {
-	return keel.One[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*paybenefit.BenefitPlan)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BenefitPlansQuery) First(ctx context.Context, db *keel.DB) (*paybenefit.BenefitPlan, error) {
-	return keel.First[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*paybenefit.BenefitPlan)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BenefitPlansQuery) List(ctx context.Context, db *keel.DB) ([]*paybenefit.BenefitPlan, error) {
-	return keel.List[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paybenefit.BenefitPlan)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BenefitPlansQuery) All(ctx context.Context, db *keel.DB) ([]*paybenefit.BenefitPlan, error) {
-	return keel.All[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paybenefit.BenefitPlan)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BenefitPlansQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paybenefit.BenefitPlan, error) {
-	return keel.UpdateReturning[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*paybenefit.BenefitPlan)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BenefitPlansQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paybenefit.BenefitPlan], error) {
-	return keel.PageOf[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*paybenefit.BenefitPlan])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BenefitPlansQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paybenefit.BenefitPlan) error) error {
-	return keel.Each[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*paybenefit.BenefitPlan)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBenefitPlan() unsafe.Pointer { return unsafe.Pointer(new(paybenefit.BenefitPlan)) }
@@ -727,21 +733,21 @@ type WorkerBenefitEnrollmentsTable struct {
 // WorkerBenefitEnrollments references the worker_benefit_enrollments table.
 var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
 	TableBase:            keel.TableBase{Ref: &workerBenefitEnrollmentsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 2}}},
-	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 3}}},
-	BenefitPlanID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 4}}},
-	Status:               BenefitEnrollmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 5}}},
-	CoverageTier:         CoverageTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 6}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 2}}},
+	WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 3}}},
+	BenefitPlanID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 4}}},
+	Status:               BenefitEnrollmentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 5}}},
+	CoverageTier:         CoverageTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 6}}},
 	EffectiveFrom:        keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 7}},
 	EffectiveTo:          keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 8}},
 	EmployeeCostMinor:    keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 9}},
 	EmployerCostMinor:    keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 10}},
-	RecurringDeductionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 11}}},
+	RecurringDeductionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 11}}},
 	WaivedReason:         keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 12}},
 	Notes:                keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 13}},
-	EnrolledByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 14}}},
+	EnrolledByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 14}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 15}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 16}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 17}},
@@ -751,21 +757,21 @@ var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
 func BuildWorkerBenefitEnrollments(r *keel.Ref) *WorkerBenefitEnrollmentsTable {
 	return &WorkerBenefitEnrollmentsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BenefitPlanID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:               BenefitEnrollmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CoverageTier:         CoverageTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BenefitPlanID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:               BenefitEnrollmentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CoverageTier:         CoverageTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		EffectiveFrom:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		EffectiveTo:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		EmployeeCostMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		EmployerCostMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		RecurringDeductionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		RecurringDeductionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		WaivedReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Notes:                keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		EnrolledByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		EnrolledByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -802,8 +808,6 @@ func (t *WorkerBenefitEnrollmentsTable) Get(ctx context.Context, db *keel.DB, ke
 
 // WorkerBenefitEnrollmentsQuery is a query over paybenefit.WorkerBenefitEnrollment.
 type WorkerBenefitEnrollmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*paybenefit.WorkerBenefitEnrollment] = (*WorkerBenefitEnrollmentsTable)(nil)
 
 var _ keel.Query[*paybenefit.WorkerBenefitEnrollment] = (*WorkerBenefitEnrollmentsQuery)(nil)
 
@@ -919,42 +923,42 @@ func (t *WorkerBenefitEnrollmentsTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *WorkerBenefitEnrollmentsTable) Create(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerBenefitEnrollmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerBenefitEnrollmentsTable) Save(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerBenefitEnrollmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerBenefitEnrollmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerBenefitEnrollmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerBenefitEnrollmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerBenefitEnrollmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1126,37 +1130,45 @@ func (q *WorkerBenefitEnrollmentsQuery) Clone() keel.Query[*paybenefit.WorkerBen
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerBenefitEnrollmentsQuery) One(ctx context.Context, db *keel.DB) (*paybenefit.WorkerBenefitEnrollment, error) {
-	return keel.One[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*paybenefit.WorkerBenefitEnrollment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerBenefitEnrollmentsQuery) First(ctx context.Context, db *keel.DB) (*paybenefit.WorkerBenefitEnrollment, error) {
-	return keel.First[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*paybenefit.WorkerBenefitEnrollment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerBenefitEnrollmentsQuery) List(ctx context.Context, db *keel.DB) ([]*paybenefit.WorkerBenefitEnrollment, error) {
-	return keel.List[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paybenefit.WorkerBenefitEnrollment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerBenefitEnrollmentsQuery) All(ctx context.Context, db *keel.DB) ([]*paybenefit.WorkerBenefitEnrollment, error) {
-	return keel.All[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*paybenefit.WorkerBenefitEnrollment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerBenefitEnrollmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paybenefit.WorkerBenefitEnrollment, error) {
-	return keel.UpdateReturning[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*paybenefit.WorkerBenefitEnrollment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerBenefitEnrollmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paybenefit.WorkerBenefitEnrollment], error) {
-	return keel.PageOf[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*paybenefit.WorkerBenefitEnrollment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerBenefitEnrollmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paybenefit.WorkerBenefitEnrollment) error) error {
-	return keel.Each[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*paybenefit.WorkerBenefitEnrollment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerBenefitEnrollment() unsafe.Pointer {
@@ -1321,100 +1333,90 @@ var enumDomaintypesStatus = [...]schema.EnumValue{
 }
 
 // BenefitEnrollmentStatusCol is a column of paybenefit.BenefitEnrollmentStatus values.
-type BenefitEnrollmentStatusCol struct{ keel.StringCol }
+type BenefitEnrollmentStatusCol struct{ keel.TypedStringCol }
 
 func (c BenefitEnrollmentStatusCol) Eq(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Ne(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Gt(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Gte(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Lt(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Lte(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BenefitEnrollmentStatusCol) IsDistinctFrom(v paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BenefitEnrollmentStatusCol) Between(lo, hi paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BenefitEnrollmentStatusCol) To(v paybenefit.BenefitEnrollmentStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BenefitEnrollmentStatusCol) In(vs ...paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BenefitEnrollmentStatusCol) NotIn(vs ...paybenefit.BenefitEnrollmentStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // BenefitPlanTypeCol is a column of paybenefit.BenefitPlanType values.
-type BenefitPlanTypeCol struct{ keel.StringCol }
+type BenefitPlanTypeCol struct{ keel.TypedStringCol }
 
-func (c BenefitPlanTypeCol) Eq(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c BenefitPlanTypeCol) Ne(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c BenefitPlanTypeCol) Gt(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c BenefitPlanTypeCol) Eq(v paybenefit.BenefitPlanType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c BenefitPlanTypeCol) Ne(v paybenefit.BenefitPlanType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c BenefitPlanTypeCol) Gt(v paybenefit.BenefitPlanType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c BenefitPlanTypeCol) Gte(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c BenefitPlanTypeCol) Lt(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c BenefitPlanTypeCol) Lt(v paybenefit.BenefitPlanType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c BenefitPlanTypeCol) Lte(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BenefitPlanTypeCol) IsDistinctFrom(v paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BenefitPlanTypeCol) Between(lo, hi paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BenefitPlanTypeCol) To(v paybenefit.BenefitPlanType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BenefitPlanTypeCol) In(vs ...paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BenefitPlanTypeCol) NotIn(vs ...paybenefit.BenefitPlanType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CoverageTierCol is a column of paybenefit.CoverageTier values.
-type CoverageTierCol struct{ keel.StringCol }
+type CoverageTierCol struct{ keel.TypedStringCol }
 
-func (c CoverageTierCol) Eq(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CoverageTierCol) Ne(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CoverageTierCol) Gt(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CoverageTierCol) Gte(v paybenefit.CoverageTier) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CoverageTierCol) Lt(v paybenefit.CoverageTier) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CoverageTierCol) Lte(v paybenefit.CoverageTier) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CoverageTierCol) Eq(v paybenefit.CoverageTier) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CoverageTierCol) Ne(v paybenefit.CoverageTier) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CoverageTierCol) Gt(v paybenefit.CoverageTier) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CoverageTierCol) Gte(v paybenefit.CoverageTier) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CoverageTierCol) Lt(v paybenefit.CoverageTier) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CoverageTierCol) Lte(v paybenefit.CoverageTier) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CoverageTierCol) IsDistinctFrom(v paybenefit.CoverageTier) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CoverageTierCol) Between(lo, hi paybenefit.CoverageTier) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CoverageTierCol) To(v paybenefit.CoverageTier) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c CoverageTierCol) To(v paybenefit.CoverageTier) keel.Assignment { return c.Text().To(string(v)) }
 func (c CoverageTierCol) In(vs ...paybenefit.CoverageTier) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CoverageTierCol) NotIn(vs ...paybenefit.CoverageTier) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

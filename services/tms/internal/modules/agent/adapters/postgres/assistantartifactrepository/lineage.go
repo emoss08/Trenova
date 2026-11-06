@@ -29,7 +29,7 @@ const lineageCursorResource = "assistant_artifacts:"
 func rootExpr() keel.StringExpr {
 	a := assistantartifactdb.Artifacts
 
-	return a.LineageID.Coalesce(a.ID)
+	return a.LineageID.Text().Coalesce(a.ID)
 }
 
 func rootIs(root string) keel.Pred {
@@ -197,7 +197,7 @@ func (r *repository) ListPage(
 				rows    []lineageRow
 			)
 			err := keel.Batch(ctx, r.db.Keel(ctx),
-				keel.IntoSlice(lineages.Query().
+				keel.IntoSlice(keel.RowsOf(lineages.TableRef()).
 					With(lineages).
 					Group(lineages.Col("family"), lineages.Col("pinned")).
 					Pick(lineages.Col("family"), lineages.Col("pinned"), keel.Count()), &counted),
@@ -279,7 +279,7 @@ func pageQuery(
 	limit int,
 ) keel.Query[*keel.Row] {
 	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
-	window := lineages.Query().With(lineages)
+	window := keel.RowsOf(lineages.TableRef()).With(lineages)
 	if req.Family != "" {
 		window.Where(lineages.Col("family").Eq(string(req.Family)))
 	}

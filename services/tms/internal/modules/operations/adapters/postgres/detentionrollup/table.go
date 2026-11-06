@@ -134,14 +134,14 @@ func Union(
 }
 
 // Query starts a read of the view.
-func (v *View) Query() keel.Query[*keel.Row] { return v.cte.Query().With(v.cte) }
+func (v *View) Query() keel.Query[*keel.Row] { return keel.RowsOf(v.cte.TableRef()).With(v.cte) }
 
 // CTE is the view's definition, for a read that defines further CTEs over it.
 func (v *View) CTE() *keel.CTETable { return v.cte }
 
 // Rows starts a read of the view inside another CTE of the same statement, which lists the view
 // in its own WITH.
-func (v *View) Rows() keel.Query[*keel.Row] { return v.cte.Query() }
+func (v *View) Rows() keel.Query[*keel.Row] { return keel.RowsOf(v.cte.TableRef()) }
 
 // Col is the named column of the view; a name the view was not built with is a programming error.
 func (v *View) Col(name string) keel.Col {

@@ -87,18 +87,18 @@ type DetentionEvidencesTable struct {
 // DetentionEvidences references the detention_evidence table.
 var DetentionEvidences = &DetentionEvidencesTable{
 	TableBase:             keel.TableBase{Ref: &detentionEvidencesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 2}}},
-	DetentionOccurrenceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 2}}},
+	DetentionOccurrenceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 3}}},
 	Sequence:              keel.Int32Col{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 4}},
-	Kind:                  EvidenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 5}}},
-	Source:                EvidenceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 6}}},
+	Kind:                  EvidenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 5}}},
+	Source:                EvidenceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 6}}},
 	Summary:               keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 7}},
 	ObservedAt:            keel.Int64Col{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 8}},
 	RecordedAt:            keel.Int64Col{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 9}},
-	RecordedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 10}}},
-	DocumentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 11}}},
+	RecordedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 10}}},
+	DocumentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 11}}},
 	Payload:               keel.JSONBCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 12}},
 	PrevHash:              keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 13}},
 	Hash:                  keel.StringCol{Col: keel.Col{Ref: &detentionEvidencesRef, Index: 14}},
@@ -109,18 +109,18 @@ var DetentionEvidences = &DetentionEvidencesTable{
 func BuildDetentionEvidences(r *keel.Ref) *DetentionEvidencesTable {
 	return &DetentionEvidencesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DetentionOccurrenceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DetentionOccurrenceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Sequence:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
-		Kind:                  EvidenceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Source:                EvidenceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:                  EvidenceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Source:                EvidenceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Summary:               keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ObservedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		RecordedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		RecordedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DocumentID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		RecordedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DocumentID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Payload:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		PrevHash:              keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Hash:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -143,8 +143,6 @@ func (t *DetentionEvidencesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // DetentionEvidencesQuery is a query over detentionevidence.DetentionEvidence.
 type DetentionEvidencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*detentionevidence.DetentionEvidence] = (*DetentionEvidencesTable)(nil)
 
 var _ keel.Query[*detentionevidence.DetentionEvidence] = (*DetentionEvidencesQuery)(nil)
 
@@ -260,42 +258,42 @@ func (t *DetentionEvidencesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *DetentionEvidencesTable) Create(ctx context.Context, db *keel.DB, row *detentionevidence.DetentionEvidence) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DetentionEvidencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*detentionevidence.DetentionEvidence) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DetentionEvidencesTable) Save(ctx context.Context, db *keel.DB, row *detentionevidence.DetentionEvidence, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DetentionEvidencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *detentionevidence.DetentionEvidence, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DetentionEvidencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *detentionevidence.DetentionEvidence) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DetentionEvidencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*detentionevidence.DetentionEvidence, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DetentionEvidencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*detentionevidence.DetentionEvidence, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DetentionEvidencesTable) Copy(ctx context.Context, db *keel.DB, rows []*detentionevidence.DetentionEvidence) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -467,37 +465,45 @@ func (q *DetentionEvidencesQuery) Clone() keel.Query[*detentionevidence.Detentio
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DetentionEvidencesQuery) One(ctx context.Context, db *keel.DB) (*detentionevidence.DetentionEvidence, error) {
-	return keel.One[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*detentionevidence.DetentionEvidence)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DetentionEvidencesQuery) First(ctx context.Context, db *keel.DB) (*detentionevidence.DetentionEvidence, error) {
-	return keel.First[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*detentionevidence.DetentionEvidence)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DetentionEvidencesQuery) List(ctx context.Context, db *keel.DB) ([]*detentionevidence.DetentionEvidence, error) {
-	return keel.List[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionevidence.DetentionEvidence)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DetentionEvidencesQuery) All(ctx context.Context, db *keel.DB) ([]*detentionevidence.DetentionEvidence, error) {
-	return keel.All[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionevidence.DetentionEvidence)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DetentionEvidencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*detentionevidence.DetentionEvidence, error) {
-	return keel.UpdateReturning[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*detentionevidence.DetentionEvidence)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DetentionEvidencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*detentionevidence.DetentionEvidence], error) {
-	return keel.PageOf[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*detentionevidence.DetentionEvidence])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DetentionEvidencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*detentionevidence.DetentionEvidence) error) error {
-	return keel.Each[*detentionevidence.DetentionEvidence](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*detentionevidence.DetentionEvidence)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDetentionEvidence() unsafe.Pointer {
@@ -622,75 +628,75 @@ var enumEvidenceSource = [...]schema.EnumValue{
 }
 
 // EvidenceKindCol is a column of detentionevidence.EvidenceKind values.
-type EvidenceKindCol struct{ keel.StringCol }
+type EvidenceKindCol struct{ keel.TypedStringCol }
 
 func (c EvidenceKindCol) Eq(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EvidenceKindCol) Ne(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EvidenceKindCol) Gt(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EvidenceKindCol) Gte(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EvidenceKindCol) Lt(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EvidenceKindCol) Lte(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EvidenceKindCol) IsDistinctFrom(v detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EvidenceKindCol) Between(lo, hi detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EvidenceKindCol) To(v detentionevidence.EvidenceKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EvidenceKindCol) In(vs ...detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EvidenceKindCol) NotIn(vs ...detentionevidence.EvidenceKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EvidenceSourceCol is a column of detentionevidence.EvidenceSource values.
-type EvidenceSourceCol struct{ keel.StringCol }
+type EvidenceSourceCol struct{ keel.TypedStringCol }
 
 func (c EvidenceSourceCol) Eq(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EvidenceSourceCol) Ne(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EvidenceSourceCol) Gt(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EvidenceSourceCol) Gte(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EvidenceSourceCol) Lt(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EvidenceSourceCol) Lte(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EvidenceSourceCol) IsDistinctFrom(v detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EvidenceSourceCol) Between(lo, hi detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EvidenceSourceCol) To(v detentionevidence.EvidenceSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EvidenceSourceCol) In(vs ...detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EvidenceSourceCol) NotIn(vs ...detentionevidence.EvidenceSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

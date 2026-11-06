@@ -79,12 +79,12 @@ type EDIControlNumberSequencesTable struct {
 // EDIControlNumberSequences references the edi_control_number_sequences table.
 var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
 	TableBase:      keel.TableBase{Ref: &eDIControlNumberSequencesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 2}}},
-	EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 3}}},
-	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 4}}},
-	Kind:           ControlNumberKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 2}}},
+	EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 3}}},
+	DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 4}}},
+	Kind:           ControlNumberKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 5}}},
 	NextValue:      keel.Int64Col{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 6}},
 	MinValue:       keel.Int64Col{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 7}},
 	MaxValue:       keel.Int64Col{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 8}},
@@ -97,12 +97,12 @@ var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
 func BuildEDIControlNumberSequences(r *keel.Ref) *EDIControlNumberSequencesTable {
 	return &EDIControlNumberSequencesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Kind:           ControlNumberKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Kind:           ControlNumberKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		NextValue:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		MinValue:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		MaxValue:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -127,8 +127,6 @@ func (t *EDIControlNumberSequencesTable) Get(ctx context.Context, db *keel.DB, k
 
 // EDIControlNumberSequencesQuery is a query over edidocument.EDIControlNumberSequence.
 type EDIControlNumberSequencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edidocument.EDIControlNumberSequence] = (*EDIControlNumberSequencesTable)(nil)
 
 var _ keel.Query[*edidocument.EDIControlNumberSequence] = (*EDIControlNumberSequencesQuery)(nil)
 
@@ -244,42 +242,42 @@ func (t *EDIControlNumberSequencesTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *EDIControlNumberSequencesTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIControlNumberSequencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIControlNumberSequencesTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIControlNumberSequencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIControlNumberSequencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIControlNumberSequencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIControlNumberSequencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIControlNumberSequencesTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -451,37 +449,45 @@ func (q *EDIControlNumberSequencesQuery) Clone() keel.Query[*edidocument.EDICont
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIControlNumberSequencesQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDIControlNumberSequence, error) {
-	return keel.One[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDIControlNumberSequence)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIControlNumberSequencesQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDIControlNumberSequence, error) {
-	return keel.First[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDIControlNumberSequence)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIControlNumberSequencesQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDIControlNumberSequence, error) {
-	return keel.List[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDIControlNumberSequence)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIControlNumberSequencesQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDIControlNumberSequence, error) {
-	return keel.All[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDIControlNumberSequence)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIControlNumberSequencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDIControlNumberSequence, error) {
-	return keel.UpdateReturning[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edidocument.EDIControlNumberSequence)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIControlNumberSequencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDIControlNumberSequence], error) {
-	return keel.PageOf[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edidocument.EDIControlNumberSequence])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIControlNumberSequencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDIControlNumberSequence) error) error {
-	return keel.Each[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edidocument.EDIControlNumberSequence)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIControlNumberSequence() unsafe.Pointer {
@@ -630,15 +636,15 @@ type EDIDocumentTypesTable struct {
 // EDIDocumentTypes references the edi_document_types table.
 var EDIDocumentTypes = &EDIDocumentTypesTable{
 	TableBase:        keel.TableBase{Ref: &eDIDocumentTypesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 0}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 0}}},
 	Code:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 1}},
 	Name:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 2}},
-	Standard:         EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 3}}},
-	TransactionSet:   TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 4}}},
-	TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 5}}},
-	Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 6}}},
+	Standard:         EDIStandardCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 3}}},
+	TransactionSet:   TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 4}}},
+	TransactionSetID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 5}}},
+	Direction:        DocumentDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 6}}},
 	DefaultVersion:   keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 7}},
-	Status:           DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 8}}},
+	Status:           DocumentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 8}}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 9}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 10}},
 }
@@ -647,15 +653,15 @@ var EDIDocumentTypes = &EDIDocumentTypesTable{
 func BuildEDIDocumentTypes(r *keel.Ref) *EDIDocumentTypesTable {
 	return &EDIDocumentTypesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Code:             keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Name:             keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		Standard:         EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TransactionSet:   TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TransactionSetID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Direction:        DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Standard:         EDIStandardCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TransactionSet:   TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TransactionSetID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Direction:        DocumentDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		DefaultVersion:   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:           DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:           DocumentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
@@ -681,8 +687,6 @@ func (t *EDIDocumentTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // EDIDocumentTypesQuery is a query over edidocument.EDIDocumentType.
 type EDIDocumentTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edidocument.EDIDocumentType] = (*EDIDocumentTypesTable)(nil)
 
 var _ keel.Query[*edidocument.EDIDocumentType] = (*EDIDocumentTypesQuery)(nil)
 
@@ -798,42 +802,42 @@ func (t *EDIDocumentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *EDIDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1005,37 +1009,45 @@ func (q *EDIDocumentTypesQuery) Clone() keel.Query[*edidocument.EDIDocumentType]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDIDocumentType, error) {
-	return keel.One[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDIDocumentType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDIDocumentType, error) {
-	return keel.First[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDIDocumentType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDIDocumentType, error) {
-	return keel.List[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDIDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDIDocumentType, error) {
-	return keel.All[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDIDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDIDocumentType, error) {
-	return keel.UpdateReturning[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edidocument.EDIDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDIDocumentType], error) {
-	return keel.PageOf[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edidocument.EDIDocumentType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDIDocumentType) error) error {
-	return keel.Each[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edidocument.EDIDocumentType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIDocumentType() unsafe.Pointer { return unsafe.Pointer(new(edidocument.EDIDocumentType)) }
@@ -1166,13 +1178,13 @@ type EDITransactionSetsTable struct {
 // EDITransactionSets references the edi_transaction_sets table.
 var EDITransactionSets = &EDITransactionSetsTable{
 	TableBase:      keel.TableBase{Ref: &eDITransactionSetsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 0}}},
-	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 1}}},
-	Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 0}}},
+	Standard:       EDIStandardCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 1}}},
+	Code:           TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 3}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 4}},
 	DefaultVersion: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 5}},
-	Status:         DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 6}}},
+	Status:         DocumentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 6}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 7}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 8}},
 }
@@ -1181,13 +1193,13 @@ var EDITransactionSets = &EDITransactionSetsTable{
 func BuildEDITransactionSets(r *keel.Ref) *EDITransactionSetsTable {
 	return &EDITransactionSetsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		Standard:       EDIStandardCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Code:           TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		DefaultVersion: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:         DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:         DocumentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}
@@ -1208,8 +1220,6 @@ func (t *EDITransactionSetsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // EDITransactionSetsQuery is a query over edidocument.EDITransactionSet.
 type EDITransactionSetsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edidocument.EDITransactionSet] = (*EDITransactionSetsTable)(nil)
 
 var _ keel.Query[*edidocument.EDITransactionSet] = (*EDITransactionSetsQuery)(nil)
 
@@ -1325,42 +1335,42 @@ func (t *EDITransactionSetsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *EDITransactionSetsTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDITransactionSetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDITransactionSetsTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDITransactionSetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDITransactionSetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDITransactionSetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDITransactionSetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDITransactionSetsTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1532,37 +1542,45 @@ func (q *EDITransactionSetsQuery) Clone() keel.Query[*edidocument.EDITransaction
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDITransactionSetsQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDITransactionSet, error) {
-	return keel.One[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDITransactionSet)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDITransactionSetsQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDITransactionSet, error) {
-	return keel.First[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edidocument.EDITransactionSet)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDITransactionSetsQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDITransactionSet, error) {
-	return keel.List[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDITransactionSet)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDITransactionSetsQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDITransactionSet, error) {
-	return keel.All[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edidocument.EDITransactionSet)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDITransactionSetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDITransactionSet, error) {
-	return keel.UpdateReturning[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edidocument.EDITransactionSet)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDITransactionSetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDITransactionSet], error) {
-	return keel.PageOf[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edidocument.EDITransactionSet])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDITransactionSetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDITransactionSet) error) error {
-	return keel.Each[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edidocument.EDITransactionSet)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDITransactionSet() unsafe.Pointer { return unsafe.Pointer(new(edidocument.EDITransactionSet)) }
@@ -1658,211 +1676,193 @@ var enumTransactionSet = [...]schema.EnumValue{
 }
 
 // ControlNumberKindCol is a column of edidocument.ControlNumberKind values.
-type ControlNumberKindCol struct{ keel.StringCol }
+type ControlNumberKindCol struct{ keel.TypedStringCol }
 
 func (c ControlNumberKindCol) Eq(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ControlNumberKindCol) Ne(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ControlNumberKindCol) Gt(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ControlNumberKindCol) Gte(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ControlNumberKindCol) Lt(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ControlNumberKindCol) Lte(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ControlNumberKindCol) IsDistinctFrom(v edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ControlNumberKindCol) Between(lo, hi edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ControlNumberKindCol) To(v edidocument.ControlNumberKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ControlNumberKindCol) In(vs ...edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ControlNumberKindCol) NotIn(vs ...edidocument.ControlNumberKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DocumentDirectionCol is a column of edidocument.DocumentDirection values.
-type DocumentDirectionCol struct{ keel.StringCol }
+type DocumentDirectionCol struct{ keel.TypedStringCol }
 
 func (c DocumentDirectionCol) Eq(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DocumentDirectionCol) Ne(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DocumentDirectionCol) Gt(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DocumentDirectionCol) Gte(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DocumentDirectionCol) Lt(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DocumentDirectionCol) Lte(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DocumentDirectionCol) IsDistinctFrom(v edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DocumentDirectionCol) Between(lo, hi edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DocumentDirectionCol) To(v edidocument.DocumentDirection) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DocumentDirectionCol) In(vs ...edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DocumentDirectionCol) NotIn(vs ...edidocument.DocumentDirection) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DocumentStatusCol is a column of edidocument.DocumentStatus values.
-type DocumentStatusCol struct{ keel.StringCol }
+type DocumentStatusCol struct{ keel.TypedStringCol }
 
-func (c DocumentStatusCol) Eq(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DocumentStatusCol) Ne(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DocumentStatusCol) Gt(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c DocumentStatusCol) Eq(v edidocument.DocumentStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c DocumentStatusCol) Ne(v edidocument.DocumentStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c DocumentStatusCol) Gt(v edidocument.DocumentStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c DocumentStatusCol) Gte(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c DocumentStatusCol) Lt(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c DocumentStatusCol) Lt(v edidocument.DocumentStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c DocumentStatusCol) Lte(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DocumentStatusCol) IsDistinctFrom(v edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DocumentStatusCol) Between(lo, hi edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DocumentStatusCol) To(v edidocument.DocumentStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DocumentStatusCol) In(vs ...edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DocumentStatusCol) NotIn(vs ...edidocument.DocumentStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EDIStandardCol is a column of edidocument.EDIStandard values.
-type EDIStandardCol struct{ keel.StringCol }
+type EDIStandardCol struct{ keel.TypedStringCol }
 
-func (c EDIStandardCol) Eq(v edidocument.EDIStandard) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EDIStandardCol) Ne(v edidocument.EDIStandard) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EDIStandardCol) Gt(v edidocument.EDIStandard) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EDIStandardCol) Gte(v edidocument.EDIStandard) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EDIStandardCol) Lt(v edidocument.EDIStandard) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EDIStandardCol) Lte(v edidocument.EDIStandard) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EDIStandardCol) Eq(v edidocument.EDIStandard) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EDIStandardCol) Ne(v edidocument.EDIStandard) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EDIStandardCol) Gt(v edidocument.EDIStandard) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EDIStandardCol) Gte(v edidocument.EDIStandard) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EDIStandardCol) Lt(v edidocument.EDIStandard) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EDIStandardCol) Lte(v edidocument.EDIStandard) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EDIStandardCol) IsDistinctFrom(v edidocument.EDIStandard) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EDIStandardCol) Between(lo, hi edidocument.EDIStandard) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EDIStandardCol) To(v edidocument.EDIStandard) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c EDIStandardCol) To(v edidocument.EDIStandard) keel.Assignment { return c.Text().To(string(v)) }
 func (c EDIStandardCol) In(vs ...edidocument.EDIStandard) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EDIStandardCol) NotIn(vs ...edidocument.EDIStandard) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransactionSetCol is a column of edidocument.TransactionSet values.
-type TransactionSetCol struct{ keel.StringCol }
+type TransactionSetCol struct{ keel.TypedStringCol }
 
-func (c TransactionSetCol) Eq(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TransactionSetCol) Ne(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TransactionSetCol) Gt(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c TransactionSetCol) Eq(v edidocument.TransactionSet) keel.Pred { return c.Text().Eq(string(v)) }
+func (c TransactionSetCol) Ne(v edidocument.TransactionSet) keel.Pred { return c.Text().Ne(string(v)) }
+func (c TransactionSetCol) Gt(v edidocument.TransactionSet) keel.Pred { return c.Text().Gt(string(v)) }
 func (c TransactionSetCol) Gte(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c TransactionSetCol) Lt(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c TransactionSetCol) Lt(v edidocument.TransactionSet) keel.Pred { return c.Text().Lt(string(v)) }
 func (c TransactionSetCol) Lte(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransactionSetCol) IsDistinctFrom(v edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransactionSetCol) Between(lo, hi edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransactionSetCol) To(v edidocument.TransactionSet) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransactionSetCol) In(vs ...edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransactionSetCol) NotIn(vs ...edidocument.TransactionSet) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ValidationSeverityCol is a column of edidocument.ValidationSeverity values.
-type ValidationSeverityCol struct{ keel.StringCol }
+type ValidationSeverityCol struct{ keel.TypedStringCol }
 
 func (c ValidationSeverityCol) Eq(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ValidationSeverityCol) Ne(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ValidationSeverityCol) Gt(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ValidationSeverityCol) Gte(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ValidationSeverityCol) Lt(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ValidationSeverityCol) Lte(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ValidationSeverityCol) IsDistinctFrom(v edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ValidationSeverityCol) Between(lo, hi edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ValidationSeverityCol) To(v edidocument.ValidationSeverity) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ValidationSeverityCol) In(vs ...edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ValidationSeverityCol) NotIn(vs ...edidocument.ValidationSeverity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

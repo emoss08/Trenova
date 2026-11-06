@@ -56,7 +56,7 @@ func (w openAsOfWindow) build() openAsOf {
 		keel.GenerateSeries(keel.Int64(0), keel.Int64(int64(w.points-1))),
 	))
 	seriesN := keel.Int64Of(series.Col("n"))
-	points := keel.CTE("points", []string{"n", colPeriodEnd}, series.Query().Pick(
+	points := keel.CTE("points", []string{"n", colPeriodEnd}, keel.RowsOf(series.TableRef()).Pick(
 		seriesN,
 		keel.Int64(w.asOf).Sub(seriesN.Mul(keel.Int64(w.step))),
 	))
@@ -192,14 +192,14 @@ func (w openAsOfWindow) movesOf(candidates, events *keel.CTETable) *keel.CTETabl
 		"moves",
 		[]string{colInvoiceID, colDueDate, colChangedAt, colDelta},
 		keel.UnionAll(
-			candidates.Query().
+			keel.RowsOf(candidates.TableRef()).
 				Pick(id, due, invoiceDate, candidates.Col("total_amount_minor")).
 				Where(invoiceDate.Gt(start)),
-			events.Query().
+			keel.RowsOf(events.TableRef()).
 				Join(candidates, onCandidate()).
 				Pick(id, due, settledAt, amount.Neg()).
 				Where(settledAt.Gt(start)),
-			events.Query().
+			keel.RowsOf(events.TableRef()).
 				Join(candidates, onCandidate()).
 				Pick(id, due, releasedOn, amount).
 				Where(releasedAt.IsNotNull(), releasedOn.Gt(start)),
@@ -214,19 +214,19 @@ func (w openAsOfWindow) changesOf(candidates, moves *keel.CTETable) *keel.CTETab
 		"changes",
 		[]string{colInvoiceID, colDueDate, colChangedAt, colDelta},
 		keel.UnionAll(
-			candidates.Query().Pick(
+			keel.RowsOf(candidates.TableRef()).Pick(
 				candidates.Col("id"),
 				candidates.Col(colDueDate),
 				start,
 				candidates.Col(colOpenNow),
 			),
-			moves.Query().Pick(
+			keel.RowsOf(moves.TableRef()).Pick(
 				moves.Col(colInvoiceID),
 				moves.Col(colDueDate),
 				moves.Col(colChangedAt),
 				moves.Col(colDelta),
 			),
-			moves.Query().Pick(
+			keel.RowsOf(moves.TableRef()).Pick(
 				moves.Col(colInvoiceID),
 				moves.Col(colDueDate),
 				start,
@@ -245,7 +245,7 @@ func segmentsOf(changes *keel.CTETable) *keel.CTETable {
 	return keel.CTE(
 		"segments",
 		[]string{colInvoiceID, colDueDate, "starts_at", "ends_at", "open_minor"},
-		changes.Query().
+		keel.RowsOf(changes.TableRef()).
 			Pick(
 				id,
 				due,
@@ -277,7 +277,7 @@ func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
 	return keel.CTE(
 		"open_items",
 		[]string{"n", colInvoiceID, colDueDate, "open_minor"},
-		segments.Query().
+		keel.RowsOf(segments.TableRef()).
 			JoinLateral(offsets).
 			Pick(
 				offsets.Col("n"),

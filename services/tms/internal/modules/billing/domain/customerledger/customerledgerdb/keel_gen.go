@@ -91,19 +91,19 @@ type CustomerLedgerEntriesTable struct {
 // CustomerLedgerEntries references the customer_ledger_entries table.
 var CustomerLedgerEntries = &CustomerLedgerEntriesTable{
 	TableBase:        keel.TableBase{Ref: &customerLedgerEntriesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 2}}},
-	CustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 2}}},
+	CustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 3}}},
 	SourceObjectType: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 4}},
 	SourceObjectID:   keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 5}},
 	SourceEventType:  keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 6}},
-	RelatedInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 7}}},
+	RelatedInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 7}}},
 	DocumentNumber:   keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 8}},
 	TransactionDate:  keel.Int64Col{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 9}},
 	LineNumber:       keel.Int64Col{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 10}},
 	AmountMinor:      keel.Int64Col{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 11}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 12}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 12}}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &customerLedgerEntriesRef, Index: 13}},
 }
 
@@ -111,19 +111,19 @@ var CustomerLedgerEntries = &CustomerLedgerEntriesTable{
 func BuildCustomerLedgerEntries(r *keel.Ref) *CustomerLedgerEntriesTable {
 	return &CustomerLedgerEntriesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SourceObjectType: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		SourceObjectID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SourceEventType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		RelatedInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		RelatedInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DocumentNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		TransactionDate:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		LineNumber:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		AmountMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 	}
 }
@@ -153,8 +153,6 @@ func (t *CustomerLedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key p
 
 // CustomerLedgerEntriesQuery is a query over customerledger.CustomerLedgerEntry.
 type CustomerLedgerEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customerledger.CustomerLedgerEntry] = (*CustomerLedgerEntriesTable)(nil)
 
 var _ keel.Query[*customerledger.CustomerLedgerEntry] = (*CustomerLedgerEntriesQuery)(nil)
 
@@ -270,42 +268,42 @@ func (t *CustomerLedgerEntriesTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *CustomerLedgerEntriesTable) Create(ctx context.Context, db *keel.DB, row *customerledger.CustomerLedgerEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomerLedgerEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerledger.CustomerLedgerEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomerLedgerEntriesTable) Save(ctx context.Context, db *keel.DB, row *customerledger.CustomerLedgerEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomerLedgerEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerledger.CustomerLedgerEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomerLedgerEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerledger.CustomerLedgerEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomerLedgerEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerledger.CustomerLedgerEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomerLedgerEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerledger.CustomerLedgerEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomerLedgerEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*customerledger.CustomerLedgerEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -477,37 +475,45 @@ func (q *CustomerLedgerEntriesQuery) Clone() keel.Query[*customerledger.Customer
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomerLedgerEntriesQuery) One(ctx context.Context, db *keel.DB) (*customerledger.CustomerLedgerEntry, error) {
-	return keel.One[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerledger.CustomerLedgerEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomerLedgerEntriesQuery) First(ctx context.Context, db *keel.DB) (*customerledger.CustomerLedgerEntry, error) {
-	return keel.First[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerledger.CustomerLedgerEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomerLedgerEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*customerledger.CustomerLedgerEntry, error) {
-	return keel.List[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.CustomerLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomerLedgerEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*customerledger.CustomerLedgerEntry, error) {
-	return keel.All[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerledger.CustomerLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomerLedgerEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerledger.CustomerLedgerEntry, error) {
-	return keel.UpdateReturning[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerledger.CustomerLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomerLedgerEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerledger.CustomerLedgerEntry], error) {
-	return keel.PageOf[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerledger.CustomerLedgerEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomerLedgerEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerledger.CustomerLedgerEntry) error) error {
-	return keel.Each[*customerledger.CustomerLedgerEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerledger.CustomerLedgerEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomerLedgerEntry() unsafe.Pointer {

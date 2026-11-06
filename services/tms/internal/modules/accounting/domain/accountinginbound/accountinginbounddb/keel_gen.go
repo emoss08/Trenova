@@ -119,11 +119,11 @@ type AccountingInboundChangesTable struct {
 // AccountingInboundChanges references the accounting_inbound_changes table.
 var AccountingInboundChanges = &AccountingInboundChangesTable{
 	TableBase:          keel.TableBase{Ref: &accountingInboundChangesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 2}}},
-	ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 3}}},
-	Kind:               InboundChangeKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 2}}},
+	ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 3}}},
+	Kind:               InboundChangeKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 4}}},
 	ExternalID:         keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 5}},
 	ExternalNumber:     keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 6}},
 	ExternalURL:        keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 7}},
@@ -134,13 +134,13 @@ var AccountingInboundChanges = &AccountingInboundChangesTable{
 	CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 12}},
 	PartyExternalID:    keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 13}},
 	PartyName:          keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 14}},
-	PartyObjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 15}}},
+	PartyObjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 15}}},
 	Document:           keel.JSONBCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 16}},
-	Status:             InboundChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 17}}},
-	Reason:             InboundChangeReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 18}}},
+	Status:             InboundChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 17}}},
+	Reason:             InboundChangeReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 18}}},
 	Resolution:         keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 19}},
 	AppliedObjects:     keel.JSONBCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 20}},
-	DecidedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 21}}},
+	DecidedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 21}}},
 	DecidedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 22}},
 	Note:               keel.StringCol{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 23}},
 	DetectedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingInboundChangesRef, Index: 24}},
@@ -153,11 +153,11 @@ var AccountingInboundChanges = &AccountingInboundChangesTable{
 func BuildAccountingInboundChanges(r *keel.Ref) *AccountingInboundChangesTable {
 	return &AccountingInboundChangesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:               InboundChangeKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:               InboundChangeKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ExternalID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ExternalNumber:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ExternalURL:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -168,13 +168,13 @@ func BuildAccountingInboundChanges(r *keel.Ref) *AccountingInboundChangesTable {
 		CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		PartyExternalID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		PartyName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		PartyObjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		PartyObjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Document:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		Status:             InboundChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		Reason:             InboundChangeReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		Status:             InboundChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		Reason:             InboundChangeReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Resolution:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		AppliedObjects:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 20}},
-		DecidedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		DecidedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		DecidedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		Note:               keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		DetectedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
@@ -204,8 +204,6 @@ func (t *AccountingInboundChangesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // AccountingInboundChangesQuery is a query over accountinginbound.AccountingInboundChange.
 type AccountingInboundChangesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountinginbound.AccountingInboundChange] = (*AccountingInboundChangesTable)(nil)
 
 var _ keel.Query[*accountinginbound.AccountingInboundChange] = (*AccountingInboundChangesQuery)(nil)
 
@@ -321,42 +319,42 @@ func (t *AccountingInboundChangesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *AccountingInboundChangesTable) Create(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingInboundChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingInboundChangesTable) Save(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingInboundChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingInboundChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountinginbound.AccountingInboundChange) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingInboundChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingInboundChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingInboundChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*accountinginbound.AccountingInboundChange) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -528,37 +526,45 @@ func (q *AccountingInboundChangesQuery) Clone() keel.Query[*accountinginbound.Ac
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingInboundChangesQuery) One(ctx context.Context, db *keel.DB) (*accountinginbound.AccountingInboundChange, error) {
-	return keel.One[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountinginbound.AccountingInboundChange)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingInboundChangesQuery) First(ctx context.Context, db *keel.DB) (*accountinginbound.AccountingInboundChange, error) {
-	return keel.First[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountinginbound.AccountingInboundChange)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingInboundChangesQuery) List(ctx context.Context, db *keel.DB) ([]*accountinginbound.AccountingInboundChange, error) {
-	return keel.List[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountinginbound.AccountingInboundChange)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingInboundChangesQuery) All(ctx context.Context, db *keel.DB) ([]*accountinginbound.AccountingInboundChange, error) {
-	return keel.All[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountinginbound.AccountingInboundChange)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingInboundChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountinginbound.AccountingInboundChange, error) {
-	return keel.UpdateReturning[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountinginbound.AccountingInboundChange)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingInboundChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountinginbound.AccountingInboundChange], error) {
-	return keel.PageOf[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountinginbound.AccountingInboundChange])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingInboundChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountinginbound.AccountingInboundChange) error) error {
-	return keel.Each[*accountinginbound.AccountingInboundChange](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountinginbound.AccountingInboundChange)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingInboundChange() unsafe.Pointer {
@@ -801,112 +807,112 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // InboundChangeKindCol is a column of accountinginbound.InboundChangeKind values.
-type InboundChangeKindCol struct{ keel.StringCol }
+type InboundChangeKindCol struct{ keel.TypedStringCol }
 
 func (c InboundChangeKindCol) Eq(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InboundChangeKindCol) Ne(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InboundChangeKindCol) Gt(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InboundChangeKindCol) Gte(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InboundChangeKindCol) Lt(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InboundChangeKindCol) Lte(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InboundChangeKindCol) IsDistinctFrom(v accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InboundChangeKindCol) Between(lo, hi accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InboundChangeKindCol) To(v accountinginbound.InboundChangeKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InboundChangeKindCol) In(vs ...accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InboundChangeKindCol) NotIn(vs ...accountinginbound.InboundChangeKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InboundChangeReasonCol is a column of accountinginbound.InboundChangeReason values.
-type InboundChangeReasonCol struct{ keel.StringCol }
+type InboundChangeReasonCol struct{ keel.TypedStringCol }
 
 func (c InboundChangeReasonCol) Eq(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InboundChangeReasonCol) Ne(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InboundChangeReasonCol) Gt(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InboundChangeReasonCol) Gte(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InboundChangeReasonCol) Lt(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InboundChangeReasonCol) Lte(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InboundChangeReasonCol) IsDistinctFrom(v accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InboundChangeReasonCol) Between(lo, hi accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InboundChangeReasonCol) To(v accountinginbound.InboundChangeReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InboundChangeReasonCol) In(vs ...accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InboundChangeReasonCol) NotIn(vs ...accountinginbound.InboundChangeReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InboundChangeStatusCol is a column of accountinginbound.InboundChangeStatus values.
-type InboundChangeStatusCol struct{ keel.StringCol }
+type InboundChangeStatusCol struct{ keel.TypedStringCol }
 
 func (c InboundChangeStatusCol) Eq(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InboundChangeStatusCol) Ne(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InboundChangeStatusCol) Gt(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InboundChangeStatusCol) Gte(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InboundChangeStatusCol) Lt(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InboundChangeStatusCol) Lte(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InboundChangeStatusCol) IsDistinctFrom(v accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InboundChangeStatusCol) Between(lo, hi accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InboundChangeStatusCol) To(v accountinginbound.InboundChangeStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InboundChangeStatusCol) In(vs ...accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InboundChangeStatusCol) NotIn(vs ...accountinginbound.InboundChangeStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

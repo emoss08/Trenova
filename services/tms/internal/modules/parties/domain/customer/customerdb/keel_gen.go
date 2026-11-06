@@ -144,11 +144,11 @@ type CustomersTable struct {
 // Customers references the customers table.
 var Customers = &CustomersTable{
 	TableBase:               keel.TableBase{Ref: &customersRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 2}}},
-	StateID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 3}}},
-	Status:                  keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 2}}},
+	StateID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 3}}},
+	Status:                  keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 4}}},
 	Code:                    keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 5}},
 	Name:                    keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 6}},
 	AddressLine1:            keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 7}},
@@ -162,7 +162,7 @@ var Customers = &CustomersTable{
 	ExternalID:              keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 15}},
 	DOTNumber:               keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 16}},
 	MCNumber:                keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 17}},
-	StatusUpdatePreference:  StatusUpdatePreferenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 18}}},
+	StatusUpdatePreference:  StatusUpdatePreferenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customersRef, Index: 18}}},
 	StatusUpdateRecipients:  keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 19}},
 	BrokerVettingEnabled:    keel.BoolCol{Col: keel.Col{Ref: &customersRef, Index: 20}},
 	CheckCallIntervalHours:  keel.Int16Col{Col: keel.Col{Ref: &customersRef, Index: 21}},
@@ -182,11 +182,11 @@ var Customers = &CustomersTable{
 func BuildCustomers(r *keel.Ref) *CustomersTable {
 	return &CustomersTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		StateID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                  keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		StateID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                  keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Code:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Name:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		AddressLine1:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -200,7 +200,7 @@ func BuildCustomers(r *keel.Ref) *CustomersTable {
 		ExternalID:              keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		DOTNumber:               keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		MCNumber:                keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		StatusUpdatePreference:  StatusUpdatePreferenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		StatusUpdatePreference:  StatusUpdatePreferenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		StatusUpdateRecipients:  keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		BrokerVettingEnabled:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		CheckCallIntervalHours:  keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -252,8 +252,6 @@ func (t *CustomersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*c
 
 // CustomersQuery is a query over customer.Customer.
 type CustomersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customer.Customer] = (*CustomersTable)(nil)
 
 var _ keel.Query[*customer.Customer] = (*CustomersQuery)(nil)
 
@@ -369,42 +367,42 @@ func (t *CustomersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*custo
 
 // Create inserts row.
 func (t *CustomersTable) Create(ctx context.Context, db *keel.DB, row *customer.Customer) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.Customer) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomersTable) Save(ctx context.Context, db *keel.DB, row *customer.Customer, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomersTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.Customer, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomersTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.Customer) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomersTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.Customer, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.Customer, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomersTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.Customer) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -576,37 +574,45 @@ func (q *CustomersQuery) Clone() keel.Query[*customer.Customer] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomersQuery) One(ctx context.Context, db *keel.DB) (*customer.Customer, error) {
-	return keel.One[*customer.Customer](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customer.Customer)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomersQuery) First(ctx context.Context, db *keel.DB) (*customer.Customer, error) {
-	return keel.First[*customer.Customer](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customer.Customer)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomersQuery) List(ctx context.Context, db *keel.DB) ([]*customer.Customer, error) {
-	return keel.List[*customer.Customer](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.Customer)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomersQuery) All(ctx context.Context, db *keel.DB) ([]*customer.Customer, error) {
-	return keel.All[*customer.Customer](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.Customer)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.Customer, error) {
-	return keel.UpdateReturning[*customer.Customer](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customer.Customer)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.Customer], error) {
-	return keel.PageOf[*customer.Customer](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customer.Customer])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.Customer) error) error {
-	return keel.Each[*customer.Customer](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customer.Customer)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomer() unsafe.Pointer { return unsafe.Pointer(new(customer.Customer)) }
@@ -995,20 +1001,20 @@ type CustomerBillingProfilesTable struct {
 // CustomerBillingProfiles references the customer_billing_profiles table.
 var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 	TableBase:                       keel.TableBase{Ref: &customerBillingProfilesRef},
-	ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 0}}},
-	BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 1}}},
-	OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 2}}},
-	CustomerID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 3}}},
-	InvoiceDelivery:                 InvoiceDeliveryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 4}}},
-	BillingCycle:                    BillingCycleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 5}}},
+	ID:                              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 0}}},
+	BusinessUnitID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 1}}},
+	OrganizationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 2}}},
+	CustomerID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 3}}},
+	InvoiceDelivery:                 InvoiceDeliveryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 4}}},
+	BillingCycle:                    BillingCycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 5}}},
 	BillingCycleAnchorDay:           keel.Int16Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 6}},
 	BillingCycleTimezone:            keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 7}},
 	LastBilledPeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 8}},
-	PaymentTerm:                     PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 9}}},
+	PaymentTerm:                     PaymentTermCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 9}}},
 	HasBillingControlOverrides:      keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 10}},
 	CreditLimit:                     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 11}}},
 	CreditBalance:                   keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 12}}},
-	CreditStatus:                    CreditStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 13}}},
+	CreditStatus:                    CreditStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 13}}},
 	EnforceCreditLimit:              keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 14}},
 	AutoCreditHold:                  keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 15}},
 	CreditHoldReason:                keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 16}},
@@ -1019,17 +1025,17 @@ var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 	SendStatements:                  keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 21}},
 	EmailInvoiceEnabled:             keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 22}},
 	EDIInvoiceEnabled:               keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 23}},
-	SplitBy:                         InvoiceSplitKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 24}}},
-	SectionBy:                       InvoiceSectionKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 25}}},
-	InvoiceDetail:                   InvoiceDetailCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 26}}},
+	SplitBy:                         InvoiceSplitKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 24}}},
+	SectionBy:                       InvoiceSectionKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 25}}},
+	InvoiceDetail:                   InvoiceDetailCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 26}}},
 	MinConsolidatedAmount:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 27}}},
 	MinConsolidatedAmountMinor:      keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 28}},
 	MaxShipmentsPerInvoice:          keel.Int16Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 29}},
-	InvoiceNumberFormat:             InvoiceNumberFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 30}}},
+	InvoiceNumberFormat:             InvoiceNumberFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 30}}},
 	CustomerInvoicePrefix:           keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 31}},
 	InvoiceCopies:                   keel.Int16Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 32}},
-	RevenueAccountID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 33}}},
-	ARAccountID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 34}}},
+	RevenueAccountID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 33}}},
+	ARAccountID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 34}}},
 	ApplyLateCharges:                keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 35}},
 	LateChargeRate:                  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 36}}},
 	GracePeriodDays:                 keel.Int16Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 37}},
@@ -1047,11 +1053,11 @@ var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 	RequirePONumber:                 keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 49}},
 	RequireBOLNumber:                keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 50}},
 	RequireDeliveryNumber:           keel.BoolCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 51}},
-	DefaultBillerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 52}}},
+	DefaultBillerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 52}}},
 	BillingNotes:                    keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 53}},
-	FuelSurchargeMode:               FuelSurchargeModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 54}}},
-	FuelSurchargeProgramID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 55}}},
-	FactoringCompanyID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 56}}},
+	FuelSurchargeMode:               FuelSurchargeModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 54}}},
+	FuelSurchargeProgramID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 55}}},
+	FactoringCompanyID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 56}}},
 	Version:                         keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 57}},
 	CreatedAt:                       keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 58}},
 	UpdatedAt:                       keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 59}},
@@ -1061,20 +1067,20 @@ var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 func BuildCustomerBillingProfiles(r *keel.Ref) *CustomerBillingProfilesTable {
 	return &CustomerBillingProfilesTable{
 		TableBase:                       keel.TableBase{Ref: r},
-		ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceDelivery:                 InvoiceDeliveryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		BillingCycle:                    BillingCycleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceDelivery:                 InvoiceDeliveryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		BillingCycle:                    BillingCycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		BillingCycleAnchorDay:           keel.Int16Col{Col: keel.Col{Ref: r, Index: 6}},
 		BillingCycleTimezone:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		LastBilledPeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		PaymentTerm:                     PaymentTermCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		PaymentTerm:                     PaymentTermCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		HasBillingControlOverrides:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		CreditLimit:                     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 11}}},
 		CreditBalance:                   keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
-		CreditStatus:                    CreditStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CreditStatus:                    CreditStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		EnforceCreditLimit:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
 		AutoCreditHold:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		CreditHoldReason:                keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
@@ -1085,17 +1091,17 @@ func BuildCustomerBillingProfiles(r *keel.Ref) *CustomerBillingProfilesTable {
 		SendStatements:                  keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
 		EmailInvoiceEnabled:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 22}},
 		EDIInvoiceEnabled:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 23}},
-		SplitBy:                         InvoiceSplitKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		SectionBy:                       InvoiceSectionKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		InvoiceDetail:                   InvoiceDetailCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		SplitBy:                         InvoiceSplitKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		SectionBy:                       InvoiceSectionKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		InvoiceDetail:                   InvoiceDetailCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		MinConsolidatedAmount:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 27}}},
 		MinConsolidatedAmountMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		MaxShipmentsPerInvoice:          keel.Int16Col{Col: keel.Col{Ref: r, Index: 29}},
-		InvoiceNumberFormat:             InvoiceNumberFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		InvoiceNumberFormat:             InvoiceNumberFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		CustomerInvoicePrefix:           keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		InvoiceCopies:                   keel.Int16Col{Col: keel.Col{Ref: r, Index: 32}},
-		RevenueAccountID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		ARAccountID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		RevenueAccountID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		ARAccountID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		ApplyLateCharges:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 35}},
 		LateChargeRate:                  keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 36}}},
 		GracePeriodDays:                 keel.Int16Col{Col: keel.Col{Ref: r, Index: 37}},
@@ -1113,11 +1119,11 @@ func BuildCustomerBillingProfiles(r *keel.Ref) *CustomerBillingProfilesTable {
 		RequirePONumber:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 49}},
 		RequireBOLNumber:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 50}},
 		RequireDeliveryNumber:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 51}},
-		DefaultBillerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 52}}},
+		DefaultBillerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 52}}},
 		BillingNotes:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 53}},
-		FuelSurchargeMode:               FuelSurchargeModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 54}}},
-		FuelSurchargeProgramID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 55}}},
-		FactoringCompanyID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 56}}},
+		FuelSurchargeMode:               FuelSurchargeModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 54}}},
+		FuelSurchargeProgramID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 55}}},
+		FactoringCompanyID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 56}}},
 		Version:                         keel.Int64Col{Col: keel.Col{Ref: r, Index: 57}},
 		CreatedAt:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 58}},
 		UpdatedAt:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 59}},
@@ -1169,8 +1175,6 @@ func (t *CustomerBillingProfilesTable) Get(ctx context.Context, db *keel.DB, key
 
 // CustomerBillingProfilesQuery is a query over customer.CustomerBillingProfile.
 type CustomerBillingProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customer.CustomerBillingProfile] = (*CustomerBillingProfilesTable)(nil)
 
 var _ keel.Query[*customer.CustomerBillingProfile] = (*CustomerBillingProfilesQuery)(nil)
 
@@ -1286,42 +1290,42 @@ func (t *CustomerBillingProfilesTable) Compute(col keel.Column, e keel.Expr) kee
 
 // Create inserts row.
 func (t *CustomerBillingProfilesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomerBillingProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomerBillingProfilesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomerBillingProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomerBillingProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomerBillingProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomerBillingProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomerBillingProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1493,37 +1497,45 @@ func (q *CustomerBillingProfilesQuery) Clone() keel.Query[*customer.CustomerBill
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomerBillingProfilesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfile, error) {
-	return keel.One[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerBillingProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomerBillingProfilesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfile, error) {
-	return keel.First[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerBillingProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomerBillingProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfile, error) {
-	return keel.List[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerBillingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomerBillingProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfile, error) {
-	return keel.All[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerBillingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomerBillingProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerBillingProfile, error) {
-	return keel.UpdateReturning[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customer.CustomerBillingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomerBillingProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerBillingProfile], error) {
-	return keel.PageOf[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customer.CustomerBillingProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomerBillingProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerBillingProfile) error) error {
-	return keel.Each[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customer.CustomerBillingProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomerBillingProfile() unsafe.Pointer {
@@ -1908,20 +1920,20 @@ type CustomerBillingProfileDocumentTypesTable struct {
 // CustomerBillingProfileDocumentTypes references the customer_billing_profile_document_types table.
 var CustomerBillingProfileDocumentTypes = &CustomerBillingProfileDocumentTypesTable{
 	TableBase:        keel.TableBase{Ref: &customerBillingProfileDocumentTypesRef},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 1}}},
-	BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 2}}},
-	DocumentTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 3}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 1}}},
+	BillingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 2}}},
+	DocumentTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 3}}},
 }
 
 // BuildCustomerBillingProfileDocumentTypes builds the table of customer_billing_profile_document_types for ref. Generated relation and alias methods call it.
 func BuildCustomerBillingProfileDocumentTypes(r *keel.Ref) *CustomerBillingProfileDocumentTypesTable {
 	return &CustomerBillingProfileDocumentTypesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BillingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DocumentTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 	}
 }
 
@@ -1947,8 +1959,6 @@ func (t *CustomerBillingProfileDocumentTypesTable) DocumentType() *documenttyped
 
 // CustomerBillingProfileDocumentTypesQuery is a query over customer.CustomerBillingProfileDocumentType.
 type CustomerBillingProfileDocumentTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customer.CustomerBillingProfileDocumentType] = (*CustomerBillingProfileDocumentTypesTable)(nil)
 
 var _ keel.Query[*customer.CustomerBillingProfileDocumentType] = (*CustomerBillingProfileDocumentTypesQuery)(nil)
 
@@ -2064,42 +2074,42 @@ func (t *CustomerBillingProfileDocumentTypesTable) Compute(col keel.Column, e ke
 
 // Create inserts row.
 func (t *CustomerBillingProfileDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomerBillingProfileDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomerBillingProfileDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomerBillingProfileDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomerBillingProfileDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomerBillingProfileDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomerBillingProfileDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomerBillingProfileDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2271,37 +2281,45 @@ func (q *CustomerBillingProfileDocumentTypesQuery) Clone() keel.Query[*customer.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomerBillingProfileDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfileDocumentType, error) {
-	return keel.One[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerBillingProfileDocumentType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomerBillingProfileDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfileDocumentType, error) {
-	return keel.First[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerBillingProfileDocumentType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomerBillingProfileDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfileDocumentType, error) {
-	return keel.List[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerBillingProfileDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomerBillingProfileDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfileDocumentType, error) {
-	return keel.All[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerBillingProfileDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomerBillingProfileDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerBillingProfileDocumentType, error) {
-	return keel.UpdateReturning[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customer.CustomerBillingProfileDocumentType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomerBillingProfileDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerBillingProfileDocumentType], error) {
-	return keel.PageOf[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customer.CustomerBillingProfileDocumentType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomerBillingProfileDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerBillingProfileDocumentType) error) error {
-	return keel.Each[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customer.CustomerBillingProfileDocumentType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomerBillingProfileDocumentType() unsafe.Pointer {
@@ -2420,10 +2438,10 @@ type CustomerEmailProfilesTable struct {
 // CustomerEmailProfiles references the customer_email_profiles table.
 var CustomerEmailProfiles = &CustomerEmailProfilesTable{
 	TableBase:             keel.TableBase{Ref: &customerEmailProfilesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 2}}},
-	CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 2}}},
+	CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 3}}},
 	Subject:               keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 4}},
 	Comment:               keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 5}},
 	ToRecipients:          keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 6}},
@@ -2441,10 +2459,10 @@ var CustomerEmailProfiles = &CustomerEmailProfilesTable{
 func BuildCustomerEmailProfiles(r *keel.Ref) *CustomerEmailProfilesTable {
 	return &CustomerEmailProfilesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Subject:               keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Comment:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ToRecipients:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -2474,8 +2492,6 @@ func (t *CustomerEmailProfilesTable) Get(ctx context.Context, db *keel.DB, key p
 
 // CustomerEmailProfilesQuery is a query over customer.CustomerEmailProfile.
 type CustomerEmailProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customer.CustomerEmailProfile] = (*CustomerEmailProfilesTable)(nil)
 
 var _ keel.Query[*customer.CustomerEmailProfile] = (*CustomerEmailProfilesQuery)(nil)
 
@@ -2591,42 +2607,42 @@ func (t *CustomerEmailProfilesTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *CustomerEmailProfilesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomerEmailProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomerEmailProfilesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomerEmailProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomerEmailProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomerEmailProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomerEmailProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomerEmailProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2798,37 +2814,45 @@ func (q *CustomerEmailProfilesQuery) Clone() keel.Query[*customer.CustomerEmailP
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomerEmailProfilesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerEmailProfile, error) {
-	return keel.One[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerEmailProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomerEmailProfilesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerEmailProfile, error) {
-	return keel.First[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customer.CustomerEmailProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomerEmailProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerEmailProfile, error) {
-	return keel.List[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerEmailProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomerEmailProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerEmailProfile, error) {
-	return keel.All[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customer.CustomerEmailProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomerEmailProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerEmailProfile, error) {
-	return keel.UpdateReturning[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customer.CustomerEmailProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomerEmailProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerEmailProfile], error) {
-	return keel.PageOf[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customer.CustomerEmailProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomerEmailProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerEmailProfile) error) error {
-	return keel.Each[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customer.CustomerEmailProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomerEmailProfile() unsafe.Pointer {
@@ -3050,321 +3074,291 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // BillingCycleCol is a column of customer.BillingCycle values.
-type BillingCycleCol struct{ keel.StringCol }
+type BillingCycleCol struct{ keel.TypedStringCol }
 
-func (c BillingCycleCol) Eq(v customer.BillingCycle) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c BillingCycleCol) Ne(v customer.BillingCycle) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c BillingCycleCol) Gt(v customer.BillingCycle) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c BillingCycleCol) Gte(v customer.BillingCycle) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c BillingCycleCol) Lt(v customer.BillingCycle) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c BillingCycleCol) Lte(v customer.BillingCycle) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c BillingCycleCol) Eq(v customer.BillingCycle) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c BillingCycleCol) Ne(v customer.BillingCycle) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c BillingCycleCol) Gt(v customer.BillingCycle) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c BillingCycleCol) Gte(v customer.BillingCycle) keel.Pred { return c.Text().Gte(string(v)) }
+func (c BillingCycleCol) Lt(v customer.BillingCycle) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c BillingCycleCol) Lte(v customer.BillingCycle) keel.Pred { return c.Text().Lte(string(v)) }
 func (c BillingCycleCol) IsDistinctFrom(v customer.BillingCycle) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BillingCycleCol) Between(lo, hi customer.BillingCycle) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c BillingCycleCol) To(v customer.BillingCycle) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c BillingCycleCol) To(v customer.BillingCycle) keel.Assignment { return c.Text().To(string(v)) }
 func (c BillingCycleCol) In(vs ...customer.BillingCycle) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BillingCycleCol) NotIn(vs ...customer.BillingCycle) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CreditStatusCol is a column of customer.CreditStatus values.
-type CreditStatusCol struct{ keel.StringCol }
+type CreditStatusCol struct{ keel.TypedStringCol }
 
-func (c CreditStatusCol) Eq(v customer.CreditStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CreditStatusCol) Ne(v customer.CreditStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CreditStatusCol) Gt(v customer.CreditStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CreditStatusCol) Gte(v customer.CreditStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CreditStatusCol) Lt(v customer.CreditStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CreditStatusCol) Lte(v customer.CreditStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CreditStatusCol) Eq(v customer.CreditStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CreditStatusCol) Ne(v customer.CreditStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CreditStatusCol) Gt(v customer.CreditStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CreditStatusCol) Gte(v customer.CreditStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CreditStatusCol) Lt(v customer.CreditStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CreditStatusCol) Lte(v customer.CreditStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CreditStatusCol) IsDistinctFrom(v customer.CreditStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CreditStatusCol) Between(lo, hi customer.CreditStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CreditStatusCol) To(v customer.CreditStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c CreditStatusCol) To(v customer.CreditStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c CreditStatusCol) In(vs ...customer.CreditStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CreditStatusCol) NotIn(vs ...customer.CreditStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FuelSurchargeModeCol is a column of customer.FuelSurchargeMode values.
-type FuelSurchargeModeCol struct{ keel.StringCol }
+type FuelSurchargeModeCol struct{ keel.TypedStringCol }
 
 func (c FuelSurchargeModeCol) Eq(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c FuelSurchargeModeCol) Ne(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c FuelSurchargeModeCol) Gt(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c FuelSurchargeModeCol) Gte(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c FuelSurchargeModeCol) Lt(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c FuelSurchargeModeCol) Lte(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c FuelSurchargeModeCol) IsDistinctFrom(v customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FuelSurchargeModeCol) Between(lo, hi customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FuelSurchargeModeCol) To(v customer.FuelSurchargeMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FuelSurchargeModeCol) In(vs ...customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FuelSurchargeModeCol) NotIn(vs ...customer.FuelSurchargeMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceDeliveryCol is a column of customer.InvoiceDelivery values.
-type InvoiceDeliveryCol struct{ keel.StringCol }
+type InvoiceDeliveryCol struct{ keel.TypedStringCol }
 
-func (c InvoiceDeliveryCol) Eq(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c InvoiceDeliveryCol) Ne(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c InvoiceDeliveryCol) Gt(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c InvoiceDeliveryCol) Gte(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c InvoiceDeliveryCol) Lt(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c InvoiceDeliveryCol) Lte(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c InvoiceDeliveryCol) Eq(v customer.InvoiceDelivery) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c InvoiceDeliveryCol) Ne(v customer.InvoiceDelivery) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c InvoiceDeliveryCol) Gt(v customer.InvoiceDelivery) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c InvoiceDeliveryCol) Gte(v customer.InvoiceDelivery) keel.Pred { return c.Text().Gte(string(v)) }
+func (c InvoiceDeliveryCol) Lt(v customer.InvoiceDelivery) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c InvoiceDeliveryCol) Lte(v customer.InvoiceDelivery) keel.Pred { return c.Text().Lte(string(v)) }
 func (c InvoiceDeliveryCol) IsDistinctFrom(v customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceDeliveryCol) Between(lo, hi customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceDeliveryCol) To(v customer.InvoiceDelivery) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceDeliveryCol) In(vs ...customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceDeliveryCol) NotIn(vs ...customer.InvoiceDelivery) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceDetailCol is a column of customer.InvoiceDetail values.
-type InvoiceDetailCol struct{ keel.StringCol }
+type InvoiceDetailCol struct{ keel.TypedStringCol }
 
-func (c InvoiceDetailCol) Eq(v customer.InvoiceDetail) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c InvoiceDetailCol) Ne(v customer.InvoiceDetail) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c InvoiceDetailCol) Gt(v customer.InvoiceDetail) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c InvoiceDetailCol) Gte(v customer.InvoiceDetail) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c InvoiceDetailCol) Lt(v customer.InvoiceDetail) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c InvoiceDetailCol) Lte(v customer.InvoiceDetail) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c InvoiceDetailCol) Eq(v customer.InvoiceDetail) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c InvoiceDetailCol) Ne(v customer.InvoiceDetail) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c InvoiceDetailCol) Gt(v customer.InvoiceDetail) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c InvoiceDetailCol) Gte(v customer.InvoiceDetail) keel.Pred { return c.Text().Gte(string(v)) }
+func (c InvoiceDetailCol) Lt(v customer.InvoiceDetail) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c InvoiceDetailCol) Lte(v customer.InvoiceDetail) keel.Pred { return c.Text().Lte(string(v)) }
 func (c InvoiceDetailCol) IsDistinctFrom(v customer.InvoiceDetail) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceDetailCol) Between(lo, hi customer.InvoiceDetail) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c InvoiceDetailCol) To(v customer.InvoiceDetail) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c InvoiceDetailCol) To(v customer.InvoiceDetail) keel.Assignment { return c.Text().To(string(v)) }
 func (c InvoiceDetailCol) In(vs ...customer.InvoiceDetail) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceDetailCol) NotIn(vs ...customer.InvoiceDetail) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceNumberFormatCol is a column of customer.InvoiceNumberFormat values.
-type InvoiceNumberFormatCol struct{ keel.StringCol }
+type InvoiceNumberFormatCol struct{ keel.TypedStringCol }
 
 func (c InvoiceNumberFormatCol) Eq(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InvoiceNumberFormatCol) Ne(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InvoiceNumberFormatCol) Gt(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InvoiceNumberFormatCol) Gte(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InvoiceNumberFormatCol) Lt(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InvoiceNumberFormatCol) Lte(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InvoiceNumberFormatCol) IsDistinctFrom(v customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceNumberFormatCol) Between(lo, hi customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceNumberFormatCol) To(v customer.InvoiceNumberFormat) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceNumberFormatCol) In(vs ...customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceNumberFormatCol) NotIn(vs ...customer.InvoiceNumberFormat) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceSectionKeyCol is a column of customer.InvoiceSectionKey values.
-type InvoiceSectionKeyCol struct{ keel.StringCol }
+type InvoiceSectionKeyCol struct{ keel.TypedStringCol }
 
 func (c InvoiceSectionKeyCol) Eq(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InvoiceSectionKeyCol) Ne(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InvoiceSectionKeyCol) Gt(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InvoiceSectionKeyCol) Gte(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InvoiceSectionKeyCol) Lt(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InvoiceSectionKeyCol) Lte(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InvoiceSectionKeyCol) IsDistinctFrom(v customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceSectionKeyCol) Between(lo, hi customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceSectionKeyCol) To(v customer.InvoiceSectionKey) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceSectionKeyCol) In(vs ...customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceSectionKeyCol) NotIn(vs ...customer.InvoiceSectionKey) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceSplitKeyCol is a column of customer.InvoiceSplitKey values.
-type InvoiceSplitKeyCol struct{ keel.StringCol }
+type InvoiceSplitKeyCol struct{ keel.TypedStringCol }
 
-func (c InvoiceSplitKeyCol) Eq(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c InvoiceSplitKeyCol) Ne(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c InvoiceSplitKeyCol) Gt(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c InvoiceSplitKeyCol) Gte(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c InvoiceSplitKeyCol) Lt(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c InvoiceSplitKeyCol) Lte(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c InvoiceSplitKeyCol) Eq(v customer.InvoiceSplitKey) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c InvoiceSplitKeyCol) Ne(v customer.InvoiceSplitKey) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c InvoiceSplitKeyCol) Gt(v customer.InvoiceSplitKey) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c InvoiceSplitKeyCol) Gte(v customer.InvoiceSplitKey) keel.Pred { return c.Text().Gte(string(v)) }
+func (c InvoiceSplitKeyCol) Lt(v customer.InvoiceSplitKey) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c InvoiceSplitKeyCol) Lte(v customer.InvoiceSplitKey) keel.Pred { return c.Text().Lte(string(v)) }
 func (c InvoiceSplitKeyCol) IsDistinctFrom(v customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceSplitKeyCol) Between(lo, hi customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceSplitKeyCol) To(v customer.InvoiceSplitKey) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceSplitKeyCol) In(vs ...customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceSplitKeyCol) NotIn(vs ...customer.InvoiceSplitKey) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PaymentTermCol is a column of customer.PaymentTerm values.
-type PaymentTermCol struct{ keel.StringCol }
+type PaymentTermCol struct{ keel.TypedStringCol }
 
-func (c PaymentTermCol) Eq(v customer.PaymentTerm) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PaymentTermCol) Ne(v customer.PaymentTerm) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PaymentTermCol) Gt(v customer.PaymentTerm) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PaymentTermCol) Gte(v customer.PaymentTerm) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PaymentTermCol) Lt(v customer.PaymentTerm) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PaymentTermCol) Lte(v customer.PaymentTerm) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PaymentTermCol) Eq(v customer.PaymentTerm) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PaymentTermCol) Ne(v customer.PaymentTerm) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PaymentTermCol) Gt(v customer.PaymentTerm) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PaymentTermCol) Gte(v customer.PaymentTerm) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PaymentTermCol) Lt(v customer.PaymentTerm) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PaymentTermCol) Lte(v customer.PaymentTerm) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PaymentTermCol) IsDistinctFrom(v customer.PaymentTerm) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PaymentTermCol) Between(lo, hi customer.PaymentTerm) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PaymentTermCol) To(v customer.PaymentTerm) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PaymentTermCol) To(v customer.PaymentTerm) keel.Assignment { return c.Text().To(string(v)) }
 func (c PaymentTermCol) In(vs ...customer.PaymentTerm) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PaymentTermCol) NotIn(vs ...customer.PaymentTerm) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusUpdatePreferenceCol is a column of customer.StatusUpdatePreference values.
-type StatusUpdatePreferenceCol struct{ keel.StringCol }
+type StatusUpdatePreferenceCol struct{ keel.TypedStringCol }
 
 func (c StatusUpdatePreferenceCol) Eq(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c StatusUpdatePreferenceCol) Ne(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c StatusUpdatePreferenceCol) Gt(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c StatusUpdatePreferenceCol) Gte(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c StatusUpdatePreferenceCol) Lt(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c StatusUpdatePreferenceCol) Lte(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c StatusUpdatePreferenceCol) IsDistinctFrom(v customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusUpdatePreferenceCol) Between(lo, hi customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c StatusUpdatePreferenceCol) To(v customer.StatusUpdatePreference) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c StatusUpdatePreferenceCol) In(vs ...customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusUpdatePreferenceCol) NotIn(vs ...customer.StatusUpdatePreference) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

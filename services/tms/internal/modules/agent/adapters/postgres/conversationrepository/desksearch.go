@@ -41,7 +41,7 @@ func latestFirst(cte *keel.CTETable, limit int) keel.Projection {
 		cols = append(cols, cte.Col(name))
 	}
 
-	return cte.Query().With(cte).Pick(cols...).Order(cte.Col("at").Desc()).Limit(limit)
+	return keel.RowsOf(cte.TableRef()).With(cte).Pick(cols...).Order(cte.Col("at").Desc()).Limit(limit)
 }
 
 func deskChats(terms *deskTerms) keel.Projection {
@@ -122,7 +122,7 @@ func deskMessages(terms *deskTerms) keel.Projection {
 func deskArtifacts(terms *deskTerms) keel.Projection {
 	a := assistantartifactdb.Artifacts
 	t := conversationdb.Threads
-	lineage := a.LineageID.Coalesce(a.ID)
+	lineage := a.LineageID.Text().Coalesce(a.ID)
 
 	return latestFirst(keel.CTE("latest", deskColumns, a.
 		Join(t, t.ID.EqCol(a.ThreadID)).

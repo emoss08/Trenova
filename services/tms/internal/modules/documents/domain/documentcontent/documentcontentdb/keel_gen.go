@@ -97,14 +97,14 @@ type ContentsTable struct {
 // Contents references the document_contents table.
 var Contents = &ContentsTable{
 	TableBase:                keel.TableBase{Ref: &contentsRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 0}}},
-	DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 2}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 3}}},
-	Status:                   StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 4}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 0}}},
+	DocumentID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 2}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 3}}},
+	Status:                   StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 4}}},
 	ContentText:              keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 5}},
 	PageCount:                keel.Int64Col{Col: keel.Col{Ref: &contentsRef, Index: 6}},
-	SourceKind:               SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 7}}},
+	SourceKind:               SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &contentsRef, Index: 7}}},
 	DetectedLanguage:         keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 8}},
 	DetectedDocumentKind:     keel.StringCol{Col: keel.Col{Ref: &contentsRef, Index: 9}},
 	ClassificationConfidence: keel.Float64Col{Col: keel.Col{Ref: &contentsRef, Index: 10}},
@@ -124,14 +124,14 @@ var Contents = &ContentsTable{
 func BuildContents(r *keel.Ref) *ContentsTable {
 	return &ContentsTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		DocumentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                   StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		DocumentID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                   StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ContentText:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		PageCount:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		SourceKind:               SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SourceKind:               SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DetectedLanguage:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		DetectedDocumentKind:     keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ClassificationConfidence: keel.Float64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -163,8 +163,6 @@ func (t *ContentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*do
 
 // ContentsQuery is a query over documentcontent.Content.
 type ContentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documentcontent.Content] = (*ContentsTable)(nil)
 
 var _ keel.Query[*documentcontent.Content] = (*ContentsQuery)(nil)
 
@@ -280,42 +278,42 @@ func (t *ContentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*docume
 
 // Create inserts row.
 func (t *ContentsTable) Create(ctx context.Context, db *keel.DB, row *documentcontent.Content) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ContentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentcontent.Content) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ContentsTable) Save(ctx context.Context, db *keel.DB, row *documentcontent.Content, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ContentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentcontent.Content, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ContentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentcontent.Content) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ContentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentcontent.Content, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ContentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentcontent.Content, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ContentsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentcontent.Content) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -487,37 +485,45 @@ func (q *ContentsQuery) Clone() keel.Query[*documentcontent.Content] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ContentsQuery) One(ctx context.Context, db *keel.DB) (*documentcontent.Content, error) {
-	return keel.One[*documentcontent.Content](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documentcontent.Content)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ContentsQuery) First(ctx context.Context, db *keel.DB) (*documentcontent.Content, error) {
-	return keel.First[*documentcontent.Content](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documentcontent.Content)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ContentsQuery) List(ctx context.Context, db *keel.DB) ([]*documentcontent.Content, error) {
-	return keel.List[*documentcontent.Content](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentcontent.Content)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ContentsQuery) All(ctx context.Context, db *keel.DB) ([]*documentcontent.Content, error) {
-	return keel.All[*documentcontent.Content](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentcontent.Content)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ContentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentcontent.Content, error) {
-	return keel.UpdateReturning[*documentcontent.Content](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documentcontent.Content)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ContentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentcontent.Content], error) {
-	return keel.PageOf[*documentcontent.Content](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documentcontent.Content])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ContentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentcontent.Content) error) error {
-	return keel.Each[*documentcontent.Content](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documentcontent.Content)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newContent() unsafe.Pointer { return unsafe.Pointer(new(documentcontent.Content)) }
@@ -738,13 +744,13 @@ type PagesTable struct {
 // Pages references the document_content_pages table.
 var Pages = &PagesTable{
 	TableBase:            keel.TableBase{Ref: &pagesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 0}}},
-	DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 1}}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 2}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 3}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 0}}},
+	DocumentContentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 1}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 2}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 3}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 4}}},
 	PageNumber:           keel.Int64Col{Col: keel.Col{Ref: &pagesRef, Index: 5}},
-	SourceKind:           SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 6}}},
+	SourceKind:           SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pagesRef, Index: 6}}},
 	ExtractedText:        keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 7}},
 	Markdown:             keel.StringCol{Col: keel.Col{Ref: &pagesRef, Index: 8}},
 	OCRConfidence:        keel.Float64Col{Col: keel.Col{Ref: &pagesRef, Index: 9}},
@@ -761,13 +767,13 @@ var Pages = &PagesTable{
 func BuildPages(r *keel.Ref) *PagesTable {
 	return &PagesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		DocumentContentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		DocumentContentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		PageNumber:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		SourceKind:           SourceKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SourceKind:           SourceKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ExtractedText:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Markdown:             keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		OCRConfidence:        keel.Float64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -794,8 +800,6 @@ func (t *PagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*docum
 
 // PagesQuery is a query over documentcontent.Page.
 type PagesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documentcontent.Page] = (*PagesTable)(nil)
 
 var _ keel.Query[*documentcontent.Page] = (*PagesQuery)(nil)
 
@@ -911,42 +915,42 @@ func (t *PagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentc
 
 // Create inserts row.
 func (t *PagesTable) Create(ctx context.Context, db *keel.DB, row *documentcontent.Page) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentcontent.Page) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PagesTable) Save(ctx context.Context, db *keel.DB, row *documentcontent.Page, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentcontent.Page, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentcontent.Page) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentcontent.Page, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentcontent.Page, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PagesTable) Copy(ctx context.Context, db *keel.DB, rows []*documentcontent.Page) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1118,37 +1122,45 @@ func (q *PagesQuery) Clone() keel.Query[*documentcontent.Page] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PagesQuery) One(ctx context.Context, db *keel.DB) (*documentcontent.Page, error) {
-	return keel.One[*documentcontent.Page](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documentcontent.Page)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PagesQuery) First(ctx context.Context, db *keel.DB) (*documentcontent.Page, error) {
-	return keel.First[*documentcontent.Page](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documentcontent.Page)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PagesQuery) List(ctx context.Context, db *keel.DB) ([]*documentcontent.Page, error) {
-	return keel.List[*documentcontent.Page](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentcontent.Page)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PagesQuery) All(ctx context.Context, db *keel.DB) ([]*documentcontent.Page, error) {
-	return keel.All[*documentcontent.Page](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documentcontent.Page)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentcontent.Page, error) {
-	return keel.UpdateReturning[*documentcontent.Page](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documentcontent.Page)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentcontent.Page], error) {
-	return keel.PageOf[*documentcontent.Page](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documentcontent.Page])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentcontent.Page) error) error {
-	return keel.Each[*documentcontent.Page](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documentcontent.Page)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPage() unsafe.Pointer { return unsafe.Pointer(new(documentcontent.Page)) }
@@ -1278,49 +1290,49 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // SourceKindCol is a column of documentcontent.SourceKind values.
-type SourceKindCol struct{ keel.StringCol }
+type SourceKindCol struct{ keel.TypedStringCol }
 
-func (c SourceKindCol) Eq(v documentcontent.SourceKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceKindCol) Ne(v documentcontent.SourceKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceKindCol) Gt(v documentcontent.SourceKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceKindCol) Gte(v documentcontent.SourceKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceKindCol) Lt(v documentcontent.SourceKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceKindCol) Lte(v documentcontent.SourceKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceKindCol) Eq(v documentcontent.SourceKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceKindCol) Ne(v documentcontent.SourceKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceKindCol) Gt(v documentcontent.SourceKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceKindCol) Gte(v documentcontent.SourceKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceKindCol) Lt(v documentcontent.SourceKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceKindCol) Lte(v documentcontent.SourceKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceKindCol) IsDistinctFrom(v documentcontent.SourceKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceKindCol) Between(lo, hi documentcontent.SourceKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SourceKindCol) To(v documentcontent.SourceKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SourceKindCol) In(vs ...documentcontent.SourceKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceKindCol) NotIn(vs ...documentcontent.SourceKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of documentcontent.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v documentcontent.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v documentcontent.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v documentcontent.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v documentcontent.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v documentcontent.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v documentcontent.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v documentcontent.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v documentcontent.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v documentcontent.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v documentcontent.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v documentcontent.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v documentcontent.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v documentcontent.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi documentcontent.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v documentcontent.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v documentcontent.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...documentcontent.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...documentcontent.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

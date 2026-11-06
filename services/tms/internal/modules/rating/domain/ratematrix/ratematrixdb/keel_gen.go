@@ -107,17 +107,17 @@ type RateMatrixesTable struct {
 // RateMatrixes references the rate_matrices table.
 var RateMatrixes = &RateMatrixesTable{
 	TableBase:              keel.TableBase{Ref: &rateMatrixesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 2}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 2}}},
 	Code:                   keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 3}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 4}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 5}},
 	ValueType:              keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 6}},
-	Status:                 formulatemplatedb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 7}}},
-	SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 8}}},
+	Status:                 formulatemplatedb.StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 7}}},
+	SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 8}}},
 	SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: &rateMatrixesRef, Index: 9}},
-	ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 10}}},
+	ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 10}}},
 	ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: &rateMatrixesRef, Index: 11}},
 	ReviewComment:          keel.StringCol{Col: keel.Col{Ref: &rateMatrixesRef, Index: 12}},
 	PublishedVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &rateMatrixesRef, Index: 13}},
@@ -136,17 +136,17 @@ var RateMatrixes = &RateMatrixesTable{
 func BuildRateMatrixes(r *keel.Ref) *RateMatrixesTable {
 	return &RateMatrixesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ValueType:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:                 formulatemplatedb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:                 formulatemplatedb.StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ReviewComment:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		PublishedVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -182,8 +182,6 @@ func (t *RateMatrixesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // RateMatrixesQuery is a query over ratematrix.RateMatrix.
 type RateMatrixesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratematrix.RateMatrix] = (*RateMatrixesTable)(nil)
 
 var _ keel.Query[*ratematrix.RateMatrix] = (*RateMatrixesQuery)(nil)
 
@@ -299,42 +297,42 @@ func (t *RateMatrixesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ra
 
 // Create inserts row.
 func (t *RateMatrixesTable) Create(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrix) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateMatrixesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrix) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateMatrixesTable) Save(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrix, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateMatrixesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrix, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateMatrixesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrix) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateMatrixesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrix, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateMatrixesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrix, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateMatrixesTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrix) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -506,37 +504,45 @@ func (q *RateMatrixesQuery) Clone() keel.Query[*ratematrix.RateMatrix] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateMatrixesQuery) One(ctx context.Context, db *keel.DB) (*ratematrix.RateMatrix, error) {
-	return keel.One[*ratematrix.RateMatrix](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratematrix.RateMatrix)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateMatrixesQuery) First(ctx context.Context, db *keel.DB) (*ratematrix.RateMatrix, error) {
-	return keel.First[*ratematrix.RateMatrix](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratematrix.RateMatrix)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateMatrixesQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrix.RateMatrix, error) {
-	return keel.List[*ratematrix.RateMatrix](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrix.RateMatrix)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateMatrixesQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrix.RateMatrix, error) {
-	return keel.All[*ratematrix.RateMatrix](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrix.RateMatrix)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateMatrixesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrix.RateMatrix, error) {
-	return keel.UpdateReturning[*ratematrix.RateMatrix](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratematrix.RateMatrix)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateMatrixesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrix.RateMatrix], error) {
-	return keel.PageOf[*ratematrix.RateMatrix](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratematrix.RateMatrix])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateMatrixesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrix.RateMatrix) error) error {
-	return keel.Each[*ratematrix.RateMatrix](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratematrix.RateMatrix)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateMatrix() unsafe.Pointer { return unsafe.Pointer(new(ratematrix.RateMatrix)) }
@@ -767,17 +773,17 @@ type RateMatrixDimensionsTable struct {
 // RateMatrixDimensions references the rate_matrix_dimensions table.
 var RateMatrixDimensions = &RateMatrixDimensionsTable{
 	TableBase:        keel.TableBase{Ref: &rateMatrixDimensionsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 2}}},
-	RateMatrixID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 2}}},
+	RateMatrixID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 3}}},
 	VersionNumber:    keel.Int64Col{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 4}},
 	Position:         keel.Int16Col{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 5}},
-	Kind:             DimensionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 6}}},
-	MatchMode:        MatchModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 7}}},
+	Kind:             DimensionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 6}}},
+	MatchMode:        MatchModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 7}}},
 	Label:            keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 8}},
-	KeyNormalization: KeyNormalizationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 9}}},
-	RangeOverflow:    RangeOverflowCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 10}}},
+	KeyNormalization: KeyNormalizationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 9}}},
+	RangeOverflow:    RangeOverflowCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 10}}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 11}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &rateMatrixDimensionsRef, Index: 12}},
 }
@@ -786,17 +792,17 @@ var RateMatrixDimensions = &RateMatrixDimensionsTable{
 func BuildRateMatrixDimensions(r *keel.Ref) *RateMatrixDimensionsTable {
 	return &RateMatrixDimensionsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateMatrixID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateMatrixID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VersionNumber:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Position:         keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:             DimensionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		MatchMode:        MatchModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:             DimensionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		MatchMode:        MatchModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Label:            keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		KeyNormalization: KeyNormalizationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		RangeOverflow:    RangeOverflowCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		KeyNormalization: KeyNormalizationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RangeOverflow:    RangeOverflowCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 	}
@@ -822,8 +828,6 @@ func (t *RateMatrixDimensionsTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // RateMatrixDimensionsQuery is a query over ratematrix.RateMatrixDimension.
 type RateMatrixDimensionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratematrix.RateMatrixDimension] = (*RateMatrixDimensionsTable)(nil)
 
 var _ keel.Query[*ratematrix.RateMatrixDimension] = (*RateMatrixDimensionsQuery)(nil)
 
@@ -939,42 +943,42 @@ func (t *RateMatrixDimensionsTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *RateMatrixDimensionsTable) Create(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrixDimension) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateMatrixDimensionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrixDimension) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateMatrixDimensionsTable) Save(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrixDimension, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateMatrixDimensionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrixDimension, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateMatrixDimensionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrix.RateMatrixDimension) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateMatrixDimensionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrixDimension, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateMatrixDimensionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrixDimension, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateMatrixDimensionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrix.RateMatrixDimension) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1146,37 +1150,45 @@ func (q *RateMatrixDimensionsQuery) Clone() keel.Query[*ratematrix.RateMatrixDim
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateMatrixDimensionsQuery) One(ctx context.Context, db *keel.DB) (*ratematrix.RateMatrixDimension, error) {
-	return keel.One[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratematrix.RateMatrixDimension)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateMatrixDimensionsQuery) First(ctx context.Context, db *keel.DB) (*ratematrix.RateMatrixDimension, error) {
-	return keel.First[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratematrix.RateMatrixDimension)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateMatrixDimensionsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrix.RateMatrixDimension, error) {
-	return keel.List[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrix.RateMatrixDimension)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateMatrixDimensionsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrix.RateMatrixDimension, error) {
-	return keel.All[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrix.RateMatrixDimension)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateMatrixDimensionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrix.RateMatrixDimension, error) {
-	return keel.UpdateReturning[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratematrix.RateMatrixDimension)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateMatrixDimensionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrix.RateMatrixDimension], error) {
-	return keel.PageOf[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratematrix.RateMatrixDimension])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateMatrixDimensionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrix.RateMatrixDimension) error) error {
-	return keel.Each[*ratematrix.RateMatrixDimension](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratematrix.RateMatrixDimension)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateMatrixDimension() unsafe.Pointer {
@@ -1321,119 +1333,111 @@ var enumRangeOverflow = [...]schema.EnumValue{
 }
 
 // DimensionKindCol is a column of ratematrix.DimensionKind values.
-type DimensionKindCol struct{ keel.StringCol }
+type DimensionKindCol struct{ keel.TypedStringCol }
 
-func (c DimensionKindCol) Eq(v ratematrix.DimensionKind) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c DimensionKindCol) Ne(v ratematrix.DimensionKind) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c DimensionKindCol) Gt(v ratematrix.DimensionKind) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c DimensionKindCol) Gte(v ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DimensionKindCol) Lt(v ratematrix.DimensionKind) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c DimensionKindCol) Lte(v ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DimensionKindCol) Eq(v ratematrix.DimensionKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DimensionKindCol) Ne(v ratematrix.DimensionKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DimensionKindCol) Gt(v ratematrix.DimensionKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DimensionKindCol) Gte(v ratematrix.DimensionKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DimensionKindCol) Lt(v ratematrix.DimensionKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DimensionKindCol) Lte(v ratematrix.DimensionKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DimensionKindCol) IsDistinctFrom(v ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DimensionKindCol) Between(lo, hi ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DimensionKindCol) To(v ratematrix.DimensionKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DimensionKindCol) In(vs ...ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DimensionKindCol) NotIn(vs ...ratematrix.DimensionKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // KeyNormalizationCol is a column of ratematrix.KeyNormalization values.
-type KeyNormalizationCol struct{ keel.StringCol }
+type KeyNormalizationCol struct{ keel.TypedStringCol }
 
 func (c KeyNormalizationCol) Eq(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c KeyNormalizationCol) Ne(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c KeyNormalizationCol) Gt(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c KeyNormalizationCol) Gte(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c KeyNormalizationCol) Lt(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c KeyNormalizationCol) Lte(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c KeyNormalizationCol) IsDistinctFrom(v ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KeyNormalizationCol) Between(lo, hi ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c KeyNormalizationCol) To(v ratematrix.KeyNormalization) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c KeyNormalizationCol) In(vs ...ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c KeyNormalizationCol) NotIn(vs ...ratematrix.KeyNormalization) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MatchModeCol is a column of ratematrix.MatchMode values.
-type MatchModeCol struct{ keel.StringCol }
+type MatchModeCol struct{ keel.TypedStringCol }
 
-func (c MatchModeCol) Eq(v ratematrix.MatchMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MatchModeCol) Ne(v ratematrix.MatchMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MatchModeCol) Gt(v ratematrix.MatchMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MatchModeCol) Gte(v ratematrix.MatchMode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MatchModeCol) Lt(v ratematrix.MatchMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MatchModeCol) Lte(v ratematrix.MatchMode) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MatchModeCol) Eq(v ratematrix.MatchMode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MatchModeCol) Ne(v ratematrix.MatchMode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MatchModeCol) Gt(v ratematrix.MatchMode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MatchModeCol) Gte(v ratematrix.MatchMode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MatchModeCol) Lt(v ratematrix.MatchMode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MatchModeCol) Lte(v ratematrix.MatchMode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MatchModeCol) IsDistinctFrom(v ratematrix.MatchMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MatchModeCol) Between(lo, hi ratematrix.MatchMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MatchModeCol) To(v ratematrix.MatchMode) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MatchModeCol) To(v ratematrix.MatchMode) keel.Assignment { return c.Text().To(string(v)) }
 func (c MatchModeCol) In(vs ...ratematrix.MatchMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MatchModeCol) NotIn(vs ...ratematrix.MatchMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RangeOverflowCol is a column of ratematrix.RangeOverflow values.
-type RangeOverflowCol struct{ keel.StringCol }
+type RangeOverflowCol struct{ keel.TypedStringCol }
 
-func (c RangeOverflowCol) Eq(v ratematrix.RangeOverflow) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c RangeOverflowCol) Ne(v ratematrix.RangeOverflow) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c RangeOverflowCol) Gt(v ratematrix.RangeOverflow) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c RangeOverflowCol) Gte(v ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c RangeOverflowCol) Lt(v ratematrix.RangeOverflow) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c RangeOverflowCol) Lte(v ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c RangeOverflowCol) Eq(v ratematrix.RangeOverflow) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RangeOverflowCol) Ne(v ratematrix.RangeOverflow) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RangeOverflowCol) Gt(v ratematrix.RangeOverflow) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RangeOverflowCol) Gte(v ratematrix.RangeOverflow) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RangeOverflowCol) Lt(v ratematrix.RangeOverflow) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RangeOverflowCol) Lte(v ratematrix.RangeOverflow) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RangeOverflowCol) IsDistinctFrom(v ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RangeOverflowCol) Between(lo, hi ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RangeOverflowCol) To(v ratematrix.RangeOverflow) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RangeOverflowCol) In(vs ...ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RangeOverflowCol) NotIn(vs ...ratematrix.RangeOverflow) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

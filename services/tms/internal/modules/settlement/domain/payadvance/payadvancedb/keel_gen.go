@@ -101,12 +101,12 @@ type PayAdvancesTable struct {
 // PayAdvances references the pay_advances table.
 var PayAdvances = &PayAdvancesTable{
 	TableBase:       keel.TableBase{Ref: &payAdvancesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 2}}},
-	WorkerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 3}}},
-	Status:          AdvanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 4}}},
-	Source:          AdvanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 5}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 2}}},
+	WorkerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 3}}},
+	Status:          AdvanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 4}}},
+	Source:          AdvanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 5}}},
 	Reference:       keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 6}},
 	IssuedDate:      keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 7}},
 	AmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 8}},
@@ -115,8 +115,8 @@ var PayAdvances = &PayAdvancesTable{
 	WriteOffReason:  keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 11}},
 	Notes:           keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 12}},
 	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 13}},
-	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 14}}},
-	WrittenOffByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 15}}},
+	CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 14}}},
+	WrittenOffByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payAdvancesRef, Index: 15}}},
 	WrittenOffAt:    keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 16}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 17}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &payAdvancesRef, Index: 18}},
@@ -127,12 +127,12 @@ var PayAdvances = &PayAdvancesTable{
 func BuildPayAdvances(r *keel.Ref) *PayAdvancesTable {
 	return &PayAdvancesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:          AdvanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Source:          AdvanceSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:          AdvanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Source:          AdvanceSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Reference:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IssuedDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		AmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -141,8 +141,8 @@ func BuildPayAdvances(r *keel.Ref) *PayAdvancesTable {
 		WriteOffReason:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		WrittenOffByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		WrittenOffByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		WrittenOffAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -170,8 +170,6 @@ func (t *PayAdvancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PayAdvancesQuery is a query over payadvance.PayAdvance.
 type PayAdvancesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*payadvance.PayAdvance] = (*PayAdvancesTable)(nil)
 
 var _ keel.Query[*payadvance.PayAdvance] = (*PayAdvancesQuery)(nil)
 
@@ -287,42 +285,42 @@ func (t *PayAdvancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pay
 
 // Create inserts row.
 func (t *PayAdvancesTable) Create(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayAdvancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayAdvancesTable) Save(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayAdvancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayAdvancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *payadvance.PayAdvance) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayAdvancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayAdvancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayAdvancesTable) Copy(ctx context.Context, db *keel.DB, rows []*payadvance.PayAdvance) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -494,37 +492,45 @@ func (q *PayAdvancesQuery) Clone() keel.Query[*payadvance.PayAdvance] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayAdvancesQuery) One(ctx context.Context, db *keel.DB) (*payadvance.PayAdvance, error) {
-	return keel.One[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*payadvance.PayAdvance)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayAdvancesQuery) First(ctx context.Context, db *keel.DB) (*payadvance.PayAdvance, error) {
-	return keel.First[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*payadvance.PayAdvance)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayAdvancesQuery) List(ctx context.Context, db *keel.DB) ([]*payadvance.PayAdvance, error) {
-	return keel.List[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payadvance.PayAdvance)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayAdvancesQuery) All(ctx context.Context, db *keel.DB) ([]*payadvance.PayAdvance, error) {
-	return keel.All[*payadvance.PayAdvance](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*payadvance.PayAdvance)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayAdvancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payadvance.PayAdvance, error) {
-	return keel.UpdateReturning[*payadvance.PayAdvance](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*payadvance.PayAdvance)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayAdvancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payadvance.PayAdvance], error) {
-	return keel.PageOf[*payadvance.PayAdvance](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*payadvance.PayAdvance])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayAdvancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payadvance.PayAdvance) error) error {
-	return keel.Each[*payadvance.PayAdvance](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*payadvance.PayAdvance)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayAdvance() unsafe.Pointer { return unsafe.Pointer(new(payadvance.PayAdvance)) }
@@ -689,59 +695,51 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // AdvanceSourceCol is a column of payadvance.AdvanceSource values.
-type AdvanceSourceCol struct{ keel.StringCol }
+type AdvanceSourceCol struct{ keel.TypedStringCol }
 
-func (c AdvanceSourceCol) Eq(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c AdvanceSourceCol) Ne(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c AdvanceSourceCol) Gt(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c AdvanceSourceCol) Gte(v payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AdvanceSourceCol) Lt(v payadvance.AdvanceSource) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c AdvanceSourceCol) Lte(v payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AdvanceSourceCol) Eq(v payadvance.AdvanceSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AdvanceSourceCol) Ne(v payadvance.AdvanceSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AdvanceSourceCol) Gt(v payadvance.AdvanceSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AdvanceSourceCol) Gte(v payadvance.AdvanceSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AdvanceSourceCol) Lt(v payadvance.AdvanceSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AdvanceSourceCol) Lte(v payadvance.AdvanceSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AdvanceSourceCol) IsDistinctFrom(v payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AdvanceSourceCol) Between(lo, hi payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AdvanceSourceCol) To(v payadvance.AdvanceSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AdvanceSourceCol) In(vs ...payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AdvanceSourceCol) NotIn(vs ...payadvance.AdvanceSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AdvanceStatusCol is a column of payadvance.AdvanceStatus values.
-type AdvanceStatusCol struct{ keel.StringCol }
+type AdvanceStatusCol struct{ keel.TypedStringCol }
 
-func (c AdvanceStatusCol) Eq(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c AdvanceStatusCol) Ne(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c AdvanceStatusCol) Gt(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c AdvanceStatusCol) Gte(v payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AdvanceStatusCol) Lt(v payadvance.AdvanceStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c AdvanceStatusCol) Lte(v payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AdvanceStatusCol) Eq(v payadvance.AdvanceStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AdvanceStatusCol) Ne(v payadvance.AdvanceStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AdvanceStatusCol) Gt(v payadvance.AdvanceStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AdvanceStatusCol) Gte(v payadvance.AdvanceStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AdvanceStatusCol) Lt(v payadvance.AdvanceStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AdvanceStatusCol) Lte(v payadvance.AdvanceStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AdvanceStatusCol) IsDistinctFrom(v payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AdvanceStatusCol) Between(lo, hi payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AdvanceStatusCol) To(v payadvance.AdvanceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AdvanceStatusCol) In(vs ...payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AdvanceStatusCol) NotIn(vs ...payadvance.AdvanceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

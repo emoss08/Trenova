@@ -107,13 +107,13 @@ type InsightsTable struct {
 // Insights references the insights table.
 var Insights = &InsightsTable{
 	TableBase:       keel.TableBase{Ref: &insightsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 2}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 2}}},
 	DetectorKey:     keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 3}},
-	Category:        CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 4}}},
-	Severity:        SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 5}}},
-	Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 6}}},
+	Category:        CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 4}}},
+	Severity:        SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 5}}},
+	Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 6}}},
 	DedupeKey:       keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 7}},
 	Subject:         keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 8}},
 	Headline:        keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 9}},
@@ -127,10 +127,10 @@ var Insights = &InsightsTable{
 	DetectedAt:      keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 17}},
 	StaleAt:         keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 18}},
 	DismissedAt:     keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 19}},
-	DismissedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 20}}},
+	DismissedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 20}}},
 	DismissReason:   keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 21}},
 	ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 22}},
-	ProviderID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 23}}},
+	ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &insightsRef, Index: 23}}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 24}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 25}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 26}},
@@ -140,13 +140,13 @@ var Insights = &InsightsTable{
 func BuildInsights(r *keel.Ref) *InsightsTable {
 	return &InsightsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		DetectorKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Category:        CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Severity:        SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Category:        CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Severity:        SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		DedupeKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Subject:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Headline:        keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -160,10 +160,10 @@ func BuildInsights(r *keel.Ref) *InsightsTable {
 		DetectedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		StaleAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		DismissedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		DismissedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		DismissedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		DismissReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		ProviderID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
@@ -185,8 +185,6 @@ func (t *InsightsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*in
 
 // InsightsQuery is a query over insight.Insight.
 type InsightsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*insight.Insight] = (*InsightsTable)(nil)
 
 var _ keel.Query[*insight.Insight] = (*InsightsQuery)(nil)
 
@@ -302,42 +300,42 @@ func (t *InsightsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*insigh
 
 // Create inserts row.
 func (t *InsightsTable) Create(ctx context.Context, db *keel.DB, row *insight.Insight) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InsightsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*insight.Insight) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InsightsTable) Save(ctx context.Context, db *keel.DB, row *insight.Insight, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InsightsTable) SaveExcept(ctx context.Context, db *keel.DB, row *insight.Insight, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InsightsTable) DeleteRow(ctx context.Context, db *keel.DB, row *insight.Insight) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InsightsTable) Upsert(ctx context.Context, db *keel.DB, rows []*insight.Insight, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InsightsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*insight.Insight, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InsightsTable) Copy(ctx context.Context, db *keel.DB, rows []*insight.Insight) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -509,37 +507,45 @@ func (q *InsightsQuery) Clone() keel.Query[*insight.Insight] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InsightsQuery) One(ctx context.Context, db *keel.DB) (*insight.Insight, error) {
-	return keel.One[*insight.Insight](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*insight.Insight)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InsightsQuery) First(ctx context.Context, db *keel.DB) (*insight.Insight, error) {
-	return keel.First[*insight.Insight](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*insight.Insight)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InsightsQuery) List(ctx context.Context, db *keel.DB) ([]*insight.Insight, error) {
-	return keel.List[*insight.Insight](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*insight.Insight)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InsightsQuery) All(ctx context.Context, db *keel.DB) ([]*insight.Insight, error) {
-	return keel.All[*insight.Insight](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*insight.Insight)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InsightsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*insight.Insight, error) {
-	return keel.UpdateReturning[*insight.Insight](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*insight.Insight)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InsightsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*insight.Insight], error) {
-	return keel.PageOf[*insight.Insight](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*insight.Insight])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InsightsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*insight.Insight) error) error {
-	return keel.Each[*insight.Insight](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*insight.Insight)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInsight() unsafe.Pointer { return unsafe.Pointer(new(insight.Insight)) }
@@ -725,64 +731,70 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // CategoryCol is a column of insight.Category values.
-type CategoryCol struct{ keel.StringCol }
+type CategoryCol struct{ keel.TypedStringCol }
 
-func (c CategoryCol) Eq(v insight.Category) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CategoryCol) Ne(v insight.Category) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CategoryCol) Gt(v insight.Category) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CategoryCol) Gte(v insight.Category) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CategoryCol) Lt(v insight.Category) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CategoryCol) Lte(v insight.Category) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CategoryCol) Eq(v insight.Category) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CategoryCol) Ne(v insight.Category) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CategoryCol) Gt(v insight.Category) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CategoryCol) Gte(v insight.Category) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CategoryCol) Lt(v insight.Category) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CategoryCol) Lte(v insight.Category) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CategoryCol) IsDistinctFrom(v insight.Category) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CategoryCol) Between(lo, hi insight.Category) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CategoryCol) To(v insight.Category) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c CategoryCol) In(vs ...insight.Category) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c CategoryCol) To(v insight.Category) keel.Assignment { return c.Text().To(string(v)) }
+func (c CategoryCol) In(vs ...insight.Category) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c CategoryCol) NotIn(vs ...insight.Category) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SeverityCol is a column of insight.Severity values.
-type SeverityCol struct{ keel.StringCol }
+type SeverityCol struct{ keel.TypedStringCol }
 
-func (c SeverityCol) Eq(v insight.Severity) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SeverityCol) Ne(v insight.Severity) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SeverityCol) Gt(v insight.Severity) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SeverityCol) Gte(v insight.Severity) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SeverityCol) Lt(v insight.Severity) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SeverityCol) Lte(v insight.Severity) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SeverityCol) Eq(v insight.Severity) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SeverityCol) Ne(v insight.Severity) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SeverityCol) Gt(v insight.Severity) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SeverityCol) Gte(v insight.Severity) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SeverityCol) Lt(v insight.Severity) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SeverityCol) Lte(v insight.Severity) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SeverityCol) IsDistinctFrom(v insight.Severity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SeverityCol) Between(lo, hi insight.Severity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SeverityCol) To(v insight.Severity) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c SeverityCol) In(vs ...insight.Severity) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c SeverityCol) To(v insight.Severity) keel.Assignment { return c.Text().To(string(v)) }
+func (c SeverityCol) In(vs ...insight.Severity) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c SeverityCol) NotIn(vs ...insight.Severity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of insight.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v insight.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v insight.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v insight.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v insight.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v insight.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v insight.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v insight.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v insight.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v insight.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v insight.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v insight.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v insight.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v insight.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi insight.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v insight.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...insight.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v insight.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...insight.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...insight.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

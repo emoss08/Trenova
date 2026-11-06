@@ -134,22 +134,22 @@ type SubmissionsTable struct {
 // Submissions references the factoring_submissions table.
 var Submissions = &SubmissionsTable{
 	TableBase:             keel.TableBase{Ref: &submissionsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 2}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 2}}},
 	Number:                keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 3}},
-	FactoringCompanyID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 4}}},
-	AgreementID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 5}}},
-	Status:                SubmissionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 6}}},
+	FactoringCompanyID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 4}}},
+	AgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 5}}},
+	Status:                SubmissionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 6}}},
 	CurrencyCode:          keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 7}},
 	InvoiceCount:          keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 8}},
 	FaceMinor:             keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 9}},
 	ExpectedAdvanceMinor:  keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 10}},
 	ExpectedFeeMinor:      keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 11}},
 	ExpectedReserveMinor:  keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 12}},
-	SchedulePDFDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 13}}},
-	ScheduleCSVDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 14}}},
-	TransportMethod:       TransportMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 15}}},
+	SchedulePDFDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 13}}},
+	ScheduleCSVDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 14}}},
+	TransportMethod:       TransportMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 15}}},
 	TransportTarget:       keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 16}},
 	TransportReference:    keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 17}},
 	SendAttemptGroup:      keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 18}},
@@ -161,8 +161,8 @@ var Submissions = &SubmissionsTable{
 	CancelledAt:           keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 24}},
 	CancelReason:          keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 25}},
 	FundedAt:              keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 26}},
-	SubmittedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 27}}},
-	AgentRunID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionsRef, Index: 28}}},
+	SubmittedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 27}}},
+	AgentRunID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionsRef, Index: 28}}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 29}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 30}},
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &submissionsRef, Index: 31}},
@@ -172,22 +172,22 @@ var Submissions = &SubmissionsTable{
 func BuildSubmissions(r *keel.Ref) *SubmissionsTable {
 	return &SubmissionsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Number:                keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		FactoringCompanyID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		AgreementID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:                SubmissionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		FactoringCompanyID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		AgreementID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                SubmissionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		CurrencyCode:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		InvoiceCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		FaceMinor:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ExpectedAdvanceMinor:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ExpectedFeeMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ExpectedReserveMinor:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		SchedulePDFDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ScheduleCSVDocumentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		TransportMethod:       TransportMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		SchedulePDFDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ScheduleCSVDocumentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		TransportMethod:       TransportMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		TransportTarget:       keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		TransportReference:    keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		SendAttemptGroup:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -199,8 +199,8 @@ func BuildSubmissions(r *keel.Ref) *SubmissionsTable {
 		CancelledAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		CancelReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		FundedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		SubmittedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
-		AgentRunID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		SubmittedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		AgentRunID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -237,8 +237,6 @@ func (t *SubmissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // SubmissionsQuery is a query over factoringsubmission.Submission.
 type SubmissionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringsubmission.Submission] = (*SubmissionsTable)(nil)
 
 var _ keel.Query[*factoringsubmission.Submission] = (*SubmissionsQuery)(nil)
 
@@ -354,42 +352,42 @@ func (t *SubmissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fac
 
 // Create inserts row.
 func (t *SubmissionsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SubmissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SubmissionsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SubmissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SubmissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.Submission) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SubmissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SubmissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SubmissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Submission) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -561,37 +559,45 @@ func (q *SubmissionsQuery) Clone() keel.Query[*factoringsubmission.Submission] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SubmissionsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.Submission, error) {
-	return keel.One[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.Submission)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SubmissionsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.Submission, error) {
-	return keel.First[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.Submission)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SubmissionsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Submission, error) {
-	return keel.List[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.Submission)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SubmissionsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Submission, error) {
-	return keel.All[*factoringsubmission.Submission](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.Submission)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SubmissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.Submission, error) {
-	return keel.UpdateReturning[*factoringsubmission.Submission](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringsubmission.Submission)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SubmissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.Submission], error) {
-	return keel.PageOf[*factoringsubmission.Submission](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringsubmission.Submission])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SubmissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.Submission) error) error {
-	return keel.Each[*factoringsubmission.Submission](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringsubmission.Submission)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSubmission() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Submission)) }
@@ -893,21 +899,21 @@ type SubmissionItemsTable struct {
 // SubmissionItems references the factoring_submission_items table.
 var SubmissionItems = &SubmissionItemsTable{
 	TableBase:            keel.TableBase{Ref: &submissionItemsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 2}}},
-	SubmissionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 3}}},
-	InvoiceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 2}}},
+	SubmissionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 3}}},
+	InvoiceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 4}}},
 	InvoiceNumber:        keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 5}},
-	CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 6}}},
+	CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 6}}},
 	Position:             keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 7}},
 	FaceMinor:            keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 8}},
 	ExpectedAdvanceMinor: keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 9}},
 	ExpectedFeeMinor:     keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 10}},
 	ExpectedReserveMinor: keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 11}},
 	ExpectedDays:         keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 12}},
-	PacketDocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 13}}},
-	Status:               SubmissionItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 14}}},
+	PacketDocumentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 13}}},
+	Status:               SubmissionItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &submissionItemsRef, Index: 14}}},
 	ReleasedAt:           keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 15}},
 	FundedOn:             keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 16}},
 	AdvanceMinor:         keel.Int64Col{Col: keel.Col{Ref: &submissionItemsRef, Index: 17}},
@@ -926,21 +932,21 @@ var SubmissionItems = &SubmissionItemsTable{
 func BuildSubmissionItems(r *keel.Ref) *SubmissionItemsTable {
 	return &SubmissionItemsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SubmissionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SubmissionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		InvoiceNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Position:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		FaceMinor:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		ExpectedAdvanceMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ExpectedFeeMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		ExpectedReserveMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ExpectedDays:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		PacketDocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Status:               SubmissionItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		PacketDocumentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Status:               SubmissionItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ReleasedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		FundedOn:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		AdvanceMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -986,8 +992,6 @@ func (t *SubmissionItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // SubmissionItemsQuery is a query over factoringsubmission.SubmissionItem.
 type SubmissionItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringsubmission.SubmissionItem] = (*SubmissionItemsTable)(nil)
 
 var _ keel.Query[*factoringsubmission.SubmissionItem] = (*SubmissionItemsQuery)(nil)
 
@@ -1103,42 +1107,42 @@ func (t *SubmissionItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *SubmissionItemsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SubmissionItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SubmissionItemsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SubmissionItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SubmissionItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.SubmissionItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SubmissionItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SubmissionItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SubmissionItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.SubmissionItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1310,37 +1314,45 @@ func (q *SubmissionItemsQuery) Clone() keel.Query[*factoringsubmission.Submissio
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SubmissionItemsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.SubmissionItem, error) {
-	return keel.One[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.SubmissionItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SubmissionItemsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.SubmissionItem, error) {
-	return keel.First[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.SubmissionItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SubmissionItemsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.SubmissionItem, error) {
-	return keel.List[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.SubmissionItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SubmissionItemsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.SubmissionItem, error) {
-	return keel.All[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.SubmissionItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SubmissionItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.SubmissionItem, error) {
-	return keel.UpdateReturning[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringsubmission.SubmissionItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SubmissionItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.SubmissionItem], error) {
-	return keel.PageOf[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringsubmission.SubmissionItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SubmissionItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.SubmissionItem) error) error {
-	return keel.Each[*factoringsubmission.SubmissionItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringsubmission.SubmissionItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSubmissionItem() unsafe.Pointer {
@@ -1600,17 +1612,17 @@ type TransportsTable struct {
 // Transports references the factoring_transports table.
 var Transports = &TransportsTable{
 	TableBase:          keel.TableBase{Ref: &transportsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 2}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 3}}},
-	Method:             TransportMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 2}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 3}}},
+	Method:             TransportMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 4}}},
 	EmailRecipients:    keel.StringArrayCol{Col: keel.Col{Ref: &transportsRef, Index: 5}},
 	AttachPackets:      keel.BoolCol{Col: keel.Col{Ref: &transportsRef, Index: 6}},
 	SftpHost:           keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 7}},
 	SftpPort:           keel.Int64Col{Col: keel.Col{Ref: &transportsRef, Index: 8}},
 	SftpUsername:       keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 9}},
-	SftpAuthMethod:     SftpAuthMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 10}}},
+	SftpAuthMethod:     SftpAuthMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transportsRef, Index: 10}}},
 	SftpSecret:         keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 11}},
 	SftpKnownHostKey:   keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 12}},
 	SftpDirectory:      keel.StringCol{Col: keel.Col{Ref: &transportsRef, Index: 13}},
@@ -1625,17 +1637,17 @@ var Transports = &TransportsTable{
 func BuildTransports(r *keel.Ref) *TransportsTable {
 	return &TransportsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Method:             TransportMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Method:             TransportMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		EmailRecipients:    keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 5}},
 		AttachPackets:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		SftpHost:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SftpPort:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		SftpUsername:       keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		SftpAuthMethod:     SftpAuthMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SftpAuthMethod:     SftpAuthMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		SftpSecret:         keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		SftpKnownHostKey:   keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		SftpDirectory:      keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -1662,8 +1674,6 @@ func (t *TransportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // TransportsQuery is a query over factoringsubmission.Transport.
 type TransportsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringsubmission.Transport] = (*TransportsTable)(nil)
 
 var _ keel.Query[*factoringsubmission.Transport] = (*TransportsQuery)(nil)
 
@@ -1779,42 +1789,42 @@ func (t *TransportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fact
 
 // Create inserts row.
 func (t *TransportsTable) Create(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TransportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TransportsTable) Save(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TransportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TransportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringsubmission.Transport) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TransportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TransportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TransportsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringsubmission.Transport) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1986,37 +1996,45 @@ func (q *TransportsQuery) Clone() keel.Query[*factoringsubmission.Transport] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TransportsQuery) One(ctx context.Context, db *keel.DB) (*factoringsubmission.Transport, error) {
-	return keel.One[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.Transport)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TransportsQuery) First(ctx context.Context, db *keel.DB) (*factoringsubmission.Transport, error) {
-	return keel.First[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringsubmission.Transport)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TransportsQuery) List(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Transport, error) {
-	return keel.List[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.Transport)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TransportsQuery) All(ctx context.Context, db *keel.DB) ([]*factoringsubmission.Transport, error) {
-	return keel.All[*factoringsubmission.Transport](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringsubmission.Transport)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TransportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringsubmission.Transport, error) {
-	return keel.UpdateReturning[*factoringsubmission.Transport](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringsubmission.Transport)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TransportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringsubmission.Transport], error) {
-	return keel.PageOf[*factoringsubmission.Transport](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringsubmission.Transport])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TransportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringsubmission.Transport) error) error {
-	return keel.Each[*factoringsubmission.Transport](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringsubmission.Transport)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTransport() unsafe.Pointer { return unsafe.Pointer(new(factoringsubmission.Transport)) }
@@ -2207,149 +2225,149 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // SftpAuthMethodCol is a column of factoringsubmission.SftpAuthMethod values.
-type SftpAuthMethodCol struct{ keel.StringCol }
+type SftpAuthMethodCol struct{ keel.TypedStringCol }
 
 func (c SftpAuthMethodCol) Eq(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SftpAuthMethodCol) Ne(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SftpAuthMethodCol) Gt(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SftpAuthMethodCol) Gte(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SftpAuthMethodCol) Lt(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SftpAuthMethodCol) Lte(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SftpAuthMethodCol) IsDistinctFrom(v factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SftpAuthMethodCol) Between(lo, hi factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SftpAuthMethodCol) To(v factoringsubmission.SftpAuthMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SftpAuthMethodCol) In(vs ...factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SftpAuthMethodCol) NotIn(vs ...factoringsubmission.SftpAuthMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SubmissionItemStatusCol is a column of factoringsubmission.SubmissionItemStatus values.
-type SubmissionItemStatusCol struct{ keel.StringCol }
+type SubmissionItemStatusCol struct{ keel.TypedStringCol }
 
 func (c SubmissionItemStatusCol) Eq(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SubmissionItemStatusCol) Ne(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SubmissionItemStatusCol) Gt(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SubmissionItemStatusCol) Gte(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SubmissionItemStatusCol) Lt(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SubmissionItemStatusCol) Lte(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SubmissionItemStatusCol) IsDistinctFrom(v factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubmissionItemStatusCol) Between(lo, hi factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SubmissionItemStatusCol) To(v factoringsubmission.SubmissionItemStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SubmissionItemStatusCol) In(vs ...factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubmissionItemStatusCol) NotIn(vs ...factoringsubmission.SubmissionItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SubmissionStatusCol is a column of factoringsubmission.SubmissionStatus values.
-type SubmissionStatusCol struct{ keel.StringCol }
+type SubmissionStatusCol struct{ keel.TypedStringCol }
 
 func (c SubmissionStatusCol) Eq(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SubmissionStatusCol) Ne(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SubmissionStatusCol) Gt(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SubmissionStatusCol) Gte(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SubmissionStatusCol) Lt(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SubmissionStatusCol) Lte(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SubmissionStatusCol) IsDistinctFrom(v factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubmissionStatusCol) Between(lo, hi factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SubmissionStatusCol) To(v factoringsubmission.SubmissionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SubmissionStatusCol) In(vs ...factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubmissionStatusCol) NotIn(vs ...factoringsubmission.SubmissionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransportMethodCol is a column of factoringsubmission.TransportMethod values.
-type TransportMethodCol struct{ keel.StringCol }
+type TransportMethodCol struct{ keel.TypedStringCol }
 
 func (c TransportMethodCol) Eq(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TransportMethodCol) Ne(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TransportMethodCol) Gt(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TransportMethodCol) Gte(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TransportMethodCol) Lt(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TransportMethodCol) Lte(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransportMethodCol) IsDistinctFrom(v factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransportMethodCol) Between(lo, hi factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransportMethodCol) To(v factoringsubmission.TransportMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransportMethodCol) In(vs ...factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransportMethodCol) NotIn(vs ...factoringsubmission.TransportMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

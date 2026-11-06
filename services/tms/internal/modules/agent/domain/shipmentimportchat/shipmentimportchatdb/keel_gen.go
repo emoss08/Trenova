@@ -80,14 +80,14 @@ type ConversationsTable struct {
 // Conversations references the shipment_import_chat_conversations table.
 var Conversations = &ConversationsTable{
 	TableBase:              keel.TableBase{Ref: &conversationsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 0}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 1}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 2}}},
-	DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 3}}},
-	UserID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 0}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 1}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 2}}},
+	DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 3}}},
+	UserID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 4}}},
 	ExternalConversationID: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 5}},
-	Status:                 ConversationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 6}}},
-	StatusReason:           ConversationStatusReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 7}}},
+	Status:                 ConversationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 6}}},
+	StatusReason:           ConversationStatusReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &conversationsRef, Index: 7}}},
 	TurnCount:              keel.Int64Col{Col: keel.Col{Ref: &conversationsRef, Index: 8}},
 	LastMessageAt:          keel.Int64Col{Col: keel.Col{Ref: &conversationsRef, Index: 9}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &conversationsRef, Index: 10}},
@@ -99,14 +99,14 @@ var Conversations = &ConversationsTable{
 func BuildConversations(r *keel.Ref) *ConversationsTable {
 	return &ConversationsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ExternalConversationID: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:                 ConversationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		StatusReason:           ConversationStatusReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:                 ConversationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		StatusReason:           ConversationStatusReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		TurnCount:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		LastMessageAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -130,8 +130,6 @@ func (t *ConversationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // ConversationsQuery is a query over shipmentimportchat.Conversation.
 type ConversationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*shipmentimportchat.Conversation] = (*ConversationsTable)(nil)
 
 var _ keel.Query[*shipmentimportchat.Conversation] = (*ConversationsQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *ConversationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*s
 
 // Create inserts row.
 func (t *ConversationsTable) Create(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ConversationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ConversationsTable) Save(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ConversationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ConversationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ConversationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ConversationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ConversationsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *ConversationsQuery) Clone() keel.Query[*shipmentimportchat.Conversation
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ConversationsQuery) One(ctx context.Context, db *keel.DB) (*shipmentimportchat.Conversation, error) {
-	return keel.One[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*shipmentimportchat.Conversation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ConversationsQuery) First(ctx context.Context, db *keel.DB) (*shipmentimportchat.Conversation, error) {
-	return keel.First[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*shipmentimportchat.Conversation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ConversationsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Conversation, error) {
-	return keel.List[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentimportchat.Conversation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ConversationsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Conversation, error) {
-	return keel.All[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentimportchat.Conversation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ConversationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentimportchat.Conversation, error) {
-	return keel.UpdateReturning[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*shipmentimportchat.Conversation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ConversationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentimportchat.Conversation], error) {
-	return keel.PageOf[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*shipmentimportchat.Conversation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ConversationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentimportchat.Conversation) error) error {
-	return keel.Each[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*shipmentimportchat.Conversation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newConversation() unsafe.Pointer { return unsafe.Pointer(new(shipmentimportchat.Conversation)) }
@@ -653,19 +659,19 @@ type TurnsTable struct {
 // Turns references the shipment_import_chat_turns table.
 var Turns = &TurnsTable{
 	TableBase:              keel.TableBase{Ref: &turnsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 0}}},
-	ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 2}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 3}}},
-	DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 4}}},
-	UserID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 5}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 0}}},
+	ConversationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 2}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 3}}},
+	DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 4}}},
+	UserID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 5}}},
 	TurnIndex:              keel.Int64Col{Col: keel.Col{Ref: &turnsRef, Index: 6}},
 	UserMessage:            keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 7}},
 	AssistantMessage:       keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 8}},
 	RequestConversationID:  keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 9}},
 	ResponseConversationID: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 10}},
 	Model:                  keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 11}},
-	ResultStatus:           TurnResultStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 12}}},
+	ResultStatus:           TurnResultStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &turnsRef, Index: 12}}},
 	ErrorMessage:           keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 13}},
 	ContextJSON:            keel.JSONBCol{Col: keel.Col{Ref: &turnsRef, Index: 14}},
 	SuggestionsJSON:        keel.JSONBCol{Col: keel.Col{Ref: &turnsRef, Index: 15}},
@@ -678,19 +684,19 @@ var Turns = &TurnsTable{
 func BuildTurns(r *keel.Ref) *TurnsTable {
 	return &TurnsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		UserID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		ConversationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DocumentID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		UserID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TurnIndex:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		UserMessage:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		AssistantMessage:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		RequestConversationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ResponseConversationID: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Model:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		ResultStatus:           TurnResultStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ResultStatus:           TurnResultStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ErrorMessage:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ContextJSON:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		SuggestionsJSON:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
@@ -713,8 +719,6 @@ func (t *TurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipm
 
 // TurnsQuery is a query over shipmentimportchat.Turn.
 type TurnsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*shipmentimportchat.Turn] = (*TurnsTable)(nil)
 
 var _ keel.Query[*shipmentimportchat.Turn] = (*TurnsQuery)(nil)
 
@@ -830,42 +834,42 @@ func (t *TurnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmenti
 
 // Create inserts row.
 func (t *TurnsTable) Create(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TurnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TurnsTable) Save(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TurnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TurnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TurnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TurnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TurnsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1037,37 +1041,45 @@ func (q *TurnsQuery) Clone() keel.Query[*shipmentimportchat.Turn] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TurnsQuery) One(ctx context.Context, db *keel.DB) (*shipmentimportchat.Turn, error) {
-	return keel.One[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*shipmentimportchat.Turn)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TurnsQuery) First(ctx context.Context, db *keel.DB) (*shipmentimportchat.Turn, error) {
-	return keel.First[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*shipmentimportchat.Turn)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TurnsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Turn, error) {
-	return keel.List[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentimportchat.Turn)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TurnsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Turn, error) {
-	return keel.All[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*shipmentimportchat.Turn)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TurnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentimportchat.Turn, error) {
-	return keel.UpdateReturning[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*shipmentimportchat.Turn)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TurnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentimportchat.Turn], error) {
-	return keel.PageOf[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*shipmentimportchat.Turn])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TurnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentimportchat.Turn) error) error {
-	return keel.Each[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*shipmentimportchat.Turn)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTurn() unsafe.Pointer { return unsafe.Pointer(new(shipmentimportchat.Turn)) }
@@ -1216,112 +1228,112 @@ var enumTurnResultStatus = [...]schema.EnumValue{
 }
 
 // ConversationStatusCol is a column of shipmentimportchat.ConversationStatus values.
-type ConversationStatusCol struct{ keel.StringCol }
+type ConversationStatusCol struct{ keel.TypedStringCol }
 
 func (c ConversationStatusCol) Eq(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ConversationStatusCol) Ne(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ConversationStatusCol) Gt(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ConversationStatusCol) Gte(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ConversationStatusCol) Lt(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ConversationStatusCol) Lte(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ConversationStatusCol) IsDistinctFrom(v shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ConversationStatusCol) Between(lo, hi shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ConversationStatusCol) To(v shipmentimportchat.ConversationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ConversationStatusCol) In(vs ...shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ConversationStatusCol) NotIn(vs ...shipmentimportchat.ConversationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ConversationStatusReasonCol is a column of shipmentimportchat.ConversationStatusReason values.
-type ConversationStatusReasonCol struct{ keel.StringCol }
+type ConversationStatusReasonCol struct{ keel.TypedStringCol }
 
 func (c ConversationStatusReasonCol) Eq(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ConversationStatusReasonCol) Ne(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ConversationStatusReasonCol) Gt(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ConversationStatusReasonCol) Gte(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ConversationStatusReasonCol) Lt(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ConversationStatusReasonCol) Lte(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ConversationStatusReasonCol) IsDistinctFrom(v shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ConversationStatusReasonCol) Between(lo, hi shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ConversationStatusReasonCol) To(v shipmentimportchat.ConversationStatusReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ConversationStatusReasonCol) In(vs ...shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ConversationStatusReasonCol) NotIn(vs ...shipmentimportchat.ConversationStatusReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TurnResultStatusCol is a column of shipmentimportchat.TurnResultStatus values.
-type TurnResultStatusCol struct{ keel.StringCol }
+type TurnResultStatusCol struct{ keel.TypedStringCol }
 
 func (c TurnResultStatusCol) Eq(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TurnResultStatusCol) Ne(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TurnResultStatusCol) Gt(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TurnResultStatusCol) Gte(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TurnResultStatusCol) Lt(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TurnResultStatusCol) Lte(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TurnResultStatusCol) IsDistinctFrom(v shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TurnResultStatusCol) Between(lo, hi shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TurnResultStatusCol) To(v shipmentimportchat.TurnResultStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TurnResultStatusCol) In(vs ...shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TurnResultStatusCol) NotIn(vs ...shipmentimportchat.TurnResultStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

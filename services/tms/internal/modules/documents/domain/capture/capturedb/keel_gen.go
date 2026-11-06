@@ -118,22 +118,22 @@ type CaptureBatchesTable struct {
 // CaptureBatches references the capture_batches table.
 var CaptureBatches = &CaptureBatchesTable{
 	TableBase:           keel.TableBase{Ref: &captureBatchesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 2}}},
-	UserID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 3}}},
-	DeviceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 4}}},
-	RequestID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 5}}},
-	ProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 6}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 2}}},
+	UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 3}}},
+	DeviceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 4}}},
+	RequestID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 5}}},
+	ProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 6}}},
 	ClientKey:           keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 7}},
-	Source:              SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 8}}},
-	Status:              BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 9}}},
+	Source:              SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 8}}},
+	Status:              BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 9}}},
 	SourceName:          keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 10}},
 	JobName:             keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 11}},
 	Settings:            keel.JSONBCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 12}},
 	TargetType:          keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 13}},
-	TargetID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 14}}},
-	DocumentTypeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 15}}},
+	TargetID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 14}}},
+	DocumentTypeID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureBatchesRef, Index: 15}}},
 	ExpectedPageCount:   keel.Int64Col{Col: keel.Col{Ref: &captureBatchesRef, Index: 16}},
 	ReceivedPageCount:   keel.Int64Col{Col: keel.Col{Ref: &captureBatchesRef, Index: 17}},
 	ItemCount:           keel.Int64Col{Col: keel.Col{Ref: &captureBatchesRef, Index: 18}},
@@ -153,22 +153,22 @@ var CaptureBatches = &CaptureBatchesTable{
 func BuildCaptureBatches(r *keel.Ref) *CaptureBatchesTable {
 	return &CaptureBatchesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DeviceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RequestID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DeviceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RequestID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ClientKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Source:              SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:              BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Source:              SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:              BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		SourceName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		JobName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Settings:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		TargetType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		TargetID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		DocumentTypeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		TargetID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		DocumentTypeID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		ExpectedPageCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		ReceivedPageCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		ItemCount:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -215,8 +215,6 @@ func (t *CaptureBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // CaptureBatchesQuery is a query over capture.CaptureBatch.
 type CaptureBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capture.CaptureBatch] = (*CaptureBatchesTable)(nil)
 
 var _ keel.Query[*capture.CaptureBatch] = (*CaptureBatchesQuery)(nil)
 
@@ -332,42 +330,42 @@ func (t *CaptureBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *CaptureBatchesTable) Create(ctx context.Context, db *keel.DB, row *capture.CaptureBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CaptureBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capture.CaptureBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CaptureBatchesTable) Save(ctx context.Context, db *keel.DB, row *capture.CaptureBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CaptureBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *capture.CaptureBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CaptureBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *capture.CaptureBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CaptureBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*capture.CaptureBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CaptureBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capture.CaptureBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CaptureBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*capture.CaptureBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -539,37 +537,45 @@ func (q *CaptureBatchesQuery) Clone() keel.Query[*capture.CaptureBatch] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CaptureBatchesQuery) One(ctx context.Context, db *keel.DB) (*capture.CaptureBatch, error) {
-	return keel.One[*capture.CaptureBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CaptureBatchesQuery) First(ctx context.Context, db *keel.DB) (*capture.CaptureBatch, error) {
-	return keel.First[*capture.CaptureBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CaptureBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*capture.CaptureBatch, error) {
-	return keel.List[*capture.CaptureBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CaptureBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*capture.CaptureBatch, error) {
-	return keel.All[*capture.CaptureBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CaptureBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capture.CaptureBatch, error) {
-	return keel.UpdateReturning[*capture.CaptureBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capture.CaptureBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CaptureBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capture.CaptureBatch], error) {
-	return keel.PageOf[*capture.CaptureBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capture.CaptureBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CaptureBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capture.CaptureBatch) error) error {
-	return keel.Each[*capture.CaptureBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capture.CaptureBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCaptureBatch() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureBatch)) }
@@ -852,17 +858,17 @@ type CaptureDevicesTable struct {
 // CaptureDevices references the capture_devices table.
 var CaptureDevices = &CaptureDevicesTable{
 	TableBase:            keel.TableBase{Ref: &captureDevicesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 2}}},
-	UserID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 2}}},
+	UserID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 3}}},
 	Name:                 keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 4}},
 	MachineName:          keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 5}},
 	WindowsUser:          keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 6}},
 	AgentVersion:         keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 7}},
-	Architecture:         ArchitectureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 8}}},
+	Architecture:         ArchitectureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 8}}},
 	OSVersion:            keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 9}},
-	Status:               DeviceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 10}}},
+	Status:               DeviceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 10}}},
 	RefreshTokenHash:     keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 11}},
 	PreviousRefreshHash:  keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 12}},
 	AccessTokenHash:      keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 13}},
@@ -871,7 +877,7 @@ var CaptureDevices = &CaptureDevicesTable{
 	LastSeenAt:           keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 16}},
 	LastIP:               keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 17}},
 	RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 18}},
-	RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 19}}},
+	RevokedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 19}}},
 	RevokedReason:        keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 20}},
 	ActiveRoleIDs:        keel.JSONBCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 21}},
 	SessionEpoch:         keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 22}},
@@ -884,17 +890,17 @@ var CaptureDevices = &CaptureDevicesTable{
 func BuildCaptureDevices(r *keel.Ref) *CaptureDevicesTable {
 	return &CaptureDevicesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		MachineName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		WindowsUser:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		AgentVersion:         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Architecture:         ArchitectureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Architecture:         ArchitectureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		OSVersion:            keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Status:               DeviceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:               DeviceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		RefreshTokenHash:     keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		PreviousRefreshHash:  keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		AccessTokenHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -903,7 +909,7 @@ func BuildCaptureDevices(r *keel.Ref) *CaptureDevicesTable {
 		LastSeenAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		LastIP:               keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		RevokedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		RevokedReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		ActiveRoleIDs:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
 		SessionEpoch:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -928,8 +934,6 @@ func (t *CaptureDevicesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // CaptureDevicesQuery is a query over capture.CaptureDevice.
 type CaptureDevicesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capture.CaptureDevice] = (*CaptureDevicesTable)(nil)
 
 var _ keel.Query[*capture.CaptureDevice] = (*CaptureDevicesQuery)(nil)
 
@@ -1045,42 +1049,42 @@ func (t *CaptureDevicesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *CaptureDevicesTable) Create(ctx context.Context, db *keel.DB, row *capture.CaptureDevice) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CaptureDevicesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capture.CaptureDevice) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CaptureDevicesTable) Save(ctx context.Context, db *keel.DB, row *capture.CaptureDevice, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CaptureDevicesTable) SaveExcept(ctx context.Context, db *keel.DB, row *capture.CaptureDevice, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CaptureDevicesTable) DeleteRow(ctx context.Context, db *keel.DB, row *capture.CaptureDevice) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CaptureDevicesTable) Upsert(ctx context.Context, db *keel.DB, rows []*capture.CaptureDevice, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CaptureDevicesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capture.CaptureDevice, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CaptureDevicesTable) Copy(ctx context.Context, db *keel.DB, rows []*capture.CaptureDevice) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1252,37 +1256,45 @@ func (q *CaptureDevicesQuery) Clone() keel.Query[*capture.CaptureDevice] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CaptureDevicesQuery) One(ctx context.Context, db *keel.DB) (*capture.CaptureDevice, error) {
-	return keel.One[*capture.CaptureDevice](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureDevice)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CaptureDevicesQuery) First(ctx context.Context, db *keel.DB) (*capture.CaptureDevice, error) {
-	return keel.First[*capture.CaptureDevice](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureDevice)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CaptureDevicesQuery) List(ctx context.Context, db *keel.DB) ([]*capture.CaptureDevice, error) {
-	return keel.List[*capture.CaptureDevice](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureDevice)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CaptureDevicesQuery) All(ctx context.Context, db *keel.DB) ([]*capture.CaptureDevice, error) {
-	return keel.All[*capture.CaptureDevice](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureDevice)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CaptureDevicesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capture.CaptureDevice, error) {
-	return keel.UpdateReturning[*capture.CaptureDevice](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capture.CaptureDevice)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CaptureDevicesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capture.CaptureDevice], error) {
-	return keel.PageOf[*capture.CaptureDevice](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capture.CaptureDevice])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CaptureDevicesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capture.CaptureDevice) error) error {
-	return keel.Each[*capture.CaptureDevice](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capture.CaptureDevice)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCaptureDevice() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureDevice)) }
@@ -1535,27 +1547,27 @@ type CaptureItemsTable struct {
 // CaptureItems references the capture_items table.
 var CaptureItems = &CaptureItemsTable{
 	TableBase:            keel.TableBase{Ref: &captureItemsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 2}}},
-	BatchID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 2}}},
+	BatchID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 3}}},
 	Position:             keel.Int64Col{Col: keel.Col{Ref: &captureItemsRef, Index: 4}},
-	Status:               ItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 5}}},
+	Status:               ItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 5}}},
 	PageIDs:              keel.StringArrayCol{Col: keel.Col{Ref: &captureItemsRef, Index: 6}},
 	SuggestedType:        keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 7}},
-	SuggestedID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 8}}},
-	SuggestedDocTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 9}}},
-	SuggestionSource:     SuggestionSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 10}}},
+	SuggestedID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 8}}},
+	SuggestedDocTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 9}}},
+	SuggestionSource:     SuggestionSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 10}}},
 	SuggestionConfidence: keel.Float64Col{Col: keel.Col{Ref: &captureItemsRef, Index: 11}},
 	SuggestionReason:     keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 12}},
-	CoverSheetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 13}}},
+	CoverSheetID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 13}}},
 	DetectedKind:         keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 14}},
 	FiledType:            keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 15}},
-	FiledID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 16}}},
-	FiledDocTypeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 17}}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 18}}},
-	UploadSessionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 19}}},
-	FiledByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 20}}},
+	FiledID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 16}}},
+	FiledDocTypeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 17}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 18}}},
+	UploadSessionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 19}}},
+	FiledByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 20}}},
 	FiledAt:              keel.Int64Col{Col: keel.Col{Ref: &captureItemsRef, Index: 21}},
 	FailureMessage:       keel.StringCol{Col: keel.Col{Ref: &captureItemsRef, Index: 22}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &captureItemsRef, Index: 23}},
@@ -1567,27 +1579,27 @@ var CaptureItems = &CaptureItemsTable{
 func BuildCaptureItems(r *keel.Ref) *CaptureItemsTable {
 	return &CaptureItemsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BatchID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BatchID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Position:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Status:               ItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:               ItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		PageIDs:              keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
 		SuggestedType:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		SuggestedID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SuggestedDocTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		SuggestionSource:     SuggestionSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SuggestedID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SuggestedDocTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SuggestionSource:     SuggestionSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		SuggestionConfidence: keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
 		SuggestionReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		CoverSheetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CoverSheetID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		DetectedKind:         keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		FiledType:            keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		FiledID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		FiledDocTypeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		UploadSessionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		FiledByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		FiledID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		FiledDocTypeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		UploadSessionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		FiledByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		FiledAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		FailureMessage:       keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -1611,8 +1623,6 @@ func (t *CaptureItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // CaptureItemsQuery is a query over capture.CaptureItem.
 type CaptureItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capture.CaptureItem] = (*CaptureItemsTable)(nil)
 
 var _ keel.Query[*capture.CaptureItem] = (*CaptureItemsQuery)(nil)
 
@@ -1728,42 +1738,42 @@ func (t *CaptureItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ca
 
 // Create inserts row.
 func (t *CaptureItemsTable) Create(ctx context.Context, db *keel.DB, row *capture.CaptureItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CaptureItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capture.CaptureItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CaptureItemsTable) Save(ctx context.Context, db *keel.DB, row *capture.CaptureItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CaptureItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *capture.CaptureItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CaptureItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *capture.CaptureItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CaptureItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*capture.CaptureItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CaptureItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capture.CaptureItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CaptureItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*capture.CaptureItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1935,37 +1945,45 @@ func (q *CaptureItemsQuery) Clone() keel.Query[*capture.CaptureItem] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CaptureItemsQuery) One(ctx context.Context, db *keel.DB) (*capture.CaptureItem, error) {
-	return keel.One[*capture.CaptureItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CaptureItemsQuery) First(ctx context.Context, db *keel.DB) (*capture.CaptureItem, error) {
-	return keel.First[*capture.CaptureItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capture.CaptureItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CaptureItemsQuery) List(ctx context.Context, db *keel.DB) ([]*capture.CaptureItem, error) {
-	return keel.List[*capture.CaptureItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CaptureItemsQuery) All(ctx context.Context, db *keel.DB) ([]*capture.CaptureItem, error) {
-	return keel.All[*capture.CaptureItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CaptureItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CaptureItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capture.CaptureItem, error) {
-	return keel.UpdateReturning[*capture.CaptureItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capture.CaptureItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CaptureItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capture.CaptureItem], error) {
-	return keel.PageOf[*capture.CaptureItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capture.CaptureItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CaptureItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capture.CaptureItem) error) error {
-	return keel.Each[*capture.CaptureItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capture.CaptureItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCaptureItem() unsafe.Pointer { return unsafe.Pointer(new(capture.CaptureItem)) }
@@ -2229,12 +2247,12 @@ type CapturePagesTable struct {
 // CapturePages references the capture_pages table.
 var CapturePages = &CapturePagesTable{
 	TableBase:      keel.TableBase{Ref: &capturePagesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 2}}},
-	BatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 2}}},
+	BatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 3}}},
 	Sequence:       keel.Int64Col{Col: keel.Col{Ref: &capturePagesRef, Index: 4}},
-	Status:         PageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 5}}},
+	Status:         PageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 5}}},
 	StoragePath:    keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 6}},
 	ChecksumSHA256: keel.StringCol{Col: keel.Col{Ref: &capturePagesRef, Index: 7}},
 	ByteSize:       keel.Int64Col{Col: keel.Col{Ref: &capturePagesRef, Index: 8}},
@@ -2256,12 +2274,12 @@ var CapturePages = &CapturePagesTable{
 func BuildCapturePages(r *keel.Ref) *CapturePagesTable {
 	return &CapturePagesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Sequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Status:         PageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:         PageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		StoragePath:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ChecksumSHA256: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ByteSize:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -2295,8 +2313,6 @@ func (t *CapturePagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // CapturePagesQuery is a query over capture.CapturePage.
 type CapturePagesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capture.CapturePage] = (*CapturePagesTable)(nil)
 
 var _ keel.Query[*capture.CapturePage] = (*CapturePagesQuery)(nil)
 
@@ -2412,42 +2428,42 @@ func (t *CapturePagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ca
 
 // Create inserts row.
 func (t *CapturePagesTable) Create(ctx context.Context, db *keel.DB, row *capture.CapturePage) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CapturePagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capture.CapturePage) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CapturePagesTable) Save(ctx context.Context, db *keel.DB, row *capture.CapturePage, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CapturePagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *capture.CapturePage, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CapturePagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *capture.CapturePage) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CapturePagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*capture.CapturePage, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CapturePagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capture.CapturePage, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CapturePagesTable) Copy(ctx context.Context, db *keel.DB, rows []*capture.CapturePage) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2619,37 +2635,45 @@ func (q *CapturePagesQuery) Clone() keel.Query[*capture.CapturePage] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CapturePagesQuery) One(ctx context.Context, db *keel.DB) (*capture.CapturePage, error) {
-	return keel.One[*capture.CapturePage](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capture.CapturePage)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CapturePagesQuery) First(ctx context.Context, db *keel.DB) (*capture.CapturePage, error) {
-	return keel.First[*capture.CapturePage](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capture.CapturePage)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CapturePagesQuery) List(ctx context.Context, db *keel.DB) ([]*capture.CapturePage, error) {
-	return keel.List[*capture.CapturePage](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CapturePage)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CapturePagesQuery) All(ctx context.Context, db *keel.DB) ([]*capture.CapturePage, error) {
-	return keel.All[*capture.CapturePage](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capture.CapturePage)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CapturePagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capture.CapturePage, error) {
-	return keel.UpdateReturning[*capture.CapturePage](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capture.CapturePage)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CapturePagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capture.CapturePage], error) {
-	return keel.PageOf[*capture.CapturePage](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capture.CapturePage])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CapturePagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capture.CapturePage) error) error {
-	return keel.Each[*capture.CapturePage](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capture.CapturePage)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCapturePage() unsafe.Pointer { return unsafe.Pointer(new(capture.CapturePage)) }
@@ -2826,197 +2850,191 @@ var enumSuggestionSource = [...]schema.EnumValue{
 }
 
 // ArchitectureCol is a column of capture.Architecture values.
-type ArchitectureCol struct{ keel.StringCol }
+type ArchitectureCol struct{ keel.TypedStringCol }
 
-func (c ArchitectureCol) Eq(v capture.Architecture) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ArchitectureCol) Ne(v capture.Architecture) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ArchitectureCol) Gt(v capture.Architecture) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ArchitectureCol) Gte(v capture.Architecture) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ArchitectureCol) Lt(v capture.Architecture) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ArchitectureCol) Lte(v capture.Architecture) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ArchitectureCol) Eq(v capture.Architecture) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ArchitectureCol) Ne(v capture.Architecture) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ArchitectureCol) Gt(v capture.Architecture) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ArchitectureCol) Gte(v capture.Architecture) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ArchitectureCol) Lt(v capture.Architecture) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ArchitectureCol) Lte(v capture.Architecture) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ArchitectureCol) IsDistinctFrom(v capture.Architecture) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ArchitectureCol) Between(lo, hi capture.Architecture) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ArchitectureCol) To(v capture.Architecture) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ArchitectureCol) To(v capture.Architecture) keel.Assignment { return c.Text().To(string(v)) }
 func (c ArchitectureCol) In(vs ...capture.Architecture) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ArchitectureCol) NotIn(vs ...capture.Architecture) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // BatchStatusCol is a column of capture.BatchStatus values.
-type BatchStatusCol struct{ keel.StringCol }
+type BatchStatusCol struct{ keel.TypedStringCol }
 
-func (c BatchStatusCol) Eq(v capture.BatchStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c BatchStatusCol) Ne(v capture.BatchStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c BatchStatusCol) Gt(v capture.BatchStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c BatchStatusCol) Gte(v capture.BatchStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c BatchStatusCol) Lt(v capture.BatchStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c BatchStatusCol) Lte(v capture.BatchStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c BatchStatusCol) Eq(v capture.BatchStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c BatchStatusCol) Ne(v capture.BatchStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c BatchStatusCol) Gt(v capture.BatchStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c BatchStatusCol) Gte(v capture.BatchStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c BatchStatusCol) Lt(v capture.BatchStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c BatchStatusCol) Lte(v capture.BatchStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c BatchStatusCol) IsDistinctFrom(v capture.BatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BatchStatusCol) Between(lo, hi capture.BatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c BatchStatusCol) To(v capture.BatchStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c BatchStatusCol) To(v capture.BatchStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c BatchStatusCol) In(vs ...capture.BatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BatchStatusCol) NotIn(vs ...capture.BatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeviceStatusCol is a column of capture.DeviceStatus values.
-type DeviceStatusCol struct{ keel.StringCol }
+type DeviceStatusCol struct{ keel.TypedStringCol }
 
-func (c DeviceStatusCol) Eq(v capture.DeviceStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DeviceStatusCol) Ne(v capture.DeviceStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DeviceStatusCol) Gt(v capture.DeviceStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DeviceStatusCol) Gte(v capture.DeviceStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DeviceStatusCol) Lt(v capture.DeviceStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DeviceStatusCol) Lte(v capture.DeviceStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DeviceStatusCol) Eq(v capture.DeviceStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DeviceStatusCol) Ne(v capture.DeviceStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DeviceStatusCol) Gt(v capture.DeviceStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DeviceStatusCol) Gte(v capture.DeviceStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DeviceStatusCol) Lt(v capture.DeviceStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DeviceStatusCol) Lte(v capture.DeviceStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DeviceStatusCol) IsDistinctFrom(v capture.DeviceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeviceStatusCol) Between(lo, hi capture.DeviceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DeviceStatusCol) To(v capture.DeviceStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DeviceStatusCol) To(v capture.DeviceStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c DeviceStatusCol) In(vs ...capture.DeviceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeviceStatusCol) NotIn(vs ...capture.DeviceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ItemStatusCol is a column of capture.ItemStatus values.
-type ItemStatusCol struct{ keel.StringCol }
+type ItemStatusCol struct{ keel.TypedStringCol }
 
-func (c ItemStatusCol) Eq(v capture.ItemStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ItemStatusCol) Ne(v capture.ItemStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ItemStatusCol) Gt(v capture.ItemStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ItemStatusCol) Gte(v capture.ItemStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ItemStatusCol) Lt(v capture.ItemStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ItemStatusCol) Lte(v capture.ItemStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ItemStatusCol) Eq(v capture.ItemStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ItemStatusCol) Ne(v capture.ItemStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ItemStatusCol) Gt(v capture.ItemStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ItemStatusCol) Gte(v capture.ItemStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ItemStatusCol) Lt(v capture.ItemStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ItemStatusCol) Lte(v capture.ItemStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ItemStatusCol) IsDistinctFrom(v capture.ItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ItemStatusCol) Between(lo, hi capture.ItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ItemStatusCol) To(v capture.ItemStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ItemStatusCol) To(v capture.ItemStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c ItemStatusCol) In(vs ...capture.ItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ItemStatusCol) NotIn(vs ...capture.ItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PageStatusCol is a column of capture.PageStatus values.
-type PageStatusCol struct{ keel.StringCol }
+type PageStatusCol struct{ keel.TypedStringCol }
 
-func (c PageStatusCol) Eq(v capture.PageStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PageStatusCol) Ne(v capture.PageStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PageStatusCol) Gt(v capture.PageStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PageStatusCol) Gte(v capture.PageStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PageStatusCol) Lt(v capture.PageStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PageStatusCol) Lte(v capture.PageStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PageStatusCol) Eq(v capture.PageStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PageStatusCol) Ne(v capture.PageStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PageStatusCol) Gt(v capture.PageStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PageStatusCol) Gte(v capture.PageStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PageStatusCol) Lt(v capture.PageStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PageStatusCol) Lte(v capture.PageStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PageStatusCol) IsDistinctFrom(v capture.PageStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PageStatusCol) Between(lo, hi capture.PageStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PageStatusCol) To(v capture.PageStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PageStatusCol) To(v capture.PageStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c PageStatusCol) In(vs ...capture.PageStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PageStatusCol) NotIn(vs ...capture.PageStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PixelTypeCol is a column of capture.PixelType values.
-type PixelTypeCol struct{ keel.StringCol }
+type PixelTypeCol struct{ keel.TypedStringCol }
 
-func (c PixelTypeCol) Eq(v capture.PixelType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PixelTypeCol) Ne(v capture.PixelType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PixelTypeCol) Gt(v capture.PixelType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PixelTypeCol) Gte(v capture.PixelType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PixelTypeCol) Lt(v capture.PixelType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PixelTypeCol) Lte(v capture.PixelType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PixelTypeCol) Eq(v capture.PixelType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PixelTypeCol) Ne(v capture.PixelType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PixelTypeCol) Gt(v capture.PixelType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PixelTypeCol) Gte(v capture.PixelType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PixelTypeCol) Lt(v capture.PixelType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PixelTypeCol) Lte(v capture.PixelType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PixelTypeCol) IsDistinctFrom(v capture.PixelType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PixelTypeCol) Between(lo, hi capture.PixelType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PixelTypeCol) To(v capture.PixelType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PixelTypeCol) To(v capture.PixelType) keel.Assignment { return c.Text().To(string(v)) }
 func (c PixelTypeCol) In(vs ...capture.PixelType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PixelTypeCol) NotIn(vs ...capture.PixelType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceCol is a column of capture.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v capture.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v capture.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v capture.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v capture.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v capture.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v capture.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v capture.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v capture.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v capture.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v capture.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v capture.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v capture.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v capture.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi capture.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v capture.Source) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c SourceCol) In(vs ...capture.Source) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c SourceCol) To(v capture.Source) keel.Assignment { return c.Text().To(string(v)) }
+func (c SourceCol) In(vs ...capture.Source) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c SourceCol) NotIn(vs ...capture.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SuggestionSourceCol is a column of capture.SuggestionSource values.
-type SuggestionSourceCol struct{ keel.StringCol }
+type SuggestionSourceCol struct{ keel.TypedStringCol }
 
-func (c SuggestionSourceCol) Eq(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SuggestionSourceCol) Ne(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SuggestionSourceCol) Gt(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c SuggestionSourceCol) Eq(v capture.SuggestionSource) keel.Pred { return c.Text().Eq(string(v)) }
+func (c SuggestionSourceCol) Ne(v capture.SuggestionSource) keel.Pred { return c.Text().Ne(string(v)) }
+func (c SuggestionSourceCol) Gt(v capture.SuggestionSource) keel.Pred { return c.Text().Gt(string(v)) }
 func (c SuggestionSourceCol) Gte(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c SuggestionSourceCol) Lt(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c SuggestionSourceCol) Lt(v capture.SuggestionSource) keel.Pred { return c.Text().Lt(string(v)) }
 func (c SuggestionSourceCol) Lte(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SuggestionSourceCol) IsDistinctFrom(v capture.SuggestionSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SuggestionSourceCol) Between(lo, hi capture.SuggestionSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SuggestionSourceCol) To(v capture.SuggestionSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SuggestionSourceCol) In(vs ...capture.SuggestionSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SuggestionSourceCol) NotIn(vs ...capture.SuggestionSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

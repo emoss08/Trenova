@@ -87,12 +87,12 @@ type WorkerSafetyViolationsTable struct {
 // WorkerSafetyViolations references the worker_safety_violations table.
 var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
 	TableBase:      keel.TableBase{Ref: &workerSafetyViolationsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 2}}},
-	SafetyEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 3}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 4}}},
-	Basic:          CSABasicCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 2}}},
+	SafetyEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 3}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 4}}},
+	Basic:          CSABasicCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 5}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 6}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 7}},
 	SeverityWeight: keel.Int16Col{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 8}},
@@ -106,12 +106,12 @@ var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
 func BuildWorkerSafetyViolations(r *keel.Ref) *WorkerSafetyViolationsTable {
 	return &WorkerSafetyViolationsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SafetyEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Basic:          CSABasicCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SafetyEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Basic:          CSABasicCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		SeverityWeight: keel.Int16Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -142,8 +142,6 @@ func (t *WorkerSafetyViolationsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // WorkerSafetyViolationsQuery is a query over fleetsafety.WorkerSafetyViolation.
 type WorkerSafetyViolationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fleetsafety.WorkerSafetyViolation] = (*WorkerSafetyViolationsTable)(nil)
 
 var _ keel.Query[*fleetsafety.WorkerSafetyViolation] = (*WorkerSafetyViolationsQuery)(nil)
 
@@ -259,42 +257,42 @@ func (t *WorkerSafetyViolationsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *WorkerSafetyViolationsTable) Create(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerSafetyViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerSafetyViolationsTable) Save(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerSafetyViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerSafetyViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerSafetyViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerSafetyViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerSafetyViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -466,37 +464,45 @@ func (q *WorkerSafetyViolationsQuery) Clone() keel.Query[*fleetsafety.WorkerSafe
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerSafetyViolationsQuery) One(ctx context.Context, db *keel.DB) (*fleetsafety.WorkerSafetyViolation, error) {
-	return keel.One[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fleetsafety.WorkerSafetyViolation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerSafetyViolationsQuery) First(ctx context.Context, db *keel.DB) (*fleetsafety.WorkerSafetyViolation, error) {
-	return keel.First[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fleetsafety.WorkerSafetyViolation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerSafetyViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*fleetsafety.WorkerSafetyViolation, error) {
-	return keel.List[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fleetsafety.WorkerSafetyViolation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerSafetyViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*fleetsafety.WorkerSafetyViolation, error) {
-	return keel.All[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fleetsafety.WorkerSafetyViolation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerSafetyViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fleetsafety.WorkerSafetyViolation, error) {
-	return keel.UpdateReturning[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fleetsafety.WorkerSafetyViolation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerSafetyViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fleetsafety.WorkerSafetyViolation], error) {
-	return keel.PageOf[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fleetsafety.WorkerSafetyViolation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerSafetyViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fleetsafety.WorkerSafetyViolation) error) error {
-	return keel.Each[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fleetsafety.WorkerSafetyViolation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerSafetyViolation() unsafe.Pointer {
@@ -603,24 +609,24 @@ var enumCSABasic = [...]schema.EnumValue{
 }
 
 // CSABasicCol is a column of fleetsafety.CSABasic values.
-type CSABasicCol struct{ keel.StringCol }
+type CSABasicCol struct{ keel.TypedStringCol }
 
-func (c CSABasicCol) Eq(v fleetsafety.CSABasic) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CSABasicCol) Ne(v fleetsafety.CSABasic) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CSABasicCol) Gt(v fleetsafety.CSABasic) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CSABasicCol) Gte(v fleetsafety.CSABasic) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CSABasicCol) Lt(v fleetsafety.CSABasic) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CSABasicCol) Lte(v fleetsafety.CSABasic) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CSABasicCol) Eq(v fleetsafety.CSABasic) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CSABasicCol) Ne(v fleetsafety.CSABasic) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CSABasicCol) Gt(v fleetsafety.CSABasic) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CSABasicCol) Gte(v fleetsafety.CSABasic) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CSABasicCol) Lt(v fleetsafety.CSABasic) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CSABasicCol) Lte(v fleetsafety.CSABasic) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CSABasicCol) IsDistinctFrom(v fleetsafety.CSABasic) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CSABasicCol) Between(lo, hi fleetsafety.CSABasic) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CSABasicCol) To(v fleetsafety.CSABasic) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CSABasicCol) To(v fleetsafety.CSABasic) keel.Assignment { return c.Text().To(string(v)) }
 func (c CSABasicCol) In(vs ...fleetsafety.CSABasic) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CSABasicCol) NotIn(vs ...fleetsafety.CSABasic) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

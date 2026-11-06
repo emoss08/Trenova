@@ -215,7 +215,7 @@ func verdictsQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*keel.
 	ranked := keel.CTE(
 		"ranked",
 		[]string{"tool_name", "verdict", "reason", "calls", "total", "reason_rank"},
-		labelled.Query().
+		keel.RowsOf(labelled.TableRef()).
 			Group(tool, verdict, reason).
 			Pick(
 				tool,
@@ -234,7 +234,7 @@ func verdictsQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*keel.
 
 	rank := ranked.Col("reason_rank")
 
-	return ranked.Query().With(labelled, ranked).
+	return keel.RowsOf(ranked.TableRef()).With(labelled, ranked).
 		Pick(
 			ranked.Col("tool_name"),
 			ranked.Col("verdict"),

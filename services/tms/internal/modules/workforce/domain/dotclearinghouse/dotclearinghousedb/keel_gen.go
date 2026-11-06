@@ -102,21 +102,21 @@ type WorkerClearinghouseQueriesTable struct {
 // WorkerClearinghouseQueries references the worker_clearinghouse_queries table.
 var WorkerClearinghouseQueries = &WorkerClearinghouseQueriesTable{
 	TableBase:         keel.TableBase{Ref: &workerClearinghouseQueriesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 2}}},
-	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 3}}},
-	QueryType:         ClearinghouseQueryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 4}}},
-	Result:            ClearinghouseResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 2}}},
+	WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 3}}},
+	QueryType:         ClearinghouseQueryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 4}}},
+	Result:            ClearinghouseResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 5}}},
 	ConsentObtainedAt: keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 6}},
 	ConsentExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 7}},
 	RequestedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 8}},
 	CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 9}},
 	ViolationCount:    keel.Int32Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 10}},
 	Reference:         keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 11}},
-	DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 12}}},
+	DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 12}}},
 	Notes:             keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 13}},
-	PerformedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 14}}},
+	PerformedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 14}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 15}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 16}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerClearinghouseQueriesRef, Index: 17}},
@@ -126,21 +126,21 @@ var WorkerClearinghouseQueries = &WorkerClearinghouseQueriesTable{
 func BuildWorkerClearinghouseQueries(r *keel.Ref) *WorkerClearinghouseQueriesTable {
 	return &WorkerClearinghouseQueriesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		QueryType:         ClearinghouseQueryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Result:            ClearinghouseResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		QueryType:         ClearinghouseQueryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Result:            ClearinghouseResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ConsentObtainedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		ConsentExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		RequestedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ViolationCount:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 10}},
 		Reference:         keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		DocumentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DocumentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Notes:             keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		PerformedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		PerformedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -177,8 +177,6 @@ func (t *WorkerClearinghouseQueriesTable) Get(ctx context.Context, db *keel.DB, 
 
 // WorkerClearinghouseQueriesQuery is a query over dotclearinghouse.WorkerClearinghouseQuery.
 type WorkerClearinghouseQueriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dotclearinghouse.WorkerClearinghouseQuery] = (*WorkerClearinghouseQueriesTable)(nil)
 
 var _ keel.Query[*dotclearinghouse.WorkerClearinghouseQuery] = (*WorkerClearinghouseQueriesQuery)(nil)
 
@@ -294,42 +292,42 @@ func (t *WorkerClearinghouseQueriesTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *WorkerClearinghouseQueriesTable) Create(ctx context.Context, db *keel.DB, row *dotclearinghouse.WorkerClearinghouseQuery) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerClearinghouseQueriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dotclearinghouse.WorkerClearinghouseQuery) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerClearinghouseQueriesTable) Save(ctx context.Context, db *keel.DB, row *dotclearinghouse.WorkerClearinghouseQuery, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerClearinghouseQueriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *dotclearinghouse.WorkerClearinghouseQuery, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerClearinghouseQueriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *dotclearinghouse.WorkerClearinghouseQuery) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerClearinghouseQueriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*dotclearinghouse.WorkerClearinghouseQuery, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerClearinghouseQueriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dotclearinghouse.WorkerClearinghouseQuery, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerClearinghouseQueriesTable) Copy(ctx context.Context, db *keel.DB, rows []*dotclearinghouse.WorkerClearinghouseQuery) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -501,37 +499,45 @@ func (q *WorkerClearinghouseQueriesQuery) Clone() keel.Query[*dotclearinghouse.W
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerClearinghouseQueriesQuery) One(ctx context.Context, db *keel.DB) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
-	return keel.One[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dotclearinghouse.WorkerClearinghouseQuery)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerClearinghouseQueriesQuery) First(ctx context.Context, db *keel.DB) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
-	return keel.First[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dotclearinghouse.WorkerClearinghouseQuery)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerClearinghouseQueriesQuery) List(ctx context.Context, db *keel.DB) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
-	return keel.List[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotclearinghouse.WorkerClearinghouseQuery)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerClearinghouseQueriesQuery) All(ctx context.Context, db *keel.DB) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
-	return keel.All[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dotclearinghouse.WorkerClearinghouseQuery)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerClearinghouseQueriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
-	return keel.UpdateReturning[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dotclearinghouse.WorkerClearinghouseQuery)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerClearinghouseQueriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dotclearinghouse.WorkerClearinghouseQuery], error) {
-	return keel.PageOf[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dotclearinghouse.WorkerClearinghouseQuery])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerClearinghouseQueriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dotclearinghouse.WorkerClearinghouseQuery) error) error {
-	return keel.Each[*dotclearinghouse.WorkerClearinghouseQuery](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dotclearinghouse.WorkerClearinghouseQuery)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerClearinghouseQuery() unsafe.Pointer {
@@ -686,75 +692,75 @@ var enumClearinghouseResult = [...]schema.EnumValue{
 }
 
 // ClearinghouseQueryTypeCol is a column of dotclearinghouse.ClearinghouseQueryType values.
-type ClearinghouseQueryTypeCol struct{ keel.StringCol }
+type ClearinghouseQueryTypeCol struct{ keel.TypedStringCol }
 
 func (c ClearinghouseQueryTypeCol) Eq(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Ne(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Gt(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Gte(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Lt(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Lte(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClearinghouseQueryTypeCol) IsDistinctFrom(v dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClearinghouseQueryTypeCol) Between(lo, hi dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClearinghouseQueryTypeCol) To(v dotclearinghouse.ClearinghouseQueryType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClearinghouseQueryTypeCol) In(vs ...dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClearinghouseQueryTypeCol) NotIn(vs ...dotclearinghouse.ClearinghouseQueryType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ClearinghouseResultCol is a column of dotclearinghouse.ClearinghouseResult values.
-type ClearinghouseResultCol struct{ keel.StringCol }
+type ClearinghouseResultCol struct{ keel.TypedStringCol }
 
 func (c ClearinghouseResultCol) Eq(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClearinghouseResultCol) Ne(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClearinghouseResultCol) Gt(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClearinghouseResultCol) Gte(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClearinghouseResultCol) Lt(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClearinghouseResultCol) Lte(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClearinghouseResultCol) IsDistinctFrom(v dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClearinghouseResultCol) Between(lo, hi dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClearinghouseResultCol) To(v dotclearinghouse.ClearinghouseResult) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClearinghouseResultCol) In(vs ...dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClearinghouseResultCol) NotIn(vs ...dotclearinghouse.ClearinghouseResult) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

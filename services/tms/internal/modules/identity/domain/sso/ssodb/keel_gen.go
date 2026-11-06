@@ -92,12 +92,12 @@ type SSOConfigsTable struct {
 // SSOConfigs references the sso_configs table.
 var SSOConfigs = &SSOConfigsTable{
 	TableBase:        keel.TableBase{Ref: &sSOConfigsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 0}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 1}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 2}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 0}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 1}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 2}}},
 	Name:             keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 3}},
-	Provider:         SSOProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 4}}},
-	Protocol:         SSOProtocolCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 5}}},
+	Provider:         SSOProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 4}}},
+	Protocol:         SSOProtocolCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 5}}},
 	Enabled:          keel.BoolCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 6}},
 	EnforceSSO:       keel.BoolCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 7}},
 	AutoProvision:    keel.BoolCol{Col: keel.Col{Ref: &sSOConfigsRef, Index: 8}},
@@ -118,12 +118,12 @@ var SSOConfigs = &SSOConfigsTable{
 func BuildSSOConfigs(r *keel.Ref) *SSOConfigsTable {
 	return &SSOConfigsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:             keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Provider:         SSOProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Protocol:         SSOProtocolCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Provider:         SSOProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Protocol:         SSOProtocolCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Enabled:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		EnforceSSO:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		AutoProvision:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -156,8 +156,6 @@ func (t *SSOConfigsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // SSOConfigsQuery is a query over sso.SSOConfig.
 type SSOConfigsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*sso.SSOConfig] = (*SSOConfigsTable)(nil)
 
 var _ keel.Query[*sso.SSOConfig] = (*SSOConfigsQuery)(nil)
 
@@ -273,42 +271,42 @@ func (t *SSOConfigsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*sso.
 
 // Create inserts row.
 func (t *SSOConfigsTable) Create(ctx context.Context, db *keel.DB, row *sso.SSOConfig) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SSOConfigsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SSOConfigsTable) Save(ctx context.Context, db *keel.DB, row *sso.SSOConfig, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SSOConfigsTable) SaveExcept(ctx context.Context, db *keel.DB, row *sso.SSOConfig, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SSOConfigsTable) DeleteRow(ctx context.Context, db *keel.DB, row *sso.SSOConfig) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SSOConfigsTable) Upsert(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SSOConfigsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SSOConfigsTable) Copy(ctx context.Context, db *keel.DB, rows []*sso.SSOConfig) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -480,37 +478,45 @@ func (q *SSOConfigsQuery) Clone() keel.Query[*sso.SSOConfig] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SSOConfigsQuery) One(ctx context.Context, db *keel.DB) (*sso.SSOConfig, error) {
-	return keel.One[*sso.SSOConfig](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*sso.SSOConfig)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SSOConfigsQuery) First(ctx context.Context, db *keel.DB) (*sso.SSOConfig, error) {
-	return keel.First[*sso.SSOConfig](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*sso.SSOConfig)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SSOConfigsQuery) List(ctx context.Context, db *keel.DB) ([]*sso.SSOConfig, error) {
-	return keel.List[*sso.SSOConfig](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sso.SSOConfig)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SSOConfigsQuery) All(ctx context.Context, db *keel.DB) ([]*sso.SSOConfig, error) {
-	return keel.All[*sso.SSOConfig](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sso.SSOConfig)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SSOConfigsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sso.SSOConfig, error) {
-	return keel.UpdateReturning[*sso.SSOConfig](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*sso.SSOConfig)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SSOConfigsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sso.SSOConfig], error) {
-	return keel.PageOf[*sso.SSOConfig](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*sso.SSOConfig])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SSOConfigsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sso.SSOConfig) error) error {
-	return keel.Each[*sso.SSOConfig](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*sso.SSOConfig)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSSOConfig() unsafe.Pointer { return unsafe.Pointer(new(sso.SSOConfig)) }
@@ -685,11 +691,11 @@ type SSOIdentityLinksTable struct {
 // SSOIdentityLinks references the sso_identity_links table.
 var SSOIdentityLinks = &SSOIdentityLinksTable{
 	TableBase:      keel.TableBase{Ref: &sSOIdentityLinksRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 2}}},
-	SSOConfigID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 3}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 2}}},
+	SSOConfigID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 4}}},
 	Issuer:         keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 5}},
 	Subject:        keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 6}},
 	EmailAtLink:    keel.StringCol{Col: keel.Col{Ref: &sSOIdentityLinksRef, Index: 7}},
@@ -702,11 +708,11 @@ var SSOIdentityLinks = &SSOIdentityLinksTable{
 func BuildSSOIdentityLinks(r *keel.Ref) *SSOIdentityLinksTable {
 	return &SSOIdentityLinksTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SSOConfigID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SSOConfigID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Issuer:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Subject:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		EmailAtLink:    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -731,8 +737,6 @@ func (t *SSOIdentityLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // SSOIdentityLinksQuery is a query over sso.SSOIdentityLink.
 type SSOIdentityLinksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*sso.SSOIdentityLink] = (*SSOIdentityLinksTable)(nil)
 
 var _ keel.Query[*sso.SSOIdentityLink] = (*SSOIdentityLinksQuery)(nil)
 
@@ -848,42 +852,42 @@ func (t *SSOIdentityLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *SSOIdentityLinksTable) Create(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SSOIdentityLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SSOIdentityLinksTable) Save(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SSOIdentityLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SSOIdentityLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *sso.SSOIdentityLink) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SSOIdentityLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SSOIdentityLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SSOIdentityLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*sso.SSOIdentityLink) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1055,37 +1059,45 @@ func (q *SSOIdentityLinksQuery) Clone() keel.Query[*sso.SSOIdentityLink] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SSOIdentityLinksQuery) One(ctx context.Context, db *keel.DB) (*sso.SSOIdentityLink, error) {
-	return keel.One[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*sso.SSOIdentityLink)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SSOIdentityLinksQuery) First(ctx context.Context, db *keel.DB) (*sso.SSOIdentityLink, error) {
-	return keel.First[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*sso.SSOIdentityLink)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SSOIdentityLinksQuery) List(ctx context.Context, db *keel.DB) ([]*sso.SSOIdentityLink, error) {
-	return keel.List[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sso.SSOIdentityLink)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SSOIdentityLinksQuery) All(ctx context.Context, db *keel.DB) ([]*sso.SSOIdentityLink, error) {
-	return keel.All[*sso.SSOIdentityLink](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sso.SSOIdentityLink)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SSOIdentityLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sso.SSOIdentityLink, error) {
-	return keel.UpdateReturning[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*sso.SSOIdentityLink)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SSOIdentityLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sso.SSOIdentityLink], error) {
-	return keel.PageOf[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*sso.SSOIdentityLink])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SSOIdentityLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sso.SSOIdentityLink) error) error {
-	return keel.Each[*sso.SSOIdentityLink](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*sso.SSOIdentityLink)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSSOIdentityLink() unsafe.Pointer { return unsafe.Pointer(new(sso.SSOIdentityLink)) }
@@ -1162,47 +1174,47 @@ var enumSSOProvider = [...]schema.EnumValue{
 }
 
 // SSOProtocolCol is a column of sso.SSOProtocol values.
-type SSOProtocolCol struct{ keel.StringCol }
+type SSOProtocolCol struct{ keel.TypedStringCol }
 
-func (c SSOProtocolCol) Eq(v sso.SSOProtocol) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SSOProtocolCol) Ne(v sso.SSOProtocol) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SSOProtocolCol) Gt(v sso.SSOProtocol) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SSOProtocolCol) Gte(v sso.SSOProtocol) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SSOProtocolCol) Lt(v sso.SSOProtocol) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SSOProtocolCol) Lte(v sso.SSOProtocol) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SSOProtocolCol) Eq(v sso.SSOProtocol) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SSOProtocolCol) Ne(v sso.SSOProtocol) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SSOProtocolCol) Gt(v sso.SSOProtocol) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SSOProtocolCol) Gte(v sso.SSOProtocol) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SSOProtocolCol) Lt(v sso.SSOProtocol) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SSOProtocolCol) Lte(v sso.SSOProtocol) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SSOProtocolCol) IsDistinctFrom(v sso.SSOProtocol) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SSOProtocolCol) Between(lo, hi sso.SSOProtocol) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SSOProtocolCol) To(v sso.SSOProtocol) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SSOProtocolCol) To(v sso.SSOProtocol) keel.Assignment { return c.Text().To(string(v)) }
 func (c SSOProtocolCol) In(vs ...sso.SSOProtocol) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SSOProtocolCol) NotIn(vs ...sso.SSOProtocol) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SSOProviderCol is a column of sso.SSOProvider values.
-type SSOProviderCol struct{ keel.StringCol }
+type SSOProviderCol struct{ keel.TypedStringCol }
 
-func (c SSOProviderCol) Eq(v sso.SSOProvider) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SSOProviderCol) Ne(v sso.SSOProvider) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SSOProviderCol) Gt(v sso.SSOProvider) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SSOProviderCol) Gte(v sso.SSOProvider) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SSOProviderCol) Lt(v sso.SSOProvider) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SSOProviderCol) Lte(v sso.SSOProvider) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SSOProviderCol) Eq(v sso.SSOProvider) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SSOProviderCol) Ne(v sso.SSOProvider) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SSOProviderCol) Gt(v sso.SSOProvider) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SSOProviderCol) Gte(v sso.SSOProvider) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SSOProviderCol) Lt(v sso.SSOProvider) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SSOProviderCol) Lte(v sso.SSOProvider) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SSOProviderCol) IsDistinctFrom(v sso.SSOProvider) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SSOProviderCol) Between(lo, hi sso.SSOProvider) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SSOProviderCol) To(v sso.SSOProvider) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SSOProviderCol) To(v sso.SSOProvider) keel.Assignment { return c.Text().To(string(v)) }
 func (c SSOProviderCol) In(vs ...sso.SSOProvider) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SSOProviderCol) NotIn(vs ...sso.SSOProvider) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

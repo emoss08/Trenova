@@ -130,18 +130,18 @@ type AccountingDriftFindingsTable struct {
 // AccountingDriftFindings references the accounting_drift_findings table.
 var AccountingDriftFindings = &AccountingDriftFindingsTable{
 	TableBase:          keel.TableBase{Ref: &accountingDriftFindingsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 2}}},
-	ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 3}}},
-	ObjectType:         accountingsyncdb.SyncObjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 4}}},
-	ObjectID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 5}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 2}}},
+	ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 3}}},
+	ObjectType:         accountingsyncdb.SyncObjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 4}}},
+	ObjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 5}}},
 	ObjectNumber:       keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 6}},
-	PartyID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 7}}},
+	PartyID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 7}}},
 	PartyName:          keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 8}},
 	ExternalID:         keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 9}},
 	ExternalURL:        keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 10}},
-	Kind:               DriftKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 11}}},
+	Kind:               DriftKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 11}}},
 	CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 12}},
 	TrenovaMinor:       keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 13}},
 	ProviderMinor:      keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 14}},
@@ -151,12 +151,12 @@ var AccountingDriftFindings = &AccountingDriftFindingsTable{
 	Detail:             keel.JSONBCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 18}},
 	ProviderModifiedAt: keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 19}},
 	ProviderModifiedBy: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 20}},
-	Status:             DriftStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 21}}},
-	Resolution:         DriftResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 22}}},
+	Status:             DriftStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 21}}},
+	Resolution:         DriftResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 22}}},
 	ResolutionNote:     keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 23}},
-	FixObjectType:      DriftFixObjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 24}}},
-	FixObjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 25}}},
-	ResolvedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 26}}},
+	FixObjectType:      DriftFixObjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 24}}},
+	FixObjectID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 25}}},
+	ResolvedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 26}}},
 	ResolvedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 27}},
 	DetectedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 28}},
 	LastSeenAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 29}},
@@ -169,18 +169,18 @@ var AccountingDriftFindings = &AccountingDriftFindingsTable{
 func BuildAccountingDriftFindings(r *keel.Ref) *AccountingDriftFindingsTable {
 	return &AccountingDriftFindingsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ObjectType:         accountingsyncdb.SyncObjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ObjectID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ObjectType:         accountingsyncdb.SyncObjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ObjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ObjectNumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		PartyID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		PartyID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		PartyName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		ExternalID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		ExternalURL:        keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Kind:               DriftKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Kind:               DriftKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		TrenovaMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ProviderMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -190,12 +190,12 @@ func BuildAccountingDriftFindings(r *keel.Ref) *AccountingDriftFindingsTable {
 		Detail:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
 		ProviderModifiedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		ProviderModifiedBy: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		Status:             DriftStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		Resolution:         DriftResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		Status:             DriftStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		Resolution:         DriftResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		ResolutionNote:     keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		FixObjectType:      DriftFixObjectCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		FixObjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		ResolvedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		FixObjectType:      DriftFixObjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		FixObjectID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ResolvedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		ResolvedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		DetectedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		LastSeenAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
@@ -225,8 +225,6 @@ func (t *AccountingDriftFindingsTable) Get(ctx context.Context, db *keel.DB, key
 
 // AccountingDriftFindingsQuery is a query over accountingdrift.AccountingDriftFinding.
 type AccountingDriftFindingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingdrift.AccountingDriftFinding] = (*AccountingDriftFindingsTable)(nil)
 
 var _ keel.Query[*accountingdrift.AccountingDriftFinding] = (*AccountingDriftFindingsQuery)(nil)
 
@@ -342,42 +340,42 @@ func (t *AccountingDriftFindingsTable) Compute(col keel.Column, e keel.Expr) kee
 
 // Create inserts row.
 func (t *AccountingDriftFindingsTable) Create(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingDriftFindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingDriftFindingsTable) Save(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingDriftFindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingDriftFindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingDriftFindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingDriftFindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingDriftFindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -549,37 +547,45 @@ func (q *AccountingDriftFindingsQuery) Clone() keel.Query[*accountingdrift.Accou
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingDriftFindingsQuery) One(ctx context.Context, db *keel.DB) (*accountingdrift.AccountingDriftFinding, error) {
-	return keel.One[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingdrift.AccountingDriftFinding)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingDriftFindingsQuery) First(ctx context.Context, db *keel.DB) (*accountingdrift.AccountingDriftFinding, error) {
-	return keel.First[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingdrift.AccountingDriftFinding)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingDriftFindingsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingdrift.AccountingDriftFinding, error) {
-	return keel.List[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingdrift.AccountingDriftFinding)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingDriftFindingsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingdrift.AccountingDriftFinding, error) {
-	return keel.All[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingdrift.AccountingDriftFinding)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingDriftFindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingdrift.AccountingDriftFinding, error) {
-	return keel.UpdateReturning[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingdrift.AccountingDriftFinding)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingDriftFindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingdrift.AccountingDriftFinding], error) {
-	return keel.PageOf[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingdrift.AccountingDriftFinding])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingDriftFindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingdrift.AccountingDriftFinding) error) error {
-	return keel.Each[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingdrift.AccountingDriftFinding)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingDriftFinding() unsafe.Pointer {
@@ -880,129 +886,123 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // DriftFixObjectCol is a column of accountingdrift.DriftFixObject values.
-type DriftFixObjectCol struct{ keel.StringCol }
+type DriftFixObjectCol struct{ keel.TypedStringCol }
 
 func (c DriftFixObjectCol) Eq(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DriftFixObjectCol) Ne(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DriftFixObjectCol) Gt(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DriftFixObjectCol) Gte(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DriftFixObjectCol) Lt(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DriftFixObjectCol) Lte(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DriftFixObjectCol) IsDistinctFrom(v accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriftFixObjectCol) Between(lo, hi accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DriftFixObjectCol) To(v accountingdrift.DriftFixObject) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DriftFixObjectCol) In(vs ...accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriftFixObjectCol) NotIn(vs ...accountingdrift.DriftFixObject) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DriftKindCol is a column of accountingdrift.DriftKind values.
-type DriftKindCol struct{ keel.StringCol }
+type DriftKindCol struct{ keel.TypedStringCol }
 
-func (c DriftKindCol) Eq(v accountingdrift.DriftKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DriftKindCol) Ne(v accountingdrift.DriftKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DriftKindCol) Gt(v accountingdrift.DriftKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DriftKindCol) Gte(v accountingdrift.DriftKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DriftKindCol) Lt(v accountingdrift.DriftKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DriftKindCol) Lte(v accountingdrift.DriftKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DriftKindCol) Eq(v accountingdrift.DriftKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DriftKindCol) Ne(v accountingdrift.DriftKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DriftKindCol) Gt(v accountingdrift.DriftKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DriftKindCol) Gte(v accountingdrift.DriftKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DriftKindCol) Lt(v accountingdrift.DriftKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DriftKindCol) Lte(v accountingdrift.DriftKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DriftKindCol) IsDistinctFrom(v accountingdrift.DriftKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriftKindCol) Between(lo, hi accountingdrift.DriftKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DriftKindCol) To(v accountingdrift.DriftKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c DriftKindCol) To(v accountingdrift.DriftKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c DriftKindCol) In(vs ...accountingdrift.DriftKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriftKindCol) NotIn(vs ...accountingdrift.DriftKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DriftResolutionCol is a column of accountingdrift.DriftResolution values.
-type DriftResolutionCol struct{ keel.StringCol }
+type DriftResolutionCol struct{ keel.TypedStringCol }
 
 func (c DriftResolutionCol) Eq(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DriftResolutionCol) Ne(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DriftResolutionCol) Gt(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DriftResolutionCol) Gte(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DriftResolutionCol) Lt(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DriftResolutionCol) Lte(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DriftResolutionCol) IsDistinctFrom(v accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriftResolutionCol) Between(lo, hi accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DriftResolutionCol) To(v accountingdrift.DriftResolution) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DriftResolutionCol) In(vs ...accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriftResolutionCol) NotIn(vs ...accountingdrift.DriftResolution) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DriftStatusCol is a column of accountingdrift.DriftStatus values.
-type DriftStatusCol struct{ keel.StringCol }
+type DriftStatusCol struct{ keel.TypedStringCol }
 
-func (c DriftStatusCol) Eq(v accountingdrift.DriftStatus) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c DriftStatusCol) Ne(v accountingdrift.DriftStatus) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c DriftStatusCol) Gt(v accountingdrift.DriftStatus) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c DriftStatusCol) Gte(v accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DriftStatusCol) Lt(v accountingdrift.DriftStatus) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c DriftStatusCol) Lte(v accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DriftStatusCol) Eq(v accountingdrift.DriftStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DriftStatusCol) Ne(v accountingdrift.DriftStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DriftStatusCol) Gt(v accountingdrift.DriftStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DriftStatusCol) Gte(v accountingdrift.DriftStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DriftStatusCol) Lt(v accountingdrift.DriftStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DriftStatusCol) Lte(v accountingdrift.DriftStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DriftStatusCol) IsDistinctFrom(v accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriftStatusCol) Between(lo, hi accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DriftStatusCol) To(v accountingdrift.DriftStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DriftStatusCol) In(vs ...accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriftStatusCol) NotIn(vs ...accountingdrift.DriftStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

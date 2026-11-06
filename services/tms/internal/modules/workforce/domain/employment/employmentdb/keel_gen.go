@@ -107,19 +107,19 @@ type WorkerEmploymentEventsTable struct {
 // WorkerEmploymentEvents references the worker_employment_events table.
 var WorkerEmploymentEvents = &WorkerEmploymentEventsTable{
 	TableBase:      keel.TableBase{Ref: &workerEmploymentEventsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 3}}},
-	Kind:           EmploymentEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 3}}},
+	Kind:           EmploymentEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 4}}},
 	EffectiveAt:    keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 5}},
 	Reason:         keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 6}},
 	Notes:          keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 7}},
 	FromValues:     keel.JSONBCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 8}},
 	ToValues:       keel.JSONBCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 9}},
-	DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 10}}},
-	RecordedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 11}}},
-	AmendedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 12}}},
+	DocumentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 10}}},
+	RecordedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 11}}},
+	AmendedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 12}}},
 	AmendedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 13}},
 	AmendmentNote:  keel.StringCol{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 14}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentEventsRef, Index: 15}},
@@ -131,19 +131,19 @@ var WorkerEmploymentEvents = &WorkerEmploymentEventsTable{
 func BuildWorkerEmploymentEvents(r *keel.Ref) *WorkerEmploymentEventsTable {
 	return &WorkerEmploymentEventsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Kind:           EmploymentEventKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:           EmploymentEventKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		EffectiveAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Notes:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		FromValues:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		ToValues:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		RecordedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		AmendedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DocumentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		RecordedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		AmendedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		AmendedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		AmendmentNote:  keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -187,8 +187,6 @@ func (t *WorkerEmploymentEventsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // WorkerEmploymentEventsQuery is a query over employment.WorkerEmploymentEvent.
 type WorkerEmploymentEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*employment.WorkerEmploymentEvent] = (*WorkerEmploymentEventsTable)(nil)
 
 var _ keel.Query[*employment.WorkerEmploymentEvent] = (*WorkerEmploymentEventsQuery)(nil)
 
@@ -304,42 +302,42 @@ func (t *WorkerEmploymentEventsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *WorkerEmploymentEventsTable) Create(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerEmploymentEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerEmploymentEventsTable) Save(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerEmploymentEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerEmploymentEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerEmploymentEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerEmploymentEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerEmploymentEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -511,37 +509,45 @@ func (q *WorkerEmploymentEventsQuery) Clone() keel.Query[*employment.WorkerEmplo
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerEmploymentEventsQuery) One(ctx context.Context, db *keel.DB) (*employment.WorkerEmploymentEvent, error) {
-	return keel.One[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*employment.WorkerEmploymentEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerEmploymentEventsQuery) First(ctx context.Context, db *keel.DB) (*employment.WorkerEmploymentEvent, error) {
-	return keel.First[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*employment.WorkerEmploymentEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerEmploymentEventsQuery) List(ctx context.Context, db *keel.DB) ([]*employment.WorkerEmploymentEvent, error) {
-	return keel.List[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*employment.WorkerEmploymentEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerEmploymentEventsQuery) All(ctx context.Context, db *keel.DB) ([]*employment.WorkerEmploymentEvent, error) {
-	return keel.All[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*employment.WorkerEmploymentEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerEmploymentEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*employment.WorkerEmploymentEvent, error) {
-	return keel.UpdateReturning[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*employment.WorkerEmploymentEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerEmploymentEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*employment.WorkerEmploymentEvent], error) {
-	return keel.PageOf[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*employment.WorkerEmploymentEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerEmploymentEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*employment.WorkerEmploymentEvent) error) error {
-	return keel.Each[*employment.WorkerEmploymentEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*employment.WorkerEmploymentEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerEmploymentEvent() unsafe.Pointer {
@@ -798,10 +804,10 @@ type WorkerEmploymentVerificationsTable struct {
 // WorkerEmploymentVerifications references the worker_employment_verifications table.
 var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
 	TableBase:                     keel.TableBase{Ref: &workerEmploymentVerificationsRef},
-	ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 0}}},
-	BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 1}}},
-	OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 2}}},
-	WorkerID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 3}}},
+	ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 0}}},
+	BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 1}}},
+	OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 2}}},
+	WorkerID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 3}}},
 	EmployerName:                  keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 4}},
 	EmployerDOTNumber:             keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 5}},
 	EmployerMCNumber:              keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 6}},
@@ -811,8 +817,8 @@ var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
 	EmployedFrom:                  keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 10}},
 	EmployedTo:                    keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 11}},
 	WasDOTRegulated:               keel.BoolCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 12}},
-	Status:                        EmploymentVerificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 13}}},
-	Method:                        EmploymentVerificationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 14}}},
+	Status:                        EmploymentVerificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 13}}},
+	Method:                        EmploymentVerificationMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 14}}},
 	RequestedAt:                   keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 15}},
 	ResponseReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 16}},
 	LastFollowUpAt:                keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 17}},
@@ -823,8 +829,8 @@ var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
 	HadDrugAlcoholViolations:      keel.BoolCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 22}},
 	Findings:                      keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 23}},
 	Notes:                         keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 24}},
-	DocumentID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 25}}},
-	RequestedByID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 26}}},
+	DocumentID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 25}}},
+	RequestedByID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 26}}},
 	Version:                       keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 27}},
 	CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 28}},
 	UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &workerEmploymentVerificationsRef, Index: 29}},
@@ -834,10 +840,10 @@ var WorkerEmploymentVerifications = &WorkerEmploymentVerificationsTable{
 func BuildWorkerEmploymentVerifications(r *keel.Ref) *WorkerEmploymentVerificationsTable {
 	return &WorkerEmploymentVerificationsTable{
 		TableBase:                     keel.TableBase{Ref: r},
-		ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		EmployerName:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		EmployerDOTNumber:             keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		EmployerMCNumber:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -847,8 +853,8 @@ func BuildWorkerEmploymentVerifications(r *keel.Ref) *WorkerEmploymentVerificati
 		EmployedFrom:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		EmployedTo:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		WasDOTRegulated:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		Status:                        EmploymentVerificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Method:                        EmploymentVerificationMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Status:                        EmploymentVerificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Method:                        EmploymentVerificationMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		RequestedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ResponseReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		LastFollowUpAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -859,8 +865,8 @@ func BuildWorkerEmploymentVerifications(r *keel.Ref) *WorkerEmploymentVerificati
 		HadDrugAlcoholViolations:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 22}},
 		Findings:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		Notes:                         keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
-		DocumentID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		RequestedByID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		DocumentID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		RequestedByID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		Version:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
@@ -897,8 +903,6 @@ func (t *WorkerEmploymentVerificationsTable) Get(ctx context.Context, db *keel.D
 
 // WorkerEmploymentVerificationsQuery is a query over employment.WorkerEmploymentVerification.
 type WorkerEmploymentVerificationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*employment.WorkerEmploymentVerification] = (*WorkerEmploymentVerificationsTable)(nil)
 
 var _ keel.Query[*employment.WorkerEmploymentVerification] = (*WorkerEmploymentVerificationsQuery)(nil)
 
@@ -1014,42 +1018,42 @@ func (t *WorkerEmploymentVerificationsTable) Compute(col keel.Column, e keel.Exp
 
 // Create inserts row.
 func (t *WorkerEmploymentVerificationsTable) Create(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentVerification) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerEmploymentVerificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentVerification) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerEmploymentVerificationsTable) Save(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentVerification, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerEmploymentVerificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentVerification, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerEmploymentVerificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *employment.WorkerEmploymentVerification) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerEmploymentVerificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentVerification, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerEmploymentVerificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentVerification, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerEmploymentVerificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*employment.WorkerEmploymentVerification) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1221,37 +1225,45 @@ func (q *WorkerEmploymentVerificationsQuery) Clone() keel.Query[*employment.Work
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerEmploymentVerificationsQuery) One(ctx context.Context, db *keel.DB) (*employment.WorkerEmploymentVerification, error) {
-	return keel.One[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*employment.WorkerEmploymentVerification)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerEmploymentVerificationsQuery) First(ctx context.Context, db *keel.DB) (*employment.WorkerEmploymentVerification, error) {
-	return keel.First[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*employment.WorkerEmploymentVerification)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerEmploymentVerificationsQuery) List(ctx context.Context, db *keel.DB) ([]*employment.WorkerEmploymentVerification, error) {
-	return keel.List[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*employment.WorkerEmploymentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerEmploymentVerificationsQuery) All(ctx context.Context, db *keel.DB) ([]*employment.WorkerEmploymentVerification, error) {
-	return keel.All[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*employment.WorkerEmploymentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerEmploymentVerificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*employment.WorkerEmploymentVerification, error) {
-	return keel.UpdateReturning[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*employment.WorkerEmploymentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerEmploymentVerificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*employment.WorkerEmploymentVerification], error) {
-	return keel.PageOf[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*employment.WorkerEmploymentVerification])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerEmploymentVerificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*employment.WorkerEmploymentVerification) error) error {
-	return keel.Each[*employment.WorkerEmploymentVerification](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*employment.WorkerEmploymentVerification)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerEmploymentVerification() unsafe.Pointer {
@@ -1511,112 +1523,112 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // EmploymentEventKindCol is a column of employment.EmploymentEventKind values.
-type EmploymentEventKindCol struct{ keel.StringCol }
+type EmploymentEventKindCol struct{ keel.TypedStringCol }
 
 func (c EmploymentEventKindCol) Eq(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EmploymentEventKindCol) Ne(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EmploymentEventKindCol) Gt(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EmploymentEventKindCol) Gte(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EmploymentEventKindCol) Lt(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EmploymentEventKindCol) Lte(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EmploymentEventKindCol) IsDistinctFrom(v employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EmploymentEventKindCol) Between(lo, hi employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EmploymentEventKindCol) To(v employment.EmploymentEventKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EmploymentEventKindCol) In(vs ...employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EmploymentEventKindCol) NotIn(vs ...employment.EmploymentEventKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EmploymentVerificationMethodCol is a column of employment.EmploymentVerificationMethod values.
-type EmploymentVerificationMethodCol struct{ keel.StringCol }
+type EmploymentVerificationMethodCol struct{ keel.TypedStringCol }
 
 func (c EmploymentVerificationMethodCol) Eq(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EmploymentVerificationMethodCol) Ne(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EmploymentVerificationMethodCol) Gt(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EmploymentVerificationMethodCol) Gte(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EmploymentVerificationMethodCol) Lt(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EmploymentVerificationMethodCol) Lte(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EmploymentVerificationMethodCol) IsDistinctFrom(v employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EmploymentVerificationMethodCol) Between(lo, hi employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EmploymentVerificationMethodCol) To(v employment.EmploymentVerificationMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EmploymentVerificationMethodCol) In(vs ...employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EmploymentVerificationMethodCol) NotIn(vs ...employment.EmploymentVerificationMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EmploymentVerificationStatusCol is a column of employment.EmploymentVerificationStatus values.
-type EmploymentVerificationStatusCol struct{ keel.StringCol }
+type EmploymentVerificationStatusCol struct{ keel.TypedStringCol }
 
 func (c EmploymentVerificationStatusCol) Eq(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EmploymentVerificationStatusCol) Ne(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EmploymentVerificationStatusCol) Gt(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EmploymentVerificationStatusCol) Gte(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EmploymentVerificationStatusCol) Lt(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EmploymentVerificationStatusCol) Lte(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EmploymentVerificationStatusCol) IsDistinctFrom(v employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EmploymentVerificationStatusCol) Between(lo, hi employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EmploymentVerificationStatusCol) To(v employment.EmploymentVerificationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EmploymentVerificationStatusCol) In(vs ...employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EmploymentVerificationStatusCol) NotIn(vs ...employment.EmploymentVerificationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

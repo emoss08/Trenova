@@ -87,16 +87,16 @@ type AccountingAppCredentialsTable struct {
 // AccountingAppCredentials references the accounting_app_credentials table.
 var AccountingAppCredentials = &AccountingAppCredentialsTable{
 	TableBase:                 keel.TableBase{Ref: &accountingAppCredentialsRef},
-	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 0}}},
-	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 1}}},
-	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 2}}},
-	IntegrationType:           integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 3}}},
-	Environment:               keelkinds.AccountingproviderAppEnvironmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 4}}},
+	ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 0}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 1}}},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 2}}},
+	IntegrationType:           integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 3}}},
+	Environment:               keelkinds.AccountingproviderAppEnvironmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 4}}},
 	ClientID:                  keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 5}},
 	ClientSecretCiphertext:    keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 6}},
 	WebhookVerifierCiphertext: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 7}},
 	Fingerprint:               keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 8}},
-	UpdatedByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 9}}},
+	UpdatedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 9}}},
 	Version:                   keel.Int64Col{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 10}},
 	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 11}},
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingAppCredentialsRef, Index: 12}},
@@ -106,16 +106,16 @@ var AccountingAppCredentials = &AccountingAppCredentialsTable{
 func BuildAccountingAppCredentials(r *keel.Ref) *AccountingAppCredentialsTable {
 	return &AccountingAppCredentialsTable{
 		TableBase:                 keel.TableBase{Ref: r},
-		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		IntegrationType:           integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Environment:               keelkinds.AccountingproviderAppEnvironmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		IntegrationType:           integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Environment:               keelkinds.AccountingproviderAppEnvironmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ClientID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ClientSecretCiphertext:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		WebhookVerifierCiphertext: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Fingerprint:               keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		UpdatedByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		UpdatedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -142,8 +142,6 @@ func (t *AccountingAppCredentialsTable) Get(ctx context.Context, db *keel.DB, ke
 
 // AccountingAppCredentialsQuery is a query over accountingconnection.AccountingAppCredential.
 type AccountingAppCredentialsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingconnection.AccountingAppCredential] = (*AccountingAppCredentialsTable)(nil)
 
 var _ keel.Query[*accountingconnection.AccountingAppCredential] = (*AccountingAppCredentialsQuery)(nil)
 
@@ -259,42 +257,42 @@ func (t *AccountingAppCredentialsTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *AccountingAppCredentialsTable) Create(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingAppCredential) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingAppCredentialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingAppCredential) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingAppCredentialsTable) Save(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingAppCredential, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingAppCredentialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingAppCredential, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingAppCredentialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingAppCredential) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingAppCredentialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingAppCredential, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingAppCredentialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingAppCredential, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingAppCredentialsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingAppCredential) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -466,37 +464,45 @@ func (q *AccountingAppCredentialsQuery) Clone() keel.Query[*accountingconnection
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingAppCredentialsQuery) One(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingAppCredential, error) {
-	return keel.One[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingAppCredential)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingAppCredentialsQuery) First(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingAppCredential, error) {
-	return keel.First[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingAppCredential)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingAppCredentialsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingAppCredential, error) {
-	return keel.List[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingAppCredential)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingAppCredentialsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingAppCredential, error) {
-	return keel.All[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingAppCredential)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingAppCredentialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingconnection.AccountingAppCredential, error) {
-	return keel.UpdateReturning[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingconnection.AccountingAppCredential)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingAppCredentialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingconnection.AccountingAppCredential], error) {
-	return keel.PageOf[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingconnection.AccountingAppCredential])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingAppCredentialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingconnection.AccountingAppCredential) error) error {
-	return keel.Each[*accountingconnection.AccountingAppCredential](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingconnection.AccountingAppCredential)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingAppCredential() unsafe.Pointer {
@@ -758,16 +764,16 @@ type AccountingConnectionsTable struct {
 // AccountingConnections references the accounting_connections table.
 var AccountingConnections = &AccountingConnectionsTable{
 	TableBase:                     keel.TableBase{Ref: &accountingConnectionsRef},
-	ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 0}}},
-	BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 1}}},
-	OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 2}}},
-	IntegrationType:               integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 3}}},
-	Status:                        ConnectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 4}}},
+	ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 0}}},
+	BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 1}}},
+	OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 2}}},
+	IntegrationType:               integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 3}}},
+	Status:                        ConnectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 4}}},
 	ExternalRealmID:               keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 5}},
-	AppSource:                     AppSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 6}}},
-	AppEnvironment:                keelkinds.AccountingproviderAppEnvironmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 7}}},
+	AppSource:                     AppSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 6}}},
+	AppEnvironment:                keelkinds.AccountingproviderAppEnvironmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 7}}},
 	AppFingerprint:                keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 8}},
-	AuthMethod:                    AuthMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 9}}},
+	AuthMethod:                    AuthMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 9}}},
 	ClientKeyCiphertext:           keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 10}},
 	ClientCertificateID:           keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 11}},
 	ClientCertificateExpiresAt:    keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 12}},
@@ -788,10 +794,10 @@ var AccountingConnections = &AccountingConnectionsTable{
 	LastSuccessAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 27}},
 	LastFailureAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 28}},
 	ConsecutiveFailures:           keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 29}},
-	LastErrorCategory:             accountingsyncdb.ErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 30}}},
+	LastErrorCategory:             accountingsyncdb.ErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 30}}},
 	LastErrorMessage:              keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 31}},
 	LastWebhookAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 32}},
-	SetupStep:                     SetupStepCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 33}}},
+	SetupStep:                     SetupStepCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 33}}},
 	ReferenceRefreshStartedAt:     keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 34}},
 	ReferenceRefreshedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 35}},
 	ReferenceRefreshError:         keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 36}},
@@ -799,24 +805,24 @@ var AccountingConnections = &AccountingConnectionsTable{
 	SyncEnabledAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 38}},
 	AutoSync:                      keel.BoolCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 39}},
 	DriverSettlementsEnabledAt:    keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 40}},
-	InboundPaymentPolicy:          InboundPaymentPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 41}}},
-	SyncMode:                      keelkinds.AccountingproviderSyncModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 42}}},
-	LedgerGranularity:             LedgerGranularityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 43}}},
+	InboundPaymentPolicy:          InboundPaymentPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 41}}},
+	SyncMode:                      keelkinds.AccountingproviderSyncModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 42}}},
+	LedgerGranularity:             LedgerGranularityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 43}}},
 	LedgerOpeningBalancesSentAt:   keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 44}},
 	ExternalFiscalYearStartMonth:  keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 45}},
 	ChangeCursor:                  keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 46}},
 	ChangesReadAt:                 keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 47}},
-	ChangesErrorCategory:          accountingsyncdb.SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 48}}},
+	ChangesErrorCategory:          accountingsyncdb.SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 48}}},
 	ChangesErrorMessage:           keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 49}},
 	DriftCheckedAt:                keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 50}},
-	DriftErrorCategory:            accountingsyncdb.SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 51}}},
+	DriftErrorCategory:            accountingsyncdb.SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 51}}},
 	DriftErrorMessage:             keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 52}},
 	PausedAt:                      keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 53}},
-	PausedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 54}}},
+	PausedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 54}}},
 	PausedReason:                  keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 55}},
-	ConnectedByID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 56}}},
+	ConnectedByID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 56}}},
 	ConnectedAt:                   keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 57}},
-	DisconnectedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 58}}},
+	DisconnectedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 58}}},
 	DisconnectedAt:                keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 59}},
 	Version:                       keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 60}},
 	CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &accountingConnectionsRef, Index: 61}},
@@ -827,16 +833,16 @@ var AccountingConnections = &AccountingConnectionsTable{
 func BuildAccountingConnections(r *keel.Ref) *AccountingConnectionsTable {
 	return &AccountingConnectionsTable{
 		TableBase:                     keel.TableBase{Ref: r},
-		ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		IntegrationType:               integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                        ConnectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		IntegrationType:               integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                        ConnectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ExternalRealmID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		AppSource:                     AppSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		AppEnvironment:                keelkinds.AccountingproviderAppEnvironmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AppSource:                     AppSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		AppEnvironment:                keelkinds.AccountingproviderAppEnvironmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		AppFingerprint:                keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		AuthMethod:                    AuthMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AuthMethod:                    AuthMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ClientKeyCiphertext:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ClientCertificateID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		ClientCertificateExpiresAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -857,10 +863,10 @@ func BuildAccountingConnections(r *keel.Ref) *AccountingConnectionsTable {
 		LastSuccessAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		LastFailureAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		ConsecutiveFailures:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		LastErrorCategory:             accountingsyncdb.ErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		LastErrorCategory:             accountingsyncdb.ErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		LastErrorMessage:              keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		LastWebhookAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		SetupStep:                     SetupStepCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		SetupStep:                     SetupStepCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		ReferenceRefreshStartedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
 		ReferenceRefreshedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		ReferenceRefreshError:         keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
@@ -868,24 +874,24 @@ func BuildAccountingConnections(r *keel.Ref) *AccountingConnectionsTable {
 		SyncEnabledAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 		AutoSync:                      keel.BoolCol{Col: keel.Col{Ref: r, Index: 39}},
 		DriverSettlementsEnabledAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		InboundPaymentPolicy:          InboundPaymentPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
-		SyncMode:                      keelkinds.AccountingproviderSyncModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
-		LedgerGranularity:             LedgerGranularityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
+		InboundPaymentPolicy:          InboundPaymentPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		SyncMode:                      keelkinds.AccountingproviderSyncModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		LedgerGranularity:             LedgerGranularityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 43}}},
 		LedgerOpeningBalancesSentAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
 		ExternalFiscalYearStartMonth:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 		ChangeCursor:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 46}},
 		ChangesReadAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
-		ChangesErrorCategory:          accountingsyncdb.SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		ChangesErrorCategory:          accountingsyncdb.SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 48}}},
 		ChangesErrorMessage:           keel.StringCol{Col: keel.Col{Ref: r, Index: 49}},
 		DriftCheckedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
-		DriftErrorCategory:            accountingsyncdb.SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 51}}},
+		DriftErrorCategory:            accountingsyncdb.SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 51}}},
 		DriftErrorMessage:             keel.StringCol{Col: keel.Col{Ref: r, Index: 52}},
 		PausedAt:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 53}},
-		PausedByID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 54}}},
+		PausedByID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 54}}},
 		PausedReason:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 55}},
-		ConnectedByID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 56}}},
+		ConnectedByID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 56}}},
 		ConnectedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 57}},
-		DisconnectedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 58}}},
+		DisconnectedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 58}}},
 		DisconnectedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 59}},
 		Version:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 60}},
 		CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 61}},
@@ -923,8 +929,6 @@ func (t *AccountingConnectionsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // AccountingConnectionsQuery is a query over accountingconnection.AccountingConnection.
 type AccountingConnectionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingconnection.AccountingConnection] = (*AccountingConnectionsTable)(nil)
 
 var _ keel.Query[*accountingconnection.AccountingConnection] = (*AccountingConnectionsQuery)(nil)
 
@@ -1040,42 +1044,42 @@ func (t *AccountingConnectionsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *AccountingConnectionsTable) Create(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingConnection) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingConnectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingConnection) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingConnectionsTable) Save(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingConnection, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingConnectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingConnection, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingConnectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingConnection) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingConnectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingConnection, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingConnectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingConnection, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingConnectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingConnection) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1247,37 +1251,45 @@ func (q *AccountingConnectionsQuery) Clone() keel.Query[*accountingconnection.Ac
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingConnectionsQuery) One(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingConnection, error) {
-	return keel.One[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingConnection)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingConnectionsQuery) First(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingConnection, error) {
-	return keel.First[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingConnection)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingConnectionsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingConnection, error) {
-	return keel.List[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingConnection)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingConnectionsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingConnection, error) {
-	return keel.All[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingConnection)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingConnectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingconnection.AccountingConnection, error) {
-	return keel.UpdateReturning[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingconnection.AccountingConnection)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingConnectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingconnection.AccountingConnection], error) {
-	return keel.PageOf[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingconnection.AccountingConnection])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingConnectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingconnection.AccountingConnection) error) error {
-	return keel.Each[*accountingconnection.AccountingConnection](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingconnection.AccountingConnection)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingConnection() unsafe.Pointer {
@@ -1772,14 +1784,14 @@ type AccountingPendingCertificatesTable struct {
 // AccountingPendingCertificates references the accounting_pending_certificates table.
 var AccountingPendingCertificates = &AccountingPendingCertificatesTable{
 	TableBase:            keel.TableBase{Ref: &accountingPendingCertificatesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 2}}},
-	IntegrationType:      integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 2}}},
+	IntegrationType:      integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 3}}},
 	PrivateKeyCiphertext: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 4}},
 	CertificatePEM:       keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 5}},
 	ExpiresAt:            keel.Int64Col{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 6}},
-	PreparedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 7}}},
+	PreparedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 7}}},
 	PreparedAt:           keel.Int64Col{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 8}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 9}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &accountingPendingCertificatesRef, Index: 10}},
@@ -1789,14 +1801,14 @@ var AccountingPendingCertificates = &AccountingPendingCertificatesTable{
 func BuildAccountingPendingCertificates(r *keel.Ref) *AccountingPendingCertificatesTable {
 	return &AccountingPendingCertificatesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		IntegrationType:      integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		IntegrationType:      integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PrivateKeyCiphertext: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		CertificatePEM:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ExpiresAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		PreparedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		PreparedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		PreparedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -1823,8 +1835,6 @@ func (t *AccountingPendingCertificatesTable) Get(ctx context.Context, db *keel.D
 
 // AccountingPendingCertificatesQuery is a query over accountingconnection.AccountingPendingCertificate.
 type AccountingPendingCertificatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingconnection.AccountingPendingCertificate] = (*AccountingPendingCertificatesTable)(nil)
 
 var _ keel.Query[*accountingconnection.AccountingPendingCertificate] = (*AccountingPendingCertificatesQuery)(nil)
 
@@ -1940,42 +1950,42 @@ func (t *AccountingPendingCertificatesTable) Compute(col keel.Column, e keel.Exp
 
 // Create inserts row.
 func (t *AccountingPendingCertificatesTable) Create(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingPendingCertificate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingPendingCertificatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingPendingCertificate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingPendingCertificatesTable) Save(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingPendingCertificate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingPendingCertificatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingPendingCertificate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingPendingCertificatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingPendingCertificate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingPendingCertificatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingPendingCertificate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingPendingCertificatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingPendingCertificate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingPendingCertificatesTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingPendingCertificate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2147,37 +2157,45 @@ func (q *AccountingPendingCertificatesQuery) Clone() keel.Query[*accountingconne
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingPendingCertificatesQuery) One(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingPendingCertificate, error) {
-	return keel.One[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingPendingCertificate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingPendingCertificatesQuery) First(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingPendingCertificate, error) {
-	return keel.First[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingPendingCertificate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingPendingCertificatesQuery) List(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingPendingCertificate, error) {
-	return keel.List[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingPendingCertificate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingPendingCertificatesQuery) All(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingPendingCertificate, error) {
-	return keel.All[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingPendingCertificate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingPendingCertificatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingconnection.AccountingPendingCertificate, error) {
-	return keel.UpdateReturning[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingconnection.AccountingPendingCertificate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingPendingCertificatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingconnection.AccountingPendingCertificate], error) {
-	return keel.PageOf[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingconnection.AccountingPendingCertificate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingPendingCertificatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingconnection.AccountingPendingCertificate) error) error {
-	return keel.Each[*accountingconnection.AccountingPendingCertificate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingconnection.AccountingPendingCertificate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingPendingCertificate() unsafe.Pointer {
@@ -2327,17 +2345,17 @@ type AccountingWebhookSubscriptionsTable struct {
 // AccountingWebhookSubscriptions references the accounting_webhook_subscriptions table.
 var AccountingWebhookSubscriptions = &AccountingWebhookSubscriptionsTable{
 	TableBase:              keel.TableBase{Ref: &accountingWebhookSubscriptionsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 2}}},
-	ConnectionID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 3}}},
-	IntegrationType:        integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 2}}},
+	ConnectionID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 3}}},
+	IntegrationType:        integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 4}}},
 	Resource:               keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 5}},
 	ExternalSubscriptionID: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 6}},
 	NotificationURL:        keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 7}},
 	ClientStateCiphertext:  keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 8}},
 	ETag:                   keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 9}},
-	Status:                 WebhookSubscriptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 10}}},
+	Status:                 WebhookSubscriptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 10}}},
 	ExpiresAt:              keel.Int64Col{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 11}},
 	LastAttemptAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 12}},
 	LastError:              keel.StringCol{Col: keel.Col{Ref: &accountingWebhookSubscriptionsRef, Index: 13}},
@@ -2350,17 +2368,17 @@ var AccountingWebhookSubscriptions = &AccountingWebhookSubscriptionsTable{
 func BuildAccountingWebhookSubscriptions(r *keel.Ref) *AccountingWebhookSubscriptionsTable {
 	return &AccountingWebhookSubscriptionsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		IntegrationType:        integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		IntegrationType:        integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Resource:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ExternalSubscriptionID: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		NotificationURL:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ClientStateCiphertext:  keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		ETag:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Status:                 WebhookSubscriptionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:                 WebhookSubscriptionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ExpiresAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		LastAttemptAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		LastError:              keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -2387,8 +2405,6 @@ func (t *AccountingWebhookSubscriptionsTable) Get(ctx context.Context, db *keel.
 
 // AccountingWebhookSubscriptionsQuery is a query over accountingconnection.AccountingWebhookSubscription.
 type AccountingWebhookSubscriptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingconnection.AccountingWebhookSubscription] = (*AccountingWebhookSubscriptionsTable)(nil)
 
 var _ keel.Query[*accountingconnection.AccountingWebhookSubscription] = (*AccountingWebhookSubscriptionsQuery)(nil)
 
@@ -2504,42 +2520,42 @@ func (t *AccountingWebhookSubscriptionsTable) Compute(col keel.Column, e keel.Ex
 
 // Create inserts row.
 func (t *AccountingWebhookSubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingWebhookSubscription) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingWebhookSubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingWebhookSubscription) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingWebhookSubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingWebhookSubscription, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingWebhookSubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingWebhookSubscription, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingWebhookSubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingconnection.AccountingWebhookSubscription) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingWebhookSubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingWebhookSubscription, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingWebhookSubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingWebhookSubscription, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingWebhookSubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingconnection.AccountingWebhookSubscription) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2711,37 +2727,45 @@ func (q *AccountingWebhookSubscriptionsQuery) Clone() keel.Query[*accountingconn
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingWebhookSubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingWebhookSubscription, error) {
-	return keel.One[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingWebhookSubscription)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingWebhookSubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*accountingconnection.AccountingWebhookSubscription, error) {
-	return keel.First[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingconnection.AccountingWebhookSubscription)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingWebhookSubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingWebhookSubscription, error) {
-	return keel.List[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingWebhookSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingWebhookSubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingconnection.AccountingWebhookSubscription, error) {
-	return keel.All[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingconnection.AccountingWebhookSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingWebhookSubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingconnection.AccountingWebhookSubscription, error) {
-	return keel.UpdateReturning[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingconnection.AccountingWebhookSubscription)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingWebhookSubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingconnection.AccountingWebhookSubscription], error) {
-	return keel.PageOf[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingconnection.AccountingWebhookSubscription])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingWebhookSubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingconnection.AccountingWebhookSubscription) error) error {
-	return keel.Each[*accountingconnection.AccountingWebhookSubscription](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingconnection.AccountingWebhookSubscription)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingWebhookSubscription() unsafe.Pointer {
@@ -2970,260 +2994,228 @@ var enumWebhookSubscriptionStatus = [...]schema.EnumValue{
 }
 
 // AppSourceCol is a column of accountingconnection.AppSource values.
-type AppSourceCol struct{ keel.StringCol }
+type AppSourceCol struct{ keel.TypedStringCol }
 
-func (c AppSourceCol) Eq(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AppSourceCol) Ne(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AppSourceCol) Gt(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c AppSourceCol) Gte(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AppSourceCol) Lt(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c AppSourceCol) Lte(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AppSourceCol) Eq(v accountingconnection.AppSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AppSourceCol) Ne(v accountingconnection.AppSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AppSourceCol) Gt(v accountingconnection.AppSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AppSourceCol) Gte(v accountingconnection.AppSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AppSourceCol) Lt(v accountingconnection.AppSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AppSourceCol) Lte(v accountingconnection.AppSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AppSourceCol) IsDistinctFrom(v accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AppSourceCol) Between(lo, hi accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AppSourceCol) To(v accountingconnection.AppSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AppSourceCol) In(vs ...accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AppSourceCol) NotIn(vs ...accountingconnection.AppSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AuthMethodCol is a column of accountingconnection.AuthMethod values.
-type AuthMethodCol struct{ keel.StringCol }
+type AuthMethodCol struct{ keel.TypedStringCol }
 
-func (c AuthMethodCol) Eq(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AuthMethodCol) Ne(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AuthMethodCol) Gt(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c AuthMethodCol) Eq(v accountingconnection.AuthMethod) keel.Pred { return c.Text().Eq(string(v)) }
+func (c AuthMethodCol) Ne(v accountingconnection.AuthMethod) keel.Pred { return c.Text().Ne(string(v)) }
+func (c AuthMethodCol) Gt(v accountingconnection.AuthMethod) keel.Pred { return c.Text().Gt(string(v)) }
 func (c AuthMethodCol) Gte(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c AuthMethodCol) Lt(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c AuthMethodCol) Lt(v accountingconnection.AuthMethod) keel.Pred { return c.Text().Lt(string(v)) }
 func (c AuthMethodCol) Lte(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AuthMethodCol) IsDistinctFrom(v accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AuthMethodCol) Between(lo, hi accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AuthMethodCol) To(v accountingconnection.AuthMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AuthMethodCol) In(vs ...accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AuthMethodCol) NotIn(vs ...accountingconnection.AuthMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ConnectionStatusCol is a column of accountingconnection.ConnectionStatus values.
-type ConnectionStatusCol struct{ keel.StringCol }
+type ConnectionStatusCol struct{ keel.TypedStringCol }
 
 func (c ConnectionStatusCol) Eq(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ConnectionStatusCol) Ne(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ConnectionStatusCol) Gt(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ConnectionStatusCol) Gte(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ConnectionStatusCol) Lt(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ConnectionStatusCol) Lte(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ConnectionStatusCol) IsDistinctFrom(v accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ConnectionStatusCol) Between(lo, hi accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ConnectionStatusCol) To(v accountingconnection.ConnectionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ConnectionStatusCol) In(vs ...accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ConnectionStatusCol) NotIn(vs ...accountingconnection.ConnectionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InboundPaymentPolicyCol is a column of accountingconnection.InboundPaymentPolicy values.
-type InboundPaymentPolicyCol struct{ keel.StringCol }
+type InboundPaymentPolicyCol struct{ keel.TypedStringCol }
 
 func (c InboundPaymentPolicyCol) Eq(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InboundPaymentPolicyCol) Ne(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InboundPaymentPolicyCol) Gt(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InboundPaymentPolicyCol) Gte(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InboundPaymentPolicyCol) Lt(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InboundPaymentPolicyCol) Lte(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InboundPaymentPolicyCol) IsDistinctFrom(v accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InboundPaymentPolicyCol) Between(lo, hi accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InboundPaymentPolicyCol) To(v accountingconnection.InboundPaymentPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InboundPaymentPolicyCol) In(vs ...accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InboundPaymentPolicyCol) NotIn(vs ...accountingconnection.InboundPaymentPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LedgerGranularityCol is a column of accountingconnection.LedgerGranularity values.
-type LedgerGranularityCol struct{ keel.StringCol }
+type LedgerGranularityCol struct{ keel.TypedStringCol }
 
 func (c LedgerGranularityCol) Eq(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LedgerGranularityCol) Ne(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LedgerGranularityCol) Gt(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LedgerGranularityCol) Gte(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LedgerGranularityCol) Lt(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LedgerGranularityCol) Lte(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LedgerGranularityCol) IsDistinctFrom(v accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LedgerGranularityCol) Between(lo, hi accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LedgerGranularityCol) To(v accountingconnection.LedgerGranularity) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LedgerGranularityCol) In(vs ...accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LedgerGranularityCol) NotIn(vs ...accountingconnection.LedgerGranularity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SetupStepCol is a column of accountingconnection.SetupStep values.
-type SetupStepCol struct{ keel.StringCol }
+type SetupStepCol struct{ keel.TypedStringCol }
 
-func (c SetupStepCol) Eq(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SetupStepCol) Ne(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SetupStepCol) Gt(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SetupStepCol) Gte(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SetupStepCol) Lt(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SetupStepCol) Lte(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SetupStepCol) Eq(v accountingconnection.SetupStep) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SetupStepCol) Ne(v accountingconnection.SetupStep) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SetupStepCol) Gt(v accountingconnection.SetupStep) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SetupStepCol) Gte(v accountingconnection.SetupStep) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SetupStepCol) Lt(v accountingconnection.SetupStep) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SetupStepCol) Lte(v accountingconnection.SetupStep) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SetupStepCol) IsDistinctFrom(v accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SetupStepCol) Between(lo, hi accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SetupStepCol) To(v accountingconnection.SetupStep) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SetupStepCol) In(vs ...accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SetupStepCol) NotIn(vs ...accountingconnection.SetupStep) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // WebhookSubscriptionStatusCol is a column of accountingconnection.WebhookSubscriptionStatus values.
-type WebhookSubscriptionStatusCol struct{ keel.StringCol }
+type WebhookSubscriptionStatusCol struct{ keel.TypedStringCol }
 
 func (c WebhookSubscriptionStatusCol) Eq(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Ne(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Gt(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Gte(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Lt(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Lte(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c WebhookSubscriptionStatusCol) IsDistinctFrom(v accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WebhookSubscriptionStatusCol) Between(lo, hi accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c WebhookSubscriptionStatusCol) To(v accountingconnection.WebhookSubscriptionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c WebhookSubscriptionStatusCol) In(vs ...accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WebhookSubscriptionStatusCol) NotIn(vs ...accountingconnection.WebhookSubscriptionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

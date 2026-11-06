@@ -104,21 +104,21 @@ type JournalBatchesTable struct {
 // JournalBatches references the journal_batches table.
 var JournalBatches = &JournalBatchesTable{
 	TableBase:      keel.TableBase{Ref: &journalBatchesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 2}}},
 	BatchNumber:    keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 3}},
 	BatchType:      keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 4}},
 	Status:         keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 5}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 6}},
 	AccountingDate: keel.Int64Col{Col: keel.Col{Ref: &journalBatchesRef, Index: 7}},
-	FiscalYearID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 8}}},
-	FiscalPeriodID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 9}}},
+	FiscalYearID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 8}}},
+	FiscalPeriodID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 9}}},
 	EntryCount:     keel.Int64Col{Col: keel.Col{Ref: &journalBatchesRef, Index: 10}},
 	PostedAt:       keel.Int64Col{Col: keel.Col{Ref: &journalBatchesRef, Index: 11}},
-	PostedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 12}}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 13}}},
-	UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 14}}},
+	PostedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 12}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 13}}},
+	UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalBatchesRef, Index: 14}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &journalBatchesRef, Index: 15}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &journalBatchesRef, Index: 16}},
 }
@@ -127,21 +127,21 @@ var JournalBatches = &JournalBatchesTable{
 func BuildJournalBatches(r *keel.Ref) *JournalBatchesTable {
 	return &JournalBatchesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		BatchNumber:    keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		BatchType:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Status:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		AccountingDate: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		FiscalYearID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		FiscalPeriodID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		FiscalYearID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		FiscalPeriodID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		EntryCount:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		PostedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		PostedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		UpdatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		PostedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		UpdatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 	}
@@ -177,8 +177,6 @@ func (t *JournalBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // JournalBatchesQuery is a query over journalentry.JournalBatch.
 type JournalBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalentry.JournalBatch] = (*JournalBatchesTable)(nil)
 
 var _ keel.Query[*journalentry.JournalBatch] = (*JournalBatchesQuery)(nil)
 
@@ -294,42 +292,42 @@ func (t *JournalBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *JournalBatchesTable) Create(ctx context.Context, db *keel.DB, row *journalentry.JournalBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JournalBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalentry.JournalBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JournalBatchesTable) Save(ctx context.Context, db *keel.DB, row *journalentry.JournalBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JournalBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalentry.JournalBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JournalBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalentry.JournalBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JournalBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalentry.JournalBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JournalBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalentry.JournalBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JournalBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*journalentry.JournalBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -501,37 +499,45 @@ func (q *JournalBatchesQuery) Clone() keel.Query[*journalentry.JournalBatch] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JournalBatchesQuery) One(ctx context.Context, db *keel.DB) (*journalentry.JournalBatch, error) {
-	return keel.One[*journalentry.JournalBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JournalBatchesQuery) First(ctx context.Context, db *keel.DB) (*journalentry.JournalBatch, error) {
-	return keel.First[*journalentry.JournalBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JournalBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*journalentry.JournalBatch, error) {
-	return keel.List[*journalentry.JournalBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JournalBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*journalentry.JournalBatch, error) {
-	return keel.All[*journalentry.JournalBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JournalBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalentry.JournalBatch, error) {
-	return keel.UpdateReturning[*journalentry.JournalBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalentry.JournalBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JournalBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalentry.JournalBatch], error) {
-	return keel.PageOf[*journalentry.JournalBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalentry.JournalBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JournalBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalentry.JournalBatch) error) error {
-	return keel.Each[*journalentry.JournalBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalentry.JournalBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJournalBatch() unsafe.Pointer { return unsafe.Pointer(new(journalentry.JournalBatch)) }
@@ -775,17 +781,17 @@ type JournalEntriesTable struct {
 // JournalEntries references the journal_entries table.
 var JournalEntries = &JournalEntriesTable{
 	TableBase:        keel.TableBase{Ref: &journalEntriesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 2}}},
-	FiscalYearID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 3}}},
-	FiscalPeriodID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 4}}},
-	BatchID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 5}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 2}}},
+	FiscalYearID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 3}}},
+	FiscalPeriodID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 4}}},
+	BatchID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 5}}},
 	EntryNumber:      keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 6}},
 	EntryDate:        keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 7}},
 	AccountingDate:   keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 8}},
-	EntryType:        EntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 9}}},
-	Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 10}}},
+	EntryType:        EntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 9}}},
+	Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 10}}},
 	ReferenceNumber:  keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 11}},
 	ReferenceType:    keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 12}},
 	ReferenceID:      keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 13}},
@@ -794,24 +800,24 @@ var JournalEntries = &JournalEntriesTable{
 	TotalCredit:      keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 16}},
 	IsPosted:         keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 17}},
 	PostedAt:         keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 18}},
-	PostedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 19}}},
+	PostedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 19}}},
 	IsAutoGenerated:  keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 20}},
 	IsReversal:       keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 21}},
-	ReversalOfID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 22}}},
-	ReversedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 23}}},
+	ReversalOfID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 22}}},
+	ReversedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 23}}},
 	ReversalDate:     keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 24}},
 	ReversalReason:   keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 25}},
 	RequiresApproval: keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 26}},
 	IsApproved:       keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 27}},
 	ApprovedAt:       keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 28}},
-	ApprovedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 29}}},
+	ApprovedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 29}}},
 	ApprovalNotes:    keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 30}},
 	IsRejected:       keel.BoolCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 31}},
 	RejectedAt:       keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 32}},
-	RejectedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 33}}},
+	RejectedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 33}}},
 	RejectionReason:  keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 34}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 35}}},
-	UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 36}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 35}}},
+	UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntriesRef, Index: 36}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 37}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 38}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &journalEntriesRef, Index: 39}},
@@ -822,17 +828,17 @@ var JournalEntries = &JournalEntriesTable{
 func BuildJournalEntries(r *keel.Ref) *JournalEntriesTable {
 	return &JournalEntriesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FiscalYearID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		FiscalPeriodID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		BatchID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FiscalYearID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		FiscalPeriodID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		BatchID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		EntryNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		EntryDate:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		AccountingDate:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		EntryType:        EntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		EntryType:        EntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ReferenceNumber:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		ReferenceType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		ReferenceID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
@@ -841,24 +847,24 @@ func BuildJournalEntries(r *keel.Ref) *JournalEntriesTable {
 		TotalCredit:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		IsPosted:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		PostedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		PostedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		PostedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		IsAutoGenerated:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		IsReversal:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
-		ReversalOfID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		ReversedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ReversalOfID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		ReversedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		ReversalDate:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		ReversalReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		RequiresApproval: keel.BoolCol{Col: keel.Col{Ref: r, Index: 26}},
 		IsApproved:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
 		ApprovedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		ApprovedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		ApprovedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		ApprovalNotes:    keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
 		IsRejected:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 31}},
 		RejectedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		RejectedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		RejectedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		RejectionReason:  keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
@@ -911,8 +917,6 @@ func (t *JournalEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // JournalEntriesQuery is a query over journalentry.JournalEntry.
 type JournalEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalentry.JournalEntry] = (*JournalEntriesTable)(nil)
 
 var _ keel.Query[*journalentry.JournalEntry] = (*JournalEntriesQuery)(nil)
 
@@ -1028,42 +1032,42 @@ func (t *JournalEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *JournalEntriesTable) Create(ctx context.Context, db *keel.DB, row *journalentry.JournalEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JournalEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JournalEntriesTable) Save(ctx context.Context, db *keel.DB, row *journalentry.JournalEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JournalEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalentry.JournalEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JournalEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalentry.JournalEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JournalEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JournalEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JournalEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1235,37 +1239,45 @@ func (q *JournalEntriesQuery) Clone() keel.Query[*journalentry.JournalEntry] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JournalEntriesQuery) One(ctx context.Context, db *keel.DB) (*journalentry.JournalEntry, error) {
-	return keel.One[*journalentry.JournalEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JournalEntriesQuery) First(ctx context.Context, db *keel.DB) (*journalentry.JournalEntry, error) {
-	return keel.First[*journalentry.JournalEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JournalEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*journalentry.JournalEntry, error) {
-	return keel.List[*journalentry.JournalEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JournalEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*journalentry.JournalEntry, error) {
-	return keel.All[*journalentry.JournalEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JournalEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalentry.JournalEntry, error) {
-	return keel.UpdateReturning[*journalentry.JournalEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalentry.JournalEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JournalEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalentry.JournalEntry], error) {
-	return keel.PageOf[*journalentry.JournalEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalentry.JournalEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JournalEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalentry.JournalEntry) error) error {
-	return keel.Each[*journalentry.JournalEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalentry.JournalEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJournalEntry() unsafe.Pointer { return unsafe.Pointer(new(journalentry.JournalEntry)) }
@@ -1620,27 +1632,27 @@ type JournalEntryLinesTable struct {
 // JournalEntryLines references the journal_entry_lines table.
 var JournalEntryLines = &JournalEntryLinesTable{
 	TableBase:      keel.TableBase{Ref: &journalEntryLinesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 2}}},
-	JournalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 3}}},
-	GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 2}}},
+	JournalEntryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 3}}},
+	GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 4}}},
 	LineNumber:     keel.Int16Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 5}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 6}},
 	DebitAmount:    keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 7}},
 	CreditAmount:   keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 8}},
 	NetAmount:      keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 9}},
-	DepartmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 10}}},
-	ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 11}}},
-	LocationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 12}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 13}}},
-	VendorID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 14}}},
+	DepartmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 10}}},
+	ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 11}}},
+	LocationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 12}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 13}}},
+	VendorID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 14}}},
 	TaxCode:        keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 15}},
 	TaxAmount:      keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 16}},
 	IsTaxLine:      keel.BoolCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 17}},
 	IsReconciled:   keel.BoolCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 18}},
 	ReconciledAt:   keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 19}},
-	ReconciledByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 20}}},
+	ReconciledByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 20}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 21}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 22}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &journalEntryLinesRef, Index: 23}},
@@ -1650,27 +1662,27 @@ var JournalEntryLines = &JournalEntryLinesTable{
 func BuildJournalEntryLines(r *keel.Ref) *JournalEntryLinesTable {
 	return &JournalEntryLinesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		JournalEntryID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		JournalEntryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		LineNumber:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		DebitAmount:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreditAmount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		NetAmount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		DepartmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		LocationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		VendorID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		DepartmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		LocationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		VendorID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		TaxCode:        keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		TaxAmount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		IsTaxLine:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		IsReconciled:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
 		ReconciledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		ReconciledByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ReconciledByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -1712,8 +1724,6 @@ func (t *JournalEntryLinesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // JournalEntryLinesQuery is a query over journalentry.JournalEntryLine.
 type JournalEntryLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalentry.JournalEntryLine] = (*JournalEntryLinesTable)(nil)
 
 var _ keel.Query[*journalentry.JournalEntryLine] = (*JournalEntryLinesQuery)(nil)
 
@@ -1829,42 +1839,42 @@ func (t *JournalEntryLinesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *JournalEntryLinesTable) Create(ctx context.Context, db *keel.DB, row *journalentry.JournalEntryLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JournalEntryLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntryLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JournalEntryLinesTable) Save(ctx context.Context, db *keel.DB, row *journalentry.JournalEntryLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JournalEntryLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalentry.JournalEntryLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JournalEntryLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalentry.JournalEntryLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JournalEntryLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntryLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JournalEntryLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntryLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JournalEntryLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*journalentry.JournalEntryLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2036,37 +2046,45 @@ func (q *JournalEntryLinesQuery) Clone() keel.Query[*journalentry.JournalEntryLi
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JournalEntryLinesQuery) One(ctx context.Context, db *keel.DB) (*journalentry.JournalEntryLine, error) {
-	return keel.One[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalEntryLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JournalEntryLinesQuery) First(ctx context.Context, db *keel.DB) (*journalentry.JournalEntryLine, error) {
-	return keel.First[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalentry.JournalEntryLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JournalEntryLinesQuery) List(ctx context.Context, db *keel.DB) ([]*journalentry.JournalEntryLine, error) {
-	return keel.List[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalEntryLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JournalEntryLinesQuery) All(ctx context.Context, db *keel.DB) ([]*journalentry.JournalEntryLine, error) {
-	return keel.All[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalentry.JournalEntryLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JournalEntryLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalentry.JournalEntryLine, error) {
-	return keel.UpdateReturning[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalentry.JournalEntryLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JournalEntryLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalentry.JournalEntryLine], error) {
-	return keel.PageOf[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalentry.JournalEntryLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JournalEntryLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalentry.JournalEntryLine) error) error {
-	return keel.Each[*journalentry.JournalEntryLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalentry.JournalEntryLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJournalEntryLine() unsafe.Pointer { return unsafe.Pointer(new(journalentry.JournalEntryLine)) }
@@ -2284,47 +2302,47 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // EntryTypeCol is a column of journalentry.EntryType values.
-type EntryTypeCol struct{ keel.StringCol }
+type EntryTypeCol struct{ keel.TypedStringCol }
 
-func (c EntryTypeCol) Eq(v journalentry.EntryType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EntryTypeCol) Ne(v journalentry.EntryType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EntryTypeCol) Gt(v journalentry.EntryType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EntryTypeCol) Gte(v journalentry.EntryType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EntryTypeCol) Lt(v journalentry.EntryType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EntryTypeCol) Lte(v journalentry.EntryType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EntryTypeCol) Eq(v journalentry.EntryType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EntryTypeCol) Ne(v journalentry.EntryType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EntryTypeCol) Gt(v journalentry.EntryType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EntryTypeCol) Gte(v journalentry.EntryType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EntryTypeCol) Lt(v journalentry.EntryType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EntryTypeCol) Lte(v journalentry.EntryType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EntryTypeCol) IsDistinctFrom(v journalentry.EntryType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EntryTypeCol) Between(lo, hi journalentry.EntryType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EntryTypeCol) To(v journalentry.EntryType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EntryTypeCol) To(v journalentry.EntryType) keel.Assignment { return c.Text().To(string(v)) }
 func (c EntryTypeCol) In(vs ...journalentry.EntryType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EntryTypeCol) NotIn(vs ...journalentry.EntryType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of journalentry.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v journalentry.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v journalentry.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v journalentry.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v journalentry.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v journalentry.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v journalentry.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v journalentry.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v journalentry.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v journalentry.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v journalentry.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v journalentry.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v journalentry.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v journalentry.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi journalentry.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v journalentry.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v journalentry.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...journalentry.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...journalentry.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

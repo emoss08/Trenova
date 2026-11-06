@@ -137,40 +137,40 @@ type AgentProposalsTable struct {
 // AgentProposals references the agent_proposals table.
 var AgentProposals = &AgentProposalsTable{
 	TableBase:             keel.TableBase{Ref: &agentProposalsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 2}}},
-	RunID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 2}}},
+	RunID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 3}}},
 	ToolName:              keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 4}},
 	ToolParams:            keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 5}},
 	Confidence:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 6}}},
 	Rationale:             keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 7}},
 	Evidence:              keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 8}},
-	AutonomyTier:          AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 9}}},
-	Status:                ProposalStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 10}}},
+	AutonomyTier:          AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 9}}},
+	Status:                ProposalStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 10}}},
 	ExecutedAt:            keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 11}},
 	ExecutionError:        keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 12}},
 	ExecutionResult:       keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 13}},
-	SourceMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 14}}},
+	SourceMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 14}}},
 	ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 15}},
 	SimulatedAt:           keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 16}},
 	Simulation:            keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 17}},
-	PlanID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 18}}},
+	PlanID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 18}}},
 	PlanStep:              keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 19}},
 	RemindedAt:            keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 20}},
 	TargetResource:        keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 21}},
-	TargetID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 22}}},
+	TargetID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 22}}},
 	TargetVersion:         keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 23}},
 	Tainted:               keel.BoolCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 24}},
 	Taint:                 keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 25}},
-	EgressClass:           EgressClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 26}}},
+	EgressClass:           EgressClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 26}}},
 	HeldBy:                keel.StringArrayCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 27}},
 	MoneyMinor:            keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 28}},
 	MoneyCurrency:         keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 29}},
 	TraceID:               keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 30}},
 	SpanID:                keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 31}},
 	StepKey:               keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 32}},
-	ExecutedByUserID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 33}}},
+	ExecutedByUserID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 33}}},
 	ExecutedTargetVersion: keel.Int64Col{Col: keel.Col{Ref: &agentProposalsRef, Index: 34}},
 	ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 35}},
 	PendingModifications:  keel.JSONBCol{Col: keel.Col{Ref: &agentProposalsRef, Index: 36}},
@@ -183,40 +183,40 @@ var AgentProposals = &AgentProposalsTable{
 func BuildAgentProposals(r *keel.Ref) *AgentProposalsTable {
 	return &AgentProposalsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ToolName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ToolParams:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		Confidence:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Rationale:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Evidence:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
-		AutonomyTier:          AutonomyTierCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Status:                ProposalStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		AutonomyTier:          AutonomyTierCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:                ProposalStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ExecutedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ExecutionError:        keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		ExecutionResult:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
-		SourceMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		SourceMessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		SimulatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		Simulation:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
-		PlanID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		PlanID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		PlanStep:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		RemindedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		TargetResource:        keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		TargetID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		TargetID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		TargetVersion:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		Tainted:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
 		Taint:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
-		EgressClass:           EgressClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		EgressClass:           EgressClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		HeldBy:                keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 27}},
 		MoneyMinor:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		MoneyCurrency:         keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
 		TraceID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
 		SpanID:                keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		StepKey:               keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		ExecutedByUserID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		ExecutedByUserID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		ExecutedTargetVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
 		ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
 		PendingModifications:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 36}},
@@ -244,8 +244,6 @@ func (t *AgentProposalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // AgentProposalsQuery is a query over agent.AgentProposal.
 type AgentProposalsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agent.AgentProposal] = (*AgentProposalsTable)(nil)
 
 var _ keel.Query[*agent.AgentProposal] = (*AgentProposalsQuery)(nil)
 
@@ -361,42 +359,42 @@ func (t *AgentProposalsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *AgentProposalsTable) Create(ctx context.Context, db *keel.DB, row *agent.AgentProposal) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgentProposalsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgentProposalsTable) Save(ctx context.Context, db *keel.DB, row *agent.AgentProposal, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgentProposalsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agent.AgentProposal, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgentProposalsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agent.AgentProposal) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgentProposalsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgentProposalsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgentProposalsTable) Copy(ctx context.Context, db *keel.DB, rows []*agent.AgentProposal) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -568,37 +566,45 @@ func (q *AgentProposalsQuery) Clone() keel.Query[*agent.AgentProposal] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgentProposalsQuery) One(ctx context.Context, db *keel.DB) (*agent.AgentProposal, error) {
-	return keel.One[*agent.AgentProposal](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agent.AgentProposal)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgentProposalsQuery) First(ctx context.Context, db *keel.DB) (*agent.AgentProposal, error) {
-	return keel.First[*agent.AgentProposal](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agent.AgentProposal)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgentProposalsQuery) List(ctx context.Context, db *keel.DB) ([]*agent.AgentProposal, error) {
-	return keel.List[*agent.AgentProposal](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agent.AgentProposal)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgentProposalsQuery) All(ctx context.Context, db *keel.DB) ([]*agent.AgentProposal, error) {
-	return keel.All[*agent.AgentProposal](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agent.AgentProposal)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgentProposalsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agent.AgentProposal, error) {
-	return keel.UpdateReturning[*agent.AgentProposal](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agent.AgentProposal)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgentProposalsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agent.AgentProposal], error) {
-	return keel.PageOf[*agent.AgentProposal](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agent.AgentProposal])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgentProposalsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agent.AgentProposal) error) error {
-	return keel.Each[*agent.AgentProposal](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agent.AgentProposal)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgentProposal() unsafe.Pointer { return unsafe.Pointer(new(agent.AgentProposal)) }
@@ -970,16 +976,16 @@ type AgentRunsTable struct {
 // AgentRuns references the agent_runs table.
 var AgentRuns = &AgentRunsTable{
 	TableBase:         keel.TableBase{Ref: &agentRunsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 3}}},
-	Trigger:           RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 4}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 2}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 3}}},
+	Trigger:           RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 4}}},
 	Summary:           keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 5}},
-	AgentType:         TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 6}}},
-	SubjectType:       SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 7}}},
-	SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 8}}},
-	Status:            RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 9}}},
+	AgentType:         TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 6}}},
+	SubjectType:       SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 7}}},
+	SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 8}}},
+	Status:            RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 9}}},
 	WorkflowID:        keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 10}},
 	ModelIdentifier:   keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 11}},
 	PromptVersion:     keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 12}},
@@ -993,9 +999,9 @@ var AgentRuns = &AgentRunsTable{
 	Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: &agentRunsRef, Index: 20}},
 	Transcript:        keel.JSONBCol{Col: keel.Col{Ref: &agentRunsRef, Index: 21}},
 	TraceID:           keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 22}},
-	TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 23}}},
-	ParentOwnerKind:   RunOwnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 24}}},
-	ParentOwnerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 25}}},
+	TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 23}}},
+	ParentOwnerKind:   RunOwnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 24}}},
+	ParentOwnerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 25}}},
 	DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: &agentRunsRef, Index: 26}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &agentRunsRef, Index: 27}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &agentRunsRef, Index: 28}},
@@ -1006,16 +1012,16 @@ var AgentRuns = &AgentRunsTable{
 func BuildAgentRuns(r *keel.Ref) *AgentRunsTable {
 	return &AgentRunsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Trigger:           RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Trigger:           RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Summary:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		AgentType:         TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SubjectType:       SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:            RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		AgentType:         TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SubjectType:       SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:            RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		WorkflowID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ModelIdentifier:   keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		PromptVersion:     keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
@@ -1029,9 +1035,9 @@ func BuildAgentRuns(r *keel.Ref) *AgentRunsTable {
 		Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 20}},
 		Transcript:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
 		TraceID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		TurnID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
-		ParentOwnerKind:   RunOwnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		ParentOwnerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		TurnID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ParentOwnerKind:   RunOwnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		ParentOwnerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		DelegateCallID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -1054,8 +1060,6 @@ func (t *AgentRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*a
 
 // AgentRunsQuery is a query over agent.AgentRun.
 type AgentRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agent.AgentRun] = (*AgentRunsTable)(nil)
 
 var _ keel.Query[*agent.AgentRun] = (*AgentRunsQuery)(nil)
 
@@ -1171,42 +1175,42 @@ func (t *AgentRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agent
 
 // Create inserts row.
 func (t *AgentRunsTable) Create(ctx context.Context, db *keel.DB, row *agent.AgentRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgentRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agent.AgentRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgentRunsTable) Save(ctx context.Context, db *keel.DB, row *agent.AgentRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgentRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agent.AgentRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgentRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agent.AgentRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgentRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agent.AgentRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgentRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agent.AgentRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgentRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*agent.AgentRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1378,37 +1382,45 @@ func (q *AgentRunsQuery) Clone() keel.Query[*agent.AgentRun] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgentRunsQuery) One(ctx context.Context, db *keel.DB) (*agent.AgentRun, error) {
-	return keel.One[*agent.AgentRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agent.AgentRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgentRunsQuery) First(ctx context.Context, db *keel.DB) (*agent.AgentRun, error) {
-	return keel.First[*agent.AgentRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agent.AgentRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgentRunsQuery) List(ctx context.Context, db *keel.DB) ([]*agent.AgentRun, error) {
-	return keel.List[*agent.AgentRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agent.AgentRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgentRunsQuery) All(ctx context.Context, db *keel.DB) ([]*agent.AgentRun, error) {
-	return keel.All[*agent.AgentRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agent.AgentRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgentRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agent.AgentRun, error) {
-	return keel.UpdateReturning[*agent.AgentRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agent.AgentRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgentRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agent.AgentRun], error) {
-	return keel.PageOf[*agent.AgentRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agent.AgentRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgentRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agent.AgentRun) error) error {
-	return keel.Each[*agent.AgentRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agent.AgentRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgentRun() unsafe.Pointer { return unsafe.Pointer(new(agent.AgentRun)) }
@@ -1702,179 +1714,183 @@ var enumType = [...]schema.EnumValue{
 }
 
 // AutonomyTierCol is a column of agent.AutonomyTier values.
-type AutonomyTierCol struct{ keel.StringCol }
+type AutonomyTierCol struct{ keel.TypedStringCol }
 
-func (c AutonomyTierCol) Eq(v agent.AutonomyTier) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AutonomyTierCol) Ne(v agent.AutonomyTier) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AutonomyTierCol) Gt(v agent.AutonomyTier) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AutonomyTierCol) Gte(v agent.AutonomyTier) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AutonomyTierCol) Lt(v agent.AutonomyTier) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AutonomyTierCol) Lte(v agent.AutonomyTier) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AutonomyTierCol) Eq(v agent.AutonomyTier) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AutonomyTierCol) Ne(v agent.AutonomyTier) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AutonomyTierCol) Gt(v agent.AutonomyTier) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AutonomyTierCol) Gte(v agent.AutonomyTier) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AutonomyTierCol) Lt(v agent.AutonomyTier) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AutonomyTierCol) Lte(v agent.AutonomyTier) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AutonomyTierCol) IsDistinctFrom(v agent.AutonomyTier) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AutonomyTierCol) Between(lo, hi agent.AutonomyTier) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c AutonomyTierCol) To(v agent.AutonomyTier) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c AutonomyTierCol) To(v agent.AutonomyTier) keel.Assignment { return c.Text().To(string(v)) }
 func (c AutonomyTierCol) In(vs ...agent.AutonomyTier) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AutonomyTierCol) NotIn(vs ...agent.AutonomyTier) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EgressClassCol is a column of agent.EgressClass values.
-type EgressClassCol struct{ keel.StringCol }
+type EgressClassCol struct{ keel.TypedStringCol }
 
-func (c EgressClassCol) Eq(v agent.EgressClass) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EgressClassCol) Ne(v agent.EgressClass) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EgressClassCol) Gt(v agent.EgressClass) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EgressClassCol) Gte(v agent.EgressClass) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EgressClassCol) Lt(v agent.EgressClass) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EgressClassCol) Lte(v agent.EgressClass) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EgressClassCol) Eq(v agent.EgressClass) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EgressClassCol) Ne(v agent.EgressClass) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EgressClassCol) Gt(v agent.EgressClass) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EgressClassCol) Gte(v agent.EgressClass) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EgressClassCol) Lt(v agent.EgressClass) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EgressClassCol) Lte(v agent.EgressClass) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EgressClassCol) IsDistinctFrom(v agent.EgressClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EgressClassCol) Between(lo, hi agent.EgressClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EgressClassCol) To(v agent.EgressClass) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EgressClassCol) To(v agent.EgressClass) keel.Assignment { return c.Text().To(string(v)) }
 func (c EgressClassCol) In(vs ...agent.EgressClass) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EgressClassCol) NotIn(vs ...agent.EgressClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProposalStatusCol is a column of agent.ProposalStatus values.
-type ProposalStatusCol struct{ keel.StringCol }
+type ProposalStatusCol struct{ keel.TypedStringCol }
 
-func (c ProposalStatusCol) Eq(v agent.ProposalStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProposalStatusCol) Ne(v agent.ProposalStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProposalStatusCol) Gt(v agent.ProposalStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProposalStatusCol) Gte(v agent.ProposalStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProposalStatusCol) Lt(v agent.ProposalStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProposalStatusCol) Lte(v agent.ProposalStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProposalStatusCol) Eq(v agent.ProposalStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProposalStatusCol) Ne(v agent.ProposalStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProposalStatusCol) Gt(v agent.ProposalStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProposalStatusCol) Gte(v agent.ProposalStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProposalStatusCol) Lt(v agent.ProposalStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProposalStatusCol) Lte(v agent.ProposalStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProposalStatusCol) IsDistinctFrom(v agent.ProposalStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProposalStatusCol) Between(lo, hi agent.ProposalStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ProposalStatusCol) To(v agent.ProposalStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c ProposalStatusCol) To(v agent.ProposalStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c ProposalStatusCol) In(vs ...agent.ProposalStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProposalStatusCol) NotIn(vs ...agent.ProposalStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunOwnerKindCol is a column of agent.RunOwnerKind values.
-type RunOwnerKindCol struct{ keel.StringCol }
+type RunOwnerKindCol struct{ keel.TypedStringCol }
 
-func (c RunOwnerKindCol) Eq(v agent.RunOwnerKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunOwnerKindCol) Ne(v agent.RunOwnerKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunOwnerKindCol) Gt(v agent.RunOwnerKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunOwnerKindCol) Gte(v agent.RunOwnerKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunOwnerKindCol) Lt(v agent.RunOwnerKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunOwnerKindCol) Lte(v agent.RunOwnerKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunOwnerKindCol) Eq(v agent.RunOwnerKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunOwnerKindCol) Ne(v agent.RunOwnerKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunOwnerKindCol) Gt(v agent.RunOwnerKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunOwnerKindCol) Gte(v agent.RunOwnerKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunOwnerKindCol) Lt(v agent.RunOwnerKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunOwnerKindCol) Lte(v agent.RunOwnerKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunOwnerKindCol) IsDistinctFrom(v agent.RunOwnerKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunOwnerKindCol) Between(lo, hi agent.RunOwnerKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunOwnerKindCol) To(v agent.RunOwnerKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RunOwnerKindCol) To(v agent.RunOwnerKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunOwnerKindCol) In(vs ...agent.RunOwnerKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunOwnerKindCol) NotIn(vs ...agent.RunOwnerKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunStatusCol is a column of agent.RunStatus values.
-type RunStatusCol struct{ keel.StringCol }
+type RunStatusCol struct{ keel.TypedStringCol }
 
-func (c RunStatusCol) Eq(v agent.RunStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunStatusCol) Ne(v agent.RunStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunStatusCol) Gt(v agent.RunStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunStatusCol) Gte(v agent.RunStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunStatusCol) Lt(v agent.RunStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunStatusCol) Lte(v agent.RunStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunStatusCol) Eq(v agent.RunStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunStatusCol) Ne(v agent.RunStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunStatusCol) Gt(v agent.RunStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunStatusCol) Gte(v agent.RunStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunStatusCol) Lt(v agent.RunStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunStatusCol) Lte(v agent.RunStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunStatusCol) IsDistinctFrom(v agent.RunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunStatusCol) Between(lo, hi agent.RunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunStatusCol) To(v agent.RunStatus) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c RunStatusCol) In(vs ...agent.RunStatus) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c RunStatusCol) To(v agent.RunStatus) keel.Assignment { return c.Text().To(string(v)) }
+func (c RunStatusCol) In(vs ...agent.RunStatus) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c RunStatusCol) NotIn(vs ...agent.RunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunTriggerCol is a column of agent.RunTrigger values.
-type RunTriggerCol struct{ keel.StringCol }
+type RunTriggerCol struct{ keel.TypedStringCol }
 
-func (c RunTriggerCol) Eq(v agent.RunTrigger) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunTriggerCol) Ne(v agent.RunTrigger) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunTriggerCol) Gt(v agent.RunTrigger) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunTriggerCol) Gte(v agent.RunTrigger) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunTriggerCol) Lt(v agent.RunTrigger) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunTriggerCol) Lte(v agent.RunTrigger) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunTriggerCol) Eq(v agent.RunTrigger) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunTriggerCol) Ne(v agent.RunTrigger) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunTriggerCol) Gt(v agent.RunTrigger) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunTriggerCol) Gte(v agent.RunTrigger) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunTriggerCol) Lt(v agent.RunTrigger) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunTriggerCol) Lte(v agent.RunTrigger) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunTriggerCol) IsDistinctFrom(v agent.RunTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunTriggerCol) Between(lo, hi agent.RunTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunTriggerCol) To(v agent.RunTrigger) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RunTriggerCol) To(v agent.RunTrigger) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunTriggerCol) In(vs ...agent.RunTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunTriggerCol) NotIn(vs ...agent.RunTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SubjectTypeCol is a column of agent.SubjectType values.
-type SubjectTypeCol struct{ keel.StringCol }
+type SubjectTypeCol struct{ keel.TypedStringCol }
 
-func (c SubjectTypeCol) Eq(v agent.SubjectType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SubjectTypeCol) Ne(v agent.SubjectType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SubjectTypeCol) Gt(v agent.SubjectType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SubjectTypeCol) Gte(v agent.SubjectType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SubjectTypeCol) Lt(v agent.SubjectType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SubjectTypeCol) Lte(v agent.SubjectType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SubjectTypeCol) Eq(v agent.SubjectType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SubjectTypeCol) Ne(v agent.SubjectType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SubjectTypeCol) Gt(v agent.SubjectType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SubjectTypeCol) Gte(v agent.SubjectType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SubjectTypeCol) Lt(v agent.SubjectType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SubjectTypeCol) Lte(v agent.SubjectType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SubjectTypeCol) IsDistinctFrom(v agent.SubjectType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubjectTypeCol) Between(lo, hi agent.SubjectType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SubjectTypeCol) To(v agent.SubjectType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SubjectTypeCol) To(v agent.SubjectType) keel.Assignment { return c.Text().To(string(v)) }
 func (c SubjectTypeCol) In(vs ...agent.SubjectType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubjectTypeCol) NotIn(vs ...agent.SubjectType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TypeCol is a column of agent.Type values.
-type TypeCol struct{ keel.StringCol }
+type TypeCol struct{ keel.TypedStringCol }
 
-func (c TypeCol) Eq(v agent.Type) keel.Pred             { return c.StringCol.Eq(string(v)) }
-func (c TypeCol) Ne(v agent.Type) keel.Pred             { return c.StringCol.Ne(string(v)) }
-func (c TypeCol) Gt(v agent.Type) keel.Pred             { return c.StringCol.Gt(string(v)) }
-func (c TypeCol) Gte(v agent.Type) keel.Pred            { return c.StringCol.Gte(string(v)) }
-func (c TypeCol) Lt(v agent.Type) keel.Pred             { return c.StringCol.Lt(string(v)) }
-func (c TypeCol) Lte(v agent.Type) keel.Pred            { return c.StringCol.Lte(string(v)) }
-func (c TypeCol) IsDistinctFrom(v agent.Type) keel.Pred { return c.StringCol.IsDistinctFrom(string(v)) }
+func (c TypeCol) Eq(v agent.Type) keel.Pred             { return c.Text().Eq(string(v)) }
+func (c TypeCol) Ne(v agent.Type) keel.Pred             { return c.Text().Ne(string(v)) }
+func (c TypeCol) Gt(v agent.Type) keel.Pred             { return c.Text().Gt(string(v)) }
+func (c TypeCol) Gte(v agent.Type) keel.Pred            { return c.Text().Gte(string(v)) }
+func (c TypeCol) Lt(v agent.Type) keel.Pred             { return c.Text().Lt(string(v)) }
+func (c TypeCol) Lte(v agent.Type) keel.Pred            { return c.Text().Lte(string(v)) }
+func (c TypeCol) IsDistinctFrom(v agent.Type) keel.Pred { return c.Text().IsDistinctFrom(string(v)) }
 func (c TypeCol) Between(lo, hi agent.Type) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c TypeCol) To(v agent.Type) keel.Assignment  { return c.StringCol.To(string(v)) }
-func (c TypeCol) In(vs ...agent.Type) keel.Pred    { return c.StringCol.In(keel.Strings(vs)...) }
-func (c TypeCol) NotIn(vs ...agent.Type) keel.Pred { return c.StringCol.NotIn(keel.Strings(vs)...) }
+func (c TypeCol) To(v agent.Type) keel.Assignment { return c.Text().To(string(v)) }
+func (c TypeCol) In(vs ...agent.Type) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c TypeCol) NotIn(vs ...agent.Type) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}

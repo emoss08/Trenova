@@ -84,17 +84,17 @@ type EquipmentContinuitiesTable struct {
 // EquipmentContinuities references the equipment_continuity table.
 var EquipmentContinuities = &EquipmentContinuitiesTable{
 	TableBase:            keel.TableBase{Ref: &equipmentContinuitiesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 2}}},
-	EquipmentType:        EquipmentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 3}}},
-	EquipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 4}}},
-	CurrentLocationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 5}}},
-	PreviousContinuityID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 6}}},
-	SourceType:           SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 7}}},
-	SourceShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 8}}},
-	SourceShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 9}}},
-	SourceAssignmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 10}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 2}}},
+	EquipmentType:        EquipmentTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 3}}},
+	EquipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 4}}},
+	CurrentLocationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 5}}},
+	PreviousContinuityID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 6}}},
+	SourceType:           SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 7}}},
+	SourceShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 8}}},
+	SourceShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 9}}},
+	SourceAssignmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 10}}},
 	IsCurrent:            keel.BoolCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 11}},
 	SupersededAt:         keel.Int64Col{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 12}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 13}},
@@ -106,17 +106,17 @@ var EquipmentContinuities = &EquipmentContinuitiesTable{
 func BuildEquipmentContinuities(r *keel.Ref) *EquipmentContinuitiesTable {
 	return &EquipmentContinuitiesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EquipmentType:        EquipmentTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EquipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CurrentLocationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		PreviousContinuityID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SourceType:           SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SourceShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SourceShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		SourceAssignmentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EquipmentType:        EquipmentTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EquipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CurrentLocationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		PreviousContinuityID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SourceType:           SourceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SourceShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SourceShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SourceAssignmentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		IsCurrent:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
 		SupersededAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -140,8 +140,6 @@ func (t *EquipmentContinuitiesTable) Get(ctx context.Context, db *keel.DB, key p
 
 // EquipmentContinuitiesQuery is a query over equipmentcontinuity.EquipmentContinuity.
 type EquipmentContinuitiesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*equipmentcontinuity.EquipmentContinuity] = (*EquipmentContinuitiesTable)(nil)
 
 var _ keel.Query[*equipmentcontinuity.EquipmentContinuity] = (*EquipmentContinuitiesQuery)(nil)
 
@@ -257,42 +255,42 @@ func (t *EquipmentContinuitiesTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *EquipmentContinuitiesTable) Create(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EquipmentContinuitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EquipmentContinuitiesTable) Save(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EquipmentContinuitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EquipmentContinuitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EquipmentContinuitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EquipmentContinuitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EquipmentContinuitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -464,37 +462,45 @@ func (q *EquipmentContinuitiesQuery) Clone() keel.Query[*equipmentcontinuity.Equ
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EquipmentContinuitiesQuery) One(ctx context.Context, db *keel.DB) (*equipmentcontinuity.EquipmentContinuity, error) {
-	return keel.One[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*equipmentcontinuity.EquipmentContinuity)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EquipmentContinuitiesQuery) First(ctx context.Context, db *keel.DB) (*equipmentcontinuity.EquipmentContinuity, error) {
-	return keel.First[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*equipmentcontinuity.EquipmentContinuity)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EquipmentContinuitiesQuery) List(ctx context.Context, db *keel.DB) ([]*equipmentcontinuity.EquipmentContinuity, error) {
-	return keel.List[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*equipmentcontinuity.EquipmentContinuity)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EquipmentContinuitiesQuery) All(ctx context.Context, db *keel.DB) ([]*equipmentcontinuity.EquipmentContinuity, error) {
-	return keel.All[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*equipmentcontinuity.EquipmentContinuity)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EquipmentContinuitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*equipmentcontinuity.EquipmentContinuity, error) {
-	return keel.UpdateReturning[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*equipmentcontinuity.EquipmentContinuity)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EquipmentContinuitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*equipmentcontinuity.EquipmentContinuity], error) {
-	return keel.PageOf[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*equipmentcontinuity.EquipmentContinuity])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EquipmentContinuitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*equipmentcontinuity.EquipmentContinuity) error) error {
-	return keel.Each[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*equipmentcontinuity.EquipmentContinuity)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEquipmentContinuity() unsafe.Pointer {
@@ -609,75 +615,67 @@ var enumSourceType = [...]schema.EnumValue{
 }
 
 // EquipmentTypeCol is a column of equipmentcontinuity.EquipmentType values.
-type EquipmentTypeCol struct{ keel.StringCol }
+type EquipmentTypeCol struct{ keel.TypedStringCol }
 
 func (c EquipmentTypeCol) Eq(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EquipmentTypeCol) Ne(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EquipmentTypeCol) Gt(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EquipmentTypeCol) Gte(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EquipmentTypeCol) Lt(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EquipmentTypeCol) Lte(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EquipmentTypeCol) IsDistinctFrom(v equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EquipmentTypeCol) Between(lo, hi equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EquipmentTypeCol) To(v equipmentcontinuity.EquipmentType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EquipmentTypeCol) In(vs ...equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EquipmentTypeCol) NotIn(vs ...equipmentcontinuity.EquipmentType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceTypeCol is a column of equipmentcontinuity.SourceType values.
-type SourceTypeCol struct{ keel.StringCol }
+type SourceTypeCol struct{ keel.TypedStringCol }
 
-func (c SourceTypeCol) Eq(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SourceTypeCol) Ne(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SourceTypeCol) Gt(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c SourceTypeCol) Eq(v equipmentcontinuity.SourceType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c SourceTypeCol) Ne(v equipmentcontinuity.SourceType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c SourceTypeCol) Gt(v equipmentcontinuity.SourceType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c SourceTypeCol) Gte(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c SourceTypeCol) Lt(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c SourceTypeCol) Lt(v equipmentcontinuity.SourceType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c SourceTypeCol) Lte(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SourceTypeCol) IsDistinctFrom(v equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceTypeCol) Between(lo, hi equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SourceTypeCol) To(v equipmentcontinuity.SourceType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SourceTypeCol) In(vs ...equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceTypeCol) NotIn(vs ...equipmentcontinuity.SourceType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

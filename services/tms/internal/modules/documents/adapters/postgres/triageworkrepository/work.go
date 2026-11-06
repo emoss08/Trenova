@@ -230,7 +230,7 @@ func (r *repository) AlternateAddresses(
 		)
 		address := candidates.Col("address")
 
-		addresses, err := keel.Into[string](ctx, r.db.Keel(ctx), candidates.Query().
+		addresses, err := keel.Into[string](ctx, r.db.Keel(ctx), keel.RowsOf(candidates.TableRef()).
 			With(candidates).
 			Pick(address).
 			Group(address).

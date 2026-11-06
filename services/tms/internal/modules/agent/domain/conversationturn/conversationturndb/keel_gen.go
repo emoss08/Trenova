@@ -91,16 +91,16 @@ type AssistantTurnsTable struct {
 // AssistantTurns references the assistant_turns table.
 var AssistantTurns = &AssistantTurnsTable{
 	TableBase:      keel.TableBase{Ref: &assistantTurnsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 2}}},
-	ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 3}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 4}}},
-	RunID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 2}}},
+	ThreadID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 4}}},
+	RunID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 5}}},
 	WorkflowID:     keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 6}},
-	Origin:         AssistantTurnOriginCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 7}}},
+	Origin:         AssistantTurnOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 7}}},
 	Input:          keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 8}},
-	Status:         conversationdb.AssistantTurnStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 9}}},
+	Status:         conversationdb.AssistantTurnStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 9}}},
 	ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 10}},
 	StartedAt:      keel.Int64Col{Col: keel.Col{Ref: &assistantTurnsRef, Index: 11}},
 	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &assistantTurnsRef, Index: 12}},
@@ -115,16 +115,16 @@ var AssistantTurns = &AssistantTurnsTable{
 func BuildAssistantTurns(r *keel.Ref) *AssistantTurnsTable {
 	return &AssistantTurnsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ThreadID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RunID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ThreadID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RunID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		WorkflowID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Origin:         AssistantTurnOriginCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Origin:         AssistantTurnOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Input:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Status:         conversationdb.AssistantTurnStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:         conversationdb.AssistantTurnStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		StartedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -151,8 +151,6 @@ func (t *AssistantTurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // AssistantTurnsQuery is a query over conversationturn.AssistantTurn.
 type AssistantTurnsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*conversationturn.AssistantTurn] = (*AssistantTurnsTable)(nil)
 
 var _ keel.Query[*conversationturn.AssistantTurn] = (*AssistantTurnsQuery)(nil)
 
@@ -268,42 +266,42 @@ func (t *AssistantTurnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *AssistantTurnsTable) Create(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AssistantTurnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AssistantTurnsTable) Save(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AssistantTurnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AssistantTurnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AssistantTurnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AssistantTurnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AssistantTurnsTable) Copy(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -475,37 +473,45 @@ func (q *AssistantTurnsQuery) Clone() keel.Query[*conversationturn.AssistantTurn
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AssistantTurnsQuery) One(ctx context.Context, db *keel.DB) (*conversationturn.AssistantTurn, error) {
-	return keel.One[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*conversationturn.AssistantTurn)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AssistantTurnsQuery) First(ctx context.Context, db *keel.DB) (*conversationturn.AssistantTurn, error) {
-	return keel.First[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*conversationturn.AssistantTurn)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AssistantTurnsQuery) List(ctx context.Context, db *keel.DB) ([]*conversationturn.AssistantTurn, error) {
-	return keel.List[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversationturn.AssistantTurn)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AssistantTurnsQuery) All(ctx context.Context, db *keel.DB) ([]*conversationturn.AssistantTurn, error) {
-	return keel.All[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*conversationturn.AssistantTurn)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AssistantTurnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversationturn.AssistantTurn, error) {
-	return keel.UpdateReturning[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*conversationturn.AssistantTurn)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AssistantTurnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversationturn.AssistantTurn], error) {
-	return keel.PageOf[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*conversationturn.AssistantTurn])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AssistantTurnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversationturn.AssistantTurn) error) error {
-	return keel.Each[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*conversationturn.AssistantTurn)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAssistantTurn() unsafe.Pointer { return unsafe.Pointer(new(conversationturn.AssistantTurn)) }
@@ -646,38 +652,38 @@ var enumConversationAssistantTurnStatus = [...]schema.EnumValue{
 }
 
 // AssistantTurnOriginCol is a column of conversationturn.AssistantTurnOrigin values.
-type AssistantTurnOriginCol struct{ keel.StringCol }
+type AssistantTurnOriginCol struct{ keel.TypedStringCol }
 
 func (c AssistantTurnOriginCol) Eq(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AssistantTurnOriginCol) Ne(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AssistantTurnOriginCol) Gt(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AssistantTurnOriginCol) Gte(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AssistantTurnOriginCol) Lt(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AssistantTurnOriginCol) Lte(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AssistantTurnOriginCol) IsDistinctFrom(v conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AssistantTurnOriginCol) Between(lo, hi conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AssistantTurnOriginCol) To(v conversationturn.AssistantTurnOrigin) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AssistantTurnOriginCol) In(vs ...conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AssistantTurnOriginCol) NotIn(vs ...conversationturn.AssistantTurnOrigin) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

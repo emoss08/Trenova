@@ -93,14 +93,14 @@ type CustomFieldDefinitionsTable struct {
 // CustomFieldDefinitions references the custom_field_definitions table.
 var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
 	TableBase:       keel.TableBase{Ref: &customFieldDefinitionsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 2}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 2}}},
 	ResourceType:    keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 3}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 4}},
 	Label:           keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 5}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 6}},
-	FieldType:       FieldTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 7}}},
+	FieldType:       FieldTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 7}}},
 	IsRequired:      keel.BoolCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 8}},
 	IsActive:        keel.BoolCol{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 9}},
 	DisplayOrder:    keel.Int64Col{Col: keel.Col{Ref: &customFieldDefinitionsRef, Index: 10}},
@@ -119,14 +119,14 @@ var CustomFieldDefinitions = &CustomFieldDefinitionsTable{
 func BuildCustomFieldDefinitions(r *keel.Ref) *CustomFieldDefinitionsTable {
 	return &CustomFieldDefinitionsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ResourceType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Label:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		FieldType:       FieldTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		FieldType:       FieldTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		IsRequired:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		IsActive:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		DisplayOrder:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -157,8 +157,6 @@ func (t *CustomFieldDefinitionsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // CustomFieldDefinitionsQuery is a query over customfield.CustomFieldDefinition.
 type CustomFieldDefinitionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customfield.CustomFieldDefinition] = (*CustomFieldDefinitionsTable)(nil)
 
 var _ keel.Query[*customfield.CustomFieldDefinition] = (*CustomFieldDefinitionsQuery)(nil)
 
@@ -274,42 +272,42 @@ func (t *CustomFieldDefinitionsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *CustomFieldDefinitionsTable) Create(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomFieldDefinitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomFieldDefinitionsTable) Save(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomFieldDefinitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomFieldDefinitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customfield.CustomFieldDefinition) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomFieldDefinitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomFieldDefinitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomFieldDefinitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldDefinition) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -481,37 +479,45 @@ func (q *CustomFieldDefinitionsQuery) Clone() keel.Query[*customfield.CustomFiel
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomFieldDefinitionsQuery) One(ctx context.Context, db *keel.DB) (*customfield.CustomFieldDefinition, error) {
-	return keel.One[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customfield.CustomFieldDefinition)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomFieldDefinitionsQuery) First(ctx context.Context, db *keel.DB) (*customfield.CustomFieldDefinition, error) {
-	return keel.First[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customfield.CustomFieldDefinition)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomFieldDefinitionsQuery) List(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldDefinition, error) {
-	return keel.List[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customfield.CustomFieldDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomFieldDefinitionsQuery) All(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldDefinition, error) {
-	return keel.All[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customfield.CustomFieldDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomFieldDefinitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customfield.CustomFieldDefinition, error) {
-	return keel.UpdateReturning[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customfield.CustomFieldDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomFieldDefinitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customfield.CustomFieldDefinition], error) {
-	return keel.PageOf[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customfield.CustomFieldDefinition])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomFieldDefinitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customfield.CustomFieldDefinition) error) error {
-	return keel.Each[*customfield.CustomFieldDefinition](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customfield.CustomFieldDefinition)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomFieldDefinition() unsafe.Pointer {
@@ -697,10 +703,10 @@ type CustomFieldValuesTable struct {
 // CustomFieldValues references the custom_field_values table.
 var CustomFieldValues = &CustomFieldValuesTable{
 	TableBase:      keel.TableBase{Ref: &customFieldValuesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 2}}},
-	DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 2}}},
+	DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 3}}},
 	ResourceType:   keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 4}},
 	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 5}},
 	Value:          keel.JSONBCol{Col: keel.Col{Ref: &customFieldValuesRef, Index: 6}},
@@ -713,10 +719,10 @@ var CustomFieldValues = &CustomFieldValuesTable{
 func BuildCustomFieldValues(r *keel.Ref) *CustomFieldValuesTable {
 	return &CustomFieldValuesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ResourceType:   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Value:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -746,8 +752,6 @@ func (t *CustomFieldValuesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // CustomFieldValuesQuery is a query over customfield.CustomFieldValue.
 type CustomFieldValuesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customfield.CustomFieldValue] = (*CustomFieldValuesTable)(nil)
 
 var _ keel.Query[*customfield.CustomFieldValue] = (*CustomFieldValuesQuery)(nil)
 
@@ -863,42 +867,42 @@ func (t *CustomFieldValuesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *CustomFieldValuesTable) Create(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CustomFieldValuesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CustomFieldValuesTable) Save(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CustomFieldValuesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CustomFieldValuesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customfield.CustomFieldValue) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CustomFieldValuesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CustomFieldValuesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CustomFieldValuesTable) Copy(ctx context.Context, db *keel.DB, rows []*customfield.CustomFieldValue) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1070,37 +1074,45 @@ func (q *CustomFieldValuesQuery) Clone() keel.Query[*customfield.CustomFieldValu
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CustomFieldValuesQuery) One(ctx context.Context, db *keel.DB) (*customfield.CustomFieldValue, error) {
-	return keel.One[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customfield.CustomFieldValue)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CustomFieldValuesQuery) First(ctx context.Context, db *keel.DB) (*customfield.CustomFieldValue, error) {
-	return keel.First[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customfield.CustomFieldValue)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CustomFieldValuesQuery) List(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldValue, error) {
-	return keel.List[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customfield.CustomFieldValue)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CustomFieldValuesQuery) All(ctx context.Context, db *keel.DB) ([]*customfield.CustomFieldValue, error) {
-	return keel.All[*customfield.CustomFieldValue](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customfield.CustomFieldValue)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CustomFieldValuesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customfield.CustomFieldValue, error) {
-	return keel.UpdateReturning[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customfield.CustomFieldValue)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CustomFieldValuesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customfield.CustomFieldValue], error) {
-	return keel.PageOf[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customfield.CustomFieldValue])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CustomFieldValuesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customfield.CustomFieldValue) error) error {
-	return keel.Each[*customfield.CustomFieldValue](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customfield.CustomFieldValue)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCustomFieldValue() unsafe.Pointer { return unsafe.Pointer(new(customfield.CustomFieldValue)) }
@@ -1188,24 +1200,24 @@ var enumFieldType = [...]schema.EnumValue{
 }
 
 // FieldTypeCol is a column of customfield.FieldType values.
-type FieldTypeCol struct{ keel.StringCol }
+type FieldTypeCol struct{ keel.TypedStringCol }
 
-func (c FieldTypeCol) Eq(v customfield.FieldType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FieldTypeCol) Ne(v customfield.FieldType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FieldTypeCol) Gt(v customfield.FieldType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FieldTypeCol) Gte(v customfield.FieldType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FieldTypeCol) Lt(v customfield.FieldType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FieldTypeCol) Lte(v customfield.FieldType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FieldTypeCol) Eq(v customfield.FieldType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FieldTypeCol) Ne(v customfield.FieldType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FieldTypeCol) Gt(v customfield.FieldType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FieldTypeCol) Gte(v customfield.FieldType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FieldTypeCol) Lt(v customfield.FieldType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FieldTypeCol) Lte(v customfield.FieldType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FieldTypeCol) IsDistinctFrom(v customfield.FieldType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FieldTypeCol) Between(lo, hi customfield.FieldType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FieldTypeCol) To(v customfield.FieldType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c FieldTypeCol) To(v customfield.FieldType) keel.Assignment { return c.Text().To(string(v)) }
 func (c FieldTypeCol) In(vs ...customfield.FieldType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FieldTypeCol) NotIn(vs ...customfield.FieldType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

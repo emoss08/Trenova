@@ -105,13 +105,13 @@ type EDICommunicationProfilesTable struct {
 // EDICommunicationProfiles references the edi_communication_profiles table.
 var EDICommunicationProfiles = &EDICommunicationProfilesTable{
 	TableBase:         keel.TableBase{Ref: &eDICommunicationProfilesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 2}}},
-	EDIConnectionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 3}}},
-	EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 4}}},
-	Method:            ConnectionMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 5}}},
-	Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 6}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 2}}},
+	EDIConnectionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 3}}},
+	EDIPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 4}}},
+	Method:            ConnectionMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 5}}},
+	Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 6}}},
 	Name:              keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 7}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 8}},
 	Config:            keel.JSONBCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 9}},
@@ -131,13 +131,13 @@ var EDICommunicationProfiles = &EDICommunicationProfilesTable{
 func BuildEDICommunicationProfiles(r *keel.Ref) *EDICommunicationProfilesTable {
 	return &EDICommunicationProfilesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIConnectionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Method:            ConnectionMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:            keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIConnectionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EDIPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Method:            ConnectionMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:            keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Config:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -179,8 +179,6 @@ func (t *EDICommunicationProfilesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // EDICommunicationProfilesQuery is a query over edi.EDICommunicationProfile.
 type EDICommunicationProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edi.EDICommunicationProfile] = (*EDICommunicationProfilesTable)(nil)
 
 var _ keel.Query[*edi.EDICommunicationProfile] = (*EDICommunicationProfilesQuery)(nil)
 
@@ -296,42 +294,42 @@ func (t *EDICommunicationProfilesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *EDICommunicationProfilesTable) Create(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDICommunicationProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDICommunicationProfilesTable) Save(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDICommunicationProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDICommunicationProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDICommunicationProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDICommunicationProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDICommunicationProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -503,37 +501,45 @@ func (q *EDICommunicationProfilesQuery) Clone() keel.Query[*edi.EDICommunication
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDICommunicationProfilesQuery) One(ctx context.Context, db *keel.DB) (*edi.EDICommunicationProfile, error) {
-	return keel.One[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edi.EDICommunicationProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDICommunicationProfilesQuery) First(ctx context.Context, db *keel.DB) (*edi.EDICommunicationProfile, error) {
-	return keel.First[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edi.EDICommunicationProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDICommunicationProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDICommunicationProfile, error) {
-	return keel.List[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDICommunicationProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDICommunicationProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDICommunicationProfile, error) {
-	return keel.All[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDICommunicationProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDICommunicationProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDICommunicationProfile, error) {
-	return keel.UpdateReturning[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edi.EDICommunicationProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDICommunicationProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDICommunicationProfile], error) {
-	return keel.PageOf[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edi.EDICommunicationProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDICommunicationProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDICommunicationProfile) error) error {
-	return keel.Each[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edi.EDICommunicationProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDICommunicationProfile() unsafe.Pointer {
@@ -783,27 +789,27 @@ type EDIConnectionsTable struct {
 // EDIConnections references the edi_connections table.
 var EDIConnections = &EDIConnectionsTable{
 	TableBase:            keel.TableBase{Ref: &eDIConnectionsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 1}}},
-	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 2}}},
-	TargetOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 3}}},
-	SourcePartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 4}}},
-	TargetPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 5}}},
-	Method:               ConnectionMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 6}}},
-	Status:               ConnectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 7}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 1}}},
+	SourceOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 2}}},
+	TargetOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 3}}},
+	SourcePartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 4}}},
+	TargetPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 5}}},
+	Method:               ConnectionMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 6}}},
+	Status:               ConnectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 7}}},
 	Capabilities:         keel.JSONBCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 8}},
 	SourcePartnerConfig:  keel.JSONBCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 9}},
 	TargetPartnerConfig:  keel.JSONBCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 10}},
-	RequestedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 11}}},
+	RequestedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 11}}},
 	RequestedAt:          keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 12}},
-	AcceptedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 13}}},
+	AcceptedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 13}}},
 	AcceptedAt:           keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 14}},
-	RejectedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 15}}},
+	RejectedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 15}}},
 	RejectedAt:           keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 16}},
 	RejectionReason:      keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 17}},
-	SuspendedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 18}}},
+	SuspendedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 18}}},
 	SuspendedAt:          keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 19}},
-	RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 20}}},
+	RevokedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 20}}},
 	RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 21}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 22}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 23}},
@@ -814,27 +820,27 @@ var EDIConnections = &EDIConnectionsTable{
 func BuildEDIConnections(r *keel.Ref) *EDIConnectionsTable {
 	return &EDIConnectionsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TargetOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourcePartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TargetPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Method:               ConnectionMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:               ConnectionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TargetOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourcePartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TargetPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Method:               ConnectionMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:               ConnectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Capabilities:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		SourcePartnerConfig:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		TargetPartnerConfig:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		RequestedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		RequestedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		RequestedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		AcceptedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		AcceptedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		AcceptedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		RejectedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		RejectedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		RejectedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		RejectionReason:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		SuspendedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		SuspendedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		SuspendedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		RevokedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -877,8 +883,6 @@ func (t *EDIConnectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // EDIConnectionsQuery is a query over edi.EDIConnection.
 type EDIConnectionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edi.EDIConnection] = (*EDIConnectionsTable)(nil)
 
 var _ keel.Query[*edi.EDIConnection] = (*EDIConnectionsQuery)(nil)
 
@@ -994,42 +998,42 @@ func (t *EDIConnectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *EDIConnectionsTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIConnection) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIConnectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIConnectionsTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIConnection, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIConnectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIConnection, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIConnectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIConnection) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIConnectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIConnectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIConnectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1201,37 +1205,45 @@ func (q *EDIConnectionsQuery) Clone() keel.Query[*edi.EDIConnection] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIConnectionsQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIConnection, error) {
-	return keel.One[*edi.EDIConnection](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIConnection)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIConnectionsQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIConnection, error) {
-	return keel.First[*edi.EDIConnection](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIConnection)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIConnectionsQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIConnection, error) {
-	return keel.List[*edi.EDIConnection](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIConnection)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIConnectionsQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIConnection, error) {
-	return keel.All[*edi.EDIConnection](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIConnection)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIConnectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIConnection, error) {
-	return keel.UpdateReturning[*edi.EDIConnection](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edi.EDIConnection)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIConnectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIConnection], error) {
-	return keel.PageOf[*edi.EDIConnection](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edi.EDIConnection])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIConnectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIConnection) error) error {
-	return keel.Each[*edi.EDIConnection](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edi.EDIConnection)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIConnection() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIConnection)) }
@@ -1481,10 +1493,10 @@ type EDIMappingProfilesTable struct {
 // EDIMappingProfiles references the edi_mapping_profiles table.
 var EDIMappingProfiles = &EDIMappingProfilesTable{
 	TableBase:      keel.TableBase{Ref: &eDIMappingProfilesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 2}}},
-	EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 2}}},
+	EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 3}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 5}},
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 6}},
@@ -1498,10 +1510,10 @@ var EDIMappingProfiles = &EDIMappingProfilesTable{
 func BuildEDIMappingProfiles(r *keel.Ref) *EDIMappingProfilesTable {
 	return &EDIMappingProfilesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -1537,8 +1549,6 @@ func (t *EDIMappingProfilesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // EDIMappingProfilesQuery is a query over edi.EDIMappingProfile.
 type EDIMappingProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edi.EDIMappingProfile] = (*EDIMappingProfilesTable)(nil)
 
 var _ keel.Query[*edi.EDIMappingProfile] = (*EDIMappingProfilesQuery)(nil)
 
@@ -1654,42 +1664,42 @@ func (t *EDIMappingProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *EDIMappingProfilesTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIMappingProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIMappingProfilesTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIMappingProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIMappingProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIMappingProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIMappingProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIMappingProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1861,37 +1871,45 @@ func (q *EDIMappingProfilesQuery) Clone() keel.Query[*edi.EDIMappingProfile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIMappingProfilesQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfile, error) {
-	return keel.One[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIMappingProfile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIMappingProfilesQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfile, error) {
-	return keel.First[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIMappingProfile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIMappingProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfile, error) {
-	return keel.List[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIMappingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIMappingProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfile, error) {
-	return keel.All[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIMappingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIMappingProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIMappingProfile, error) {
-	return keel.UpdateReturning[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edi.EDIMappingProfile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIMappingProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIMappingProfile], error) {
-	return keel.PageOf[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edi.EDIMappingProfile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIMappingProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIMappingProfile) error) error {
-	return keel.Each[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edi.EDIMappingProfile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIMappingProfile() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIMappingProfile)) }
@@ -2044,18 +2062,18 @@ type EDIMappingProfileItemsTable struct {
 // EDIMappingProfileItems references the edi_mapping_profile_items table.
 var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
 	TableBase:        keel.TableBase{Ref: &eDIMappingProfileItemsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 2}}},
-	EDIPartnerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 3}}},
-	MappingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 4}}},
-	EntityType:       MappingEntityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 5}}},
-	SourceID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 6}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 2}}},
+	EDIPartnerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 3}}},
+	MappingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 4}}},
+	EntityType:       MappingEntityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 5}}},
+	SourceID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 6}}},
 	SourceLabel:      keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 7}},
-	TargetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 8}}},
+	TargetID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 8}}},
 	TargetLabel:      keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 9}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 10}}},
-	UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 11}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 10}}},
+	UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 11}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 12}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 13}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 14}},
@@ -2065,18 +2083,18 @@ var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
 func BuildEDIMappingProfileItems(r *keel.Ref) *EDIMappingProfileItemsTable {
 	return &EDIMappingProfileItemsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		MappingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EntityType:       MappingEntityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		SourceID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		MappingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EntityType:       MappingEntityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		SourceID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SourceLabel:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		TargetID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		TargetID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		TargetLabel:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		UpdatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		UpdatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -2108,8 +2126,6 @@ func (t *EDIMappingProfileItemsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // EDIMappingProfileItemsQuery is a query over edi.EDIMappingProfileItem.
 type EDIMappingProfileItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edi.EDIMappingProfileItem] = (*EDIMappingProfileItemsTable)(nil)
 
 var _ keel.Query[*edi.EDIMappingProfileItem] = (*EDIMappingProfileItemsQuery)(nil)
 
@@ -2225,42 +2241,42 @@ func (t *EDIMappingProfileItemsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *EDIMappingProfileItemsTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIMappingProfileItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIMappingProfileItemsTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIMappingProfileItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIMappingProfileItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIMappingProfileItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIMappingProfileItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIMappingProfileItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2432,37 +2448,45 @@ func (q *EDIMappingProfileItemsQuery) Clone() keel.Query[*edi.EDIMappingProfileI
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIMappingProfileItemsQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfileItem, error) {
-	return keel.One[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIMappingProfileItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIMappingProfileItemsQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfileItem, error) {
-	return keel.First[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIMappingProfileItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIMappingProfileItemsQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfileItem, error) {
-	return keel.List[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIMappingProfileItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIMappingProfileItemsQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfileItem, error) {
-	return keel.All[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIMappingProfileItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIMappingProfileItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIMappingProfileItem, error) {
-	return keel.UpdateReturning[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edi.EDIMappingProfileItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIMappingProfileItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIMappingProfileItem], error) {
-	return keel.PageOf[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edi.EDIMappingProfileItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIMappingProfileItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIMappingProfileItem) error) error {
-	return keel.Each[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edi.EDIMappingProfileItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIMappingProfileItem() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIMappingProfileItem)) }
@@ -2670,19 +2694,19 @@ type EDIPartnersTable struct {
 // EDIPartners references the edi_partners table.
 var EDIPartners = &EDIPartnersTable{
 	TableBase:               keel.TableBase{Ref: &eDIPartnersRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 2}}},
-	Kind:                    PartnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 3}}},
-	Status:                  keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 2}}},
+	Kind:                    PartnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 3}}},
+	Status:                  keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 4}}},
 	Code:                    keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 5}},
 	Name:                    keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 6}},
 	Description:             keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 7}},
-	InternalOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 8}}},
-	EDIConnectionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 9}}},
-	CustomerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 10}}},
-	DefaultTransportID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 11}}},
-	DefaultMappingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 12}}},
+	InternalOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 8}}},
+	EDIConnectionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 9}}},
+	CustomerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 10}}},
+	DefaultTransportID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 11}}},
+	DefaultMappingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 12}}},
 	Timezone:                keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 13}},
 	Country:                 keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 14}},
 	ContactName:             keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 15}},
@@ -2702,19 +2726,19 @@ var EDIPartners = &EDIPartnersTable{
 func BuildEDIPartners(r *keel.Ref) *EDIPartnersTable {
 	return &EDIPartnersTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:                    PartnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                  keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:                    PartnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                  keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Code:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Name:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Description:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		InternalOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		EDIConnectionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		CustomerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DefaultTransportID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		DefaultMappingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		InternalOrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		EDIConnectionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CustomerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DefaultTransportID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		DefaultMappingProfileID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Timezone:                keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Country:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		ContactName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
@@ -2776,8 +2800,6 @@ func (t *EDIPartnersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // EDIPartnersQuery is a query over edi.EDIPartner.
 type EDIPartnersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edi.EDIPartner] = (*EDIPartnersTable)(nil)
 
 var _ keel.Query[*edi.EDIPartner] = (*EDIPartnersQuery)(nil)
 
@@ -2893,42 +2915,42 @@ func (t *EDIPartnersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi
 
 // Create inserts row.
 func (t *EDIPartnersTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIPartner) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EDIPartnersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EDIPartnersTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIPartner, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EDIPartnersTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIPartner, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EDIPartnersTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIPartner) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EDIPartnersTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EDIPartnersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EDIPartnersTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3100,37 +3122,45 @@ func (q *EDIPartnersQuery) Clone() keel.Query[*edi.EDIPartner] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EDIPartnersQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIPartner, error) {
-	return keel.One[*edi.EDIPartner](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIPartner)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EDIPartnersQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIPartner, error) {
-	return keel.First[*edi.EDIPartner](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edi.EDIPartner)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EDIPartnersQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIPartner, error) {
-	return keel.List[*edi.EDIPartner](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIPartner)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EDIPartnersQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIPartner, error) {
-	return keel.All[*edi.EDIPartner](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edi.EDIPartner)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EDIPartnersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIPartner, error) {
-	return keel.UpdateReturning[*edi.EDIPartner](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edi.EDIPartner)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EDIPartnersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIPartner], error) {
-	return keel.PageOf[*edi.EDIPartner](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edi.EDIPartner])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EDIPartnersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIPartner) error) error {
-	return keel.Each[*edi.EDIPartner](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edi.EDIPartner)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEDIPartner() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIPartner)) }
@@ -3376,103 +3406,99 @@ var enumPartnerKind = [...]schema.EnumValue{
 }
 
 // ConnectionMethodCol is a column of edi.ConnectionMethod values.
-type ConnectionMethodCol struct{ keel.StringCol }
+type ConnectionMethodCol struct{ keel.TypedStringCol }
 
-func (c ConnectionMethodCol) Eq(v edi.ConnectionMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ConnectionMethodCol) Ne(v edi.ConnectionMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ConnectionMethodCol) Gt(v edi.ConnectionMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ConnectionMethodCol) Gte(v edi.ConnectionMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ConnectionMethodCol) Lt(v edi.ConnectionMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ConnectionMethodCol) Lte(v edi.ConnectionMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ConnectionMethodCol) Eq(v edi.ConnectionMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ConnectionMethodCol) Ne(v edi.ConnectionMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ConnectionMethodCol) Gt(v edi.ConnectionMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ConnectionMethodCol) Gte(v edi.ConnectionMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ConnectionMethodCol) Lt(v edi.ConnectionMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ConnectionMethodCol) Lte(v edi.ConnectionMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ConnectionMethodCol) IsDistinctFrom(v edi.ConnectionMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ConnectionMethodCol) Between(lo, hi edi.ConnectionMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ConnectionMethodCol) To(v edi.ConnectionMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ConnectionMethodCol) In(vs ...edi.ConnectionMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ConnectionMethodCol) NotIn(vs ...edi.ConnectionMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ConnectionStatusCol is a column of edi.ConnectionStatus values.
-type ConnectionStatusCol struct{ keel.StringCol }
+type ConnectionStatusCol struct{ keel.TypedStringCol }
 
-func (c ConnectionStatusCol) Eq(v edi.ConnectionStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ConnectionStatusCol) Ne(v edi.ConnectionStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ConnectionStatusCol) Gt(v edi.ConnectionStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ConnectionStatusCol) Gte(v edi.ConnectionStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ConnectionStatusCol) Lt(v edi.ConnectionStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ConnectionStatusCol) Lte(v edi.ConnectionStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ConnectionStatusCol) Eq(v edi.ConnectionStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ConnectionStatusCol) Ne(v edi.ConnectionStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ConnectionStatusCol) Gt(v edi.ConnectionStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ConnectionStatusCol) Gte(v edi.ConnectionStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ConnectionStatusCol) Lt(v edi.ConnectionStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ConnectionStatusCol) Lte(v edi.ConnectionStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ConnectionStatusCol) IsDistinctFrom(v edi.ConnectionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ConnectionStatusCol) Between(lo, hi edi.ConnectionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ConnectionStatusCol) To(v edi.ConnectionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ConnectionStatusCol) In(vs ...edi.ConnectionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ConnectionStatusCol) NotIn(vs ...edi.ConnectionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MappingEntityTypeCol is a column of edi.MappingEntityType values.
-type MappingEntityTypeCol struct{ keel.StringCol }
+type MappingEntityTypeCol struct{ keel.TypedStringCol }
 
-func (c MappingEntityTypeCol) Eq(v edi.MappingEntityType) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c MappingEntityTypeCol) Ne(v edi.MappingEntityType) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c MappingEntityTypeCol) Gt(v edi.MappingEntityType) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c MappingEntityTypeCol) Gte(v edi.MappingEntityType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c MappingEntityTypeCol) Lt(v edi.MappingEntityType) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c MappingEntityTypeCol) Lte(v edi.MappingEntityType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c MappingEntityTypeCol) Eq(v edi.MappingEntityType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MappingEntityTypeCol) Ne(v edi.MappingEntityType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MappingEntityTypeCol) Gt(v edi.MappingEntityType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MappingEntityTypeCol) Gte(v edi.MappingEntityType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MappingEntityTypeCol) Lt(v edi.MappingEntityType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MappingEntityTypeCol) Lte(v edi.MappingEntityType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MappingEntityTypeCol) IsDistinctFrom(v edi.MappingEntityType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MappingEntityTypeCol) Between(lo, hi edi.MappingEntityType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MappingEntityTypeCol) To(v edi.MappingEntityType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MappingEntityTypeCol) In(vs ...edi.MappingEntityType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MappingEntityTypeCol) NotIn(vs ...edi.MappingEntityType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PartnerKindCol is a column of edi.PartnerKind values.
-type PartnerKindCol struct{ keel.StringCol }
+type PartnerKindCol struct{ keel.TypedStringCol }
 
-func (c PartnerKindCol) Eq(v edi.PartnerKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PartnerKindCol) Ne(v edi.PartnerKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PartnerKindCol) Gt(v edi.PartnerKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PartnerKindCol) Gte(v edi.PartnerKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PartnerKindCol) Lt(v edi.PartnerKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PartnerKindCol) Lte(v edi.PartnerKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PartnerKindCol) Eq(v edi.PartnerKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PartnerKindCol) Ne(v edi.PartnerKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PartnerKindCol) Gt(v edi.PartnerKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PartnerKindCol) Gte(v edi.PartnerKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PartnerKindCol) Lt(v edi.PartnerKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PartnerKindCol) Lte(v edi.PartnerKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PartnerKindCol) IsDistinctFrom(v edi.PartnerKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PartnerKindCol) Between(lo, hi edi.PartnerKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PartnerKindCol) To(v edi.PartnerKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PartnerKindCol) To(v edi.PartnerKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c PartnerKindCol) In(vs ...edi.PartnerKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PartnerKindCol) NotIn(vs ...edi.PartnerKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

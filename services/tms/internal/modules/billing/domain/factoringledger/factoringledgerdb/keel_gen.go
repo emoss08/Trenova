@@ -124,31 +124,31 @@ type ReserveEntriesTable struct {
 // ReserveEntries references the factoring_reserve_entries table.
 var ReserveEntries = &ReserveEntriesTable{
 	TableBase:          keel.TableBase{Ref: &reserveEntriesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 2}}},
-	FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 3}}},
-	AgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 4}}},
-	SubmissionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 5}}},
-	SubmissionItemID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 6}}},
-	InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 7}}},
-	CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 8}}},
-	Kind:               ReserveEntryKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 9}}},
-	Treatment:          factoringdb.AccountingTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 10}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 2}}},
+	FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 3}}},
+	AgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 4}}},
+	SubmissionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 5}}},
+	SubmissionItemID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 6}}},
+	InvoiceID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 7}}},
+	CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 8}}},
+	Kind:               ReserveEntryKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 9}}},
+	Treatment:          factoringdb.AccountingTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 10}}},
 	CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 11}},
 	CashMinor:          keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 12}},
 	FeeMinor:           keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 13}},
 	ReserveMinor:       keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 14}},
 	LiabilityMinor:     keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 15}},
 	ARMinor:            keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 16}},
-	JournalEntryID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 17}}},
-	JournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 18}}},
+	JournalEntryID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 17}}},
+	JournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 18}}},
 	AccountingDate:     keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 19}},
 	OccurredOn:         keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 20}},
-	ReversesEntryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 21}}},
-	RemittanceLineID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 22}}},
+	ReversesEntryID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 21}}},
+	RemittanceLineID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 22}}},
 	Memo:               keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 23}},
-	CreatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 24}}},
+	CreatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reserveEntriesRef, Index: 24}}},
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reserveEntriesRef, Index: 25}},
 }
 
@@ -156,31 +156,31 @@ var ReserveEntries = &ReserveEntriesTable{
 func BuildReserveEntries(r *keel.Ref) *ReserveEntriesTable {
 	return &ReserveEntriesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FactoringCompanyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		AgreementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		SubmissionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		SubmissionItemID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		CustomerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Kind:               ReserveEntryKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Treatment:          factoringdb.AccountingTreatmentCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FactoringCompanyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		AgreementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		SubmissionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		SubmissionItemID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		InvoiceID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CustomerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Kind:               ReserveEntryKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Treatment:          factoringdb.AccountingTreatmentCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		CurrencyCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		CashMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		FeeMinor:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ReserveMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		LiabilityMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ARMinor:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		JournalEntryID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		JournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		JournalEntryID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		JournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		AccountingDate:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		OccurredOn:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		ReversesEntryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		RemittanceLineID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		ReversesEntryID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		RemittanceLineID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		Memo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		CreatedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		CreatedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 	}
 }
@@ -220,8 +220,6 @@ func (t *ReserveEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // ReserveEntriesQuery is a query over factoringledger.ReserveEntry.
 type ReserveEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*factoringledger.ReserveEntry] = (*ReserveEntriesTable)(nil)
 
 var _ keel.Query[*factoringledger.ReserveEntry] = (*ReserveEntriesQuery)(nil)
 
@@ -337,42 +335,42 @@ func (t *ReserveEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *ReserveEntriesTable) Create(ctx context.Context, db *keel.DB, row *factoringledger.ReserveEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReserveEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringledger.ReserveEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReserveEntriesTable) Save(ctx context.Context, db *keel.DB, row *factoringledger.ReserveEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReserveEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringledger.ReserveEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReserveEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringledger.ReserveEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReserveEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringledger.ReserveEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReserveEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringledger.ReserveEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReserveEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringledger.ReserveEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -544,37 +542,45 @@ func (q *ReserveEntriesQuery) Clone() keel.Query[*factoringledger.ReserveEntry] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReserveEntriesQuery) One(ctx context.Context, db *keel.DB) (*factoringledger.ReserveEntry, error) {
-	return keel.One[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*factoringledger.ReserveEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReserveEntriesQuery) First(ctx context.Context, db *keel.DB) (*factoringledger.ReserveEntry, error) {
-	return keel.First[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*factoringledger.ReserveEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReserveEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringledger.ReserveEntry, error) {
-	return keel.List[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringledger.ReserveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReserveEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringledger.ReserveEntry, error) {
-	return keel.All[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*factoringledger.ReserveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReserveEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringledger.ReserveEntry, error) {
-	return keel.UpdateReturning[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*factoringledger.ReserveEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReserveEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringledger.ReserveEntry], error) {
-	return keel.PageOf[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*factoringledger.ReserveEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReserveEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringledger.ReserveEntry) error) error {
-	return keel.Each[*factoringledger.ReserveEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*factoringledger.ReserveEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReserveEntry() unsafe.Pointer { return unsafe.Pointer(new(factoringledger.ReserveEntry)) }
@@ -761,38 +767,38 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ReserveEntryKindCol is a column of factoringledger.ReserveEntryKind values.
-type ReserveEntryKindCol struct{ keel.StringCol }
+type ReserveEntryKindCol struct{ keel.TypedStringCol }
 
 func (c ReserveEntryKindCol) Eq(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReserveEntryKindCol) Ne(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReserveEntryKindCol) Gt(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReserveEntryKindCol) Gte(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReserveEntryKindCol) Lt(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReserveEntryKindCol) Lte(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReserveEntryKindCol) IsDistinctFrom(v factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReserveEntryKindCol) Between(lo, hi factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReserveEntryKindCol) To(v factoringledger.ReserveEntryKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReserveEntryKindCol) In(vs ...factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReserveEntryKindCol) NotIn(vs ...factoringledger.ReserveEntryKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
