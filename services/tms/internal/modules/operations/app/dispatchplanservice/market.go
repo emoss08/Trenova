@@ -65,10 +65,10 @@ func driverDuals(
 		return duals
 	}
 
-	solution := assignmentsolver.SolveWithPrices(problemOf(graph))
+	values := assignmentsolver.SolveWithPrices(problemOf(graph)).ColumnValues()
 	for col, driver := range graph.Drivers {
-		if value := solution.ColumnValue(col); value > 0 {
-			duals[driver.WorkerID] = value
+		if values[col] > 0 {
+			duals[driver.WorkerID] = values[col]
 		}
 	}
 

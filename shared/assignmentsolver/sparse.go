@@ -1,6 +1,9 @@
 package assignmentsolver
 
-import "container/heap"
+import (
+	"container/heap"
+	"sync"
+)
 
 const Unassigned = -1
 
@@ -43,7 +46,8 @@ type solver struct {
 	visited  []int
 	frontier columnHeap
 
-	byCol [][]rowArc
+	byCol       [][]rowArc
+	scratchPool sync.Pool
 }
 
 func Solve(p Problem) Result {
@@ -283,55 +287,6 @@ func (s *solver) result() Result {
 	return result
 }
 
-func (sol Solution) ColumnValue(col int) int64 {
-	s := sol.s
-	if s == nil || !s.validCol(col) || s.colOwner[col] == Unassigned {
-		return 0
-	}
-	_, toFree := s.reroute(s.colOwner[col], Unassigned, col, Unassigned)
-	if toFree < 0 {
-		return 0
-	}
-
-	return toFree - s.v[col]
-}
-
-func (sol Solution) OverrideCost(row, col int) (int64, bool) {
-	s := sol.s
-	if s == nil || row < 0 || row >= len(s.rows) || !s.validCol(col) {
-		return 0, false
-	}
-	cost, ok := arcTo(s.rows[row], col)
-	if !ok {
-		return 0, false
-	}
-	freed := s.rowCol[row]
-	if freed == col {
-		return 0, true
-	}
-
-	reduced := cost - s.u[row] - s.v[col]
-	owner := s.colOwner[col]
-	release := s.releaseValue(freed, row, owner, col)
-	if owner == Unassigned {
-		return reduced + release, true
-	}
-
-	toFreed, toFree := s.reroute(owner, row, col, freed)
-	best := int64(-1)
-	if toFreed >= 0 {
-		best = toFreed
-	}
-	if toFree >= 0 {
-		best = minKnown(best, toFree+release)
-	}
-	if best < 0 {
-		return 0, false
-	}
-
-	return reduced + best, true
-}
-
 func arcTo(arcs []Arc, col int) (int64, bool) {
 	for _, arc := range arcs {
 		if arc.Col == col {
@@ -340,111 +295,6 @@ func arcTo(arcs []Arc, col int) (int64, bool) {
 	}
 
 	return 0, false
-}
-
-func (s *solver) reroute(start, fixedRow, takenCol, freedCol int) (toFreed, toFree int64) {
-	dist := make(map[int]int64, 64)
-	done := make(map[int]bool, 64)
-	frontier := columnHeap{}
-	toFreed, toFree = -1, -1
-
-	push := func(col int, d int64) {
-		if col == takenCol || done[col] {
-			return
-		}
-		if current, seen := dist[col]; seen && d >= current {
-			return
-		}
-		dist[col] = d
-		heap.Push(&frontier, columnEntry{col: col, dist: d})
-	}
-	relax := func(row int, base int64) {
-		for _, arc := range s.rows[row] {
-			if s.validCol(arc.Col) {
-				push(arc.Col, base+arc.Cost-s.u[row]-s.v[arc.Col])
-			}
-		}
-		dummy := s.cols + row
-		push(dummy, base+s.uncoveredCost(row)-s.u[row]-s.v[dummy])
-	}
-
-	relax(start, 0)
-	for frontier.Len() > 0 {
-		top, ok := frontier.pop()
-		if !ok {
-			break
-		}
-		if done[top.col] || top.dist != dist[top.col] {
-			continue
-		}
-		if toFreed >= 0 && toFree >= 0 {
-			break
-		}
-		done[top.col] = true
-
-		owner := s.colOwner[top.col]
-		switch {
-		case top.col == freedCol:
-			if toFreed < 0 {
-				toFreed = top.dist
-			}
-		case owner == Unassigned:
-			if toFree < 0 {
-				toFree = top.dist
-			}
-		case owner != fixedRow:
-			relax(owner, top.dist)
-		}
-	}
-
-	return toFreed, toFree
-}
-
-func (s *solver) releaseValue(freed, fixedRow, movingRow, takenCol int) int64 {
-	best := -s.v[freed]
-	if freed >= s.cols {
-		return best
-	}
-
-	dist := map[int]int64{freed: 0}
-	done := make(map[int]bool, 64)
-	frontier := columnHeap{{col: freed, dist: 0}}
-	for frontier.Len() > 0 {
-		top, ok := frontier.pop()
-		if !ok {
-			break
-		}
-		if done[top.col] || top.dist != dist[top.col] {
-			continue
-		}
-		if top.dist >= best {
-			break
-		}
-		done[top.col] = true
-		if top.col != freed {
-			best = min(best, top.dist-s.v[top.col])
-		}
-		if top.col >= s.cols {
-			continue
-		}
-
-		for row, arcs := range s.takers(top.col) {
-			if row == fixedRow || row == movingRow {
-				continue
-			}
-			held := s.rowCol[row]
-			if held == takenCol || held == Unassigned {
-				continue
-			}
-			next := top.dist + arcs - s.u[row] - s.v[top.col]
-			if current, seen := dist[held]; !seen || next < current {
-				dist[held] = next
-				heap.Push(&frontier, columnEntry{col: held, dist: next})
-			}
-		}
-	}
-
-	return best
 }
 
 func (s *solver) indexColumns() {
@@ -458,24 +308,7 @@ func (s *solver) indexColumns() {
 	}
 }
 
-func (s *solver) takers(col int) map[int]int64 {
-	out := make(map[int]int64, len(s.byCol[col]))
-	for _, arc := range s.byCol[col] {
-		out[arc.row] = arc.cost
-	}
-
-	return out
-}
-
 type rowArc struct {
 	row  int
 	cost int64
-}
-
-func minKnown(best, candidate int64) int64 {
-	if best < 0 || candidate < best {
-		return candidate
-	}
-
-	return best
 }

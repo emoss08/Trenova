@@ -175,7 +175,7 @@ func (s *Service) solve(ctx context.Context, p *solveParams) error {
 		})
 	}
 
-	planImmediate(p.Plan, p.Graph, stabilityOf(
+	planImmediate(ctx, p.Plan, p.Graph, stabilityOf(
 		p.Graph,
 		standing,
 		p.Snapshot.Model.Economics().ReplanChangeCents,

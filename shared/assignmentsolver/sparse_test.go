@@ -3,7 +3,11 @@ package assignmentsolver_test
 import (
 	"fmt"
 	"math/rand"
+	"runtime"
+	"sync/atomic"
 	"testing"
+
+	"github.com/sourcegraph/conc/pool"
 
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/stretchr/testify/assert"
@@ -213,24 +217,67 @@ func TestSolve_MatchesExhaustiveSearchOnRandomBoards(t *testing.T) {
 	}
 }
 
+var benchSizes = [][3]int{{400, 3000, 40}, {1000, 3000, 40}, {2000, 3000, 40}, {5000, 8000, 60}, {5000, 5000, 60}}
+
+func candidateGraph(rows, cols, degree int) assignmentsolver.Problem {
+	return candidateGraphPriced(rows, cols, degree, 1_000_000)
+}
+
+func candidateGraphPriced(rows, cols, degree int, uncovered int64) assignmentsolver.Problem {
+	rng := rand.New(rand.NewSource(7))
+	p := assignmentsolver.Problem{Cols: cols, Rows: make([][]assignmentsolver.Arc, rows)}
+	for i := range rows {
+		for _, j := range rng.Perm(cols)[:degree] {
+			p.Rows[i] = append(
+				p.Rows[i],
+				assignmentsolver.Arc{Col: j, Cost: int64(rng.Intn(100_000))},
+			)
+		}
+		p.Uncovered = append(p.Uncovered, uncovered)
+	}
+
+	return p
+}
+
 func BenchmarkSolve_CandidateGraph(b *testing.B) {
-	for _, size := range [][3]int{{400, 3000, 40}, {1000, 3000, 40}, {2000, 3000, 40}, {5000, 5000, 60}} {
+	for _, size := range benchSizes {
 		rows, cols, degree := size[0], size[1], size[2]
 		b.Run(fmt.Sprintf("%dx%d_k=%d", rows, cols, degree), func(b *testing.B) {
-			rng := rand.New(rand.NewSource(7))
-			p := assignmentsolver.Problem{Cols: cols, Rows: make([][]assignmentsolver.Arc, rows)}
-			for i := range rows {
-				for _, j := range rng.Perm(cols)[:degree] {
-					p.Rows[i] = append(
-						p.Rows[i],
-						assignmentsolver.Arc{Col: j, Cost: int64(rng.Intn(100_000))},
-					)
-				}
-				p.Uncovered = append(p.Uncovered, 1_000_000)
-			}
+			p := candidateGraph(rows, cols, degree)
 			for b.Loop() {
 				assignmentsolver.Solve(p)
 			}
+		})
+	}
+}
+
+func BenchmarkPrices_EveryAssignedDriverAndSixOverrides(b *testing.B) {
+	for _, size := range benchSizes {
+		rows, cols, degree := size[0], size[1], size[2]
+		b.Run(fmt.Sprintf("%dx%d_k=%d", rows, cols, degree), func(b *testing.B) {
+			p := candidateGraphPriced(rows, cols, degree, 80_000)
+			solution := assignmentsolver.SolveWithPrices(p)
+			unknown := 0
+			for b.Loop() {
+				solution.ColumnValues()
+				work := pool.New().WithMaxGoroutines(runtime.GOMAXPROCS(0))
+				var missing atomic.Int64
+				for row, col := range solution.RowAssignment {
+					if col == assignmentsolver.Unassigned {
+						continue
+					}
+					work.Go(func() {
+						for _, arc := range p.Rows[row][:6] {
+							if _, ok := solution.OverrideCost(row, arc.Col); !ok {
+								missing.Add(1)
+							}
+						}
+					})
+				}
+				work.Wait()
+				unknown = int(missing.Load())
+			}
+			b.ReportMetric(float64(unknown), "unknown_overrides")
 		})
 	}
 }
@@ -339,6 +386,29 @@ func TestColumnValue_MatchesRemovingTheDriverOnRandomBoards(t *testing.T) {
 				solution.ColumnValue(col),
 				"trial %d: removing column %d", trial, col,
 			)
+		}
+	}
+}
+
+func TestColumnValues_MatchEachDriversOwnReroute(t *testing.T) {
+	t.Parallel()
+
+	rng := rand.New(rand.NewSource(11))
+	for board := range 3000 {
+		rows, cols := 1+rng.Intn(7), 1+rng.Intn(7)
+		p := assignmentsolver.Problem{Cols: cols, Rows: make([][]assignmentsolver.Arc, rows)}
+		for i := range rows {
+			for _, j := range rng.Perm(cols)[:1+rng.Intn(cols)] {
+				p.Rows[i] = append(p.Rows[i], assignmentsolver.Arc{Col: j, Cost: int64(rng.Intn(50))})
+			}
+			p.Uncovered = append(p.Uncovered, int64(rng.Intn(80)))
+		}
+
+		solution := assignmentsolver.SolveWithPrices(p)
+		values := solution.ColumnValues()
+		require.Len(t, values, cols)
+		for col := range cols {
+			require.Equal(t, solution.ColumnValue(col), values[col], "board %d column %d", board, col)
 		}
 	}
 }

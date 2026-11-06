@@ -2,18 +2,23 @@ package dispatchplanservice
 
 import (
 	"cmp"
+	"context"
+	"runtime"
 	"slices"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
+	"github.com/sourcegraph/conc/pool"
 )
 
 const (
 	alternativesPerMove  = 3
 	alternativesExamined = 2 * alternativesPerMove
+	alternativesBudget   = 1500 * time.Millisecond
 )
 
 func problemOf(graph *dispatchcandidateservice.Graph) assignmentsolver.Problem {
@@ -36,11 +41,14 @@ func problemOf(graph *dispatchcandidateservice.Graph) assignmentsolver.Problem {
 }
 
 func planImmediate(
+	ctx context.Context,
 	plan *dispatchplanports.Plan,
 	graph *dispatchcandidateservice.Graph,
 	stability stability,
 ) {
 	solution := assignmentsolver.SolveWithPrices(stability.apply(problemOf(graph)))
+	values := solution.ColumnValues()
+	alternativesByRow := alternativesForAssigned(ctx, graph, solution)
 
 	for i, move := range graph.Moves {
 		col := solution.RowAssignment[i]
@@ -53,8 +61,8 @@ func planImmediate(
 
 		arc, _ := arcFor(graph.Arcs[i], col)
 		pairing := pairingOf(move, arc.Candidate, graph.Coverage[i])
-		pairing.DriverValueCents = solution.ColumnValue(col)
-		pairing.Alternatives = alternatives(graph, solution, i, col)
+		pairing.DriverValueCents = values[col]
+		pairing.Alternatives = alternativesByRow[i]
 		plan.Pairings = append(plan.Pairings, pairing)
 		plan.CostCents += arc.Candidate.Cost.TotalCents
 	}
@@ -102,6 +110,39 @@ func placeLabel(city, state, name string) string {
 	}
 
 	return city + ", " + state
+}
+
+func alternativesForAssigned(
+	ctx context.Context,
+	graph *dispatchcandidateservice.Graph,
+	solution assignmentsolver.Solution,
+) [][]dispatchplanprice.Alternative {
+	ctx, cancel := context.WithTimeout(ctx, alternativesBudget)
+	defer cancel()
+
+	rows := make([]int, 0, len(graph.Moves))
+	for row, col := range solution.RowAssignment {
+		if col != assignmentsolver.Unassigned {
+			rows = append(rows, row)
+		}
+	}
+	slices.SortStableFunc(rows, func(a, b int) int {
+		return cmp.Compare(graph.Moves[a].OriginWindowStart, graph.Moves[b].OriginWindowStart)
+	})
+
+	out := make([][]dispatchplanprice.Alternative, len(graph.Moves))
+	work := pool.New().WithMaxGoroutines(runtime.GOMAXPROCS(0))
+	for _, row := range rows {
+		work.Go(func() {
+			if ctx.Err() != nil {
+				return
+			}
+			out[row] = alternatives(graph, solution, row, solution.RowAssignment[row])
+		})
+	}
+	work.Wait()
+
+	return out
 }
 
 func alternatives(

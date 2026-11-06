@@ -1,6 +1,7 @@
 package dispatchplanservice
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
@@ -93,7 +94,7 @@ func emptyPlan() *dispatchplanports.Plan {
 
 func runImmediate(graph *dispatchcandidateservice.Graph) *dispatchplanports.Plan {
 	plan := emptyPlan()
-	planImmediate(plan, graph, stability{})
+	planImmediate(context.Background(), plan, graph, stability{})
 
 	return plan
 }
@@ -428,14 +429,14 @@ func TestPlanImmediate_KeepsTheLastPlansDriverUnlessChangingSavesMoreThanTheRepl
 
 	kept := newGraph()
 	keptPlan := emptyPlan()
-	planImmediate(keptPlan, kept, stability{incumbents: []int{1}, cents: 50})
+	planImmediate(context.Background(), keptPlan, kept, stability{incumbents: []int{1}, cents: 50})
 	require.Len(t, keptPlan.Pairings, 1)
 	assert.Equal(t, kept.Drivers[1].WorkerID, keptPlan.Pairings[0].Candidate.WorkerID,
 		"saving 30 is not worth a change that costs 50")
 
 	changed := newGraph()
 	changedPlan := emptyPlan()
-	planImmediate(changedPlan, changed, stability{incumbents: []int{1}, cents: 20})
+	planImmediate(context.Background(), changedPlan, changed, stability{incumbents: []int{1}, cents: 20})
 	require.Len(t, changedPlan.Pairings, 1)
 	assert.Equal(t, changed.Drivers[0].WorkerID, changedPlan.Pairings[0].Candidate.WorkerID,
 		"saving 30 is worth a change that costs 20")
