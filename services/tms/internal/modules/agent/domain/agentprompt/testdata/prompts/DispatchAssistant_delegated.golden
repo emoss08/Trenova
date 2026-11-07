@@ -42,7 +42,7 @@ What find_tools can load, by area of Trenova:
 - Billing (1 tool): rate quote
 - Carriers (2 tools): carrier tender, rate confirmation
 - Desk (3 tools): briefing, desk
-- Dispatch (1 tool): shipment move
+- Dispatch (2 tools): shipment move
 - EDI (5 tools): edi
 - Equipment (2 tools): tractor, trailer
 - Human resources (5 tools): worker, worker credential, worker pto

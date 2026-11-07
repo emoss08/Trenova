@@ -10679,6 +10679,15 @@
       "routes/desk"
     ]
   },
+  "A record change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A record changed after it was written; the evidence chain no longer verifies": {
     "sites": 1,
     "scope": [
@@ -11082,6 +11091,15 @@
     ]
   },
   "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A report run is waited on by the conversation that started it": {
     "sites": 1,
     "scope": [
       "go"
@@ -80983,6 +81001,15 @@
       "go/other"
     ]
   },
+  "Desk picking work back up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Desk settings": {
     "sites": 1,
     "scope": [
@@ -88709,6 +88736,15 @@
     ],
     "areas": [
       "routes/dash-control"
+    ]
+  },
+  "Drivers cover the freight ahead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.": {
@@ -142796,6 +142832,15 @@
       "routes/agent-control"
     ]
   },
+  "Likely loads": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Likely range": {
     "sites": 1,
     "scope": [
@@ -165656,6 +165701,15 @@
       "routes/customer-statement"
     ]
   },
+  "No customer stands out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No customers yet": {
     "sites": 1,
     "scope": [
@@ -166995,6 +167049,15 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "No freight expected beyond your drivers in the next 48 hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "No fuel indices yet": {
@@ -176421,6 +176484,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Nothing moving right now.": {
@@ -200103,6 +200175,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Picks up when it changes; gives up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Pickup": {
@@ -250257,6 +250338,15 @@
       "routes/customer"
     ]
   },
+  "Short by": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Short context explaining when to apply this reason; use customer-safe wording.": {
     "sites": 1,
     "scope": [
@@ -279308,6 +279398,15 @@
       "apps/web/components"
     ]
   },
+  "The outlook didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The outstanding balance will no longer be recovered from future settlements.": {
     "sites": 1,
     "scope": [
@@ -292852,6 +292951,15 @@
     ]
   },
   "This isn't an empty list: covered moves may still be slipping. The Watchtower has them too.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "This isn't an empty outlook: freight may still be coming where drivers are short.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -310492,6 +310600,33 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Usually up to {0, plural, one {# load} other {# loads}} in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Usually {0}–{1} loads in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Utah (UT)": {
@@ -341180,6 +341315,15 @@
       "routes/agent-control"
     ]
   },
+  "recordId does not name a kind of record Trenova keeps. Use the id a tool returned.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "reference": {
     "sites": 1,
     "scope": [
@@ -351387,6 +351531,15 @@
     ]
   },
   "{0, plural, one {· a carrier backed out once} other {· carriers backed out # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "{0, plural, other {# booked}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -363626,6 +363779,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} still owed": {

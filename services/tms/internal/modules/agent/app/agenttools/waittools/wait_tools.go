@@ -79,23 +79,22 @@ func (t *waitUntilTool) Description() string {
 		"arrival or departure (StopArrival, StopDeparture: met when the truck is seen there " +
 		"or the time is recorded), a reply about a shipment or from a carrier or customer " +
 		"(Reply), an appointment coming round (AppointmentNear), detention free time running " +
-		"out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), any record " +
-		"being changed by a person or the system (RecordChanged), or a time (Time). Use " +
-		"RecordChanged when work is blocked on something a person has to fix on a record (a " +
-		"missing POD on the shipment an invoice is for, a rate on a billing queue item): " +
-		"name that record in recordId and you pick the work up once they have changed it, " +
-		"without them having to come back and tell you. When it ends, or gives up after " +
-		"giveUpAfterHours, you are started again here, told what happened and what you said " +
-		"you would do. A wait on something already true is refused with what is true now. " +
-		"After setting one, end your turn: say in one line what you wait for and what you " +
-		"will do then."
+		"out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time " +
+		"(Time). When it ends, or gives up after giveUpAfterHours, you are started again " +
+		"here, told what happened and what you said you would do. A wait on something " +
+		"already true is refused with what is true now. After setting one, end your turn: " +
+		"say in one line what you wait for and what you will do then."
 }
 
 func (t *waitUntilTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"until": agenttoolschema.Enum("What to wait for.", waitKinds),
+			"until": agenttoolschema.Enum("What to wait for. RecordChanged waits for any record "+
+				"to be changed by a person or the system: use it when a person must fix "+
+				"something on a record before you can go on (a missing POD on the shipment an "+
+				"invoice bills), naming it in recordId, so you pick the work up once they have "+
+				"changed it rather than asking them to come back and tell you.", waitKinds),
 			toolparams.ParamDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
@@ -125,9 +124,9 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 				"For Reply: a reply from this customer, from customer_list."),
 			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
 				"For HOSDriveBelow: the driver, from worker_list."),
-			"recordId": agenttoolschema.IDText("For RecordChanged: the record whose change you " +
-				"wait for, by the id a tool returned (shp_…, inv_…, bq_…). Name the record that " +
-				"holds what must be fixed, not the one you will change afterwards."),
+			"recordId": agenttoolschema.IDText("For RecordChanged: the record that holds what " +
+				"must be fixed, by the id shipment_get, invoice_get, billing_get_queue_item or " +
+				"another tool returned, not the record you will change afterwards."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",

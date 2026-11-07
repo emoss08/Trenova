@@ -59,8 +59,9 @@ type RecordWatchFeedParams struct {
 // watch ends, so an expired watch costs nothing and is trimmed as new ones
 // arrive. A follower reads every shard through a consumer group without
 // acknowledging (at most once: a change lost to a crash is what the wait's
-// own expiry is for) and checks each batch against the registers in one
-// pipelined round trip.
+// own expiry is for) and checks each batch against the registers in two
+// pipelined round trips: which tenants watch anything, then which of their
+// changed records they watch.
 type RecordWatchFeed struct {
 	client *redis.Client
 	shards int
@@ -222,40 +223,56 @@ type candidate struct {
 	change  realtimeports.WatchedRecordChange
 }
 
-// watched decodes the batch's tenant-wide invalidations and keeps the ones
-// whose record a tenant's register holds, read in one pipelined round trip.
+// watched keeps the batch's tenant-wide invalidations whose record a
+// tenant's register holds. It reads each entry's header, asks which of the
+// batch's tenants hold a register at all, and decodes payloads only for
+// those: the cost of a batch grows with the writes of tenants that watch
+// something, not with every write. Two pipelined round trips per batch.
 func (f *RecordWatchFeed) watched(
 	ctx context.Context,
 	read []redis.XStream,
 	shardOf map[string]int,
 ) []realtimeports.TenantRecordChange {
-	byTenant := make(map[string][]candidate)
+	byTenant := make(map[string][]*entry)
 	order := make([]string, 0, 4)
 	for _, stream := range read {
 		shard := shardOf[stream.Stream]
 		for i := range stream.Messages {
-			c, tenant, ok := decodeCandidate(shard, &stream.Messages[i])
+			e, ok := tenantInvalidation(shard, &stream.Messages[i])
 			if !ok {
 				continue
 			}
-			if _, seen := byTenant[tenant]; !seen {
-				order = append(order, tenant)
+			if _, seen := byTenant[e.tenant]; !seen {
+				order = append(order, e.tenant)
 			}
-			byTenant[tenant] = append(byTenant[tenant], c)
+			byTenant[e.tenant] = append(byTenant[e.tenant], e)
 		}
 	}
-	if len(order) == 0 {
+	watching := f.tenantsWatching(ctx, order)
+	if len(watching) == 0 {
 		return nil
 	}
 
+	candidates := make(map[string][]candidate, len(watching))
 	pipe := f.client.Pipeline()
-	scores := make(map[string]*redis.FloatSliceCmd, len(order))
-	for _, tenant := range order {
-		members := make([]string, 0, len(byTenant[tenant]))
-		for idx := range byTenant[tenant] {
-			members = append(members, byTenant[tenant][idx].change.RecordID)
+	scores := make(map[string]*redis.FloatSliceCmd, len(watching))
+	for _, tenant := range watching {
+		for _, e := range byTenant[tenant] {
+			if c, ok := decodeCandidate(e); ok {
+				candidates[tenant] = append(candidates[tenant], c)
+			}
+		}
+		if len(candidates[tenant]) == 0 {
+			continue
+		}
+		members := make([]string, 0, len(candidates[tenant]))
+		for idx := range candidates[tenant] {
+			members = append(members, candidates[tenant][idx].change.RecordID)
 		}
 		scores[tenant] = pipe.ZMScore(ctx, watchKey(tenant), members...)
+	}
+	if len(scores) == 0 {
+		return nil
 	}
 	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
 		f.l.Warn("could not check changes against the watched records", zap.Error(err))
@@ -264,13 +281,17 @@ func (f *RecordWatchFeed) watched(
 
 	now := float64(f.now())
 	out := make([]realtimeports.TenantRecordChange, 0, 4)
-	for _, tenant := range order {
-		found := scores[tenant].Val()
-		for idx := range byTenant[tenant] {
+	for _, tenant := range watching {
+		cmd, asked := scores[tenant]
+		if !asked {
+			continue
+		}
+		found := cmd.Val()
+		for idx := range candidates[tenant] {
 			if idx >= len(found) || found[idx] < now {
 				continue
 			}
-			c := &byTenant[tenant][idx]
+			c := &candidates[tenant][idx]
 			out = append(out, realtimeports.TenantRecordChange{
 				OrganizationID: c.org,
 				BusinessUnitID: c.bu,
@@ -282,29 +303,60 @@ func (f *RecordWatchFeed) watched(
 	return out
 }
 
-// decodeCandidate reads a tenant-wide invalidation of a record: what every
-// reader of the tenant may see, never one addressed to a person or a scope.
-func decodeCandidate(shard int, msg *redis.XMessage) (candidate, string, bool) {
+// tenantsWatching is the tenants among those given that hold a register.
+func (f *RecordWatchFeed) tenantsWatching(ctx context.Context, tenants []string) []string {
+	if len(tenants) == 0 {
+		return nil
+	}
+	pipe := f.client.Pipeline()
+	exists := make([]*redis.IntCmd, len(tenants))
+	for idx, tenant := range tenants {
+		exists[idx] = pipe.Exists(ctx, watchKey(tenant))
+	}
+	if _, err := pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
+		f.l.Warn("could not read which tenants watch records", zap.Error(err))
+		return nil
+	}
+	out := make([]string, 0, len(tenants))
+	for idx, tenant := range tenants {
+		if exists[idx].Val() > 0 {
+			out = append(out, tenant)
+		}
+	}
+
+	return out
+}
+
+// tenantInvalidation reads an entry's header and keeps a tenant-wide
+// invalidation: what every reader of the tenant may see, never one addressed
+// to a person or a scope.
+func tenantInvalidation(shard int, msg *redis.XMessage) (*entry, bool) {
 	e, ok := decodeEntry(shard, msg)
 	if !ok || e.event != realtimeports.RealtimeEventInvalidation || e.ephemeral ||
 		e.audience != "" || e.scope != "" {
-		return candidate{}, "", false
+		return nil, false
 	}
+
+	return e, true
+}
+
+// decodeCandidate reads the record change an invalidation carries.
+func decodeCandidate(e *entry) (candidate, bool) {
 	orgText, buText, found := strings.Cut(e.tenant, ":")
 	if !found {
-		return candidate{}, "", false
+		return candidate{}, false
 	}
 	org, err := pulid.Parse(orgText)
 	if err != nil {
-		return candidate{}, "", false
+		return candidate{}, false
 	}
 	bu, err := pulid.Parse(buText)
 	if err != nil {
-		return candidate{}, "", false
+		return candidate{}, false
 	}
 	var change changedRecord
 	if sonic.Unmarshal(e.payload, &change) != nil || change.id() == "" {
-		return candidate{}, "", false
+		return candidate{}, false
 	}
 
 	return candidate{
@@ -319,7 +371,7 @@ func decodeCandidate(shard int, msg *redis.XMessage) (candidate, string, bool) {
 			ActorUserID: change.ActorUserID,
 			At:          change.OccurredAt.Unix(),
 		},
-	}, e.tenant, true
+	}, true
 }
 
 // consumerName names this process in the group: its host, which a container

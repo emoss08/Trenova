@@ -102,7 +102,26 @@ func TestRunReport_ADelegatedTaskNeverParksTheConversation(t *testing.T) {
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 		"then":       "total it",
 	})
+	params.ThreadID = pulid.MustNew("athr_")
 	params.Delegated = true
+
+	runWithWaits(t, waits, params)
+
+	assert.Empty(t, waits.asked)
+}
+
+// A background run has no person to read the run as; it reads the run itself
+// on its next pass.
+func TestRunReport_ABackgroundRunNeverParksOnARun(t *testing.T) {
+	t.Parallel()
+
+	waits := &recordedRunWaits{}
+	params := querytooltest.TestParams(map[string]any{
+		"reportKey":  "ar_aging_by_customer",
+		"parameters": map[string]any{"asOf": "2026-03-01"},
+		"then":       "total it",
+	})
+	params.RunID = pulid.MustNew("arun_")
 
 	runWithWaits(t, waits, params)
 
@@ -113,11 +132,13 @@ func TestRunReport_AWaitThatCannotBeSetStillAnswersAsStarted(t *testing.T) {
 	t.Parallel()
 
 	waits := &recordedRunWaits{err: errors.New("There are already 10 open waits here.")}
-	status := runWithWaits(t, waits, querytooltest.TestParams(map[string]any{
+	params := querytooltest.TestParams(map[string]any{
 		"reportKey":  "ar_aging_by_customer",
 		"parameters": map[string]any{"asOf": "2026-03-01"},
 		"then":       "total it",
-	}))
+	})
+	params.ThreadID = pulid.MustNew("athr_")
+	status := runWithWaits(t, waits, params)
 
 	assert.False(t, status.Finished)
 	assert.Contains(t, status.Note, "could not be set to pick itself up")

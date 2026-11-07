@@ -75,6 +75,11 @@ fails it, fix it in the same change if it is small, or name it in your report.
   (`ClaimTestSend` in `inboundmessagerepository/mailbox.go`).
 - **Fair across tenants.** Fan-out passes a tenant fairness key; per-tenant work is batched so one
   large organization cannot starve the rest; public endpoints are rate limited.
+- **Hear a record change off the stream, never by polling.** Work that must wake when a
+  record changes registers the record with `realtimeports.RecordWatchFeed` and follows it
+  from a worker: every write already publishes an invalidation, and the feed reads only each
+  entry's header until a tenant is known to watch something, so the work beyond that grows
+  with the writes of tenants that watch, not with every write ([agent-waits.md](../agent-waits.md#hearing-a-record-change)).
 - **Realtime is invalidation, not payload.** Publish that a record changed
   (`PublishResourceInvalidation`) and let clients refetch through the cache; never broadcast
   records.

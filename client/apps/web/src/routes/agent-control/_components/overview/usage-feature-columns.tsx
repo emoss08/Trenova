@@ -11,6 +11,7 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 const FEATURES: AiUsageFeature[] = [
   "AgentTurn",
+  "AgentWakeUp",
   "AgentEvaluation",
   "TableQuery",
   "FormulaGenerate",

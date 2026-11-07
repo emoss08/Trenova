@@ -134,7 +134,6 @@ type WaitForReportRunRequest struct {
 	Actor        *permissionports.RequestActor
 	DefinitionID pulid.ID
 	ThreadID     pulid.ID
-	RunID        pulid.ID
 	Delegated    bool
 	ReportRunID  pulid.ID
 	ReportName   string
