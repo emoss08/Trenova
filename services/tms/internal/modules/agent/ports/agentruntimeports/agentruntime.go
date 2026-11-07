@@ -3,6 +3,8 @@ package agentruntimeports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
@@ -186,6 +188,9 @@ type RunRequest struct {
 	Command agentextension.Command
 
 	UsagePurpose kernelports.AIUsagePurpose
+	// UsageFeature is the line of AI usage the turn's model calls are kept
+	// under; empty is an ordinary turn.
+	UsageFeature aiusage.Feature
 }
 
 func (r *RunRequest) Ask() string {

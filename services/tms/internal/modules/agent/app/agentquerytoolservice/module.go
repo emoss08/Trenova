@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/webquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workforcequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
@@ -171,8 +172,9 @@ func provideListReportsTool(reports *reporting.Service) agenttoolports.AgentQuer
 func provideRunReportTool(
 	reports *reporting.Service,
 	permissions permissionports.PermissionEngine,
+	waits agentwaitports.ReportRunWaiter,
 ) agenttoolports.AgentQueryTool {
-	return reportquerytools.NewRunReportTool(reports, permissions)
+	return reportquerytools.NewRunReportTool(reports, permissions, waits)
 }
 
 func provideRunScriptTool(

@@ -31,6 +31,8 @@ var ownKeys = map[string]struct{}{
 // values that are not PULIDs at all, and an id whose kind is chosen by another
 // parameter from a list the registry does not follow. Each says why.
 var untypedIDs = map[string]string{
+	"agent_create_wait.recordId": "a RecordChanged wait watches a record of any kind; the " +
+		"wait service reads its kind off the id's prefix and checks the person's grant on it",
 	"ledger_list_journal_entries.referenceId": "the id of whichever source record " +
 		"referenceType names (an invoice, a payment, a settlement), stored as text",
 	"home_arrange_layout.widgetIds": "home layout widget ids are names NextWidgetID " +

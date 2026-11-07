@@ -66,12 +66,15 @@ describe("aiUsageFeatureLabel", () => {
     expect(aiUsageFeatureLabel("AgentReflection", t)).toBe("Agents learning from their work");
     expect(aiUsageFeatureLabel("AgentDrafting", t)).toBe("Agent drafting");
     expect(aiUsageFeatureLabel("AccountingMapping", t)).toBe("Accounting mapping");
-    expect(aiUsageFeatureLabel("FactoringRemittanceExtract", t)).toBe(
-      "Factor remittance reading",
-    );
+    expect(aiUsageFeatureLabel("FactoringRemittanceExtract", t)).toBe("Factor remittance reading");
   });
 
   it("names the Desk's agent suggestions, so typing a question is not booked as a turn", () => {
     expect(aiUsageFeatureLabel("AgentRecommendation", t)).toBe("Agent suggestions");
+  });
+
+  it("names the turns a wait starts apart from the ones a person asked for", () => {
+    expect(aiUsageFeatureLabel("AgentWakeUp", t)).toBe("Desk picking work back up");
+    expect(aiUsageFeatureLabel("AgentTurn", t)).not.toBe("Desk picking work back up");
   });
 });

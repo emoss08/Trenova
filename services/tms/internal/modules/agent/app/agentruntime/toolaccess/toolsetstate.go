@@ -1,6 +1,7 @@
 package toolaccess
 
 import (
+	"cmp"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
@@ -56,7 +57,7 @@ func TurnAttribution(req *agentruntimeports.RunRequest) aiusageports.AIUsageAttr
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
 		Purpose:           req.AttributedPurpose(),
-		Feature:           aiusage.FeatureAgentTurn,
+		Feature:           cmp.Or(req.UsageFeature, aiusage.FeatureAgentTurn),
 		DefinitionVersion: &version,
 	}
 	if req.StepOwner.ID.IsNotNil() {

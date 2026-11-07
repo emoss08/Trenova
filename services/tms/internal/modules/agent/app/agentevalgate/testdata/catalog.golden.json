@@ -2714,6 +2714,10 @@
             "description": "For AppointmentNear and FreeTimeEnding: how many minutes before the appointment or the end of free time to pick the work up.",
             "type": "integer"
           },
+          "recordId": {
+            "description": "For RecordChanged: the record that holds what must be fixed, by the id shipment_get, invoice_get, billing_get_queue_item or another tool returned, not the record you will change afterwards.",
+            "type": "string"
+          },
           "shipmentId": {
             "description": "For Reply: a reply about this shipment, from shipment_list or the run subject.",
             "type": "string",
@@ -2734,7 +2738,7 @@
             "type": "string"
           },
           "until": {
-            "description": "What to wait for.",
+            "description": "What to wait for. RecordChanged waits for any record to be changed by a person or the system: use it when a person must fix something on a record before you can go on (a missing POD on the shipment an invoice bills), naming it in recordId, so you pick the work up once they have changed it rather than asking them to come back and tell you.",
             "enum": [
               "Time",
               "StopArrival",
@@ -2742,7 +2746,8 @@
               "Reply",
               "AppointmentNear",
               "FreeTimeEnding",
-              "HOSDriveBelow"
+              "HOSDriveBelow",
+              "RecordChanged"
             ],
             "type": "string",
             "x-enumOf": "agent_wait_kinds"
@@ -43999,6 +44004,10 @@
           },
           "reportKey": {
             "description": "The reportKey of a built-in report from report_list.",
+            "type": "string"
+          },
+          "then": {
+            "description": "Only when the person asked something of the report's rows: what you will do with them once the run finishes (\"name the customers over 90 days and their balances\"). A run still going then picks this conversation up again when it finishes, and you answer from its rows. Leave it out when they only asked for the report itself.",
             "type": "string"
           }
         },

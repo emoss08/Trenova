@@ -95,6 +95,13 @@ func AgentWaitWorkflow(ctx workflow.Context, payload *agentwaitcontract.Payload)
 		}
 		switch woke {
 		case wokeMet:
+			if schedule.SettleSeconds > 0 {
+				detail, first := settle(ctx, met, signal, &schedule)
+				if ctx.Err() != nil {
+					return nil
+				}
+				return finishSettled(ctx, payload, detail, first)
+			}
 			return finish(ctx, payload, agentwait.StatusMet, signal.Detail)
 		case wokeRescheduled:
 			if err = workflow.ExecuteActivity(readCtx, a.ScheduleWaitActivity, payload).
@@ -206,9 +213,30 @@ func finish(
 	status agentwait.Status,
 	outcome string,
 ) error {
+	return finishWith(ctx, &agentwaitcontract.FinishInput{
+		Payload: payload,
+		Status:  status,
+		Outcome: outcome,
+	})
+}
+
+func finishSettled(
+	ctx workflow.Context,
+	payload *agentwaitcontract.Payload,
+	outcome string,
+	firstMetAt int64,
+) error {
+	return finishWith(ctx, &agentwaitcontract.FinishInput{
+		Payload:    payload,
+		Status:     agentwait.StatusMet,
+		Outcome:    outcome,
+		FirstMetAt: firstMetAt,
+	})
+}
+
+func finishWith(ctx workflow.Context, input *agentwaitcontract.FinishInput) error {
 	var a *Activities
 	finishCtx := workflow.WithActivityOptions(ctx, finishOptions)
-	input := &agentwaitcontract.FinishInput{Payload: payload, Status: status, Outcome: outcome}
 	deadline := workflow.Now(ctx).Add(finishWindow)
 	wait := busyWaitFirst
 

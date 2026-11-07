@@ -1560,9 +1560,13 @@ shard of the Redis stream from the cursor the turn opened with, at most 2,048
 entries per check, keeps tenant-wide `resource.invalidation` entries whose
 record is watched (a byte search before any decode), and merges several events
 for one record. Changes to a record the turn itself wrote, within fifteen seconds
-of the write, are its own and dropped. What is left reaches the model as a
+of the write, are its own and dropped. A write that failed watches the records it
+named by id (`worldwatch.State.Refused`: `invoiceId`, `shipmentMoveId`, up to eight of a
+list), since what refused it often lives there. What is left reaches the model as a
 `WorldChange` notice (system words, not the person's), clears the repeat
-guard's memory of reads, is saved with the structured changes
+guard's memory of reads and of failed calls (`RepeatGuard.Forget`: a person who
+fixed what refused a post mid-turn once got the old refusal back for the identical
+retry), is saved with the structured changes
 (`assistant_messages.world_changes`) and reaches the reader as `world_changed`.
 Delegated turns neither watch nor steer.
 
@@ -1648,6 +1652,11 @@ The anchored records are also watched for changes during the turn
 `WorldChange` notice. Delegated turns get no block.
 
 ### Parking work on a wait
+
+The world watch above covers a turn while it runs. Between turns, a conversation that
+is held up on a person fixing a record, or on a report it started, parks on a
+`RecordChanged` or `ReportRun` wait and is woken by the record's change on the realtime
+stream, the way a pull request event wakes a coding session.
 
 An agent can park its work until something happens with `agent_create_wait`; the turn
 ends, a workflow per wait holds the timer or listens for the event, and the work

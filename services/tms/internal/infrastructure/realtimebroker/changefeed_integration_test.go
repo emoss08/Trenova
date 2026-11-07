@@ -55,6 +55,7 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 			RealtimeConfig: &cfg.Realtime,
 			Logger:         zap.NewNop(),
 			LC:             lc,
+			Metrics:        disabledMetrics(t),
 		},
 	)
 	lc.RequireStart()
