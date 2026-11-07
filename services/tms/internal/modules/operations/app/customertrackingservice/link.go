@@ -154,7 +154,7 @@ func (s *Service) IssueLink(
 		return nil, err
 	}
 	issued := &customertrackingports.IssuedLink{Link: minted.link, URL: minted.url}
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		tenant:     req.TenantInfo,
 		userID:     req.IssuedByID,
 		resource:   permission.ResourceShipment,
@@ -205,7 +205,7 @@ func (s *Service) RevokeLink(
 	if !req.LinkID.IsNil() {
 		state["trackingLinkId"] = req.LinkID.String()
 	}
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		tenant:     req.TenantInfo,
 		userID:     req.RevokedByID,
 		resource:   permission.ResourceShipment,

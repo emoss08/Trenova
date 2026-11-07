@@ -97,7 +97,7 @@ func (s *Service) SetDeliveryFacts(
 		)
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -109,7 +109,6 @@ func (s *Service) SetDeliveryFacts(
 	},
 		auditservice.WithComment("Delivery details recorded"),
 		auditservice.WithDiff(current, updated),
-		auditservice.WithRequest(ctx),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   updated.ResourceID,
 			metadataResourceType: updated.ResourceType,

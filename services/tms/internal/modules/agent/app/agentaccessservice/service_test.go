@@ -182,7 +182,7 @@ type recordingAudit struct {
 	logged []*auditports.LogActionParams
 }
 
-func (a *recordingAudit) LogAction(
+func (a *recordingAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -76,31 +75,23 @@ func unattendedParams(definitionID, systemUser pulid.ID) *auditports.LogActionPa
 func creditedService(
 	t *testing.T,
 	definitions *fakeAgentDefinitions,
-) (*service, *mockBufferRepository) {
+) (*service, *fakeRepo) {
 	t.Helper()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 	srv.agents = newAgentCredits(definitions, zap.NewNop())
 
-	return srv, bufferRepo
+	return srv, repo
 }
 
-func pushedEntry(t *testing.T, bufferRepo *mockBufferRepository) *audit.Entry {
+func pushedEntry(t *testing.T, repo *fakeRepo) *audit.Entry {
 	t.Helper()
 
-	var pushed *audit.Entry
-	for _, call := range bufferRepo.Calls {
-		if call.Method == "Push" {
-			entry, ok := call.Arguments.Get(1).(*audit.Entry)
-			require.True(t, ok)
-			pushed = entry
-		}
-	}
-	require.NotNil(t, pushed, "the entry was buffered")
+	entries := repo.entries()
+	require.NotEmpty(t, entries, "the entry was stored")
 
-	return pushed
+	return entries[len(entries)-1]
 }
 
 func TestLogAction_AnUnattendedWriteNamesTheSystemUserAndCreditsTheAgent(t *testing.T) {
@@ -109,13 +100,12 @@ func TestLogAction_AnUnattendedWriteNamesTheSystemUserAndCreditsTheAgent(t *test
 	definitionID := pulid.MustNew("agdef_")
 	systemUser := pulid.MustNew("usr_")
 	definitions := &fakeAgentDefinitions{names: map[pulid.ID]string{definitionID: "Dispatch Agent"}}
-	srv, bufferRepo := creditedService(t, definitions)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv, repo := creditedService(t, definitions)
 
 	params := unattendedParams(definitionID, systemUser)
-	require.NoError(t, srv.LogAction(params, WithComment("Shipment updated")))
+	require.NoError(t, srv.LogAction(t.Context(), params, WithComment("Shipment updated")))
 
-	entry := pushedEntry(t, bufferRepo)
+	entry := pushedEntry(t, repo)
 	assert.Equal(t, string(permissionports.PrincipalTypeAgent), entry.PrincipalType)
 	assert.Equal(t, definitionID, entry.PrincipalID, "the principal names which agent ran")
 	assert.Equal(t, systemUser, entry.UserID, "the user is the system account")
@@ -126,46 +116,43 @@ func TestLogAction_AnUnattendedWriteNamesTheSystemUserAndCreditsTheAgent(t *test
 	assert.Equal(t, params.BusinessUnitID, definitions.tenants[0].BusinessUnitID)
 }
 
-func TestLogAction_EachEntryReadsTheAgentsNameFromTheRepository(t *testing.T) {
+func TestLogAction_TheAgentsNameIsReadOnceAndCached(t *testing.T) {
 	t.Parallel()
 
 	definitionID := pulid.MustNew("agdef_")
 	definitions := &fakeAgentDefinitions{names: map[pulid.ID]string{definitionID: "Billing Agent"}}
-	srv, bufferRepo := creditedService(t, definitions)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv, repo := creditedService(t, definitions)
 
 	params := unattendedParams(definitionID, pulid.MustNew("usr_"))
-	require.NoError(t, srv.LogAction(params))
-	require.NoError(t, srv.LogAction(params))
+	require.NoError(t, srv.LogAction(t.Context(), params))
+	require.NoError(t, srv.LogAction(t.Context(), params))
 
-	assert.Equal(t, 2, definitions.reads, "the repository's result cache serves repeats")
-	assert.Equal(t, "Ran by Billing Agent", pushedEntry(t, bufferRepo).Comment)
+	assert.Equal(t, 1, definitions.reads, "repeats are served from the in-process cache")
+	assert.Equal(t, "Ran by Billing Agent", pushedEntry(t, repo).Comment)
 }
 
 func TestLogAction_AnAgentWhoseNameCannotBeReadIsStillCredited(t *testing.T) {
 	t.Parallel()
 
 	definitions := &fakeAgentDefinitions{err: errors.New("connection refused")}
-	srv, bufferRepo := creditedService(t, definitions)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv, repo := creditedService(t, definitions)
 
 	params := unattendedParams(pulid.MustNew("agdef_"), pulid.MustNew("usr_"))
-	require.NoError(t, srv.LogAction(params, WithComment("Hold released")))
+	require.NoError(t, srv.LogAction(t.Context(), params, WithComment("Hold released")))
 
-	assert.Equal(t, "Hold released (Ran by an agent)", pushedEntry(t, bufferRepo).Comment)
+	assert.Equal(t, "Hold released (Ran by an agent)", pushedEntry(t, repo).Comment)
 }
 
 func TestLogAction_AGenericAgentPrincipalIsCreditedWithoutALookup(t *testing.T) {
 	t.Parallel()
 
 	definitions := &fakeAgentDefinitions{}
-	srv, bufferRepo := creditedService(t, definitions)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv, repo := creditedService(t, definitions)
 
 	params := unattendedParams(permissionports.AgentPrincipalID, pulid.Nil)
-	require.NoError(t, srv.LogAction(params))
+	require.NoError(t, srv.LogAction(t.Context(), params))
 
-	entry := pushedEntry(t, bufferRepo)
+	entry := pushedEntry(t, repo)
 	assert.Equal(t, "Ran by an agent", entry.Comment)
 	assert.Equal(t, pulid.Nil, entry.UserID)
 	assert.Zero(t, definitions.reads)
@@ -175,12 +162,11 @@ func TestLogAction_APersonsWriteIsNotCredited(t *testing.T) {
 	t.Parallel()
 
 	definitions := &fakeAgentDefinitions{}
-	srv, bufferRepo := creditedService(t, definitions)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv, repo := creditedService(t, definitions)
 
-	require.NoError(t, srv.LogAction(validLogActionParams(), WithComment("User created")))
+	require.NoError(t, srv.LogAction(t.Context(), validLogActionParams(), WithComment("User created")))
 
-	assert.Equal(t, "User created", pushedEntry(t, bufferRepo).Comment)
+	assert.Equal(t, "User created", pushedEntry(t, repo).Comment)
 	assert.Zero(t, definitions.reads)
 }
 
@@ -189,22 +175,14 @@ func TestLogActions_CreditsEachUnattendedEntry(t *testing.T) {
 
 	definitionID := pulid.MustNew("agdef_")
 	definitions := &fakeAgentDefinitions{names: map[pulid.ID]string{definitionID: "Dispatch Agent"}}
-	srv, bufferRepo := creditedService(t, definitions)
+	srv, repo := creditedService(t, definitions)
 
-	var pushed []*audit.Entry
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) {
-			entries, ok := args.Get(1).([]*audit.Entry)
-			require.True(t, ok)
-			pushed = entries
-		}).
-		Return(nil)
-
-	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{
+	require.NoError(t, srv.LogActions(t.Context(), []auditports.BulkLogEntry{
 		{Params: unattendedParams(definitionID, pulid.MustNew("usr_"))},
 		{Params: validLogActionParams()},
 	}))
 
+	pushed := repo.entries()
 	require.Len(t, pushed, 2)
 	assert.Equal(t, "Ran by Dispatch Agent", pushed[0].Comment)
 	assert.Empty(t, pushed[1].Comment)

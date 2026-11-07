@@ -168,7 +168,7 @@ func (s *Service) CreateWaterfall(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,
@@ -201,7 +201,7 @@ func (s *Service) CreateSpot(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,

@@ -191,8 +191,8 @@ func TestAutoMatchWithinToleranceCreatesMatched(t *testing.T) {
 	created := deps.expectMatchCreate()
 
 	var auditParams []*auditports.LogActionParams
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			auditParams = append(auditParams, params)
 		}).
 		Return(nil)
@@ -264,7 +264,7 @@ func TestAutoMatchWithinToleranceAutoAccepts(t *testing.T) {
 		Return(func(_ context.Context, entity *carriersettlement.InvoiceMatch) *carriersettlement.InvoiceMatch {
 			return entity
 		}, nil)
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Times(2)
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Times(2)
 	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).Return(invoice, nil)
 
 	result, err := deps.svc.AutoMatchInboundInvoice(
@@ -299,7 +299,7 @@ func TestAutoMatchOutsideToleranceCreatesVariance(t *testing.T) {
 	deps.expectInvoiceLoad(tenantInfo, invoice)
 	deps.assignments.On("FindForMatching", mock.Anything, mock.Anything).Return(assignment, nil)
 	created := deps.expectMatchCreate()
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	var syncedInvoice *edicarrierinvoice.CarrierInvoice
 	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {

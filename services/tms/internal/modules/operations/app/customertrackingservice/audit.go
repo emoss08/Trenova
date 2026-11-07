@@ -1,6 +1,8 @@
 package customertrackingservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -21,7 +23,7 @@ type auditParams struct {
 	current    map[string]any
 }
 
-func (s *Service) audit(p *auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	params := &auditports.LogActionParams{
 		Resource:       p.resource,
 		ResourceID:     p.resourceID,
@@ -37,7 +39,7 @@ func (s *Service) audit(p *auditParams) {
 		params.PrincipalID = permissionports.SystemPrincipalID
 	}
 	comment := p.comment
-	if err := s.auditService.LogAction(params, func(entry *audit.Entry) error {
+	if err := s.auditService.LogAction(ctx, params, func(entry *audit.Entry) error {
 		entry.Comment = comment
 		return nil
 	}); err != nil {

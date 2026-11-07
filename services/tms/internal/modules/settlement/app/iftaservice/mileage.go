@@ -180,7 +180,7 @@ func (s *Service) CreateMileageEntry(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAJurisdictionMileage,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -212,7 +212,7 @@ func (s *Service) UpdateMileageEntry(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAJurisdictionMileage,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -241,7 +241,7 @@ func (s *Service) DeleteMileageEntry(ctx context.Context, req *DeleteMileageEntr
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAJurisdictionMileage,
 		resourceID: existing.ID.String(),
 		operation:  permission.OpDelete,

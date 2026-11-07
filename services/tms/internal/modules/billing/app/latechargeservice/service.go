@@ -3,6 +3,10 @@ package latechargeservice
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
+	"time"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
@@ -26,9 +30,6 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"slices"
-	"strings"
-	"time"
 )
 
 type Params struct {
@@ -451,7 +452,7 @@ func (s *Service) raiseMemo(
 	plan.result.DebitMemoID = memo.ID
 	plan.result.DebitMemoNumber = memo.Number
 	plan.result.Posted = memo.Status == invoice.StatusPosted
-	s.logAudit(memo, inserted, actor)
+	s.logAudit(ctx, memo, inserted, actor)
 	s.notify(ctx, memo, plan.result)
 
 	return nil
@@ -522,6 +523,7 @@ func stampMemoLines(inserted []*latecharge.LateChargeAssessment, memo *invoice.I
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	memo *invoice.Invoice,
 	inserted []*latecharge.LateChargeAssessment,
 	actor *permissionports.RequestActor,
@@ -544,7 +546,7 @@ func (s *Service) logAudit(
 			map[string]any{"invoiceId": memo.ID.String(), "assessments": inserted},
 		),
 	}
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment(
 			fmt.Sprintf("Late charge debit memo raised for %d period(s)", len(inserted)),

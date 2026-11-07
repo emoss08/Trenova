@@ -56,7 +56,7 @@ func (s *Service) Patch(
 		return nil, err
 	}
 
-	s.logAudit(&auditParams{
+	s.logAudit(ctx, &auditParams{
 		provider:  saved,
 		previous:  previous,
 		operation: permission.OpUpdate,

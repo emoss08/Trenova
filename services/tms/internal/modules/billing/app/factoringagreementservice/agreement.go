@@ -116,7 +116,7 @@ func (s *AgreementService) Create(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringAgreement,
 		Entity:   created,
 		Op:       permission.OpCreate,
@@ -175,7 +175,7 @@ func (s *AgreementService) Update(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringAgreement,
 		Entity:   updated,
 		Previous: previous,
@@ -290,7 +290,7 @@ func (s *AgreementService) transition(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringAgreement,
 		Entity:   updated,
 		Previous: previous,

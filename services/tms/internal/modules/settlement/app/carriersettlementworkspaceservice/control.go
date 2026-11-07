@@ -64,7 +64,7 @@ func (s *Service) UpdateControl(
 		updated.BusinessUnitID,
 		actor.UserID,
 	)
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierSettlementControl,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

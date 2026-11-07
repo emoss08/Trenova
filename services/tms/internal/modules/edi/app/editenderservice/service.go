@@ -1,6 +1,8 @@
 package editenderservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
@@ -76,6 +78,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) logAction(
+	ctx context.Context,
 	entity edilading.Audited,
 	actor *permissionports.RequestActor,
 	operation permission.Operation,
@@ -83,7 +86,7 @@ func (s *Service) logAction(
 	current any,
 	comment string,
 ) {
-	edilading.LogAction(s.auditService, s.l, &edilading.AuditEntry{
+	edilading.LogAction(ctx, s.auditService, s.l, &edilading.AuditEntry{
 		Entity:    entity,
 		Actor:     actor,
 		Operation: operation,

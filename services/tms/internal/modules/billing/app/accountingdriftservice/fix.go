@@ -183,7 +183,7 @@ func (s *Service) Resolve(
 	if kick {
 		s.kickDispatcher(ctx, updated)
 	}
-	s.logAudit(updated, actor.UserID, previous, resolveComment(req.Direction))
+	s.logAudit(ctx, updated, actor.UserID, previous, resolveComment(req.Direction))
 	s.refreshAttentionFor(ctx, updated)
 	s.publishInvalidation(ctx, req.TenantInfo, actor.UserID, updated.ID)
 	return updated, nil

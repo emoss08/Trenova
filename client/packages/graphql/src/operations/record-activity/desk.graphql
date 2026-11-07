@@ -14,6 +14,8 @@ query DeskRecordActivity(
         changes
         comment
         principalType
+        actorName
+        channel
         user {
           id
           name

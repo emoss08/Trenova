@@ -1335,7 +1335,7 @@ type fakeAudit struct {
 	w *world
 }
 
-func (f *fakeAudit) LogAction(
+func (f *fakeAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	opts ...auditports.LogOption,
 ) error {

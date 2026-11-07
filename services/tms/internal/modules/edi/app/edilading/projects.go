@@ -130,7 +130,7 @@ func (s *Projects) CreateProject(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    project,
 		Actor:     actor,
 		Operation: permission.OpCreate,
@@ -334,7 +334,7 @@ func (s *Projects) SaveDraft(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    saved,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -567,7 +567,7 @@ func (s *Projects) importProject(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    project,
 		Actor:     actor,
 		Operation: permission.OpCreate,
@@ -664,7 +664,7 @@ func (s *Projects) NewDraft(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    created,
 		Actor:     actor,
 		Operation: permission.OpCreate,
@@ -884,7 +884,7 @@ func (s *Projects) Certify(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    saved,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1018,7 +1018,7 @@ func (s *Projects) Activate(
 	if activated.Superseded != nil {
 		comment += fmt.Sprintf(", superseding version %d", activated.Superseded.Number)
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    activated.Version,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1114,7 +1114,7 @@ func (s *Projects) Archive(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    saved,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1187,7 +1187,7 @@ func (s *Projects) StartShadow(
 	if _, err = s.projects.SetShadowVersion(ctx, project); err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    saved,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1223,7 +1223,7 @@ func (s *Projects) StopShadow(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    stopped,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1310,7 +1310,7 @@ func (s *Projects) UpdateSettings(
 	if err != nil {
 		return nil, err
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    saved,
 		Actor:     actor,
 		Operation: permission.OpUpdate,
@@ -1468,7 +1468,7 @@ func (s *Projects) StartReplay(
 	}); err != nil {
 		return nil, fmt.Errorf("start the Lading replay workflow: %w", err)
 	}
-	LogAction(s.audit, s.l, &AuditEntry{
+	LogAction(ctx, s.audit, s.l, &AuditEntry{
 		Entity:    replay,
 		Actor:     actor,
 		Operation: permission.OpCreate,

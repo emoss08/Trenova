@@ -805,7 +805,7 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 	}
 	createdDoc.IsCurrentVersion = true
 
-	if auditErr := a.auditService.LogAction(&auditports.LogActionParams{
+	if auditErr := a.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,

@@ -247,7 +247,7 @@ type fakeAudit struct {
 	logged []*auditports.LogActionParams
 }
 
-func (a *fakeAudit) LogAction(
+func (a *fakeAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

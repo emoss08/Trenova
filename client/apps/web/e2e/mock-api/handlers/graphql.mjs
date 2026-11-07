@@ -18,6 +18,7 @@ import { CUSTOMER_TRACKING_HANDLERS } from "./customertracking.mjs";
 import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { FORMULA_LIBRARY_HANDLERS } from "./formula-library.mjs";
 import { ACCOUNTING_HANDLERS } from "./accounting.mjs";
+import { AUDIT_HANDLERS } from "./audit.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -1143,6 +1144,16 @@ const EMPTY_CONNECTION = {
 };
 
 const SHELL_HANDLERS = {
+  MyTableLayout: () => ({ myTableLayout: null }),
+  SaveMyTableLayout: (state, { input }) => ({
+    saveMyTableLayout: {
+      resource: input.resource,
+      layout: input.layout,
+      version: 1,
+      updatedAt: state.now(),
+    },
+  }),
+  DataTableInsightFields: () => ({ dataTableInsightFields: [] }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,
@@ -1178,6 +1189,7 @@ const HANDLERS = {
   ...FORMULA_HANDLERS,
   ...FORMULA_LIBRARY_HANDLERS,
   ...ACCOUNTING_HANDLERS,
+  ...AUDIT_HANDLERS,
   SelectOptions: (state, v) => {
     const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
     if (v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0) return cards;

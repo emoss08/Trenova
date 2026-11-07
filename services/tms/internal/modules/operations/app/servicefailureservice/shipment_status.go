@@ -122,7 +122,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 	}
 
 	auditActor := params.actor.AuditActorOrSystem()
-	if err = m.auditService.LogAction(&auditports.LogActionParams{
+	if err = m.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

@@ -249,7 +249,7 @@ func TestBulkUpdateStatus_RetryingADeactivationEndsSessionsLeftBehind(t *testing
 
 	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*tenant.User{already}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return([]*tenant.User{already}, nil)
-	deps.audit.On("LogActions", mock.Anything).Return(nil).Once()
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(nil).Once()
 	deps.sessionRepo.EXPECT().ListForUser(mock.Anything, already.ID).
 		Return([]*session.Session{{ID: pulid.MustNew("ses_")}}, nil).Once()
 	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, already.ID).Return(nil).Once()

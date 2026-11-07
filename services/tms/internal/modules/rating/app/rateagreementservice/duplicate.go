@@ -49,7 +49,7 @@ func (s *Service) Duplicate(
 		return nil, err
 	}
 
-	s.audit(
+	s.audit(ctx,
 		log, copied, nil, permission.OpDuplicate, userID,
 		"Duplicated from "+original.Code,
 	)

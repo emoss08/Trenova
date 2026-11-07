@@ -37,7 +37,10 @@ const saved = {
   id: "dr_1",
   organizationId: "org_1",
   businessUnitId: "bu_1",
-  auditRetentionPeriod: 120,
+  auditAccessRetentionDays: 90,
+  auditOperationalRetentionDays: 730,
+  auditFinancialRetentionDays: 2555,
+  auditSecurityRetentionDays: 730,
   ediInboundFileRetentionPeriod: 0,
   ediMessageRetentionPeriod: 45,
   agentEvalCaseRetentionPeriod: 365,
@@ -53,7 +56,10 @@ const saved = {
 const NOW = 1_793_016_000;
 
 const savedRequest = {
-  auditRetentionPeriod: 120,
+  auditAccessRetentionDays: 90,
+  auditOperationalRetentionDays: 730,
+  auditFinancialRetentionDays: 2555,
+  auditSecurityRetentionDays: 730,
   ediInboundFileRetentionPeriod: 0,
   ediMessageRetentionPeriod: 45,
   agentEvalCaseRetentionPeriod: 365,
@@ -114,10 +120,11 @@ describe("DataRetentionForm", () => {
     grant(Operation.Read, Operation.Update);
     renderForm();
 
-    await field("auditRetentionPeriod");
+    await field("auditAccessRetentionDays");
 
-    expect(row("Audit entries").getByText("Jun 28, 2026")).toBeInTheDocument();
-    expect(row("Audit entries").getByText("Deleted")).toBeInTheDocument();
+    expect(row("Reads and downloads").getByText("Jul 28, 2026")).toBeInTheDocument();
+    expect(row("Reads and downloads").getByText("Deleted")).toBeInTheDocument();
+    expect(row("Financial changes").getByText("Oct 28, 2019")).toBeInTheDocument();
     expect(row("Message payloads").getByText("Sep 11, 2026")).toBeInTheDocument();
     expect(row("Message payloads").getByText("Raw content blanked")).toBeInTheDocument();
     expect(row("AI audit trail").getByText("Oct 28, 2019")).toBeInTheDocument();
@@ -130,9 +137,12 @@ describe("DataRetentionForm", () => {
     grant(Operation.Read, Operation.Update);
     renderForm();
 
-    await field("auditRetentionPeriod");
+    await field("auditAccessRetentionDays");
 
-    expect(row("Audit entries").getByText("At least 1 day")).toBeInTheDocument();
+    expect(row("Reads and downloads").getByText("At least 90 days")).toBeInTheDocument();
+    expect(row("Operational changes").getByText("At least 730 days")).toBeInTheDocument();
+    expect(row("Financial changes").getByText("At least 2,555 days")).toBeInTheDocument();
+    expect(row("Security entries").getByText("At least 730 days")).toBeInTheDocument();
     expect(row("AI audit trail").getByText("At least 365 days")).toBeInTheDocument();
     expect(row("AI feedback").getByText("At least 30 days")).toBeInTheDocument();
     expect(row("AI corrections").getByText("At least 30 days")).toBeInTheDocument();
@@ -142,7 +152,7 @@ describe("DataRetentionForm", () => {
     grant(Operation.Read, Operation.Update);
     renderForm();
 
-    await field("auditRetentionPeriod");
+    await field("auditAccessRetentionDays");
 
     expect(row("Inbound file contents").getByText("Kept")).toBeInTheDocument();
     expect(row("Inbound file contents").getByText("—")).toBeInTheDocument();
@@ -232,7 +242,7 @@ describe("DataRetentionForm", () => {
     expect(
       await screen.findByText("You can view these settings but not change them."),
     ).toBeInTheDocument();
-    expect(await field("auditRetentionPeriod")).toBeDisabled();
+    expect(await field("auditAccessRetentionDays")).toBeDisabled();
     for (const toggle of screen.getAllByRole("switch")) {
       expect(toggle).toHaveAttribute("aria-disabled", "true");
     }

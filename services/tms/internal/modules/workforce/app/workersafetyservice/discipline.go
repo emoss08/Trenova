@@ -150,7 +150,7 @@ func (s *Service) IssueAction(
 	}
 	result := &IssueActionResult{Action: created}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDisciplinaryAction,
 		resourceID: created.GetResourceID(),
 		operation:  permission.OpCreate,
@@ -254,7 +254,7 @@ func (s *Service) RescindAction(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDisciplinaryAction,
 		resourceID: saved.GetResourceID(),
 		operation:  permission.OpCancel,

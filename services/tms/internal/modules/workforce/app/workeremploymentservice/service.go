@@ -328,7 +328,7 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 		return nil, err
 	}
 
-	s.audit(created, nil, permission.OpCreate, req.UserID, "Employment event recorded", log)
+	s.audit(ctx, created, nil, permission.OpCreate, req.UserID, "Employment event recorded", log)
 	s.publish(ctx, req.TenantInfo, created, permission.OpCreate, req.UserID)
 	cascade.ChecklistsClosed = s.closeChecklists(ctx, created, wrk, req.UserID, log)
 	cascade.ChecklistStarted = s.spawnChecklist(ctx, created, wrk, req.UserID, log)
@@ -869,7 +869,7 @@ func (s *Service) Amend(
 		return nil, err
 	}
 
-	s.audit(saved, original, permission.OpUpdate, req.UserID, "Employment event amended", log)
+	s.audit(ctx, saved, original, permission.OpUpdate, req.UserID, "Employment event amended", log)
 	s.publish(ctx, req.TenantInfo, saved, permission.OpUpdate, req.UserID)
 
 	return saved, nil
@@ -911,6 +911,7 @@ func (s *Service) actor(
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	current, previous *employment.WorkerEmploymentEvent,
 	operation permission.Operation,
 	userID pulid.ID,
@@ -934,7 +935,7 @@ func (s *Service) audit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

@@ -218,6 +218,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
@@ -399,6 +403,10 @@ type Params struct {
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
+	AuditLegalHoldService             *auditlegalholdservice.Service
+	AuditExportService                *auditexportservice.Service
+	AuditAlertService                 *auditalertservice.Service
+	AuditIntegrity                    *auditintegrity.Status
 	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
 	ServiceFailureSvc                 servicefailureports.ServiceFailureService
 	BillingQueueService               billingqueueports.BillingQueueService
@@ -688,6 +696,10 @@ type Services struct {
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
+	AuditLegalHoldService             *auditlegalholdservice.Service
+	AuditExportService                *auditexportservice.Service
+	AuditAlertService                 *auditalertservice.Service
+	AuditIntegrity                    *auditintegrity.Status
 	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
 	ServiceFailureSvc                 servicefailureports.ServiceFailureService
 	BillingQueueService               billingqueueports.BillingQueueService
@@ -983,6 +995,10 @@ func newServices(p *Params) *Services {
 		JournalReview:                     p.JournalReview,
 		JournalReversalService:            p.JournalReversalService,
 		AuditService:                      p.AuditService,
+		AuditLegalHoldService:             p.AuditLegalHoldService,
+		AuditExportService:                p.AuditExportService,
+		AuditAlertService:                 p.AuditAlertService,
+		AuditIntegrity:                    p.AuditIntegrity,
 		ServiceFailureReasonCodeSvc:       p.ServiceFailureReasonCodeSvc,
 		ServiceFailureSvc:                 p.ServiceFailureSvc,
 		BillingQueueService:               p.BillingQueueService,

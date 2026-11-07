@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -43,18 +42,16 @@ func (s *recordingRealtimeService) recordChanges() []*realtimeports.PublishResou
 func TestLogAction_PublishesTheRecordChangeForTheAuditedResource(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
+	repo := &fakeRepo{}
 	realtime := &recordingRealtimeService{}
-	srv := newTestService(repo, bufferRepo, realtime)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv := newTestService(repo, realtime)
 
 	params := validLogActionParams()
 	params.Resource = permission.ResourceCommodity
 	params.ResourceID = "com_01ABC"
 	params.Operation = permission.OpUpdate
 
-	require.NoError(t, srv.LogAction(params))
+	require.NoError(t, srv.LogAction(t.Context(), params))
 
 	changes := realtime.recordChanges()
 	require.Len(t, changes, 1)
@@ -69,12 +66,9 @@ func TestLogAction_PublishesTheRecordChangeForTheAuditedResource(t *testing.T) {
 func TestLogActions_PublishesOneBulkChangePerResource(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
+	repo := &fakeRepo{}
 	realtime := &recordingRealtimeService{}
-	srv := newTestService(repo, bufferRepo, realtime)
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).Return(nil)
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	srv := newTestService(repo, realtime)
 
 	first := validLogActionParams()
 	first.Resource = permission.ResourceLocation
@@ -85,7 +79,7 @@ func TestLogActions_PublishesOneBulkChangePerResource(t *testing.T) {
 	other.Resource = permission.ResourceCommodity
 	other.Operation = permission.OpDelete
 
-	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{
+	require.NoError(t, srv.LogActions(t.Context(), []auditports.BulkLogEntry{
 		{Params: first},
 		{Params: &second},
 		{Params: &other},
@@ -117,16 +111,14 @@ func TestLogAction_PublishesNoRecordChangeForAReadOrTheAuditLogItself(t *testing
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := new(mockAuditRepository)
-			bufferRepo := new(mockBufferRepository)
+			repo := &fakeRepo{}
 			realtime := &recordingRealtimeService{}
-			srv := newTestService(repo, bufferRepo, realtime)
-			bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+			srv := newTestService(repo, realtime)
 
 			params := validLogActionParams()
 			params.Resource = tc.resource
 			params.Operation = tc.operation
-			require.NoError(t, srv.LogAction(params))
+			require.NoError(t, srv.LogAction(t.Context(), params))
 
 			assert.Empty(t, realtime.recordChanges())
 		})

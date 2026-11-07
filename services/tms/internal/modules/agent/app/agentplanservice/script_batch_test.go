@@ -1,6 +1,7 @@
 package agentplanservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -139,7 +140,7 @@ type recordedAudit struct {
 	entries []*auditports.LogActionParams
 }
 
-func (a *recordedAudit) LogAction(
+func (a *recordedAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

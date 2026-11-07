@@ -85,7 +85,7 @@ type silentAudit struct {
 	auditports.AuditService
 }
 
-func (silentAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (silentAudit) LogAction(context.Context, *auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 

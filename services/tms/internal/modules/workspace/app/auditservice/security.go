@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -61,7 +60,10 @@ func (a *SecurityAuditor) RecordChange(
 	params.CurrentState = a.stateOf(change.After, "after")
 
 	opts := make([]auditports.LogOption, 0, 5)
-	opts = append(opts, WithCategory(audit.CategoryUser), WithRequest(ctx))
+	opts = append(opts, WithSecurity())
+	if change.Action != "" {
+		opts = append(opts, WithAction(change.Action))
+	}
 	if change.Comment != "" {
 		opts = append(opts, WithComment(change.Comment))
 	}
@@ -72,7 +74,7 @@ func (a *SecurityAuditor) RecordChange(
 		opts = append(opts, WithMetadata(change.Metadata))
 	}
 
-	err := a.audit.LogAction(params, opts...)
+	err := a.audit.LogAction(ctx, params, opts...)
 	a.recordMetric(err == nil)
 	if err == nil {
 		return
@@ -147,7 +149,7 @@ func (a *SecurityAuditor) stateOf(value any, label string) map[string]any {
 }
 
 func (a *SecurityAuditor) recordMetric(success bool) {
-	if a.metrics.Audit == nil {
+	if a.metrics == nil || a.metrics.Audit == nil {
 		return
 	}
 	a.metrics.Audit.RecordSecurityEvent(securityChangeKind, success)

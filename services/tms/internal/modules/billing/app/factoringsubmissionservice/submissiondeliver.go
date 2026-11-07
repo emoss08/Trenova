@@ -95,7 +95,7 @@ func (s *SubmissionService) Deliver(
 	}
 
 	actor := factoringaction.SystemActor(req.TenantInfo)
-	s.rec.Log(&actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, &actor, &factoringaction.AuditEntry{
 		Resource: submissionResource,
 		Entity:   updated,
 		Previous: previous,
@@ -139,7 +139,7 @@ func (s *SubmissionService) MarkFailed(
 	}
 
 	actor := factoringaction.SystemActor(req.TenantInfo)
-	s.rec.Log(&actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, &actor, &factoringaction.AuditEntry{
 		Resource: submissionResource,
 		Entity:   updated,
 		Previous: &previous,

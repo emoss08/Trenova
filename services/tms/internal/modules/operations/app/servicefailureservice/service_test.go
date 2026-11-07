@@ -284,7 +284,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 			return created, nil
 		}).
 		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	result, err := svc.EvaluateShipment(
@@ -546,7 +546,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 			return updated, nil
 		}).
 		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	updated, err := svc.Review(t.Context(), req, &permissionports.RequestActor{
@@ -714,7 +714,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 				Once()
 			if tt.wantComment {
 				audit.EXPECT().
-					LogAction(mock.Anything, mock.Anything, mock.Anything).
+					LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
 				comments.EXPECT().

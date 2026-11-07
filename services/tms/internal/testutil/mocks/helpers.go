@@ -33,49 +33,29 @@ var _ auditports.AuditService = (*NoopAuditService)(nil)
 
 type NoopAuditService struct{}
 
-func (n *NoopAuditService) List(
-	_ context.Context,
-	_ *auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
-}
-
 func (n *NoopAuditService) ListConnection(
 	_ context.Context,
-	_ *auditports.ListAuditEntriesConnectionRequest,
+	_ *auditports.ListAuditEntriesRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	return &pagination.CursorListResult[*audit.Entry]{}, nil
 }
 
-func (n *NoopAuditService) ListByResourceID(
-	_ context.Context,
-	_ *auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
-}
-
 func (n *NoopAuditService) GetByID(
 	_ context.Context,
-	_ auditports.GetAuditEntryByIDOptions,
+	_ *auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
 func (n *NoopAuditService) LogAction(
+	_ context.Context,
 	_ *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {
 	return nil
 }
 
-func (n *NoopAuditService) LogActions(_ []auditports.BulkLogEntry) error {
-	return nil
-}
-
-func (n *NoopAuditService) RegisterSensitiveFields(
-	_ permission.Resource,
-	_ []auditports.SensitiveField,
-) error {
+func (n *NoopAuditService) LogActions(_ context.Context, _ []auditports.BulkLogEntry) error {
 	return nil
 }
 

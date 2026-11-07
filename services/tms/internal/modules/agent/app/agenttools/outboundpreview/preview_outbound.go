@@ -4,11 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/pkg/sensitivetext"
 )
 
 // sensitiveTextScanner finds values in free text that look like something
@@ -19,9 +18,7 @@ type sensitiveTextScanner interface {
 
 // outboundScanner reads text a write would send outside the organization.
 // Detection needs no key; the masking the audit log applies is not used.
-var outboundScanner sensitiveTextScanner = auditservice.NewSensitiveDataManager(
-	&securityconfig.EncryptionConfig{},
-)
+var outboundScanner sensitiveTextScanner = sensitivetext.Scanner{}
 
 func WarnSensitiveContent(preview *agentpreview.ToolPreview, texts ...string) {
 	for _, text := range texts {

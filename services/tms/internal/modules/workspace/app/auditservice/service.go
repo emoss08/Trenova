@@ -4,104 +4,73 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
-	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/pkg/auditctx"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+const writeTimeout = 10 * time.Second
+
+var ErrNoValidEntries = errors.New("no audit entry was valid")
+
 type Params struct {
 	fx.In
 
-	LC                    fx.Lifecycle
-	AuditRepository       auditports.AuditRepository
-	AuditBufferRepository auditports.AuditBufferRepository
-	Realtime              realtimeports.RealtimeService
-	Logger                *zap.Logger
-	AppConfig             *appconfig.Config
-	SecurityConfig        *securityconfig.Config
-	Metrics               *metrics.Registry
-	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository
+	AuditRepository  auditports.AuditRepository
+	Realtime         realtimeports.RealtimeService
+	Logger           *zap.Logger
+	Config           *auditconfig.Config
+	Metrics          *metrics.Registry
+	AgentDefinitions agentdefinitionports.AgentDefinitionRepository
+	Alerts           *Alerts `optional:"true"`
 }
 
 type service struct {
-	repo       auditports.AuditRepository
-	bufferRepo auditports.AuditBufferRepository
-	realtime   realtimeports.RealtimeService
-	logger     *zap.Logger
-	sdm        *SensitiveDataManager
-	metrics    *metrics.Registry
-	agents     *agentCredits
-}
-
-var clientBitToOperation = map[int64]permission.Operation{
-	int64(operationbits.Read):      permission.OpRead,
-	int64(operationbits.Create):    permission.OpCreate,
-	int64(operationbits.Update):    permission.OpUpdate,
-	int64(operationbits.Delete):    permission.OpDelete,
-	int64(operationbits.Export):    permission.OpExport,
-	int64(operationbits.Import):    permission.OpImport,
-	int64(operationbits.Approve):   permission.OpApprove,
-	int64(operationbits.Reject):    permission.OpReject,
-	int64(operationbits.Assign):    permission.OpAssign,
-	int64(operationbits.Unassign):  permission.OpUnassign,
-	int64(operationbits.Archive):   permission.OpArchive,
-	int64(operationbits.Restore):   permission.OpRestore,
-	int64(operationbits.Submit):    permission.OpSubmit,
-	int64(operationbits.Cancel):    permission.OpCancel,
-	int64(operationbits.Duplicate): permission.OpDuplicate,
-	int64(operationbits.Close):     permission.OpClose,
-	int64(operationbits.Lock):      permission.OpLock,
-	int64(operationbits.Unlock):    permission.OpUnlock,
-	int64(operationbits.Activate):  permission.OpActivate,
-	int64(operationbits.Reopen):    permission.OpReopen,
+	repo     auditports.AuditRepository
+	realtime realtimeports.RealtimeService
+	logger   *zap.Logger
+	redactor *Redactor
+	metrics  *metrics.Registry
+	agents   *agentCredits
+	alerts   *Alerts
 }
 
 //nolint:gocritic // this is dependency injection
 func New(p Params) auditports.AuditService {
-	var definitions agentDefinitionReader
-	definitions = p.AgentDefinitions
-
 	logger := p.Logger.Named("service.audit")
-	srv := &service{
-		repo:       p.AuditRepository,
-		bufferRepo: p.AuditBufferRepository,
-		realtime:   p.Realtime,
-		logger:     logger,
-		sdm:        NewSensitiveDataManager(&p.SecurityConfig.Encryption),
-		metrics:    p.Metrics,
-		agents:     newAgentCredits(definitions, logger),
+	pepper := ""
+	if p.Config != nil {
+		pepper = p.Config.FingerprintPepper
 	}
 
-	srv.configureSensitiveDataManager(p.AppConfig.Env)
-	if err := srv.registerDefaultSensitiveFields(); err != nil {
-		p.Logger.Error("failed to register default sensitive fields", zap.Error(err))
+	return &service{
+		repo:     p.AuditRepository,
+		realtime: p.Realtime,
+		logger:   logger,
+		redactor: NewRedactor(pepper),
+		metrics:  p.Metrics,
+		agents:   newAgentCredits(p.AgentDefinitions, logger),
+		alerts:   p.Alerts,
 	}
-
-	return srv
 }
 
 func (s *service) LogAction(
+	ctx context.Context,
 	params *auditports.LogActionParams,
 	opts ...auditports.LogOption,
 ) error {
@@ -109,9 +78,59 @@ func (s *service) LogAction(
 		return ErrAuditParamsRequired
 	}
 
-	now := timeutils.NowUnix()
-	principalType, principalID := resolveAuditPrincipal(params)
+	entry, err := s.build(ctx, params, opts)
+	if err != nil {
+		s.logger.Error("invalid audit entry",
+			zap.String("resource", string(params.Resource)),
+			zap.String("resourceId", params.ResourceID),
+			zap.Error(err),
+		)
+		return fmt.Errorf("invalid audit entry: %w", err)
+	}
 
+	return s.record(ctx, []*audit.Entry{entry})
+}
+
+func (s *service) LogActions(ctx context.Context, bulkEntries []auditports.BulkLogEntry) error {
+	if len(bulkEntries) == 0 {
+		return nil
+	}
+
+	entries := make([]*audit.Entry, 0, len(bulkEntries))
+	var invalid []error
+	for i, bulk := range bulkEntries {
+		if bulk.Params == nil {
+			invalid = append(invalid, fmt.Errorf("entry %d: %w", i, ErrAuditParamsRequired))
+			continue
+		}
+		entry, err := s.build(ctx, bulk.Params, bulk.Options)
+		if err != nil {
+			invalid = append(invalid, fmt.Errorf("entry %d: %w", i, err))
+			continue
+		}
+		entries = append(entries, entry)
+	}
+
+	if len(invalid) > 0 {
+		s.logger.Error("audit entries were invalid and are not recorded",
+			zap.Int("invalid", len(invalid)),
+			zap.Int("total", len(bulkEntries)),
+			zap.Error(errors.Join(invalid...)),
+		)
+	}
+	if len(entries) == 0 {
+		return fmt.Errorf("%w: %w", ErrNoValidEntries, errors.Join(invalid...))
+	}
+
+	return s.record(ctx, entries)
+}
+
+func (s *service) build(
+	ctx context.Context,
+	params *auditports.LogActionParams,
+	opts []auditports.LogOption,
+) (*audit.Entry, error) {
+	principalType, principalID := resolveAuditPrincipal(params)
 	entry := &audit.Entry{
 		ID:             pulid.MustNew("ae_"),
 		Resource:       params.Resource,
@@ -125,167 +144,95 @@ func (s *service) LogAction(
 		APIKeyID:       params.APIKeyID,
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
-		Timestamp:      now,
+		Timestamp:      timeutils.NowUnix(),
 		Category:       audit.CategorySystem,
-		Metadata:       make(map[string]any),
 		Critical:       params.Critical,
 	}
 
 	for _, opt := range opts {
 		if err := opt(entry); err != nil {
-			return err
+			return nil, err
 		}
 	}
+
+	enrichFromContext(ctx, entry)
 
 	if err := entry.Validate(); err != nil {
-		s.logger.Error("invalid audit entry", zap.Error(err))
-		return fmt.Errorf("invalid audit entry: %w", err)
-	}
-	s.agents.credit(entry)
-	s.publishRecordChanges(context.Background(), []*audit.Entry{entry})
-
-	if err := s.sdm.SanitizeEntry(entry); err != nil {
-		s.logger.Error("failed to sanitize sensitive data", zap.Error(err))
-		return fmt.Errorf("failed to sanitize sensitive data: %w", err)
+		return nil, err
 	}
 
-	if params.Critical {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); err != nil {
-			s.logger.Error("failed to insert critical audit entry, buffering it",
-				zap.Error(err),
-				zap.String("resource", string(params.Resource)),
-				zap.String("entryID", entry.ID.String()),
-			)
-			return s.bufferCriticalEntries([]*audit.Entry{entry}, err)
-		}
-		s.metrics.Audit.RecordDirectInsert()
-		s.publishRealtimeInvalidation(ctx, []*audit.Entry{entry})
-		return nil
-	}
+	s.agents.credit(ctx, entry)
+	s.redactor.RedactEntry(entry)
+	compactStates(entry)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	if err := s.bufferRepo.Push(ctx, entry); err != nil {
-		s.logger.Error("failed to push to Redis buffer, falling back to direct insert",
-			zap.Error(err),
-			zap.String("entryID", entry.ID.String()),
-		)
-		s.metrics.Audit.RecordBufferPushFailure()
-
-		directCtx, directCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer directCancel()
-		if fallbackErr := s.repo.InsertAuditEntries(
-			directCtx,
-			[]*audit.Entry{entry},
-		); fallbackErr != nil {
-			s.logger.Error("fallback direct insert also failed", zap.Error(fallbackErr))
-			return fmt.Errorf("failed to insert audit entry: %w", fallbackErr)
-		}
-		s.metrics.Audit.RecordFallbackInsert()
-		s.publishRealtimeInvalidation(directCtx, []*audit.Entry{entry})
-		return nil
-	}
-
-	s.metrics.Audit.RecordBufferPush()
-	return nil
+	return entry, nil
 }
 
-func (s *service) LogActions(bulkEntries []auditports.BulkLogEntry) error {
-	if len(bulkEntries) == 0 {
-		return nil
+func enrichFromContext(ctx context.Context, entry *audit.Entry) {
+	if meta, ok := requestmeta.From(ctx); ok {
+		if entry.IPAddress == "" {
+			entry.IPAddress = meta.ClientIP
+		}
+		if entry.UserAgent == "" {
+			entry.UserAgent = meta.UserAgent
+		}
+		if entry.CorrelationID == "" {
+			entry.CorrelationID = meta.RequestID
+		}
 	}
 
-	criticalEntries, nonCriticalEntries, validCount := s.buildBulkAuditEntries(bulkEntries)
-
-	if validCount == 0 {
-		return fmt.Errorf("all %d audit entries failed validation/sanitization", len(bulkEntries))
+	if entry.TraceID == "" {
+		if span := trace.SpanContextFromContext(ctx); span.HasTraceID() {
+			entry.TraceID = span.TraceID().String()
+		}
 	}
 
-	changed := make([]*audit.Entry, 0, len(criticalEntries)+len(nonCriticalEntries))
-	changed = append(changed, criticalEntries...)
-	changed = append(changed, nonCriticalEntries...)
-	s.publishRecordChanges(context.Background(), changed)
-
-	criticalErr := s.insertCriticalEntries(criticalEntries)
-
-	s.pushNonCriticalEntries(nonCriticalEntries)
-
-	return criticalErr
+	source := auditctx.From(ctx)
+	if entry.AIRunID == "" && source.AIRunID != "" {
+		entry.AIRunID = source.AIRunID
+	}
+	if entry.Channel == "" {
+		entry.Channel = channelOf(ctx, entry, source)
+	}
 }
 
-func (s *service) buildBulkAuditEntries(
-	bulkEntries []auditports.BulkLogEntry,
-) (criticalEntries, nonCriticalEntries []*audit.Entry, validCount int) {
-	for i, bulkEntry := range bulkEntries {
-		if bulkEntry.Params == nil {
-			s.logger.Warn("nil audit params in bulk entry, skipping", zap.Int("index", i))
-			continue
-		}
-
-		principalType, principalID := resolveAuditPrincipal(bulkEntry.Params)
-		entry := &audit.Entry{
-			ID:             pulid.MustNew("ae_"),
-			Resource:       bulkEntry.Params.Resource,
-			ResourceID:     bulkEntry.Params.ResourceID,
-			Operation:      bulkEntry.Params.Operation,
-			CurrentState:   bulkEntry.Params.CurrentState,
-			PreviousState:  bulkEntry.Params.PreviousState,
-			UserID:         bulkEntry.Params.UserID,
-			PrincipalType:  string(principalType),
-			PrincipalID:    principalID,
-			APIKeyID:       bulkEntry.Params.APIKeyID,
-			OrganizationID: bulkEntry.Params.OrganizationID,
-			BusinessUnitID: bulkEntry.Params.BusinessUnitID,
-			Timestamp:      timeutils.NowUnix(),
-			Category:       audit.CategorySystem,
-			Metadata:       make(map[string]any),
-			Critical:       bulkEntry.Params.Critical,
-		}
-
-		var optErr error
-		for _, opt := range bulkEntry.Options {
-			if err := opt(entry); err != nil {
-				optErr = err
-				break
-			}
-		}
-		if optErr != nil {
-			s.logger.Warn("failed to apply options to audit entry, skipping",
-				zap.Int("index", i),
-				zap.Error(optErr),
-			)
-			continue
-		}
-
-		if err := entry.Validate(); err != nil {
-			s.logger.Warn("invalid audit entry, skipping",
-				zap.Int("index", i),
-				zap.Error(err),
-			)
-			continue
-		}
-		s.agents.credit(entry)
-
-		if err := s.sdm.SanitizeEntry(entry); err != nil {
-			s.logger.Warn("failed to sanitize audit entry, skipping",
-				zap.Int("index", i),
-				zap.Error(err),
-			)
-			continue
-		}
-
-		validCount++
-		if entry.Critical {
-			criticalEntries = append(criticalEntries, entry)
-		} else {
-			nonCriticalEntries = append(nonCriticalEntries, entry)
-		}
+func channelOf(ctx context.Context, entry *audit.Entry, source auditctx.Source) audit.Channel {
+	if source.Channel != "" {
+		return audit.Channel(source.Channel)
 	}
 
-	return criticalEntries, nonCriticalEntries, validCount
+	_, fromRequest := requestmeta.From(ctx)
+	switch kernelports.PrincipalType(entry.PrincipalType) {
+	case permissionports.PrincipalTypeAPIKey:
+		return audit.ChannelAPI
+	case permissionports.PrincipalTypeAgent:
+		return audit.ChannelAgentRun
+	case permissionports.PrincipalTypeSystem:
+		if fromRequest {
+			return audit.ChannelSystem
+		}
+		return audit.ChannelJob
+	default:
+		if fromRequest {
+			return audit.ChannelWeb
+		}
+		return audit.ChannelJob
+	}
+}
+
+func compactStates(entry *audit.Entry) {
+	switch entry.Operation { //nolint:exhaustive // only creates and deletes keep a state
+	case permission.OpCreate:
+		entry.PreviousState = nil
+		return
+	case permission.OpDelete:
+		entry.CurrentState = nil
+		return
+	}
+	if len(entry.Changes) > 0 {
+		entry.PreviousState = nil
+		entry.CurrentState = nil
+	}
 }
 
 func resolveAuditPrincipal(
@@ -298,511 +245,37 @@ func resolveAuditPrincipal(
 	return permissionports.PrincipalTypeUser, params.UserID
 }
 
-func (s *service) insertCriticalEntries(criticalEntries []*audit.Entry) error {
-	if len(criticalEntries) == 0 {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+func (s *service) record(ctx context.Context, entries []*audit.Entry) error {
+	writeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), writeTimeout)
 	defer cancel()
 
-	if err := s.repo.InsertAuditEntries(ctx, criticalEntries); err != nil {
-		s.logger.Error("failed to insert critical audit entries, buffering them",
-			zap.Error(err),
-			zap.Int("count", len(criticalEntries)),
-		)
-		return s.bufferCriticalEntries(criticalEntries, err)
-	}
-
-	s.metrics.Audit.RecordDirectInsert()
-	s.publishRealtimeInvalidation(ctx, criticalEntries)
-	return nil
-}
-
-func (s *service) bufferCriticalEntries(entries []*audit.Entry, insertErr error) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.bufferRepo.PushBatch(ctx, entries); err != nil {
-		s.metrics.Audit.RecordBufferPushFailure()
-		ids := make([]string, 0, len(entries))
+	started := time.Now()
+	err := s.repo.Insert(writeCtx, entries)
+	s.metrics.Audit.RecordWrite(countByClass(entries), err == nil, time.Since(started))
+	if err != nil {
 		for _, entry := range entries {
-			ids = append(ids, entry.ID.String())
-		}
-		s.logger.Error("critical audit entries could not be stored or buffered",
-			zap.Error(err),
-			zap.NamedError("insertError", insertErr),
-			zap.Strings("entryIDs", ids),
-		)
-		return fmt.Errorf("failed to record critical audit entry: %w", errors.Join(insertErr, err))
-	}
-
-	s.metrics.Audit.RecordCriticalBuffered(len(entries))
-	return nil
-}
-
-func (s *service) pushNonCriticalEntries(nonCriticalEntries []*audit.Entry) {
-	if len(nonCriticalEntries) == 0 {
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.bufferRepo.PushBatch(ctx, nonCriticalEntries); err != nil {
-		s.logger.Error("failed to push batch to Redis buffer, falling back to direct insert",
-			zap.Error(err),
-			zap.Int("count", len(nonCriticalEntries)),
-		)
-		s.metrics.Audit.RecordBufferPushFailure()
-
-		directCtx, directCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer directCancel()
-
-		if fallbackErr := s.repo.
-			InsertAuditEntries(
-				directCtx,
-				nonCriticalEntries,
-			); fallbackErr != nil {
-			s.logger.Error("fallback direct insert also failed", zap.Error(fallbackErr))
-			return
-		}
-
-		s.metrics.Audit.RecordFallbackInsert()
-		s.publishRealtimeInvalidation(directCtx, nonCriticalEntries)
-		return
-	}
-
-	s.metrics.Audit.RecordBufferPush()
-}
-
-func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*audit.Entry) {
-	if len(entries) == 0 || s.realtime == nil {
-		return
-	}
-
-	type tenantBatch struct {
-		orgID         pulid.ID
-		buID          pulid.ID
-		actorUserID   pulid.ID
-		actorID       pulid.ID
-		actorType     kernelports.PrincipalType
-		actorAPIKeyID pulid.ID
-		record        pulid.ID
-		count         int
-	}
-
-	tenantBatches := make(map[string]*tenantBatch, len(entries))
-	for _, entry := range entries {
-		if entry == nil || entry.OrganizationID.IsNil() || entry.BusinessUnitID.IsNil() {
-			continue
-		}
-
-		key := entry.RealtimeBatchKey()
-		batch, ok := tenantBatches[key]
-		if !ok {
-			batch = &tenantBatch{
-				orgID:         entry.OrganizationID,
-				buID:          entry.BusinessUnitID,
-				actorUserID:   entry.UserID,
-				actorID:       entry.PrincipalID,
-				actorType:     kernelports.PrincipalType(entry.PrincipalType),
-				actorAPIKeyID: entry.APIKeyID,
-				record:        entry.ID,
-			}
-			tenantBatches[key] = batch
-		}
-
-		batch.count++
-	}
-
-	for _, batch := range tenantBatches {
-		action := "created"
-		recordID := batch.record
-		if batch.count > 1 {
-			action = "bulk_created"
-			recordID = pulid.ID("")
-		}
-
-		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: batch.orgID,
-			BusinessUnitID: batch.buID,
-			ActorUserID:    batch.actorUserID,
-			ActorType:      batch.actorType,
-			ActorID:        batch.actorID,
-			ActorAPIKeyID:  batch.actorAPIKeyID,
-			Resource:       "audit-logs",
-			Action:         action,
-			RecordID:       recordID,
-		}); err != nil {
-			s.logger.Warn(
-				"failed to publish audit realtime invalidation",
+			s.logger.Error("audit entry could not be stored; this log line is its only copy",
 				zap.Error(err),
-				zap.String("organizationID", batch.orgID.String()),
-				zap.String("businessUnitID", batch.buID.String()),
-				zap.String("action", action),
+				zap.Any("entry", entry),
 			)
 		}
-	}
-}
-
-func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Entry) {
-	if len(entries) == 0 || s.realtime == nil {
-		return
+		return fmt.Errorf("record audit entries: %w", err)
 	}
 
-	type resourceBatch struct {
-		entry *audit.Entry
-		count int
-	}
-
-	batches := make(map[string]*resourceBatch, len(entries))
-	order := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		if entry == nil || entry.OrganizationID.IsNil() || entry.BusinessUnitID.IsNil() {
-			continue
-		}
-		if !realtimeinvalidation.IsRecordChange(entry.Resource, entry.Operation) {
-			continue
-		}
-
-		key := entry.RealtimeBatchKey() + ":" + string(entry.Resource)
-		batch, ok := batches[key]
-		if !ok {
-			batch = &resourceBatch{entry: entry}
-			batches[key] = batch
-			order = append(order, key)
-		}
-		batch.count++
-	}
-
-	for _, key := range order {
-		batch := batches[key]
-		entry := batch.entry
-		action := realtimeinvalidation.RecordChangeAction(entry.Operation)
-		recordID := pulid.ID(entry.ResourceID)
-		if batch.count > 1 {
-			action = "bulk_" + action
-			recordID = pulid.ID("")
-		}
-
-		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: entry.OrganizationID,
-			BusinessUnitID: entry.BusinessUnitID,
-			ActorUserID:    entry.UserID,
-			ActorType:      kernelports.PrincipalType(entry.PrincipalType),
-			ActorID:        entry.PrincipalID,
-			ActorAPIKeyID:  entry.APIKeyID,
-			Resource:       realtimeinvalidation.RecordChangeResource(entry.Resource),
-			Action:         action,
-			RecordID:       recordID,
-		}); err != nil {
-			s.logger.Warn(
-				"failed to publish record change",
-				zap.Error(err),
-				zap.String("resource", string(entry.Resource)),
-				zap.String("action", action),
-			)
-		}
-	}
-}
-
-func (s *service) List(
-	ctx context.Context,
-	req *auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	log := s.logger.With(
-		zap.String("operation", "List"),
-		zap.String("buID", req.Filter.TenantInfo.BuID.String()),
-		zap.String("userID", req.Filter.TenantInfo.UserID.String()),
-	)
-
-	normalizeOperationFilters(req.Filter)
-
-	entities, err := s.repo.List(ctx, req)
-	if err != nil {
-		log.Error("failed to list audit entries", zap.Error(err))
-		return nil, fmt.Errorf("failed to list audit entries: %w", err)
-	}
-
-	return entities, nil
-}
-
-func (s *service) ListConnection(
-	ctx context.Context,
-	req *auditports.ListAuditEntriesConnectionRequest,
-) (*pagination.CursorListResult[*audit.Entry], error) {
-	log := s.logger.With(
-		zap.String("operation", "ListConnection"),
-		zap.String("buID", req.Filter.TenantInfo.BuID.String()),
-		zap.String("userID", req.Filter.TenantInfo.UserID.String()),
-	)
-
-	normalizeOperationFilters(req.Filter)
-
-	entities, err := s.repo.ListConnection(ctx, req)
-	if err != nil {
-		log.Error("failed to list audit entries", zap.Error(err))
-		return nil, fmt.Errorf("failed to list audit entries: %w", err)
-	}
-
-	return entities, nil
-}
-
-func (s *service) ListByResourceID(
-	ctx context.Context,
-	req *auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	log := s.logger.With(
-		zap.String("operation", "ListByResourceID"),
-		zap.String("resourceID", req.ResourceID.String()),
-	)
-
-	normalizeOperationFilters(req.Filter)
-
-	entities, err := s.repo.ListByResourceID(ctx, req)
-	if err != nil {
-		log.Error("failed to list audit entries by resource id", zap.Error(err))
-		return nil, fmt.Errorf("failed to list audit entries by resource id: %w", err)
-	}
-
-	return entities, nil
-}
-
-func (s *service) GetByID(
-	ctx context.Context,
-	req auditports.GetAuditEntryByIDOptions,
-) (*audit.Entry, error) {
-	log := s.logger.With(
-		zap.String("operation", "GetByID"),
-		zap.String("auditEntryID", req.EntryID.String()),
-	)
-
-	entity, err := s.repo.GetByID(ctx, req)
-	if err != nil {
-		log.Error("failed to get audit entry", zap.Error(err))
-		return nil, fmt.Errorf("failed to get audit entry by id: %w", err)
-	}
-
-	return entity, nil
-}
-
-func (s *service) RegisterSensitiveFields(
-	resource permission.Resource,
-	fields []auditports.SensitiveField,
-) error {
-	return s.sdm.RegisterSensitiveFields(resource, fields)
-}
-
-func (s *service) registerDefaultSensitiveFields() error {
-	if err := s.sdm.RegisterSensitiveFields(permission.ResourceUser, []auditports.SensitiveField{
-		{Name: "password", Action: auditports.SensitiveFieldOmit},
-		{Name: "hashedPassword", Action: auditports.SensitiveFieldOmit},
-		{Name: "emailAddress", Action: auditports.SensitiveFieldMask},
-		{Name: "address", Action: auditports.SensitiveFieldMask},
-	}); err != nil {
-		return err
-	}
-
-	if err := s.sdm.RegisterSensitiveFields(
-		permission.ResourceOrganization,
-		[]auditports.SensitiveField{
-			{Name: "logoUrl", Action: auditports.SensitiveFieldMask},
-			{Name: "taxId", Action: auditports.SensitiveFieldMask},
-		},
-	); err != nil {
-		return err
-	}
-
-	if err := s.sdm.RegisterSensitiveFields(permission.ResourceWorker, []auditports.SensitiveField{
-		{Name: "licenseNumber", Action: auditports.SensitiveFieldMask},
-		{Name: "dateOfBirth", Action: auditports.SensitiveFieldMask},
-		{Path: "profile", Name: "licenseNumber", Action: auditports.SensitiveFieldMask},
-	}); err != nil {
-		return err
-	}
+	kernelports.AfterCommit(ctx, func(ctx context.Context) {
+		ctx = context.WithoutCancel(ctx)
+		s.publishRecordChanges(ctx, entries)
+		s.publishRealtimeInvalidation(ctx, entries)
+		s.alerts.Observe(ctx, entries)
+	})
 
 	return nil
 }
 
-func normalizeOperationFilters(opts *pagination.QueryOptions) {
-	if opts == nil {
-		return
+func countByClass(entries []*audit.Entry) map[string]int {
+	counts := make(map[string]int, len(audit.RetentionClasses))
+	for _, entry := range entries {
+		counts[string(entry.RetentionClass)]++
 	}
-
-	normalizeOperationFieldFilters(opts.FieldFilters)
-	for idx := range opts.FilterGroups {
-		normalizeOperationFieldFilters(opts.FilterGroups[idx].Filters)
-	}
-}
-
-func normalizeOperationFieldFilters(filters []domaintypes.FieldFilter) {
-	for idx := range filters {
-		if filters[idx].Field != "operation" {
-			continue
-		}
-
-		filters[idx].Value = normalizeOperationFilterValue(filters[idx].Value)
-	}
-}
-
-func normalizeOperationFilterValue(value any) any {
-	switch v := value.(type) {
-	case []string:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if normalized, ok := toOperationString(item); ok {
-				out = append(out, normalized)
-			}
-		}
-		return out
-	case []int:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if normalized, ok := toOperationString(item); ok {
-				out = append(out, normalized)
-			}
-		}
-		return out
-	case []int64:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if normalized, ok := toOperationString(item); ok {
-				out = append(out, normalized)
-			}
-		}
-		return out
-	case []float64:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if normalized, ok := toOperationString(item); ok {
-				out = append(out, normalized)
-			}
-		}
-		return out
-	case []any:
-		out := make([]string, 0, len(v))
-		for _, item := range v {
-			if normalized, ok := toOperationString(item); ok {
-				out = append(out, normalized)
-			}
-		}
-		return out
-	default:
-		if normalized, ok := toOperationString(value); ok {
-			return normalized
-		}
-		return value
-	}
-}
-
-//nolint:cyclop // existing business workflow intentionally has several domain branches
-func toOperationString(value any) (string, bool) {
-	switch v := value.(type) {
-	case permission.Operation:
-		return string(v), true
-	case string:
-		normalized := strings.ToLower(strings.TrimSpace(v))
-		if normalized == "" {
-			return "", false
-		}
-
-		if numeric, err := strconv.ParseInt(normalized, 10, 64); err == nil {
-			if op, ok := clientBitToOperation[numeric]; ok {
-				return string(op), true
-			}
-			return strconv.FormatInt(numeric, 10), true
-		}
-
-		return normalized, true
-	case int:
-		return normalizeOperationFromInt64(int64(v))
-	case int8:
-		return normalizeOperationFromInt64(int64(v))
-	case int16:
-		return normalizeOperationFromInt64(int64(v))
-	case int32:
-		return normalizeOperationFromInt64(int64(v))
-	case int64:
-		return normalizeOperationFromInt64(v)
-	case uint:
-		return normalizeOperationFromUint64(uint64(v))
-	case uint8:
-		return normalizeOperationFromUint64(uint64(v))
-	case uint16:
-		return normalizeOperationFromUint64(uint64(v))
-	case uint32:
-		return normalizeOperationFromUint64(uint64(v))
-	case uint64:
-		return normalizeOperationFromUint64(v)
-	case float32:
-		if math.Trunc(float64(v)) != float64(v) {
-			return strconv.FormatFloat(float64(v), 'f', -1, 32), true
-		}
-		return normalizeOperationFromInt64(int64(v))
-	case float64:
-		if math.Trunc(v) != v {
-			return strconv.FormatFloat(v, 'f', -1, 64), true
-		}
-		return normalizeOperationFromInt64(int64(v))
-	default:
-		return "", false
-	}
-}
-
-func normalizeOperationFromInt64(value int64) (string, bool) {
-	if op, ok := clientBitToOperation[value]; ok {
-		return string(op), true
-	}
-
-	return strconv.FormatInt(value, 10), true
-}
-
-func normalizeOperationFromUint64(value uint64) (string, bool) {
-	n, err := intutils.SafeUint64ToInt64(value)
-	if err != nil {
-		return strconv.FormatUint(value, 10), true
-	}
-
-	return normalizeOperationFromInt64(n)
-}
-
-func (s *service) configureSensitiveDataManager(environment string) {
-	switch environment {
-	case "production", "prod":
-		s.sdm.SetAutoDetect(true)
-		s.sdm.SetMaskStrategy(MaskStrategyStrict)
-		s.logger.Info(
-			"sensitive data manager configured for production (strict masking, auto-detect ON)",
-		)
-
-	case "staging", "stage":
-		s.sdm.SetAutoDetect(true)
-		s.sdm.SetMaskStrategy(MaskStrategyDefault)
-		s.logger.Info(
-			"sensitive data manager configured for staging (default masking, auto-detect ON)",
-		)
-
-	case "development", "dev":
-		s.sdm.SetAutoDetect(true)
-		s.sdm.SetMaskStrategy(MaskStrategyPartial)
-		s.logger.Info(
-			"sensitive data manager configured for development (partial masking, auto-detect ON)",
-		)
-
-	case "test", "testing":
-		s.sdm.SetAutoDetect(false)
-		s.sdm.SetMaskStrategy(MaskStrategyPartial)
-		s.logger.Info(
-			"sensitive data manager configured for testing (partial masking, auto-detect OFF)",
-		)
-
-	default:
-		s.sdm.SetAutoDetect(true)
-		s.sdm.SetMaskStrategy(MaskStrategyDefault)
-		s.logger.Warn(
-			"unknown environment, using default configuration",
-			zap.String("environment", environment),
-		)
-	}
+	return counts
 }

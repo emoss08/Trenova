@@ -84,7 +84,7 @@ type recordingAudit struct {
 	comments []string
 }
 
-func (a *recordingAudit) LogAction(
+func (a *recordingAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

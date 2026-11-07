@@ -42,17 +42,30 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 
 Every row carries the request ID, client IP and user agent of the request that
 caused it. The request ID is the `X-Request-ID` the API returns, so a support
-ticket quoting it finds the row.
+ticket quoting it finds the row. Each `audit_entries` row also carries an `action`
+(`shipment.update`, `api_key.rotated`, `organization.cross_tenant_refused`), a
+`category` (`User`, `System` or `Security`), a `retention_class`, the `channel` it
+came through, the OpenTelemetry `trace_id`, the `ai_run_id` of the agent run that
+caused it, an `entity_ref` (the record's number or name when it was written) and an
+`actor_name` the insert trigger snapshots from the user, API key or agent, so the row
+still names its actor after a rename or deletion.
 
 ## Request metadata
 
 `middleware.NewRequestMetaMiddleware` runs right after `requestid.New()` and puts a
 `requestmeta.Meta` (request ID, `ClientIP()`, user agent, truncated to the audit
-columns) on both the request context and the gin context. Anything that writes an
-audit row adds `auditservice.WithRequest(ctx)`: it fills `ip_address`, `user_agent`
-and `correlation_id` when the entry has none, and copies the request ID into
-`metadata.requestId`. A context with no metadata (a Temporal activity, a CLI
-command) leaves those fields empty rather than failing.
+columns) on both the request context and the gin context. `LogAction` and `LogActions`
+take the caller's `ctx` and fill `ip_address`, `user_agent` and `correlation_id` (the
+request ID) from it, `trace_id` from the active span, and `channel` and `ai_run_id`
+from `pkg/auditctx`. Nothing passes request metadata by hand. A context with no
+metadata (a Temporal activity, a CLI command) leaves those fields empty rather than
+failing.
+
+`channel` is `web`, `api`, `portal`, `agent_conversation`, `agent_run`, `support`, `scim`,
+`job`, `cli` or `system` (`pkg/auditctx`). `auditctx.WithChannel` sets it where the principal
+alone does not say it (the SCIM handler); otherwise it follows the principal: an API key is
+`api`, an agent `agent_run`, the system principal `system`, a person `web`. The agent runtime puts the run on the context for every step
+(`auditctx.WithAIRun`), so every write a run makes links back to it.
 
 `ClientIP()` is only as trustworthy as `server.trustedProxies`. Behind a load
 balancer, list it there, or every row records the balancer's address.
@@ -149,8 +162,11 @@ tenant, before and after state, a comment and metadata. The auditor:
   cannot diff never drops the entry;
 - fills a missing tenant or actor from the request's database scope, and falls back
   to the system actor;
-- never fails the change. If the entry cannot be stored or buffered, it logs the
-  change in full at error and counts `trenova_audit_security_event_total{kind="security_change",status="failure"}`.
+- never fails the change. If the entry cannot be stored, it logs the change in full
+  at error and counts `trenova_audit_security_event_total{kind="security_change",status="failure"}`.
+- marks the entry `Security` with `SecurityChange.Action` as its action (`role.assigned`,
+  `data_retention.updated`), which keeps it for the security retention class, hides it
+  from readers without `security_audit_log:read`, and lets the alert policies match it.
 
 Secrets never reach an entry: OIDC client secrets, SCIM token hashes and API key
 hashes are `json:"-"`, API keys are recorded through their response shape, and
@@ -296,8 +312,8 @@ user. See [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
 Every file Trenova receives passes `contentscanports.Gate` before it is stored or parsed
 (`documentservice`, `documentuploadservice`, `captureintake`, `ediinboundservice`,
 `rateimportservice`, the fuel card file connector, and the profile picture and logo uploads). When ClamAV flags one,
-`contentscanservice` writes a critical entry against resource `document` with operation
-`reject`, the file's SHA-256 as `resource_id` (the file is never stored, so it has no ID),
+`contentscanservice` writes a critical `Security` entry with action
+`document.malware_refused` against resource `document` with operation `reject`, the file's SHA-256 as `resource_id` (the file is never stored, so it has no ID),
 and the file name, source, signature, digest and size in `current_state`. A new way of
 receiving a file calls `contentscanports.Check` on its bytes before anything opens them and
 answers a refusal with `contentscanports.RefusalError`. Configuration and operation are in
@@ -316,7 +332,8 @@ attempt with `tenantboundary.Report`:
 
 `middleware.TenantBoundaryMiddleware.Track` gives every request a tracker and,
 after the handler returns, writes each marked attempt as a critical entry against
-the caller's organization (resource `organization`, the attempted organization as
+the caller's organization (a `Security` entry with action
+`organization.cross_tenant_refused`, resource `organization`, the attempted organization as
 `resource_id`, the operation from the HTTP method) with the route and response
 status. A request with no session is only logged. A row-level security rejection
 is answered 403 with a generic message instead of surfacing as a server error.
@@ -324,36 +341,153 @@ is answered 403 with a generic message instead of surfacing as a server error.
 To refuse another cross-tenant shape, call `tenantboundary.Report(ctx, …)` where
 the request is refused; the middleware does the rest.
 
-## Surviving an outage
+## How an entry is written
 
-Non-critical entries go to the Redis buffer and fall back to a direct insert. A
-critical entry is inserted directly; if that fails it is pushed to the Redis buffer,
-whose flush and dead-letter queue retry it, and `trenova_audit_critical_buffered_total`
-counts it. Only when both PostgreSQL and Redis refuse does `LogAction` return an
-error, and the service logs the entry IDs. The security auditor and the auth event
-recorder then log the full event, so the log pipeline is the last copy.
+`auditservice.LogAction(ctx, params, opts...)` builds the entry, applies the field policy
+(below), normalizes it (action, retention class, channel, record reference, truncation)
+and inserts it with `auditrepository.Insert`:
+
+- inside the caller's transaction when `ctx` carries one for the same tenant, so the entry
+  commits or rolls back with the change it describes;
+- otherwise in its own write under the context's tenant scope, or a system scope for an
+  entry about another tenant.
+
+The write is detached from the request's cancellation (`context.WithoutCancel`, 10 second
+timeout), so a client that hangs up after the change committed does not lose the entry.
+Realtime publication and alert evaluation run through `kernelports.AfterCommit`, so a
+rolled-back change raises nothing. An update that carries a diff stores only the diff;
+creates keep `current_state` and deletes `previous_state`. `LogActions` inserts a batch in
+one statement (bulk status changes).
+
+There is no buffer and no dead-letter queue. A failed insert returns an error to the caller
+and the service logs the entry in full at error, so the log pipeline is the last copy; the
+security auditor and the auth event recorder do the same.
+
+## What an entry may hold
+
+`auditservice.Redactor` applies a field policy to the states, the diff and the metadata, by
+field name at any depth:
+
+| Field | Stored as |
+|---|---|
+| A secret: a name containing `password`/`passphrase`, or ending in `secret`, `token`, `api key`, `private key`, `signing key`, `access key`, `encryption key`, `recovery code`, `key hash`, `token hash` | left out |
+| Tax ID, EIN, SSN, account, routing and card numbers, IBAN | `[REDACTED] …1234 #a1b2c3d4`: the last four and an HMAC-SHA256 fingerprint keyed by `audit.fingerprintPepper` |
+| A private key, JWT or URL with a password inside the comment | replaced with `[REDACTED]` |
+
+A redacted entry has `sensitive_data` set, and the client marks those values **Sensitive**.
+The fingerprint lets an investigator see that two entries changed the same number without
+storing it. Without a pepper only the last four is kept. Anything else, including record IDs,
+is stored as written: the policy is by name, not by guessing at values.
+
+## Retention classes
+
+Each entry's `retention_class` is set when it is written (`audit.ClassifyRetention`):
+
+| Class | What | Floor | Default |
+|---|---|---|---|
+| `Access` | reads, downloads, exports | 90 days | 90 days |
+| `Operational` | every other change | 730 days | 730 days |
+| `Financial` | changes to billing, accounting, payroll, fuel and tax, settlements, detention and rate confirmations (`audit.IsFinancialResource`, from the permission catalog's categories) | 2,555 days | 2,555 days |
+| `Security` | `Security` entries | 730 days | 730 days |
+
+An organization chooses each on Data retention (`data_retention.audit_*_retention_days`),
+between the floor and 3,650 days. The floor is enforced three times: the domain validation,
+a `CHECK` on `data_retention`, and `audit_retention_floor_days()` inside the delete trigger.
+
+## Legal holds
+
+`audit_legal_holds` stops the sweep deleting an organization's entries: all of them, one
+resource's, or one record's (`auditlegalholdservice`, permission `audit_legal_hold`). A hold
+is released, never deleted, and a released hold cannot change
+(`trg_audit_legal_holds_guard`). Placing and releasing are `Security` entries. The delete
+trigger checks for a covering active hold on every row, so a sweep cannot remove a held
+entry even if the service has a bug, and `drop_expired_partitions` skips any month that still
+holds a held entry.
+
+## Integrity seals
+
+Every hour (`AuditSealWorkflow`, minute 12) `auditintegrity.Sealer` seals each tenant's
+entries up to the last whole hour at least 10 minutes old, looking back 72 hours and at most
+24 hours per seal. A seal (`audit_seals`, append-only) records, per retention class, the row
+count and a SHA-256 digest of the entries computed in SQL, and an HMAC-SHA256 chained to the
+previous seal (`trenova.audit-seal/v1`), signed with the active `aiAudit.chain` key.
+`audit_chain_heads` holds where each tenant's chain ends.
+
+`AuditVerifyWorkflow` (daily, 04:27) re-verifies every seal since the last run, then 200 older
+ones per tenant on a rolling cursor, so the whole chain is re-read over time. It reports
+`Verified`, `Broken` (an entry changed, an entry added to a sealed hour, or an altered seal,
+with the sequence where it broke) or `KeyMissing` (a seal signed with a key no longer
+configured, which is not tampering). The audit log page shows the status to readers with
+`security_audit_log:read`. Retention deletes past a sealed hour are expected: seals of hours
+whose entries have all aged out are removed with them.
+
+## Exports
+
+`auditexportservice` writes a date range (at most 400 days) of the trail to CSV or JSONL on
+Temporal (`AuditExportWorkflow`), streamed to object storage at up to two million rows.
+Requesting needs `audit_log:export`; security entries need `security_audit_log:read` as
+well, and the fields the requester could not see on the page are withheld (the visible
+groups are stored with the export's filters). Only the requester can download the file, until
+`audit.exportTtl` (a week by default), and the request and each download are `Access`
+entries. `AuditExportCleanupWorkflow` deletes expired files hourly.
+
+## Security alerts
+
+`audit_alert_policies` holds each organization's choice for each alert kind:
+
+| Kind | Raised by |
+|---|---|
+| `RoleChanged`, `APIKeyChanged`, `MFAReset`, `IdentityConfigChanged`, `LegalHoldChanged` | an entry with that action |
+| `CrossTenantRefused`, `MalwareRefused` | a refused request or file |
+| `BulkDelete` | 50 deletes by one principal in 10 minutes (configurable) |
+| `BulkExport` | 25 reads, downloads or exports by one principal in 10 minutes (configurable) |
+
+`auditservice.Alerts` matches each committed entry against the cached policies; counted kinds
+increment a Redis counter per principal and window, and raise once when the threshold is
+crossed. A raised alert starts `AuditAlertWorkflow`, which notifies everyone holding
+`security_audit_log:read` and writes an `audit.alert_raised` entry. Redis being down drops
+counted alerts, never entries. Changing a policy needs `security_audit_log:update` and is
+itself a `Security` entry.
+
+## Reading the trail
+
+The audit log's GraphQL queries check `audit_log:read`, then list only entries about
+resources the reader can read across the organization (`auditlogresolver.readableResources`,
+one batched permission check over the registry). A reader with only own or team scope on a
+resource does not see its history. `Security` entries need `security_audit_log:read`. The
+list reads a summary projection without the states; opening an entry reads its detail, the
+other entries of the same request and a field's history (`changedField`).
+
+Sign-ins stay in `auth_events` and have their own page (Sign-in activity), and agent runs in the
+AI audit trail; the audit log links to both rather than merging them.
+
+## Storage
+
+`audit_entries` is range-partitioned by month on `timestamp`, with partitions in the
+`audit_partitions` schema, which the application role has no privileges on. Every deploy and a
+daily schedule (`AuditPartitionWorkflow`, 01:17) run `ensure_partitions` three months ahead.
+The tenant indexes cover time, record, principal, resource, correlation ID and security
+entries; trigram indexes back search over the record reference and comment; a BRIN index covers
+time. States and metadata use lz4 compression.
 
 ## Retention
 
-`audit_entries` and `auth_events` are append-only. `prevent_audit_modification()`
-and `prevent_auth_event_modification()` (migration `20261231007050_audit_retention`)
-refuse every `UPDATE` and every `DELETE` except:
-
-- a `DELETE` by a member of `trenova_rls_bypass` in a transaction that has run
-  `SET LOCAL trenova.audit_retention = 'on'`, and then
-  - for `audit_entries`, of a non-critical row, or of a critical row older than
-    365 days (`audit.CriticalRetentionDays`);
-  - for `auth_events`, of a row older than 365 days (`iam.AuthEventRetentionDays`);
-- for `auth_events`, the foreign key setting `user_id` or `identity_provider_id` to
-  NULL when the user or identity provider is deleted.
+`audit_entries` and `auth_events` are append-only. `prevent_audit_modification()` refuses
+every `UPDATE` and `TRUNCATE`, and every `DELETE` except one by a member of
+`trenova_rls_bypass` in a transaction that has run `SET LOCAL trenova.audit_retention = 'on'`,
+of a row older than its retention class's floor and covered by no active legal hold.
+`prevent_auth_event_modification()` (migration `20261231007050_audit_retention`) allows a
+`DELETE` of an authentication event older than 365 days (`iam.AuthEventRetentionDays`) under
+the same opt-in, and the foreign key setting `user_id` or `identity_provider_id` to NULL when
+the user or identity provider is deleted.
 
 Both tables are listed in `trenova_rls.append_only_tables`, so `reconcile()` keeps
 `UPDATE` and `DELETE` revoked from `trenova_tenant`: the application role cannot
 issue either even inside its own tenant.
 
-The retention sweep (`DeleteAuditEntriesActivity`) deletes each organization's
-entries past its configured retention, keeping critical entries for at least a
-year whatever the organization chose, and deletes authentication events past 365
-days. Both deletes go through `postgres.DeleteUnderAuditRetention`, which opens a
-transaction on the system pool and opts in. Nothing else may delete from either
-table; a sweep that asks for a row the trigger protects fails as a whole.
+The retention sweep (`AuditRetentionWorkflow`, daily 02:43, `auditretention.Sweep`) deletes
+each organization's entries past each class's window in batches of 5,000, deletes
+authentication events past 365 days, and removes seals whose hours have aged out. Deletes go
+through `postgres.DeleteUnderAuditRetention`, which opens a transaction on the system pool and
+opts in. Past ten years whole monthly partitions are dropped instead. Nothing else may delete
+from either table; a sweep that asks for a row the trigger protects fails as a whole.

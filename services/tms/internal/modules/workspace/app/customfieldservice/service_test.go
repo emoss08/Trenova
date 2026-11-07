@@ -185,7 +185,7 @@ func TestService_Create_Success(t *testing.T) {
 	createdEntity.BusinessUnitID = entity.BusinessUnitID
 
 	repo.On("Create", mock.Anything, entity).Return(createdEntity, nil)
-	auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := svc.Create(t.Context(), entity, userID)
 
@@ -455,7 +455,7 @@ func TestService_Delete_Success(t *testing.T) {
 	valueRepo.On("CountResourcesByDefinition", mock.Anything, valueReq).Return(0, nil)
 
 	repo.On("Delete", mock.Anything, req).Return(nil)
-	auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	err := svc.Delete(t.Context(), req, userID)
 

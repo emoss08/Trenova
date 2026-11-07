@@ -7,14 +7,24 @@ package auditlogresolver
 
 import (
 	"context"
+	"time"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,16 +36,13 @@ func (r *AuditEntryResolver) Operation(ctx context.Context, obj *audit.Entry) (s
 	return string(obj.Operation), nil
 }
 
-func (r *AuditEntryResolver) EntityRef(ctx context.Context, obj *audit.Entry) (*string, error) {
-	ref := obj.EntityReference()
-	if ref == "" {
-		return nil, nil
-	}
-	return &ref, nil
-}
-
 func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.readableResources(ctx, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +52,12 @@ func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	result, err := r.AuditService.ListConnection(
-		ctx,
-		&auditports.ListAuditEntriesConnectionRequest{
-			Filter: tableInput.Filter,
-			Cursor: tableInput.Cursor,
-		},
-	)
+	result, err := r.AuditService.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
+		Filter:        tableInput.Filter,
+		Cursor:        tableInput.Cursor,
+		Access:        access,
+		IncludeDetail: detailRequested(ctx),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +65,8 @@ func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 	return auditEntryConnectionToModel(result)
 }
 
-func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)
+func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string, field *string) (*gqlmodel.AuditEntryConnection, error) {
+	authCtx, err := r.authContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -70,19 +76,29 @@ func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlm
 		return nil, err
 	}
 
+	access, err := r.recordAccess(ctx, authCtx, parsedResourceID)
+	if err != nil {
+		return nil, err
+	}
+
 	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := r.AuditService.ListConnection(
-		ctx,
-		&auditports.ListAuditEntriesConnectionRequest{
-			Filter:     tableInput.Filter,
-			Cursor:     tableInput.Cursor,
-			ResourceID: parsedResourceID,
-		},
-	)
+	changedField := ""
+	if field != nil {
+		changedField = *field
+	}
+
+	result, err := r.AuditService.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
+		Filter:        tableInput.Filter,
+		Cursor:        tableInput.Cursor,
+		Access:        access,
+		ResourceID:    parsedResourceID.String(),
+		ChangedField:  changedField,
+		IncludeDetail: detailRequested(ctx),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -101,9 +117,15 @@ func (r *QueryResolver) AuditEntry(ctx context.Context, id string) (*audit.Entry
 		return nil, err
 	}
 
-	return r.AuditService.GetByID(ctx, auditports.GetAuditEntryByIDOptions{
+	access, err := r.readableResources(ctx, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AuditService.GetByID(ctx, &auditports.GetAuditEntryByIDOptions{
 		EntryID:    entryID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Access:     access,
 	})
 }
 
@@ -117,4 +139,246 @@ func (r *AuditEntryResolver) PreviousState(ctx context.Context, obj *audit.Entry
 
 func (r *AuditEntryResolver) CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
 	return protectedfield.WithholdJSON(obj.Resource, obj.CurrentState, r.auditGroups(ctx)), nil
+}
+
+func (r *AuditAlertPolicyResolver) Kind(ctx context.Context, obj *auditalertservice.PolicyView) (audit.AlertKind, error) {
+	return obj.Definition.Kind, nil
+}
+
+func (r *AuditAlertPolicyResolver) Title(ctx context.Context, obj *auditalertservice.PolicyView) (string, error) {
+	return obj.Definition.Title, nil
+}
+
+func (r *AuditAlertPolicyResolver) Description(ctx context.Context, obj *auditalertservice.PolicyView) (string, error) {
+	return obj.Definition.Description, nil
+}
+
+func (r *AuditAlertPolicyResolver) Counted(ctx context.Context, obj *auditalertservice.PolicyView) (bool, error) {
+	return obj.Definition.Counted, nil
+}
+
+func (r *AuditAlertPolicyResolver) Enabled(ctx context.Context, obj *auditalertservice.PolicyView) (bool, error) {
+	return obj.Policy.Enabled, nil
+}
+
+func (r *AuditAlertPolicyResolver) Threshold(ctx context.Context, obj *auditalertservice.PolicyView) (int, error) {
+	return obj.Policy.Threshold, nil
+}
+
+func (r *AuditAlertPolicyResolver) WindowMinutes(ctx context.Context, obj *auditalertservice.PolicyView) (int, error) {
+	return obj.Policy.WindowMinutes, nil
+}
+
+func (r *AuditChainStatusResolver) SealedThrough(ctx context.Context, obj *auditintegrity.ChainStatus) (*int, error) {
+	if obj.SealedThrough == 0 {
+		return nil, nil
+	}
+	value := int(obj.SealedThrough)
+	return &value, nil
+}
+
+func (r *AuditChainStatusResolver) LastVerificationStatus(ctx context.Context, obj *auditintegrity.ChainStatus) (*audit.VerificationStatus, error) {
+	if obj.LastVerificationStatus == "" {
+		return nil, nil
+	}
+	status := obj.LastVerificationStatus
+	return &status, nil
+}
+
+func (r *AuditEntryResolver) Channel(ctx context.Context, obj *audit.Entry) (string, error) {
+	return string(obj.Channel), nil
+}
+
+func (r *AuditExportResolver) Downloadable(ctx context.Context, obj *audit.Export) (bool, error) {
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if !ok || authCtx == nil || authCtx.UserID != obj.RequestedByID {
+		return false, nil
+	}
+	return obj.Downloadable(time.Now().Unix()), nil
+}
+
+func (r *AuditLegalHoldResolver) Resource(ctx context.Context, obj *audit.LegalHold) (*string, error) {
+	if obj.Resource == "" {
+		return nil, nil
+	}
+	value := obj.Resource.String()
+	return &value, nil
+}
+
+func (r *AuditLegalHoldResolver) Active(ctx context.Context, obj *audit.LegalHold) (bool, error) {
+	return obj.Active(), nil
+}
+
+func (r *AuditLegalHoldResolver) PlacedBy(ctx context.Context, obj *audit.LegalHold) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.PlacedByID)
+}
+
+func (r *AuditLegalHoldResolver) ReleasedBy(ctx context.Context, obj *audit.LegalHold) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.ReleasedByID)
+}
+
+func (r *MutationResolver) PlaceAuditLegalHold(ctx context.Context, input gqlmodel.PlaceAuditLegalHoldInput) (*audit.LegalHold, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLegalHold, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+	req := &auditlegalholdservice.PlaceRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx).AuditActor(),
+		Name:       input.Name,
+		Reason:     input.Reason,
+	}
+	if input.Resource != nil {
+		req.Resource = permission.Resource(*input.Resource)
+	}
+	if input.ResourceID != nil {
+		req.ResourceID = *input.ResourceID
+	}
+	return r.AuditLegalHoldService.Place(ctx, req)
+}
+
+func (r *MutationResolver) ReleaseAuditLegalHold(ctx context.Context, id string, reason string) (*audit.LegalHold, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLegalHold, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	holdID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	return r.AuditLegalHoldService.Release(ctx, &auditlegalholdservice.ReleaseRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx).AuditActor(),
+		ID:         holdID,
+		Reason:     reason,
+	})
+}
+
+func (r *MutationResolver) RequestAuditExport(ctx context.Context, input gqlmodel.RequestAuditExportInput) (*audit.Export, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+	access, err := r.readableResources(ctx, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	includeSecurity := input.IncludeSecurity != nil && *input.IncludeSecurity
+	if includeSecurity && !access.IncludeSecurity {
+		return nil, errortypes.NewAuthorizationError(
+			"You don't have permission to export security entries",
+		)
+	}
+	return r.AuditExportService.Request(ctx, &auditexportservice.RequestExport{
+		TenantInfo:      resolvercore.TenantInfo(authCtx),
+		Actor:           actorutil.FromAuthContext(authCtx).AuditActor(),
+		Format:          input.Format,
+		RangeFrom:       int64(input.RangeFrom),
+		RangeTo:         int64(input.RangeTo),
+		Filters:         exportFiltersFromInput(input.Filters),
+		Access:          access,
+		VisibleGroups:   r.VisibleFieldGroups(ctx, authCtx),
+		IncludeSecurity: includeSecurity,
+	})
+}
+
+func (r *MutationResolver) AuditExportDownload(ctx context.Context, id string) (*auditexportservice.Download, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+	exportID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+	return r.AuditExportService.Download(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		actorutil.FromAuthContext(authCtx).AuditActor(),
+		exportID,
+	)
+}
+
+func (r *MutationResolver) UpdateAuditAlertPolicy(ctx context.Context, input gqlmodel.UpdateAuditAlertPolicyInput) (*auditalertservice.PolicyView, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSecurityAuditLog, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	req := &auditalertservice.UpdatePolicyRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx).AuditActor(),
+		Kind:       input.Kind,
+		Enabled:    input.Enabled,
+	}
+	if input.Threshold != nil {
+		req.Threshold = *input.Threshold
+	}
+	if input.WindowMinutes != nil {
+		req.WindowMinutes = *input.WindowMinutes
+	}
+	return r.AuditAlertService.UpdatePolicy(ctx, req)
+}
+
+func (r *QueryResolver) AuditChainStatus(ctx context.Context) (*auditintegrity.ChainStatus, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSecurityAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	return r.AuditIntegrity.Get(ctx, resolvercore.TenantInfo(authCtx))
+}
+
+func (r *QueryResolver) AuditLegalHolds(ctx context.Context, input gqlmodel.DataTableConnectionInput, activeOnly *bool) (*gqlmodel.AuditLegalHoldConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLegalHold, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.AuditLegalHoldService.List(ctx, &auditports.ListLegalHoldsRequest{
+		Filter:     tableInput.Filter,
+		Cursor:     tableInput.Cursor,
+		ActiveOnly: activeOnly != nil && *activeOnly,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return legalHoldConnectionToModel(result)
+}
+
+func (r *QueryResolver) AuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditExportConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	result, err := r.AuditExportService.List(ctx, &auditports.ListExportsRequest{
+		Filter:        tableInput.Filter,
+		Cursor:        tableInput.Cursor,
+		RequestedByID: authCtx.UserID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return exportConnectionToModel(result)
+}
+
+func (r *QueryResolver) AuditAlertPolicies(ctx context.Context) ([]*auditalertservice.PolicyView, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSecurityAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	views, err := r.AuditAlertService.ListPolicies(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*auditalertservice.PolicyView, 0, len(views))
+	for i := range views {
+		out = append(out, &views[i])
+	}
+	return out, nil
 }

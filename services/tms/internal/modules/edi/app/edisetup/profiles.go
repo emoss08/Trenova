@@ -148,7 +148,7 @@ func (s *Service) CreateCommunicationProfile(
 		return nil, mapEDICommunicationProfileConstraint(err)
 	}
 
-	s.logAction(
+	s.logAction(ctx,
 		created,
 		actor,
 		permission.OpCreate,
@@ -189,7 +189,7 @@ func (s *Service) UpdateCommunicationProfile(
 		return nil, mapEDICommunicationProfileConstraint(err)
 	}
 
-	s.logAction(
+	s.logAction(ctx,
 		updated,
 		actor,
 		permission.OpUpdate,
@@ -239,7 +239,7 @@ func (s *Service) RotateAS2InboundURL(
 		return nil, err
 	}
 
-	s.logAction(
+	s.logAction(ctx,
 		rotated,
 		actor,
 		permission.OpUpdate,

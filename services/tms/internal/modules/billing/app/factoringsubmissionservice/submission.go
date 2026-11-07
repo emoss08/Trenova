@@ -407,7 +407,7 @@ func (s *SubmissionService) Submit(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: submissionResource,
 		Entity:   created,
 		Op:       permission.OpSubmit,
@@ -465,7 +465,7 @@ func (s *SubmissionService) Retry(
 	if err != nil {
 		return nil, err
 	}
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: submissionResource,
 		Entity:   updated,
 		Previous: plan.Before,
@@ -508,7 +508,7 @@ func (s *SubmissionService) Cancel(
 	if err != nil {
 		return nil, err
 	}
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: submissionResource,
 		Entity:   updated,
 		Previous: plan.Before,

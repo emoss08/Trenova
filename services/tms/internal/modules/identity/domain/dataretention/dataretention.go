@@ -23,6 +23,12 @@ const (
 	DefaultAgentEvalCaseRetentionDays = 365
 	DefaultAIAuditRetentionDays       = 2555
 	MinAIAuditRetentionDays           = 365
+
+	MinAuditAccessRetentionDays      = 90
+	MinAuditOperationalRetentionDays = 730
+	MinAuditFinancialRetentionDays   = 2555
+	MinAuditSecurityRetentionDays    = 730
+	MaxAuditRetentionDays            = 3650
 )
 
 type DataRetention struct {
@@ -31,7 +37,10 @@ type DataRetention struct {
 	ID                            pulid.ID `json:"id"                            keel:"id,pk,autoid:dr_"`
 	BusinessUnitID                pulid.ID `json:"businessUnitId"                keel:"business_unit_id,pk,tenant"`
 	OrganizationID                pulid.ID `json:"organizationId"                keel:"organization_id,pk,tenant"`
-	AuditRetentionPeriod          int      `json:"auditRetentionPeriod"          keel:"audit_retention_period"`            // In days
+	AuditAccessRetentionDays      int      `json:"auditAccessRetentionDays"      keel:"audit_access_retention_days"`
+	AuditOperationalRetentionDays int      `json:"auditOperationalRetentionDays" keel:"audit_operational_retention_days"`
+	AuditFinancialRetentionDays   int      `json:"auditFinancialRetentionDays"   keel:"audit_financial_retention_days"`
+	AuditSecurityRetentionDays    int      `json:"auditSecurityRetentionDays"    keel:"audit_security_retention_days"`
 	EDIInboundFileRetentionPeriod int      `json:"ediInboundFileRetentionPeriod" keel:"edi_inbound_file_retention_period"` // In days, 0 disables purging
 	EDIMessageRetentionPeriod     int      `json:"ediMessageRetentionPeriod"     keel:"edi_message_retention_period"`      // In days, 0 disables purging
 	// DriverQualificationRetentionPeriod is how long a driver qualification
@@ -54,6 +63,7 @@ type DataRetention struct {
 }
 
 func (dr *DataRetention) BeforeCreate(_ context.Context) error {
+	dr.applyAuditDefaults()
 	if dr.DriverQualificationRetentionPeriod == 0 {
 		dr.DriverQualificationRetentionPeriod = 1095
 	}
@@ -72,9 +82,29 @@ func (dr *DataRetention) BeforeCreate(_ context.Context) error {
 
 func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(dr,
-		validation.Field(&dr.AuditRetentionPeriod,
-			validation.Required.Error("Audit retention period is required"),
-			validation.Min(1).Error("Audit retention period must be greater than 0"),
+		validation.Field(&dr.AuditAccessRetentionDays,
+			validation.Min(MinAuditAccessRetentionDays).
+				Error("Reads and downloads are kept for at least 90 days"),
+			validation.Max(MaxAuditRetentionDays).
+				Error("Audit entries are kept for at most 3,650 days"),
+		),
+		validation.Field(&dr.AuditOperationalRetentionDays,
+			validation.Min(MinAuditOperationalRetentionDays).
+				Error("Operational changes are kept for at least 730 days"),
+			validation.Max(MaxAuditRetentionDays).
+				Error("Audit entries are kept for at most 3,650 days"),
+		),
+		validation.Field(&dr.AuditFinancialRetentionDays,
+			validation.Min(MinAuditFinancialRetentionDays).
+				Error("Financial changes are kept for at least 2,555 days (seven years)"),
+			validation.Max(MaxAuditRetentionDays).
+				Error("Audit entries are kept for at most 3,650 days"),
+		),
+		validation.Field(&dr.AuditSecurityRetentionDays,
+			validation.Min(MinAuditSecurityRetentionDays).
+				Error("Security entries are kept for at least 730 days"),
+			validation.Max(MaxAuditRetentionDays).
+				Error("Audit entries are kept for at most 3,650 days"),
 		),
 		validation.Field(&dr.EDIInboundFileRetentionPeriod,
 			validation.Min(0).Error("EDI inbound file retention period cannot be negative"),
@@ -119,6 +149,44 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 			"AI correction retention period must be at least 30 days",
 		)
 	}
+}
+
+func (dr *DataRetention) applyAuditDefaults() {
+	if dr.AuditAccessRetentionDays == 0 {
+		dr.AuditAccessRetentionDays = MinAuditAccessRetentionDays
+	}
+	if dr.AuditOperationalRetentionDays == 0 {
+		dr.AuditOperationalRetentionDays = MinAuditOperationalRetentionDays
+	}
+	if dr.AuditFinancialRetentionDays == 0 {
+		dr.AuditFinancialRetentionDays = MinAuditFinancialRetentionDays
+	}
+	if dr.AuditSecurityRetentionDays == 0 {
+		dr.AuditSecurityRetentionDays = MinAuditSecurityRetentionDays
+	}
+}
+
+func (dr *DataRetention) AuditRetentionDays(class string) int {
+	floors := map[string]int{
+		"Access":      MinAuditAccessRetentionDays,
+		"Operational": MinAuditOperationalRetentionDays,
+		"Financial":   MinAuditFinancialRetentionDays,
+		"Security":    MinAuditSecurityRetentionDays,
+	}
+	floor, ok := floors[class]
+	if !ok {
+		return MaxAuditRetentionDays
+	}
+	if dr == nil {
+		return floor
+	}
+	chosen := map[string]int{
+		"Access":      dr.AuditAccessRetentionDays,
+		"Operational": dr.AuditOperationalRetentionDays,
+		"Financial":   dr.AuditFinancialRetentionDays,
+		"Security":    dr.AuditSecurityRetentionDays,
+	}[class]
+	return min(max(chosen, floor), MaxAuditRetentionDays)
 }
 
 func (dr *DataRetention) AICorrectionRetentionDays() int {

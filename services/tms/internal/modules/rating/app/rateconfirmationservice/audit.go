@@ -1,6 +1,8 @@
 package rateconfirmationservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -21,7 +23,7 @@ type rateConfirmationAuditParams struct {
 	Previous   *rateconfirmation.RateConfirmation
 }
 
-func (s *Service) logRateConfirmationAudit(p *rateConfirmationAuditParams) {
+func (s *Service) logRateConfirmationAudit(ctx context.Context, p *rateConfirmationAuditParams) {
 	if p.Current == nil {
 		return
 	}
@@ -46,7 +48,7 @@ func (s *Service) logRateConfirmationAudit(p *rateConfirmationAuditParams) {
 		options = append(options, auditservice.WithDiff(p.Previous, p.Current))
 	}
 
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log rate confirmation audit action", zap.Error(err))
 	}
 }

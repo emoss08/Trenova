@@ -101,8 +101,8 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 		}).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentComment, params.Resource)
 			assert.Equal(t, testutil.TestOrgID, params.OrganizationID)
 		}).
@@ -267,8 +267,8 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 		}).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentComment, params.Resource)
 			assert.Equal(t, permissionports.PrincipalTypeSystem, params.PrincipalType)
 			assert.Equal(t, permissionports.SystemPrincipalID, params.PrincipalID)
@@ -381,8 +381,8 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		}).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentComment, params.Resource)
 			assert.Equal(t, commentID.String(), params.ResourceID)
 		}).

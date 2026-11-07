@@ -431,7 +431,7 @@ func (s *Service) storeUpload(
 
 	createdDoc := doc
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -956,7 +956,7 @@ func (s *Service) Delete(
 		}
 
 		s.cleanupDocumentStorage(ctx, log, doc)
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
+		if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.GetID().String(),
 			Operation:      permission.OpDelete,
@@ -1003,7 +1003,7 @@ func (s *Service) Delete(
 		s.cleanupDocumentStorage(ctx, log, version)
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     doc.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -1088,7 +1088,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 			s.cleanupDocumentStorage(ctx, log, doc)
 		}
 		for _, doc := range docs {
-			if err = s.auditService.LogAction(&auditports.LogActionParams{
+			if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 				Resource:       permission.ResourceDocument,
 				ResourceID:     doc.GetID().String(),
 				Operation:      permission.OpDelete,
@@ -1155,7 +1155,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 	}
 
 	for _, doc := range docs {
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
+		if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.GetID().String(),
 			Operation:      permission.OpDelete,

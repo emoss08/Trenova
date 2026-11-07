@@ -522,7 +522,7 @@ func (s *Service) afterIngest(
 	}
 
 	if in.purpose.IsInteractive() {
-		if err := s.auditService.LogAction(&auditports.LogActionParams{
+		if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceCarrierIntelligence,
 			ResourceID:     snapshot.ID.String(),
 			Operation:      permission.OpUpdate,

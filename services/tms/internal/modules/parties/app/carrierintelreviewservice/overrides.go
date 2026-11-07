@@ -84,7 +84,7 @@ func (s *Service) GrantOverride(
 		return nil, err
 	}
 
-	s.auditOverride(req.TenantInfo, created, nil, "Carrier intelligence override granted")
+	s.auditOverride(ctx, req.TenantInfo, created, nil, "Carrier intelligence override granted")
 	s.recordOverrideEvent(ctx, req.TenantInfo, created, fmt.Sprintf(
 		"Override granted for %s until %s: %s",
 		req.RuleCode, timeutils.FormatUnixDate(created.ExpiresAt), created.Reason,
@@ -116,7 +116,13 @@ func (s *Service) RevokeOverride(
 		return nil, err
 	}
 
-	s.auditOverride(req.TenantInfo, updated, &original, "Carrier intelligence override revoked")
+	s.auditOverride(
+		ctx,
+		req.TenantInfo,
+		updated,
+		&original,
+		"Carrier intelligence override revoked",
+	)
 	s.recordOverrideEvent(ctx, req.TenantInfo, updated, fmt.Sprintf(
 		"Override for %s revoked: %s", updated.RuleCode, updated.RevokeReason,
 	))
@@ -133,6 +139,7 @@ func (s *Service) ListOverrides(
 }
 
 func (s *Service) auditOverride(
+	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	current, previous *carrierinteloverride.CarrierIntelOverride,
 	comment string,
@@ -152,7 +159,7 @@ func (s *Service) auditOverride(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	if err := s.auditService.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.auditService.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }

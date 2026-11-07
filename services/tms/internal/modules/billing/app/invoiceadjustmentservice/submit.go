@@ -173,7 +173,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 
 	if result != nil {
 		s.engine.LogAdjustmentEvent("invoice adjustment submitted", result, zap.InfoLevel)
-		s.engine.LogAudit(result, actor, permission.OpCreate, "Invoice adjustment submitted")
+		s.engine.LogAudit(ctx, result, actor, permission.OpCreate, "Invoice adjustment submitted")
 	}
 	return result, nil
 }

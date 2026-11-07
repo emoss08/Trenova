@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/auditctx"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -795,6 +796,7 @@ func (s *Service) DispatchStep(
 	req *agentruntimeports.RunRequest,
 	call *toolcall.Call,
 ) toolcall.Outcome {
+	ctx = withAuditSource(ctx, req)
 	outcome := s.dispatcher.GuardedDispatch(ctx, &tooldispatch.GuardedDispatchParams{
 		Req:            req,
 		Call:           call.Call,
@@ -817,6 +819,21 @@ func (s *Service) DispatchStep(
 	outcome.Summary = toolsummary.Outcome(&call.Call, &outcome)
 
 	return outcome.Outcome()
+}
+
+func withAuditSource(ctx context.Context, req *agentruntimeports.RunRequest) context.Context {
+	if req == nil {
+		return ctx
+	}
+	runID := req.StepOwner.ID
+	if runID.IsNil() {
+		runID = req.RunID
+	}
+	if runID.IsNil() {
+		return ctx
+	}
+	inConversation := req.ThreadID.IsNotNil() && !req.Unattended
+	return auditctx.WithAIRun(ctx, runID.String(), inConversation)
 }
 
 // FindFor answers find_tools for a turn held as data, and names the tools it

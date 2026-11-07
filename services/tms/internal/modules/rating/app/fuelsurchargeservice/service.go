@@ -87,7 +87,7 @@ func (s *Service) CreateIndex(
 		return nil, err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     userID,
@@ -134,7 +134,7 @@ func (s *Service) UpdateIndex(
 		return nil, err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     userID,
@@ -163,7 +163,7 @@ func (s *Service) DeleteIndex(
 		return err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: existing.ID.String(),
 		operation:  permission.OpDelete,
 		userID:     userID,
@@ -330,7 +330,7 @@ func (s *Service) CreateProgram(
 		return nil, err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     userID,
@@ -375,7 +375,7 @@ func (s *Service) UpdateProgram(
 		return nil, err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     userID,
@@ -404,7 +404,7 @@ func (s *Service) DeleteProgram(
 		return err
 	}
 
-	s.logAudit(auditParams{
+	s.logAudit(ctx, &auditParams{
 		resourceID: existing.ID.String(),
 		operation:  permission.OpDelete,
 		userID:     userID,
@@ -567,7 +567,7 @@ type auditParams struct {
 	comment    string
 }
 
-func (s *Service) logAudit(p auditParams) {
+func (s *Service) logAudit(ctx context.Context, p *auditParams) {
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceFuelSurchargeProgram,
 		ResourceID:     p.resourceID,
@@ -584,7 +584,7 @@ func (s *Service) logAudit(p auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 	}
 
-	if err := s.auditService.LogAction(params,
+	if err := s.auditService.LogAction(ctx, params,
 		auditservice.WithComment(p.comment),
 	); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))

@@ -627,7 +627,6 @@ func (s *Service) logAuditAction(
 	}
 	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
-		auditservice.WithRequest(ctx),
 	}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
@@ -635,7 +634,7 @@ func (s *Service) logAuditAction(
 	}
 	opts = append(opts, extra...)
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action",
 			zap.String("libraryID", entity.ID.String()),
 			zap.Error(err),

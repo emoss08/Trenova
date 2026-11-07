@@ -79,7 +79,7 @@ func (s *Service) CreateReview(
 	}
 	created.Template = template
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: req.UserID, tenant: req.TenantInfo,
 		current: created, comment: "Review drafted: " + created.Title, log: log,
@@ -124,7 +124,7 @@ func (s *Service) UpdateReview(
 	}
 	saved.Template = original.Template
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: saved.GetResourceID(),
 		operation: permission.OpUpdate, userID: req.UserID, tenant: req.TenantInfo,
 		current: saved, previous: original, comment: "Review draft saved", log: log,
@@ -216,7 +216,7 @@ func (s *Service) SubmitReview(
 	}
 	saved.Template = original.Template
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: saved.GetResourceID(),
 		operation: permission.OpSubmit, userID: req.UserID, tenant: req.TenantInfo,
 		current: saved, previous: original, comment: "Review submitted to the worker", log: log,
@@ -279,7 +279,7 @@ func (s *Service) ReopenReview(
 	}
 	saved.Template = original.Template
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: saved.GetResourceID(),
 		operation: permission.OpReopen, userID: req.UserID, tenant: req.TenantInfo,
 		current: saved, previous: original, comment: "Review reopened as a draft", log: log,
@@ -360,7 +360,7 @@ func (s *Service) CloseReview(
 	}
 	saved.Template = original.Template
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: saved.GetResourceID(),
 		operation: permission.OpClose, userID: req.UserID, tenant: req.TenantInfo,
 		current: saved, previous: original, comment: "Review closed", log: log,
@@ -390,7 +390,7 @@ func (s *Service) DeleteReview(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReview, resourceID: original.GetResourceID(),
 		operation: permission.OpDelete, userID: userID, tenant: tenantInfo,
 		current: original, comment: "Review draft deleted", log: log,

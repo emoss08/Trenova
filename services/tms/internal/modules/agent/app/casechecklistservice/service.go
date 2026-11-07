@@ -148,7 +148,7 @@ func (s *Service) Save(
 		return nil, err
 	}
 
-	s.record(saved, previous, req.UserID, permission.OpUpdate, "Case checklist saved")
+	s.record(ctx, saved, previous, req.UserID, permission.OpUpdate, "Case checklist saved")
 
 	return saved, nil
 }
@@ -205,12 +205,13 @@ func (s *Service) Delete(
 		return err
 	}
 
-	s.record(stored, nil, req.UserID, permission.OpDelete, "Case checklist removed")
+	s.record(ctx, stored, nil, req.UserID, permission.OpDelete, "Case checklist removed")
 
 	return nil
 }
 
 func (s *Service) record(
+	ctx context.Context,
 	current, previous *deskcase.ChecklistTemplate,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -230,7 +231,7 @@ func (s *Service) record(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.audit.LogAction(params, options...); err != nil {
+	if err := s.audit.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log a case checklist change", zap.Error(err))
 	}
 }

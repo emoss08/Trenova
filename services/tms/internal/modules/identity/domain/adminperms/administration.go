@@ -15,6 +15,8 @@ func administrationResources() []*permissionspec.ResourceDefinition {
 		userResource(),
 		roleResource(),
 		auditLogResource(),
+		securityAuditLogResource(),
+		auditLegalHoldResource(),
 		tableConfigurationResource(),
 		customFieldDefinitionResource(),
 		sequenceConfigResource(),
@@ -132,12 +134,72 @@ func roleResource() *permissionspec.ResourceDefinition {
 
 func auditLogResource() *permissionspec.ResourceDefinition {
 	return &permissionspec.ResourceDefinition{
-		Resource:           permission.ResourceAuditLog.String(),
-		DisplayName:        "Audit Log",
-		Description:        "System audit logs",
-		Category:           "Users & security",
-		Operations:         permissionspec.ReadOnlyOps,
+		Resource:    permission.ResourceAuditLog.String(),
+		DisplayName: "Audit Log",
+		Description: "The organization's audit log, narrowed to the kinds of record the person can read",
+		Category:    "Users & security",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "Read the audit log for the kinds of record you can read",
+			},
+			{
+				Operation:   permission.OpExport,
+				DisplayName: "Export",
+				Description: "Export the audit log to a CSV or JSON Lines file",
+			},
+		},
 		DefaultSensitivity: permission.SensitivityConfidential,
+	}
+}
+
+func securityAuditLogResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceSecurityAuditLog.String(),
+		DisplayName: "Security Audit Log",
+		Description: "Security entries in the audit log (access and administrative changes, refused requests) and the alerts raised from them",
+		Category:    "Users & security",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "Read security entries, check the audit log's seals and receive security alerts",
+			},
+			{
+				Operation:   permission.OpUpdate,
+				DisplayName: "Manage alerts",
+				Description: "Turn security alerts on or off and set their thresholds",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityRestricted,
+	}
+}
+
+func auditLegalHoldResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceAuditLegalHold.String(),
+		DisplayName: "Audit Legal Hold",
+		Description: "Holds that keep audit entries past their retention for litigation or an investigation",
+		Category:    "Users & security",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "See the organization's legal holds",
+			},
+			{
+				Operation:   permission.OpCreate,
+				DisplayName: "Place",
+				Description: "Place a legal hold",
+			},
+			{
+				Operation:   permission.OpUpdate,
+				DisplayName: "Release",
+				Description: "Release a legal hold",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityRestricted,
 	}
 }
 

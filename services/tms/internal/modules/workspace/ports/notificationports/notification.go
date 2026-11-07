@@ -37,6 +37,7 @@ type ExistsRecentNotificationRequest struct {
 
 type NotificationRepository interface {
 	ExistsRecent(ctx context.Context, req ExistsRecentNotificationRequest) (bool, error)
+	NotifiedUsers(ctx context.Context, req ExistsRecentNotificationRequest) ([]pulid.ID, error)
 	Create(
 		ctx context.Context,
 		entity *notification.Notification,

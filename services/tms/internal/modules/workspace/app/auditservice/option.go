@@ -1,15 +1,13 @@
 package auditservice
 
 import (
-	"context"
+	"fmt"
 	"maps"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,8 +33,8 @@ func WithDiff(before, after any) auditports.LogOption {
 		changes := make(map[string]any, len(diff))
 		for path, change := range diff {
 			changes[path] = map[string]any{
-				"from":      change.From,
-				"to":        change.To,
+				changeFrom:  change.From,
+				changeTo:    change.To,
 				"type":      change.Type,
 				"fieldType": change.FieldType,
 				"path":      change.Path,
@@ -58,8 +56,8 @@ func WithCompactDiff(before, after any) auditports.LogOption {
 		changes := make(map[string]any)
 		for key, change := range results {
 			changes[key] = map[string]any{
-				"from":      change.From,
-				"to":        change.To,
+				changeFrom:  change.From,
+				changeTo:    change.To,
 				"type":      change.Type,
 				"fieldType": change.FieldType,
 				"path":      change.Path,
@@ -109,6 +107,34 @@ func WithCategory(category audit.Category) auditports.LogOption {
 	}
 }
 
+func WithAction(action string) auditports.LogOption {
+	return func(entry *audit.Entry) error {
+		if !audit.ValidAction(action) {
+			return fmt.Errorf("audit action %q is not a dotted lower-case code", action)
+		}
+		entry.Action = action
+		return nil
+	}
+}
+
+func WithChannel(channel audit.Channel) auditports.LogOption {
+	return func(entry *audit.Entry) error {
+		if !channel.Valid() {
+			return fmt.Errorf("unsupported audit channel %q", channel)
+		}
+		entry.Channel = channel
+		return nil
+	}
+}
+
+func WithSecurity() auditports.LogOption {
+	return func(entry *audit.Entry) error {
+		entry.Category = audit.CategorySecurity
+		entry.Critical = true
+		return nil
+	}
+}
+
 func WithCritical() auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Critical = true
@@ -119,13 +145,6 @@ func WithCritical() auditports.LogOption {
 func WithIP(ip string) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.IPAddress = ip
-		return nil
-	}
-}
-
-func WithTimestamp(timestamp time.Time) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		entry.Timestamp = timestamp.Unix()
 		return nil
 	}
 }
@@ -222,31 +241,4 @@ func BuildBulkLogEntries[T validationframework.TenantedEntity](
 	}
 
 	return entries
-}
-
-func WithRequest(ctx context.Context) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		meta, ok := requestmeta.From(ctx)
-		if !ok {
-			return nil
-		}
-
-		if entry.IPAddress == "" {
-			entry.IPAddress = meta.ClientIP
-		}
-		if entry.UserAgent == "" {
-			entry.UserAgent = meta.UserAgent
-		}
-		if entry.CorrelationID == "" {
-			entry.CorrelationID = meta.RequestID
-		}
-		if meta.RequestID != "" {
-			if entry.Metadata == nil {
-				entry.Metadata = make(map[string]any)
-			}
-			entry.Metadata["requestId"] = meta.RequestID
-		}
-
-		return nil
-	}
 }

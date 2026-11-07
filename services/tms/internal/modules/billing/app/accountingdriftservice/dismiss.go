@@ -120,13 +120,20 @@ func (s *Service) Dismiss(
 		return nil, err
 	}
 
-	s.logAudit(updated, actor.UserID, previous, "Dismissed a difference with the accounting system")
+	s.logAudit(
+		ctx,
+		updated,
+		actor.UserID,
+		previous,
+		"Dismissed a difference with the accounting system",
+	)
 	s.refreshAttentionFor(ctx, updated)
 	s.publishInvalidation(ctx, req.TenantInfo, actor.UserID, updated.ID)
 	return updated, nil
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	finding *accountingdrift.AccountingDriftFinding,
 	userID pulid.ID,
 	previous map[string]any,
@@ -142,7 +149,7 @@ func (s *Service) logAudit(
 		OrganizationID: finding.OrganizationID,
 		BusinessUnitID: finding.BusinessUnitID,
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log accounting drift audit", zap.Error(err))
 	}
 }

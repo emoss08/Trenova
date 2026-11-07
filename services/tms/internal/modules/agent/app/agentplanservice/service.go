@@ -108,7 +108,11 @@ type agentAccessChecker interface {
 }
 
 type actionLogger interface {
-	LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error
+	LogAction(
+		ctx context.Context,
+		params *auditports.LogActionParams,
+		opts ...auditports.LogOption,
+	) error
 }
 
 type Params struct {
@@ -340,7 +344,7 @@ func (s *Service) claimAndRun(
 
 	if req.Decision == agentdecision.DecisionRejected {
 		s.rejectSteps(ctx, req, prepared.steps, actor)
-		s.logDecision(plan, prepared.steps, actor, "Agent plan rejected")
+		s.logDecision(ctx, plan, prepared.steps, actor, "Agent plan rejected")
 		s.announce(ctx, plan, actor, agentactivityports.ActivityUpdated)
 		s.followUp(ctx, plan, req.TenantInfo)
 
@@ -361,7 +365,7 @@ func (s *Service) claimAndRun(
 	} else {
 		plan = s.runSteps(ctx, run)
 	}
-	s.logDecision(plan, prepared.steps, actor, comment)
+	s.logDecision(ctx, plan, prepared.steps, actor, comment)
 	action := agentactivityports.ActivityUpdated
 	if from == agentplan.PlanStatusApproving {
 		action = agentactivityports.ActivityCommitted
@@ -1030,13 +1034,14 @@ func (s *Service) rejectSteps(
 }
 
 func (s *Service) logDecision(
+	ctx context.Context,
 	plan *agentplan.AgentPlan,
 	steps []*agent.AgentProposal,
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     plan.ID.String(),
 		Operation:      permission.OpUpdate,

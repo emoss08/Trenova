@@ -60,8 +60,8 @@ func TestCheck_RefusesAndRecordsAnInfectedFile(t *testing.T) {
 	var recorded *auditports.LogActionParams
 	var comment string
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params *auditports.LogActionParams, opts ...auditports.LogOption) error {
 			recorded = params
 			entry := &audit.Entry{}
 			for _, opt := range opts {
@@ -172,8 +172,8 @@ func TestStream_TheVerdictArrivesOnlyWhenTheFileHasEndedAndNamesItsDigest(t *tes
 	auditService := auditportsmock.NewMockAuditService(t)
 	var recorded *auditports.LogActionParams
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			recorded = params
 			return nil
 		}).

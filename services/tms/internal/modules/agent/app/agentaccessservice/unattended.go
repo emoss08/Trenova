@@ -74,7 +74,7 @@ func (s *Service) SetUnattendedRole(
 	definition.UnattendedRoleID = req.RoleID
 
 	s.notifier.OrganizationChanged(ctx, req.TenantInfo)
-	s.logUnattendedRoleAudit(definition, previous, actor)
+	s.logUnattendedRoleAudit(ctx, definition, previous, actor)
 
 	return definition, nil
 }
@@ -129,12 +129,13 @@ func unattendedRoleError(err error) error {
 }
 
 func (s *Service) logUnattendedRoleAudit(
+	ctx context.Context,
 	definition *agentdefinition.Definition,
 	previous pulid.ID,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentDefinition,
 		ResourceID:     definition.ID.String(),
 		Operation:      permission.OpUpdate,

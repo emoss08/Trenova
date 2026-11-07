@@ -348,7 +348,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -438,7 +438,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -483,7 +483,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,
@@ -532,7 +532,7 @@ func (s *Service) Close(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     closedEntity.GetID().String(),
 		Operation:      permission.OpClose,
@@ -649,7 +649,7 @@ func (s *Service) Reopen(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     reopenedEntity.GetID().String(),
 		Operation:      permission.OpReopen,
@@ -783,7 +783,7 @@ func (s *Service) Activate(
 		)
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceFiscalYear,
 		ResourceID:     activatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

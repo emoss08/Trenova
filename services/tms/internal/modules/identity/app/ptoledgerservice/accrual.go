@@ -178,7 +178,7 @@ func (s *Service) RunAccrualForWorker(
 
 	result.WorkersProcessed = 1
 	if actor.Type == pto.PTOLedgerActorUser && !actor.UserID.IsNil() {
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
+		if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceWorkerPTO,
 			ResourceID:     workerID.String(),
 			Operation:      permission.OpManage,
