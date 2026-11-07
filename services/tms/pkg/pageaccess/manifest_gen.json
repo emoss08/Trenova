@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9c4ef2571cd0e028eefc2f45430100622b32465a5d6b66a9e1139c2485a4631a",
+  "version": "sha256:4c268735b858cb2bc99923c225ea9b3e245be7dc771d7677542e6db7e34fee17",
   "screens": [
     {
       "path": "/",
@@ -3740,7 +3740,6 @@
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
         "DispatchForecastQuality",
-        "DispatchFreightOutlook",
         "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchStyle",
@@ -18968,7 +18967,6 @@
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
         "DispatchForecastQuality",
-        "DispatchFreightOutlook",
         "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchPlanAutoAssign",
@@ -19498,6 +19496,26 @@
         "location_category",
         "report"
       ],
+      "declared": []
+    },
+    {
+      "path": "/dispatch/outlook",
+      "name": "Freight outlook",
+      "requires": [
+        {
+          "resource": "shipment_move",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "DispatchCallOffPositioning",
+        "DispatchFreightArea",
+        "DispatchFreightOutlook",
+        "DispatchPositionDriver"
+      ],
+      "endpoints": [],
+      "reads": [],
+      "references": [],
       "declared": []
     },
     {
@@ -38060,6 +38078,13 @@
       "declared": []
     },
     {
+      "name": "DispatchCallOffPositioning",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DispatchCancelCarrierAssignment",
       "type": "mutation",
       "reads": [],
@@ -38088,6 +38113,13 @@
       "declared": []
     },
     {
+      "name": "DispatchFreightArea",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DispatchFreightOutlook",
       "type": "query",
       "reads": [],
@@ -38110,6 +38142,13 @@
     },
     {
       "name": "DispatchPlanAutoAssign",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchPositionDriver",
       "type": "mutation",
       "reads": [],
       "linked": [],

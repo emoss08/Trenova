@@ -15045,11 +15045,12 @@
     ]
   },
   "AI audit trail": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/organization"
     ]
   },
@@ -15451,7 +15452,7 @@
     ]
   },
   "API key": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -18521,7 +18522,7 @@
     ]
   },
   "Action": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -18772,7 +18773,7 @@
     ]
   },
   "Active": {
-    "sites": 93,
+    "sites": 94,
     "scope": [
       "go",
       "ts"
@@ -23199,11 +23200,12 @@
     ]
   },
   "After": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk",
       "routes/formula-template",
       "routes/pto-policy"
@@ -23768,12 +23770,13 @@
     ]
   },
   "Agent run": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -24662,11 +24665,12 @@
     ]
   },
   "Alerts": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -38065,14 +38069,12 @@
     ]
   },
   "Audit entries": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/config",
-      "routes/admin",
-      "routes/organization"
+      "apps/web/config"
     ]
   },
   "Audit entries are kept for at most 3,650 days": {
@@ -38120,51 +38122,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Audit logs are processed in batches and may take a few moments to appear. If logs are not immediately visible, please refresh the page after a brief wait.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Audit logs processing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Audit retention must be at least 1 day": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
-    ]
-  },
-  "Audit retention period is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Audit retention period must be greater than 0": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Audit trail": {
@@ -38252,7 +38209,7 @@
     ]
   },
   "Authentication required": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -46498,7 +46455,7 @@
     ]
   },
   "Business unit ID is required": {
-    "sites": 51,
+    "sites": 50,
     "scope": [
       "go"
     ],
@@ -47012,7 +46969,7 @@
     ]
   },
   "CSV": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -47021,6 +46978,7 @@
       "apps/web/components",
       "apps/web/types",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/time-attendance"
@@ -47760,7 +47718,7 @@
     ]
   },
   "Cancel": {
-    "sites": 323,
+    "sites": 326,
     "scope": [
       "go",
       "ts"
@@ -51835,7 +51793,7 @@
     ]
   },
   "Category": {
-    "sites": 31,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -53465,12 +53423,13 @@
     ]
   },
   "Channel": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/desk",
       "routes/dispatch-console",
       "routes/routing-guide"
@@ -62007,15 +61966,6 @@
       "routes/worker"
     ]
   },
-  "Complete raw event payload": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Complete the earlier stops on this load first": {
     "sites": 2,
     "scope": [
@@ -67234,15 +67184,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Correlation ID": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Correlation id cannot be longer than 100 characters": {
@@ -78951,15 +78892,6 @@
       "routes/admin"
     ]
   },
-  "Delete audit entries past each organization's retention window": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Delete audit entries past each organization's retention, class by class, outside legal holds": {
     "sites": 1,
     "scope": [
@@ -81761,15 +81693,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Detailed information about this audit event": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Details": {
@@ -86829,13 +86752,14 @@
     ]
   },
   "Download": {
-    "sites": 19,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
+      "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier",
@@ -89044,15 +88968,6 @@
     ],
     "areas": [
       "routes/dash-control"
-    ]
-  },
-  "Drivers cover the freight ahead": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.": {
@@ -98041,12 +97956,14 @@
     ]
   },
   "Entries": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/admin"
     ]
   },
   "Entries appear here as Samsara logs duty status transitions.": {
@@ -98177,15 +98094,6 @@
     ]
   },
   "Entry count cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Entry data is required": {
     "sites": 1,
     "scope": [
       "go"
@@ -105190,7 +105098,7 @@
     ]
   },
   "Expired": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "go",
       "ts"
@@ -105203,6 +105111,7 @@
       "packages/shared/components",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier",
@@ -105814,7 +105723,7 @@
     ]
   },
   "Export": {
-    "sites": 70,
+    "sites": 72,
     "scope": [
       "go",
       "ts"
@@ -106506,11 +106415,12 @@
     ]
   },
   "Exports": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -107920,7 +107830,7 @@
     ]
   },
   "Failed": {
-    "sites": 76,
+    "sites": 77,
     "scope": [
       "go",
       "ts"
@@ -109943,15 +109853,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Failure time is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failures": {
@@ -112941,12 +112842,13 @@
     ]
   },
   "First day": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -114280,15 +114182,6 @@
       "routes/edi"
     ]
   },
-  "Flush audit buffer from Redis for batch processing": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Flush stored mileage candidates from Redis": {
     "sites": 1,
     "scope": [
@@ -115148,7 +115041,7 @@
     ]
   },
   "Format": {
-    "sites": 15,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -115156,6 +115049,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/reports"
     ]
@@ -117621,15 +117515,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Full event data": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "Full extracted text used for search and document classification.": {
@@ -123476,13 +123361,14 @@
     ]
   },
   "History": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
       "apps/web/components",
+      "routes/admin",
       "routes/billing-queue",
       "routes/carrier",
       "routes/carrier-settlement",
@@ -123861,11 +123747,12 @@
     ]
   },
   "Holds": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/edi"
     ]
   },
@@ -138793,11 +138680,12 @@
     ]
   },
   "Kind of record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/desk"
     ]
   },
@@ -139785,12 +139673,13 @@
     ]
   },
   "Last day": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -143374,15 +143263,6 @@
       "routes/agent-control"
     ]
   },
-  "Likely loads": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Likely range": {
     "sites": 1,
     "scope": [
@@ -145837,15 +145717,6 @@
     ]
   },
   "Loading audit entry": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
-  "Loading audit entry...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -157581,12 +157452,11 @@
     ]
   },
   "Monitor and review system activity across your organization": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
       "routes/table-change-alert"
     ]
   },
@@ -159718,7 +159588,7 @@
     ]
   },
   "Name": {
-    "sites": 152,
+    "sites": 155,
     "scope": [
       "go",
       "ts"
@@ -164104,7 +163974,7 @@
     ]
   },
   "No": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -166364,15 +166234,6 @@
       "routes/customer-statement"
     ]
   },
-  "No customer stands out": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "No customers yet": {
     "sites": 1,
     "scope": [
@@ -167044,15 +166905,6 @@
       "routes/dispatch-console"
     ]
   },
-  "No email": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "No email attempts recorded.": {
     "sites": 1,
     "scope": [
@@ -167373,11 +167225,12 @@
     ]
   },
   "No exports yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -167721,15 +167574,6 @@
     ],
     "areas": [
       "routes/freight-outlook"
-    ]
-  },
-  "No freight expected beyond your drivers in the next 48 hours.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "No fuel indices yet": {
@@ -177167,15 +177011,6 @@
       "apps/web/components"
     ]
   },
-  "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Nothing moving right now.": {
     "sites": 1,
     "scope": [
@@ -185715,7 +185550,7 @@
     ]
   },
   "Only the person who asked for an export may download it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -190132,7 +189967,7 @@
     ]
   },
   "Organization ID is required": {
-    "sites": 54,
+    "sites": 53,
     "scope": [
       "go",
       "ts"
@@ -190796,15 +190631,6 @@
     ],
     "areas": [
       "routes/journal-reversal"
-    ]
-  },
-  "Original entry ID is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Original invoice": {
@@ -203077,12 +202903,13 @@
     ]
   },
   "Portal": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -206708,15 +206535,6 @@
       "routes/shipment"
     ]
   },
-  "Process batch of audit entries": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Process invoice adjustment batches with per-item retries and progress tracking": {
     "sites": 1,
     "scope": [
@@ -210340,7 +210158,7 @@
     ]
   },
   "Queued": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -211275,11 +211093,12 @@
     ]
   },
   "Range": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/reports",
       "routes/shipment"
@@ -215033,7 +214852,7 @@
     ]
   },
   "Ready": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -215043,6 +214862,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/edi",
       "routes/factoring",
@@ -215406,7 +215226,7 @@
     ]
   },
   "Reason": {
-    "sites": 73,
+    "sites": 77,
     "scope": [
       "go",
       "ts"
@@ -217384,7 +217204,7 @@
     ]
   },
   "Record": {
-    "sites": 24,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -217392,6 +217212,7 @@
     "areas": [
       "apps/web/components",
       "go/other",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/escrow-account",
@@ -217400,11 +217221,12 @@
     ]
   },
   "Record ID": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/table-change-alert"
     ]
   },
@@ -221258,12 +221080,15 @@
     ]
   },
   "Release": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/accounting-sync",
+      "routes/admin",
       "routes/desk",
       "routes/edi",
       "routes/factoring-company"
@@ -221315,11 +221140,12 @@
     ]
   },
   "Release hold": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/settlement-workspace"
     ]
   },
@@ -221423,7 +221249,7 @@
     ]
   },
   "Released": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -221431,7 +221257,8 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "go/other"
+      "go/other",
+      "routes/admin"
     ]
   },
   "Released At": {
@@ -225396,7 +225223,7 @@
     ]
   },
   "Requested": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -225407,6 +225234,7 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/edi"
@@ -228847,15 +228675,6 @@
     ],
     "areas": [
       "routes/accounting-sync"
-    ]
-  },
-  "Retry failed audit entries from dead-letter queue": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Retry max interval must be greater than or equal to the initial interval": {
@@ -234309,7 +234128,7 @@
     ]
   },
   "SCIM directory": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -238657,15 +238476,6 @@
       "go/other"
     ]
   },
-  "Scheduled workflow to flush audit buffer from Redis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Schedules": {
     "sites": 3,
     "scope": [
@@ -240682,7 +240492,7 @@
     ]
   },
   "Security": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -251319,15 +251129,6 @@
       "routes/customer"
     ]
   },
-  "Short by": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Short context explaining when to apply this reason; use customer-safe wording.": {
     "sites": 1,
     "scope": [
@@ -253059,11 +252860,12 @@
     ]
   },
   "Sign-in activity": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/settings"
     ]
   },
@@ -258858,7 +258660,7 @@
     ]
   },
   "Status": {
-    "sites": 335,
+    "sites": 339,
     "scope": [
       "go",
       "ts"
@@ -263283,13 +263085,14 @@
     ]
   },
   "System": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk",
       "routes/invoice-adjustment-batch",
@@ -263359,15 +263162,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "System audit logs": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "System batch": {
@@ -274609,7 +274403,7 @@
     ]
   },
   "The export could not be queued — try again shortly": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -275099,12 +274893,13 @@
     ]
   },
   "The file could not be downloaded": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/hooks",
+      "routes/admin",
       "routes/agent-control",
       "routes/inbox"
     ]
@@ -280469,15 +280264,6 @@
       "apps/web/components"
     ]
   },
-  "The outlook didn't load": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "The outstanding balance will no longer be recovered from future settlements.": {
     "sites": 1,
     "scope": [
@@ -283198,15 +282984,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "The record of who changed what, removed by the nightly audit purge.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/organization"
     ]
   },
   "The record stays as it is. The driver is told, with your reason.": {
@@ -292869,7 +292646,7 @@
     ]
   },
   "This export has no file to download yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -294040,15 +293817,6 @@
     ]
   },
   "This isn't an empty list: covered moves may still be slipping. The Watchtower has them too.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "This isn't an empty outlook: freight may still be coming where drivers are short.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -299320,7 +299088,7 @@
     ]
   },
   "Timestamp is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -304917,13 +304685,14 @@
     ]
   },
   "Try again shortly.": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -307539,7 +307308,7 @@
     ]
   },
   "Unknown": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -308055,8 +307824,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/accounting-sync",
-      "routes/admin",
       "routes/invoice"
     ]
   },
@@ -311398,7 +311167,7 @@
     ]
   },
   "User": {
-    "sites": 7,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -311761,33 +311530,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Usually up to {0, plural, one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0}–{1} loads in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Utah (UT)": {
@@ -313236,7 +312978,7 @@
     ]
   },
   "View": {
-    "sites": 130,
+    "sites": 133,
     "scope": [
       "go",
       "ts"
@@ -324961,11 +324703,12 @@
     ]
   },
   "Who": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -329212,12 +328955,13 @@
     ]
   },
   "Writing": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -329860,7 +329604,7 @@
     ]
   },
   "Yes": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -352781,15 +352525,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0, plural, other {# booked}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0, plural, other {# booked}}; {1, plural, =0 {no other driver expected} one {# other driver expected} other {# other drivers expected}}.": {
     "sites": 1,
     "scope": [
@@ -354726,7 +354461,7 @@
     ]
   },
   "{0} by {1}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -354734,6 +354469,7 @@
       "apps/web/components",
       "routes/accounting-drift",
       "routes/accounting-inbound",
+      "routes/admin",
       "routes/collections",
       "routes/desk"
     ]
@@ -365023,15 +364759,6 @@
       "routes/desk"
     ]
   },
-  "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0} still owed": {
     "sites": 1,
     "scope": [
@@ -365587,12 +365314,13 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/billing-queue",
       "routes/customer-statement",
       "routes/desk",

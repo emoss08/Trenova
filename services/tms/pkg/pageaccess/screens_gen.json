@@ -2271,7 +2271,6 @@
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
         "DispatchForecastQuality",
-        "DispatchFreightOutlook",
         "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchStyle",
@@ -10476,7 +10475,6 @@
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
         "DispatchForecastQuality",
-        "DispatchFreightOutlook",
         "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchPlanAutoAssign",
@@ -10727,6 +10725,23 @@
           "path": "/tables/:param/compose/"
         }
       ]
+    },
+    {
+      "path": "/dispatch/outlook",
+      "name": "Freight outlook",
+      "requires": [
+        {
+          "resource": "shipment_move",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "DispatchCallOffPositioning",
+        "DispatchFreightArea",
+        "DispatchFreightOutlook",
+        "DispatchPositionDriver"
+      ],
+      "rest": []
     },
     {
       "path": "/dispatch/routing-guides",

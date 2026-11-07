@@ -26,7 +26,6 @@ var alertPoliciesTable = schema.Table{
 	Model:  "audit.AlertPolicy",
 	Label:  `Alert Policy`,
 	Plural: `Alert Policies`,
-	Doc:    `AlertPolicy is an organization's choice for one alert kind.`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -552,7 +551,6 @@ var chainHeadsTable = schema.Table{
 	Model:  "audit.ChainHead",
 	Label:  `Chain Head`,
 	Plural: `Chain Heads`,
-	Doc:    `ChainHead is where a tenant's chain of audit seals ends, how far its entries are sealed and what the last verification found. The sealer locks it to append the next seal.`,
 	Columns: []schema.Column{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -1869,7 +1867,6 @@ var exportsTable = schema.Table{
 	Model:  "audit.Export",
 	Label:  `Export`,
 	Plural: `Exports`,
-	Doc:    `Export is a request to write a range of the audit trail to a file, and the file it produced.`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -2510,7 +2507,6 @@ var legalHoldsTable = schema.Table{
 	Model:  "audit.LegalHold",
 	Label:  `Legal Hold`,
 	Plural: `Legal Holds`,
-	Doc:    `LegalHold stops the retention sweep deleting an organization's audit entries: all of them, one resource's, or one record's, until it is released.`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
@@ -3096,7 +3092,6 @@ var sealsTable = schema.Table{
 	Model:  "audit.Seal",
 	Label:  `Seal`,
 	Plural: `Seals`,
-	Doc:    `Seal checkpoints one hour of a tenant's audit entries: how many of each retention class there were and the digest of their content, signed and chained to the seal before it.`,
 	Columns: []schema.Column{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
