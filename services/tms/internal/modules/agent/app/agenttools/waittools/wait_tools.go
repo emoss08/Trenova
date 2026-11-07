@@ -1,4 +1,6 @@
-package carriertools
+// Package waittools parks an agent's own work until something happens and
+// hands it back then: agent_create_wait and agent_cancel_wait.
+package waittools
 
 import (
 	"context"
