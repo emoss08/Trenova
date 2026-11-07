@@ -6061,6 +6061,7 @@
   "Manual prices can only be added to custom indices": "手動價格僅能加入自訂指數",
   "Manual service failure request is required": "人工服務異常要求為必填",
   "Manufacturer": "製造商",
+  "Map ID": "地圖 ID",
   "Map {0} wrote no message": "對應 {0} 未寫出任何訊息",
   "Mapping": "對應",
   "Mapping entity type is invalid": "對應實體類型無效",

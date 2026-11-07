@@ -310,8 +310,11 @@ func TestMapDispatchFreightAreaDetail_MapsReachAndTheRecentWeeks(t *testing.T) {
 
 	worker := pulid.MustNew("wrk_")
 	mapped := mapDispatchFreightAreaDetail(&freightoutlookports.AreaDetail{
-		Quality:   &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Area:      &freightoutlookports.Area{Balance: demandforecast.AreaBalance{Cell: 12971}},
+		Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+		Area:    &freightoutlookports.Area{Balance: demandforecast.AreaBalance{Cell: 12971}},
+		Bounds: dispatchmarket.Bounds{
+			South: 39.63, West: -87.19, North: 40.98, East: -85.78,
+		},
 		SlotStart: 1_800_014_400,
 		Reach: []freightmove.ReachRow{{
 			WorkerID: worker, WorkerName: "Joe Kowalski", Label: "Indianapolis, IN",
@@ -325,6 +328,9 @@ func TestMapDispatchFreightAreaDetail_MapsReachAndTheRecentWeeks(t *testing.T) {
 	})
 
 	assert.Equal(t, 1_800_014_400, mapped.SlotStart)
+	assert.Equal(t, &gqlmodel.DispatchFreightAreaBounds{
+		South: 39.63, West: -87.19, North: 40.98, East: -85.78,
+	}, mapped.Bounds)
 	assert.Equal(t, []int{5, 4, 6}, mapped.Recent)
 	assert.Equal(t, 3, mapped.RecentLow)
 	assert.Equal(t, 7, mapped.RecentHigh)

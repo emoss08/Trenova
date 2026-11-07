@@ -6061,6 +6061,7 @@
   "Manual prices can only be added to custom indices": "手动价格仅能加入自定义指数",
   "Manual service failure request is required": "人工服务异常请求为必填",
   "Manufacturer": "制造商",
+  "Map ID": "地图 ID",
   "Map {0} wrote no message": "映射 {0} 未写出任何消息",
   "Mapping": "映射",
   "Mapping entity type is invalid": "映射实体类型无效",

@@ -38,6 +38,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "DispatchForecastDay", Implementors: []string{"DispatchForecastDay"}},
 		{Name: "DispatchForecastQuality", Implementors: []string{"DispatchForecastQuality"}},
 		{Name: "DispatchFreightArea", Implementors: []string{"DispatchFreightArea"}},
+		{Name: "DispatchFreightAreaBounds", Implementors: []string{"DispatchFreightAreaBounds"}},
 		{Name: "DispatchFreightAreaCustomer", Implementors: []string{"DispatchFreightAreaCustomer"}},
 		{Name: "DispatchFreightAreaDetail", Implementors: []string{"DispatchFreightAreaDetail"}},
 		{Name: "DispatchFreightMove", Implementors: []string{"DispatchFreightMove"}},
@@ -2411,6 +2412,48 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDispatchFreightAreaCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightAreaCustomerᚄ),
 			},
 		}},
+		{Object: "DispatchFreightAreaBounds", Fields: []*gqlexec.Field{
+			{
+				Name:     "south",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightAreaBounds)
+					return obj.South, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "west",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightAreaBounds)
+					return obj.West, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "north",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightAreaBounds)
+					return obj.North, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "east",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightAreaBounds)
+					return obj.East, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+		}},
 		{Object: "DispatchFreightAreaCustomer", Fields: []*gqlexec.Field{
 			{
 				Name:     "customerId",
@@ -2475,6 +2518,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Area, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDispatchFreightArea2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightArea),
+			},
+			{
+				Name:      "bounds",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DispatchFreightAreaBounds",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchFreightAreaDetail)
+					return obj.Bounds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDispatchFreightAreaBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightAreaBounds),
 			},
 			{
 				Name:     "slotStart",
@@ -5719,6 +5773,14 @@ func marshalNDispatchFreightArea2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DispatchFreightArea", v)
+}
+
+func marshalNDispatchFreightAreaBounds2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightAreaBounds(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DispatchFreightAreaBounds) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DispatchFreightAreaBounds", v)
 }
 
 func marshalNDispatchFreightAreaCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDispatchFreightAreaCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DispatchFreightAreaCustomer) graphql.Marshaler {

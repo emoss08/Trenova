@@ -1,16 +1,8 @@
+import { useRootTheme } from "@/hooks/use-root-theme";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { useEffect, useRef } from "react";
-
-/* The Maps API rasterises a literal colour, so a token is read off the document
-   when the line is styled; this grey stands in only if the token is missing. */
-const FALLBACK_COLOR = "#7a7a7a"; // design-tokens-ignore: Maps API needs a literal
-
-function resolveCssVar(name: string): string {
-  if (typeof window === "undefined") return FALLBACK_COLOR;
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || FALLBACK_COLOR;
-}
+import { mapColor } from "./map-color";
 
 type MapPolylineProps = {
   path: google.maps.LatLngLiteral[];
@@ -41,6 +33,7 @@ export function MapPolyline({
   const map = useMap();
   const mapsLib = useMapsLibrary("maps");
   const lineRef = useRef<google.maps.Polyline | null>(null);
+  const theme = useRootTheme();
   const clickable = !!onClick;
   const click = useLatestCallback(() => onClick?.());
   const pathKey = path.map((p) => [p.lat.toFixed(6), p.lng.toFixed(6)].join(",")).join(";");
@@ -62,7 +55,7 @@ export function MapPolyline({
   useEffect(() => {
     const line = lineRef.current;
     if (!line) return;
-    const color = resolveCssVar(colorVar);
+    const color = mapColor(colorVar);
     line.setOptions({
       strokeColor: color,
       strokeOpacity: dashed ? 0 : opacity,
@@ -85,7 +78,7 @@ export function MapPolyline({
       zIndex,
       clickable,
     });
-  }, [map, mapsLib, pathKey, colorVar, weight, opacity, dashed, zIndex, clickable]);
+  }, [map, mapsLib, pathKey, colorVar, weight, opacity, dashed, zIndex, clickable, theme]);
 
   return null;
 }

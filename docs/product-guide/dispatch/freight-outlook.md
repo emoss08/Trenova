@@ -41,9 +41,10 @@ Keywords: load ending near, swap a load, keep a driver, customer behind pace, as
 ### Open an area
 Keywords: area outlook, who can get there, one more driver worth
 1. Select an area on the board, or an underlined area name anywhere on the page.
-2. The panel shows the area: its worst window and what one more driver is worth there, the moves into or out of it, the window by window chart, who books there and whether they are on pace, drivers already on the way, who can get there in time (on a map, with what each would net, including those who arrive too late or are not worth the miles), and the last eight weeks of that window against its usual range.
-3. Select the button named for the area (Loads into, then the area) to open the shipments list filtered to the open loads delivering to any of your locations there. When none of your locations are in the area yet, the panel says so instead.
-4. Select **Brief**, **Close** or press Escape to go back.
+2. The panel shows the area: its worst window and what one more driver is worth there, the moves into or out of it, the window by window chart, who books there and whether they are on pace, drivers already on the way, who can get there in time (on a map that outlines the area and draws a line in from each driver, with what each would net, including those who arrive too late or are not worth the miles), and the last eight weeks of that window against its usual range.
+3. Scroll over the map to zoom it and drag to move it. Opening another area or window frames that area and its drivers again. The map needs Google Maps connected under Integrations; without it, the panel lists the drivers on their own.
+4. Select the button named for the area (Loads into, then the area) to open the shipments list filtered to the open loads delivering to any of your locations there. When none of your locations are in the area yet, the panel says so instead.
+5. Select **Brief**, **Close** or press Escape to go back.
 
 ### Check how far to trust it
 Keywords: forecast accuracy, track record, backtest, range held

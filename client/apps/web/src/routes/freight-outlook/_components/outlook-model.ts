@@ -1,9 +1,11 @@
 import type {
   FreightArea,
+  FreightAreaBounds,
   FreightMove,
   FreightNetworkSlot,
   FreightOutlook,
   FreightPace,
+  FreightReach,
   FreightSlot,
 } from "@/lib/graphql/freight-outlook";
 
@@ -303,4 +305,20 @@ export function laneGroups(
         .sort((a, b) => b.peak.amount - a.peak.amount),
     }))
     .filter(({ rows: laneRows }) => laneRows.length > 0);
+}
+
+/** The view that holds an area's tile and every driver measured against it. */
+export function reachBounds(
+  area: FreightAreaBounds,
+  reach: readonly Pick<FreightReach, "latitude" | "longitude">[],
+): { south: number; west: number; north: number; east: number } {
+  return reach.reduce(
+    (bounds, row) => ({
+      south: Math.min(bounds.south, row.latitude),
+      west: Math.min(bounds.west, row.longitude),
+      north: Math.max(bounds.north, row.latitude),
+      east: Math.max(bounds.east, row.longitude),
+    }),
+    { south: area.south, west: area.west, north: area.north, east: area.east },
+  );
 }

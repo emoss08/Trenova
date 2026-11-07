@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useMapId } from "@/hooks/use-map-id";
+import { useMapStyle } from "@/hooks/use-map-style";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { googleMaps } from "@/lib/queries/google-maps";
 import { cn, formatLocation } from "@trenova/shared/lib/utils";
@@ -49,7 +49,7 @@ export function ShipmentRouteMap({
   const [pinnedIdx, setPinnedIdx] = useState<number | null>(null);
   const activeIdx = pinnedIdx ?? hoveredIdx;
 
-  const mapId = useMapId();
+  const { mapId, colorScheme } = useMapStyle();
 
   if (!apiKeyData?.config.apiKey || !center || coordinates.length === 0) {
     return null;
@@ -60,6 +60,7 @@ export function ShipmentRouteMap({
       <APIProvider apiKey={apiKeyData.config.apiKey}>
         <Map
           mapId={mapId}
+          colorScheme={colorScheme}
           defaultCenter={US_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           gestureHandling="greedy"

@@ -37,6 +37,12 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Required:  true,
 				Sensitive: true,
 			},
+			{
+				Key:      "mapId",
+				Label:    "Map ID",
+				Type:     ConfigFieldTypeString,
+				HelpText: "A Map ID from the same Google Cloud project as the key, with a light and a dark style.",
+			},
 		},
 	},
 	TypeSamsara: {

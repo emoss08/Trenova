@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useMapId } from "@/hooks/use-map-id";
+import { useMapStyle } from "@/hooks/use-map-style";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
 import { location as locationQueries } from "@/lib/queries/location";
@@ -14,7 +14,7 @@ import { LocationAddressMarker } from "./location-address-marker";
 import { MapControls } from "./map-controls";
 import { useMapFocusStore } from "./map-focus-store";
 import { buildMapShipments, countByStage, type MapShipment } from "./map-shipment-model";
-import { MapZoomControls } from "./map-zoom-controls";
+import { MapZoomControls } from "@/components/map/map-zoom-controls";
 import { collectGeofencesFromLocations } from "./normalize-geofence";
 import { OWMTileLayer, type OWMLayerId } from "./owm-tile-layer";
 import { HoveredRoute, ShipmentFocusRoutes, type RouteRequest } from "./shipment-focus-routes";
@@ -64,7 +64,7 @@ export default function ShipmentMapPanel({
 }) {
   const t = useT();
 
-  const mapId = useMapId();
+  const { mapId, colorScheme } = useMapStyle();
   const { data } = useSuspenseQuery({
     ...integration.runtimeConfig("GoogleMaps"),
   });
@@ -253,6 +253,7 @@ export default function ShipmentMapPanel({
             <Map
               id={LIVE_MAP_INSTANCE_ID}
               mapId={mapId}
+              colorScheme={colorScheme}
               mapTypeId={mapStyle}
               defaultCenter={US_CENTER}
               defaultZoom={DEFAULT_ZOOM}

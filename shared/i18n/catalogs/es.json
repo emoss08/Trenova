@@ -6061,6 +6061,7 @@
   "Manual prices can only be added to custom indices": "Los precios manuales solo pueden agregarse a índices personalizados",
   "Manual service failure request is required": "La solicitud manual de fallo de servicio es obligatoria",
   "Manufacturer": "Fabricante",
+  "Map ID": "ID de mapa",
   "Map {0} wrote no message": "El mapa {0} no escribió ningún mensaje",
   "Mapping": "Asignación",
   "Mapping entity type is invalid": "El tipo de entidad de la asignación no es válido",
