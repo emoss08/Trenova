@@ -301,8 +301,8 @@ bootstrap:
 postgres:
   # The Trenova PostgreSQL image (PostGIS, pg_cron, pgvector). Its tag is
   # published only when the image changes, so it lags the app version. A
-  # release that builds a new image points only its own chart at it, so set
-  # this to that release once it is out: later releases pin this tag.
+  # published chart names the newest image whatever this says: the release
+  # workflow sets it. This is the default for installs from a checkout.
   image:
     repository: ghcr.io/emoss08/trenova/postgres
     tag: "0.11.0"

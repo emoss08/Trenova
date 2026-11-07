@@ -400,24 +400,49 @@ jobs:
           tar xzf /tmp/helm.tar.gz -C /tmp
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 
-      # The PostgreSQL image is published only when it changes; a release
-      # that built one points the chart at it.
-      - name: Point the chart at this release's PostgreSQL image
-        if: needs.detect-postgres-changes.outputs.should_build == 'true'
+      # The PostgreSQL image is published only when it changes, by the release
+      # that changed it. A release that built one points the chart at it; any
+      # other release points it at the newest published tag, which is the
+      # image of the current Dockerfile. The chart never takes the tag from
+      # values.yaml, which no release updates: v0.11.1 published no chart
+      # because values.yaml still named 0.9.0, whose manifests GHCR had dropped.
+      - name: Point the chart at the current PostgreSQL image
+        env:
+          BUILT: ${{ needs.detect-postgres-changes.outputs.should_build }}
+          REPOSITORY: ${{ env.IMAGE_NAMESPACE }}/postgres
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          python3 - "$version" <<'PY'
-          import re, sys
+          python3 - "${GITHUB_REF_NAME#v}" <<'PY'
+          import json, os, re, sys, urllib.request
+
+          def newest_published(repository):
+              registry = "https://" + os.environ["REGISTRY"]
+              token = json.load(urllib.request.urlopen(
+                  f"{registry}/token?scope=repository:{repository}:pull"))["token"]
+              request = urllib.request.Request(
+                  f"{registry}/v2/{repository}/tags/list?n=1000",
+                  headers={"Authorization": f"Bearer {token}"})
+              tags = json.load(urllib.request.urlopen(request)).get("tags") or []
+              versions = [t for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)]
+              if not versions:
+                  sys.exit(f"no X.Y.Z tag published for {repository}")
+              return max(versions, key=lambda t: tuple(int(p) for p in t.split(".")))
+
+          version = sys.argv[1]
+          if os.environ["BUILT"] == "true":
+              tag, why = version, "built by this release"
+          else:
+              tag, why = newest_published(os.environ["REPOSITORY"]), "the newest published"
           path = "deploy/helm/trenova/values.yaml"
           text = open(path).read()
           block = re.search(r"^postgres:\n(?:  .*\n|\n)*?    tag: \"[^\"]*\"", text, re.M)
           if not block:
               sys.exit("postgres.image.tag not found in values.yaml")
-          updated = re.sub(r'tag: "[^"]*"$', f'tag: "{sys.argv[1]}"', block.group(0), flags=re.M)
+          updated = re.sub(r'tag: "[^"]*"$', f'tag: "{tag}"', block.group(0), flags=re.M)
           open(path, "w").write(text.replace(block.group(0), updated, 1))
+          print(f"postgres image {tag} ({why})")
           PY
-          grep -n -A4 '^postgres:' deploy/helm/trenova/values.yaml
+          grep -n -A9 '^postgres:' deploy/helm/trenova/values.yaml
 
       # Every image a chart names, resolved to the digest it has now, inside the
       # chart and so inside its signature: a tag moved after this release changes
