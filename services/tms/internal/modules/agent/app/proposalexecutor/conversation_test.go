@@ -80,6 +80,55 @@ func TestExecute_HandsTheToolTheConversationItsRunAnswered(t *testing.T) {
 	assert.Equal(t, proposal.BusinessUnitID, runs.asks[0].TenantInfo.BuID)
 }
 
+func TestExecute_HandsTheToolTheAgentWhoseWorkItIs(t *testing.T) {
+	t.Parallel()
+
+	tool := newConversationTool()
+	proposal := testProposal(tool.name, map[string]any{})
+	proposal.RunID = pulid.MustNew("arun_")
+	definition := pulid.MustNew("agdef_")
+	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
+	executor.runs = &stubRuns{run: &agent.AgentRun{
+		ID:                proposal.RunID,
+		AgentDefinitionID: definition,
+		SubjectType:       agent.SubjectAssistantThread,
+		SubjectID:         pulid.MustNew("athr_"),
+	}}
+
+	require.NoError(t, executor.Execute(
+		t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+	))
+
+	assert.Equal(t, definition, tool.lastParams.DefinitionID,
+		"an approved wait is parked for the agent that raised it")
+	assert.False(t, tool.lastParams.Delegated)
+}
+
+func TestExecute_HandsOnThatTheRunWasAHandedTask(t *testing.T) {
+	t.Parallel()
+
+	tool := newConversationTool()
+	proposal := testProposal(tool.name, map[string]any{})
+	proposal.RunID = pulid.MustNew("arun_")
+	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
+	executor.runs = &stubRuns{run: &agent.AgentRun{
+		ID:                proposal.RunID,
+		AgentDefinitionID: pulid.MustNew("agdef_"),
+		SubjectType:       agent.SubjectAssistantThread,
+		SubjectID:         pulid.MustNew("athr_"),
+		ParentOwnerKind:   agent.RunOwnerAssistantTurn,
+		ParentOwnerID:     pulid.MustNew("atrn_"),
+		DelegateCallID:    "call_1",
+	}}
+
+	require.NoError(t, executor.Execute(
+		t.Context(), proposal, nil, testActor(proposal.OrganizationID, proposal.BusinessUnitID),
+	))
+
+	assert.True(t, tool.lastParams.Delegated,
+		"a task another agent handed over is not parked on a wait")
+}
+
 func TestExecute_HandsNoConversationForARunAboutSomethingElse(t *testing.T) {
 	t.Parallel()
 

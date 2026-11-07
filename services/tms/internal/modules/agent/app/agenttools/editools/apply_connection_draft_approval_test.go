@@ -71,7 +71,7 @@ func TestApplyConnectionDraft_RunsFromTheParametersAnApprovalHandsIt(t *testing.
 	require.ErrorIs(t, tool.Validate(t.Context(), bare), edispec.ErrNoConversation,
 		"without the conversation the guide cannot be read")
 
-	params, err := proposalexecutor.WithConversation(t.Context(), threadRun{run: &agent.AgentRun{
+	params, err := proposalexecutor.WithRun(t.Context(), threadRun{run: &agent.AgentRun{
 		ID:          proposal.RunID,
 		SubjectType: agent.SubjectAssistantThread,
 		SubjectID:   thread,

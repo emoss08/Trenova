@@ -175,7 +175,7 @@ func (s *Service) executionParams(
 		return execParams, err
 	}
 
-	return proposalexecutor.WithConversation(ctx, s.runs, execParams)
+	return proposalexecutor.WithRun(ctx, s.runs, execParams)
 }
 
 // assertOwner keeps a self-scoped proposal's preview to the person it is

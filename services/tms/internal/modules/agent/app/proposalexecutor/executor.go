@@ -426,15 +426,19 @@ func (s *Service) executionParams(
 		return execParams, err
 	}
 
-	return WithConversation(ctx, s.runs, execParams)
+	return WithRun(ctx, s.runs, execParams)
 }
 
-func WithConversation(
+// WithRun hands the tool whose work the call is, read from the run the
+// proposal was raised in, as a live call is handed it: the agent, whether it
+// was a task another agent handed over, and the conversation it answered. A
+// wait approved from a proposal was refused without the agent.
+func WithRun(
 	ctx context.Context,
 	runs RunReader,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agenttoolports.ToolExecuteParams, error) {
-	if runs == nil || params.RunID.IsNil() || params.ThreadID.IsNotNil() {
+	if runs == nil || params.RunID.IsNil() {
 		return params, nil
 	}
 
@@ -448,7 +452,9 @@ func WithConversation(
 	if err != nil {
 		return params, fmt.Errorf("read the run the proposal was raised in: %w", err)
 	}
-	if run.SubjectType == agent.SubjectAssistantThread {
+	params.DefinitionID = run.AgentDefinitionID
+	params.Delegated = run.DelegateCallID != ""
+	if params.ThreadID.IsNil() && run.SubjectType == agent.SubjectAssistantThread {
 		params.ThreadID = run.SubjectID
 	}
 
