@@ -224,7 +224,9 @@ docker compose run --rm --entrypoint trenova tms-bootstrap db bootstrap \
 
 It prompts for the password (or reads `TRENOVA_BOOTSTRAP_ADMIN_PASSWORD`, or the first line of
 standard input with `--password-stdin`; the password is never a flag). `--dry-run` reports what
-it would do. `trenova db bootstrap --help` lists the optional organization details
+it would do. `--admin-setup link` creates the administrator with no password, to choose one from
+a one-time setup link; Trenova Cloud installs that way because it delivers the link, so leave it
+out on your own install. `trenova db bootstrap --help` lists the optional organization details
 (`--timezone`, `--address-line1`, `--city`, `--state`, `--postal-code`, `--scac`,
 `--dot-number`, each also a `TRENOVA_BOOTSTRAP_*` variable); placeholders are used for any you
 leave out.

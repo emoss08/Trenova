@@ -13,6 +13,7 @@ this doc is the TMS's side. Self-hosted installs never turn it on, and nothing h
 | `QuotaGuard` | `identity/app/quotaservice` (`New` picks by `managed.enabled`) | `UnlimitedQuotaGuard` | `ManagedQuotaGuard` |
 | `UsageProvider` | `kernel/app/usageservice`, chosen in `kernel/module.go` | `NoopUsageProvider` | `ManagedUsageProvider` |
 | The operator's listener | `internal/api/managedserver.go`, API process only | off | `managed.host:managed.port` (8090), bearer `managed.token` |
+| The first administrator | `trenova db bootstrap --admin-setup`, `identity/app/firstadmininviteservice` | `password` | `link`, then an invite from the operator |
 
 Both providers ask one gate, `managedusageports.Gate` (`kernel/app/managedusageservice`), so every
 existing hook enforces the control plane's answer with no new call site: shipments
@@ -61,12 +62,49 @@ The readers are instance-wide (`dbscope.WithSystem`, listed in `rlslint`) becaus
 instance is one customer. `since` must be on the hour, within 35 days and not after the current
 hour.
 
+## The first administrator
+
+The person who ordered the instance becomes its first administrator, and chooses their password
+from a link Trenova Cloud emails them. The instance never holds that link's token, only its
+SHA-256, so a dump of the instance yields nothing that can be redeemed, and nothing depends on the
+instance having an email provider.
+
+1. **Bootstrap.** The operator renders `bootstrap.{orgName, adminName, adminEmail}` from the spec's
+   `firstAdministrator` with `bootstrap.adminSetup: link`. The release Job runs
+   `trenova db bootstrap --admin-setup link`, which creates the organization and an administrator
+   the way an invited user is created: an unusable random password, no sign-in and no password
+   change (`User.AwaitingAccountSetup`). No password is passed or read.
+2. **Invite.** Once the instance first runs, the control plane mints a token, keeps it sealed, and
+   puts its SHA-256 and expiry in the spec as `firstAdministrator.invite`. The operator calls
+   `PUT /managed/v1/first-administrator/invite` with them. `firstadmininviteservice.Install` finds
+   the administrator through the `instance_bootstraps` record and stores the hash as their
+   account invite (`password_reset_tokens`, purpose `invite`), expiring at the earlier of the
+   given time and `security.passwordReset.inviteTokenTtl`. It is idempotent by hash:
+   - a live invite with that hash is reported as `inviteTokenSha256`;
+   - a used, expired or replaced one is reported as nothing and never made live again;
+   - a new hash retires the outstanding invites and stores the new one, audited through the
+     `SecurityAuditor`;
+   - an administrator who has chosen a password or signed in is reported as `setUp`.
+
+   Before the bootstrap it answers 409.
+3. **Delivery.** The operator reports the answer as the status report's `administrator`. When the
+   instance holds the current hash, the control plane emails
+   `https://<hostname>/auth/reset?token=<token>&purpose=invite`, the TMS's own account setup page
+   and `POST /api/v1/auth/reset-password`.
+
+A password set at bootstrap (`--admin-setup password`, self-hosted) records `password_changed_at`,
+so that administrator is not mistaken for one awaiting setup.
+
 ## Rules that bite
 
 - The listener is reachable only from the operator: the chart's NetworkPolicy admits
   `managed.from` alone and refuses to render managed mode without it. The token is compared in
   constant time; problem bodies never carry an internal error.
 - The routes are not on the API router, so `authzlint` and `writecoverage` do not see them: the
-  bearer token is their authorization, and the only write is the control plane's own state.
+  bearer token is their authorization. They write only what the control plane decides: the usage
+  state, and the first administrator's invite, which grants nothing until someone holding the
+  emailed token redeems it.
+- The invite endpoint never sends email and never returns a token; it takes a hash and answers
+  with the same hash or nothing.
 - Shipments are never hard-deleted, so counting them by `created_at` is a ledger. A meter whose
   source rows can be deleted needs its own append-only record before it is billed.

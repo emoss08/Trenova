@@ -15,7 +15,8 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
    │                                                    │
    ├── escrow.Ensure: the Secret trenova-escrow, from GET /v1/secrets when missing or incomplete
    ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
-   └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state
+   └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state,
+                                               PUT /managed/v1/first-administrator/invite
 ```
 
 ## Packages
@@ -100,9 +101,11 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 3. render the chart values; make sure the escrow Secret is there (below), and apply nothing until
    it is; pull the chart at `release.version` (cached, two versions);
 4. compare with the deployed release: apply only when the chart version or the values differ;
-5. read readiness; report when something changed, and at least every minute
+5. read readiness; while the instance is active and ready and the spec has an invite, install it
+   in the TMS (below);
+6. report when something changed, and at least every minute
    (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m);
-6. relay usage when it is due (below).
+7. relay usage when it is due (below).
 
 The applied revision is the desired revision whose rendered state is the deployed one. It needs
 no storage of its own: after a restart the operator renders the spec again and finds the release
@@ -126,6 +129,7 @@ first, and what the spec decides is merged over them:
 | `components` contains `docling` | `docling.enabled` |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | (always) | `secrets.escrowSecret: trenova-escrow` |
+| `firstAdministrator` | `bootstrap.orgName`, `adminName`, `adminEmail`, and `bootstrap.adminSetup: link` |
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
 | `lifecycle: suspended` | `stopped: true`, `postgres.hibernate: true`: nothing runs, every volume is kept |
 | `lifecycle: decommissioned` | `stopped: true`, `postgres.hibernate: false`: PostgreSQL stays up for the final backup |
@@ -174,6 +178,24 @@ characters, the scope key ID 1 to 32 of `[A-Za-z0-9_-]`, the scope key standard 
 the value. Until the Secret is in place nothing is installed or upgraded and the report says why;
 a 429 waits out `Retry-After` and a 401 goes to credential recovery, as for the spec. The values
 are never logged.
+
+## The first administrator
+
+The spec's `firstAdministrator` names the person who ordered the instance and their
+organization; the first install creates both with no usable password (`bootstrap.adminSetup:
+link`, [managed-mode.md](managed-mode.md#the-first-administrator)). A spec that is missing a name,
+has one over 100 characters or a control character, or a malformed email, is refused like any
+other invalid spec.
+
+Once the instance runs, the spec carries `firstAdministrator.invite`: the SHA-256 of a token the
+control plane holds, and its expiry. While the instance is active and ready, the operator puts it
+to the TMS (`PUT /managed/v1/first-administrator/invite`, the managed token read again on a 401)
+and reports the answer as `administrator` on the status report: the hash the TMS holds, if it is
+still live, and whether the administrator is set up. It asks again at most every minute, or at
+once for a new invite, and reports at once when the answer changes, which is how the control plane
+learns to email the link and later that the administrator chose a password. A failure is logged,
+leaves `administrator` off the report and is retried on the next tick; it never holds converging
+or the report back. The token itself never reaches the operator.
 
 ## Usage relay
 
@@ -251,13 +273,16 @@ uninstall, is created by its chart.
   no-op detection, recovery, readiness, the escrowed secrets (fetched once, kept when present,
   restored when incomplete, refused when malformed, the install held until they are in place),
   the usage relay (mapping, chunking, scheduling, the token read again on a 401) against an
-  in-process TMS, and the loop end to end.
+  in-process TMS, the first administrator (bootstrap values, invalid names and emails, the invite
+  installed, rechecked, replaced and reported, a failure omitted), and the loop end to end.
 - `.github/workflows/operator.yml` installs the operator on k3d against
   `cmd/controlplane-stub`, with every image built from the commit and the Trenova chart pushed
   to a registry in the cluster at the version the stub pins. It waits for a ready report on
   revision 1, checks the escrowed secrets were fetched once into `trenova-escrow` and that the
   TMS reads them from there, waits for a usage report relayed from the TMS's managed API,
-  suspends (revision 2: workloads at zero, PostgreSQL hibernated) and resumes (revision 3).
+  checks the release Job bootstrapped the first administrator for a setup link with no password,
+  puts an invite in the spec (revision 2) and waits for it on a report, suspends (revision 3:
+  workloads at zero, PostgreSQL hibernated) and resumes (revision 4).
 - The contract: the operator's `api/instance.yaml` is a copy of the control plane's, and the
   control plane's CI compares the two, so a contract change lands in both.
 

@@ -111,6 +111,7 @@ The ones you are most likely to change:
 | `domain`, `storageDomain` | The hostnames. `storageDomain` serves presigned uploads and downloads from the bundled MinIO |
 | `ingress.*` | The Ingress for both hostnames, to the client |
 | `bootstrap.*` | The first organization and administrator; skipped while `adminEmail` is empty |
+| `bootstrap.adminSetup` | `password` (the default: a generated password in the app Secret) or `link` (no usable password; they choose one from a one-time account setup link, as Trenova Cloud does) |
 | `minio.enabled`, `storage.external.*` | Bundled MinIO, or an S3-compatible service and a Secret with `accessKey` and `secretKey` |
 | `docling.enabled` | Document extraction (docling-serve, 2 to 4 GiB of memory) |
 | `clamav.enabled` | Malware scanning (requests 3 GiB of memory, limit 4 GiB: clamd holds two copies of its signatures while it reloads them); files are refused while clamd is down |
@@ -137,8 +138,9 @@ in order:
 3. **rls-roles**: `trenova db rls provision-roles` creates the application and system roles.
 4. **publication**: scopes GTC's publication to the tables
    [`deploy/gtc/sinks.yaml`](../../deploy/gtc/sinks.yaml) routes, and lets GTC's role read them.
-5. **bootstrap**: `trenova db bootstrap`, when `bootstrap.adminEmail` is set. Later runs are
-   no-ops; different values, or a database that already has users, fail the step.
+5. **bootstrap**: `trenova db bootstrap`, when `bootstrap.adminEmail` is set, with
+   `--admin-setup` from `bootstrap.adminSetup`. Later runs are no-ops; different values, or a
+   database that already has users, fail the step.
 
 Every step is idempotent. The API and worker start alongside the Job and wait for their role,
 then for their schema version, so `--wait --wait-for-jobs` waits for all of it. Follow it with:
