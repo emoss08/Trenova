@@ -45,6 +45,8 @@ type memoryWaits struct {
 
 	items   map[pulid.ID]*agentwait.Wait
 	resumed []agentwaitports.MarkAgentWaitResumedRequest
+	// tenantScoped reads only the tenant's waits, as row-level security does.
+	tenantScoped bool
 }
 
 func newMemoryWaits(items ...*agentwait.Wait) *memoryWaits {
@@ -81,6 +83,9 @@ func (m *memoryWaits) ListOpenWatching(
 ) ([]*agentwait.Wait, error) {
 	out := make([]*agentwait.Wait, 0, len(m.items))
 	for _, wait := range m.items {
+		if m.tenantScoped && wait.OrganizationID != req.TenantInfo.OrgID {
+			continue
+		}
 		for _, kind := range req.Kinds {
 			for _, id := range req.WatchIDs {
 				if wait.Status.Open() && wait.Kind == kind && wait.WatchID == id {

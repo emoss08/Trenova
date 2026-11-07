@@ -1,6 +1,7 @@
 package worldwatch
 
 import (
+	"cmp"
 	"maps"
 	"slices"
 	"strings"
@@ -367,26 +368,40 @@ func ChangeNotice(
 	var b strings.Builder
 	b.WriteString(ChangePreamble)
 	for i := range changes {
-		change := &changes[i]
 		b.WriteString("\n- ")
-		b.WriteString(change.Label)
-		if change.Label != change.RecordID {
-			b.WriteString(" (")
-			b.WriteString(change.RecordID)
-			b.WriteString(")")
-		}
-		b.WriteString(" was ")
-		b.WriteString(changeVerb(change.Action))
-		b.WriteString(" ")
-		b.WriteString(changedBy(change, actor))
-		if len(change.Fields) > 0 && change.Action != actionDeleted {
-			b.WriteString(": ")
-			b.WriteString(strings.Join(change.Fields, ", "))
-		}
-		b.WriteString(".")
+		b.WriteString(DescribeChange(&changes[i], actor, nil))
 	}
 	b.WriteString("\n")
 	b.WriteString(worldChangeClosing)
+
+	return b.String()
+}
+
+// DescribeChange is one change in a line: the record, what became of it, who
+// did it and the fields it touched. names, keyed by user id, names someone
+// other than the actor when it is known.
+func DescribeChange(
+	change *realtimeports.WatchedRecordChange,
+	actor *permissionports.RequestActor,
+	names map[string]string,
+) string {
+	var b strings.Builder
+	label := cmp.Or(change.Label, change.RecordID)
+	b.WriteString(label)
+	if label != change.RecordID {
+		b.WriteString(" (")
+		b.WriteString(change.RecordID)
+		b.WriteString(")")
+	}
+	b.WriteString(" was ")
+	b.WriteString(changeVerb(change.Action))
+	b.WriteString(" ")
+	b.WriteString(changedBy(change, actor, names))
+	if len(change.Fields) > 0 && change.Action != actionDeleted {
+		b.WriteString(": ")
+		b.WriteString(strings.Join(change.Fields, ", "))
+	}
+	b.WriteString(".")
 
 	return b.String()
 }
@@ -403,6 +418,7 @@ func changeVerb(action string) string {
 func changedBy(
 	change *realtimeports.WatchedRecordChange,
 	actor *permissionports.RequestActor,
+	names map[string]string,
 ) string {
 	if actor != nil && actor.UserID.IsNotNil() && change.ActorUserID == actor.UserID.String() &&
 		change.ActorType != string(permissionports.PrincipalTypeAgent) {
@@ -416,6 +432,9 @@ func changedBy(
 	case permissionports.PrincipalTypeAPIKey:
 		return "through the API"
 	case permissionports.PrincipalTypeUser:
+		if name := names[change.ActorUserID]; name != "" {
+			return "by " + name
+		}
 		return "by someone else"
 	default:
 		return "elsewhere"

@@ -65,7 +65,7 @@ func reportingTools(
 	permissions := &querytooltest.FakePermissions{Allowed: true}
 	service.Kinds = catalogResolver(t, permissions)
 
-	runner, ok := NewRunReportTool(service, permissions).(*runReportTool)
+	runner, ok := NewRunReportTool(service, permissions, nil).(*runReportTool)
 	require.True(t, ok)
 	// The settle window is real time; a test that wants "still running" waits
 	// this long, so it is short, and one that wants "finished" returns at the

@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -93,6 +94,11 @@ type Params struct {
 	WebWatches    agentextensionports.WebWatchRepository
 	Documents     documentports.DocumentRepository
 	Contents      documentcontentports.DocumentContentRepository
+	ReportRuns    reportports.ReportRunRepository
+	Permissions   permissionports.PermissionEngine
+	Records       agentwaitports.RecordFinder
+	Activity      agentwaitports.ConversationActivity
+	Feed          realtimeports.RecordWatchFeed
 }
 
 type turnStarter interface {
@@ -125,6 +131,10 @@ type Service struct {
 	runService    runStarter
 	workflows     kernelports.WorkflowStarter
 	realtime      realtimeports.RealtimeService
+	permissions   permissionports.PermissionEngine
+	records       agentwaitports.RecordFinder
+	activity      agentwaitports.ConversationActivity
+	feed          realtimeports.RecordWatchFeed
 	now           func() int64
 }
 
@@ -151,11 +161,16 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 			webWatches:  p.WebWatches,
 			documents:   p.Documents,
 			contents:    p.Contents,
+			reportRuns:  p.ReportRuns,
 		},
 		conversations: p.Conversations,
 		runService:    p.RunService,
 		workflows:     p.Workflows,
 		realtime:      p.Realtime,
+		permissions:   p.Permissions,
+		records:       p.Records,
+		activity:      p.Activity,
+		feed:          p.Feed,
 		now:           timeutils.NowUnix,
 	}
 	s.turns = p.Turns
@@ -196,6 +211,11 @@ func (s *Service) Register(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
+	if wait.Kind == agentwait.KindRecordChanged {
+		if err = s.checkRecord(ctx, req.Actor, wait); err != nil {
+			return nil, err
+		}
+	}
 
 	now := s.now()
 	due, err := s.facts.assess(ctx, wait, now)
@@ -219,6 +239,14 @@ func (s *Service) Register(
 	if err = s.start(ctx, created); err != nil {
 		s.close(ctx, created, agentwait.StatusFailed, "The wait could not be started.")
 		return nil, fmt.Errorf("start the wait: %w", err)
+	}
+	if err = s.watch(ctx, created); err != nil {
+		if _, cErr := s.cancelWaitAs(ctx, created, agentwait.StatusFailed,
+			"The record could not be watched for changes."); cErr != nil {
+			s.l.Error("a wait whose record could not be watched could not be closed",
+				zap.String("wait", created.ID.String()), zap.Error(cErr))
+		}
+		return nil, fmt.Errorf("watch the record: %w", err)
 	}
 	s.announce(ctx, created)
 
@@ -354,10 +382,21 @@ func (s *Service) cancelWait(
 	wait *agentwait.Wait,
 	outcome string,
 ) (*agentwait.Wait, error) {
+	return s.cancelWaitAs(ctx, wait, agentwait.StatusCancelled, outcome)
+}
+
+// cancelWaitAs closes an open wait as given without picking the work up, and
+// stops its workflow.
+func (s *Service) cancelWaitAs(
+	ctx context.Context,
+	wait *agentwait.Wait,
+	status agentwait.Status,
+	outcome string,
+) (*agentwait.Wait, error) {
 	closed, changed, err := s.waits.Resolve(ctx, &agentwaitports.ResolveAgentWaitRequest{
 		ID:         wait.ID,
 		TenantInfo: tenantOf(wait),
-		Status:     agentwait.StatusCancelled,
+		Status:     status,
 		Outcome:    outcome,
 		ResolvedAt: s.now(),
 	})
@@ -372,6 +411,9 @@ func (s *Service) cancelWait(
 					zap.String("wait", closed.ID.String()), zap.Error(cErr))
 			}
 		}
+	}
+	if changed {
+		s.release(ctx, closed)
 	}
 	s.announce(ctx, closed)
 
@@ -578,8 +620,17 @@ func driveBelow(state *telematics.WorkerHOSState, minutes int) bool {
 // the same arrival finds; the wait is read again first so nothing is picked
 // up twice.
 func (s *Service) meet(ctx context.Context, wait *agentwait.Wait, detail string) {
+	s.meetWith(ctx, wait, agentwaitcontract.Met{Detail: detail, At: s.now()})
+}
+
+func (s *Service) meetWith(
+	ctx context.Context,
+	wait *agentwait.Wait,
+	notice agentwaitcontract.Met,
+) {
+	detail := notice.Detail
 	err := s.workflows.SignalWorkflow(ctx, wait.WorkflowID, "", agentwaitcontract.MetSignal,
-		agentwaitcontract.Met{Detail: detail, At: s.now()})
+		notice)
 	if err == nil {
 		return
 	}
@@ -659,10 +710,14 @@ func (s *Service) Schedule(
 		return nil, err
 	}
 
+	quiet, limit := wait.Kind.Settle()
+
 	return &agentwaitcontract.Schedule{
-		Open:      wait.Status.Open(),
-		DueAt:     wait.DueAt,
-		ExpiresAt: wait.ExpiresAt,
+		Open:             wait.Status.Open(),
+		DueAt:            wait.DueAt,
+		ExpiresAt:        wait.ExpiresAt,
+		SettleSeconds:    quiet,
+		SettleMaxSeconds: limit,
 	}, nil
 }
 
@@ -719,12 +774,18 @@ func (s *Service) Finish(ctx context.Context, in *agentwaitcontract.FinishInput)
 		return err
 	}
 	if changed {
+		s.release(ctx, wait)
 		s.announce(ctx, wait)
 	}
 	if wait.Status != agentwait.StatusMet && wait.Status != agentwait.StatusTimedOut {
 		return nil
 	}
 	if wait.ResumedTurnID.IsNotNil() || wait.ResumedRunID.IsNotNil() {
+		return nil
+	}
+	if s.conversationTookItIn(ctx, wait, in.FirstMetAt) {
+		s.l.Info("a watched record changed and the person has spoken in the conversation "+
+			"since; not picking the work up again", zap.String("wait", wait.ID.String()))
 		return nil
 	}
 

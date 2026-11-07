@@ -137,3 +137,33 @@ func TestCancelWait_NamesTheAgentForABackgroundRun(t *testing.T) {
 	assert.Equal(t, params.DefinitionID, waits.cancelled[0].DefinitionID)
 	assert.True(t, waits.cancelled[0].ThreadID.IsNil())
 }
+
+func TestWaitUntil_ReadsTheRecordARecordChangedWaitWatches(t *testing.T) {
+	t.Parallel()
+
+	waits := &recordedWaits{}
+	tool := NewWaitUntilTool(waits).(*waitUntilTool)
+	shipment := pulid.MustNew("shp_")
+
+	_, err := tool.ExecuteWithResult(context.Background(), waitParams(map[string]any{
+		"until":       "RecordChanged",
+		"description": "The POD on S-1042 to be attached",
+		"then":        "Propose posting INV-1001",
+		"recordId":    shipment.String(),
+	}))
+	require.NoError(t, err)
+	require.Len(t, waits.registered, 1)
+	assert.Equal(t, agentwait.KindRecordChanged, waits.registered[0].Kind)
+	assert.Equal(t, shipment, waits.registered[0].Condition.RecordID)
+
+	err = tool.Validate(context.Background(), waitParams(map[string]any{
+		"until": "RecordChanged", "description": "x", "recordId": "shp",
+	}))
+	assert.ErrorContains(t, err, "recordId is not a valid id")
+
+	err = tool.Validate(context.Background(), waitParams(map[string]any{
+		"until": "ReportRun", "description": "x",
+	}))
+	assert.ErrorContains(t, err, "until must be one of",
+		"a report run's wait is set by report_run, never asked for")
+}

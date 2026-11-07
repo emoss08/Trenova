@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -405,6 +407,7 @@ const (
 type runReportTool struct {
 	reports     Runner
 	permissions permissionports.PermissionEngine
+	waits       agentwaitports.ReportRunWaiter
 
 	settleWindow time.Duration
 	settlePoll   time.Duration
@@ -413,10 +416,12 @@ type runReportTool struct {
 func NewRunReportTool(
 	reports Runner,
 	permissions permissionports.PermissionEngine,
+	waits agentwaitports.ReportRunWaiter,
 ) agenttoolports.AgentQueryTool {
 	return &runReportTool{
 		reports:      reports,
 		permissions:  permissions,
+		waits:        waits,
 		settleWindow: runSettleWindow,
 		settlePoll:   runSettlePoll,
 	}
@@ -443,7 +448,11 @@ func (t *runReportTool) Description() string {
 		"returns a run id, and you say that it has started and stop there. The " +
 		"conversation tracks the run and shows the person its progress, its row " +
 		"count and a download button as soon as it finishes, so there is nothing " +
-		"to poll and nowhere to send them. Never describe figures you have not seen."
+		"to poll and nowhere to send them. When the person asked something of the " +
+		"rows (who is past 90 days, the total, the worst lane), say in then what you " +
+		"will do with them: a run still going then picks this conversation up again " +
+		"when it finishes, and you answer from its rows. Never describe figures you " +
+		"have not seen."
 }
 
 func (t *runReportTool) ParamSchema() map[string]any {
@@ -474,6 +483,13 @@ func (t *runReportTool) ParamSchema() map[string]any {
 			"format": agenttoolschema.Enum(
 				"Optional output format. Defaults to the report's own.", reportRunFormats,
 			),
+			"then": map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Only when the person asked something of the report's " +
+					"rows: what you will do with them once the run finishes (\"name the customers " +
+					"over 90 days and their balances\"). Leave it out when they only asked for " +
+					"the report itself.",
+			},
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
@@ -545,17 +561,51 @@ func (t *runReportTool) Query(
 		attachRunSample(ctx, t.reports, params, run, &status)
 	} else {
 		status = toRunStatus(run)
-		status.Note = fmt.Sprintf(
-			"%q has been queued and is not finished. Tell the person it is running and "+
-				"that the result will appear here with a download button when it is done. "+
-				"Do not call report_get_run to poll it and do not send them to the Reports "+
-				"page; the conversation is already showing run %s.",
-			source.Name, run.ID.String(),
-		)
+		status.Note = t.followNote(ctx, params, run, source.Name)
 	}
 	status.ReportName = source.Name
 
 	return status, nil
+}
+
+// followNote is what the model is told about a run still going. When the
+// person asked something of its rows, the conversation parks on the run and
+// picks itself up again when it finishes, so the answer comes without the
+// person asking twice.
+func (t *runReportTool) followNote(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+	run *report.ReportRun,
+	name string,
+) string {
+	started := fmt.Sprintf(
+		"%q has been queued and is not finished. Tell the person it is running and "+
+			"that the result will appear here with a download button when it is done. "+
+			"Do not call report_get_run to poll it and do not send them to the Reports "+
+			"page; the conversation is already showing run %s.",
+		name, run.ID.String(),
+	)
+	then := strings.TrimSpace(querytool.OptionalString(params.Params, "then"))
+	if then == "" || t.waits == nil || params.Delegated {
+		return started
+	}
+
+	if _, err := t.waits.WaitForReportRun(ctx, &agentwaitports.WaitForReportRunRequest{
+		Actor:        params.Actor,
+		DefinitionID: params.AgentDefinitionID,
+		ThreadID:     params.ThreadID,
+		RunID:        params.RunID,
+		ReportRunID:  run.ID,
+		ReportName:   name,
+		Then:         then,
+	}); err != nil {
+		return started + " This conversation could not be set to pick itself up when the " +
+			"run finishes (" + err.Error() + "), so say the person will see the result here " +
+			"and can ask you about it then."
+	}
+
+	return started + " This conversation picks itself up again when the run finishes, " +
+		"with its outcome, and you will " + then + " then. Say that in one line and stop."
 }
 
 // settle waits up to the settle window for the run to reach a terminal

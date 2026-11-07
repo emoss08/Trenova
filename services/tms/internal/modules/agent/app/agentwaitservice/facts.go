@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,6 +42,7 @@ type facts struct {
 	webWatches  agentextensionports.WebWatchRepository
 	documents   documentports.DocumentRepository
 	contents    documentcontentports.DocumentContentRepository
+	reportRuns  reportports.ReportRunRepository
 }
 
 // alreadyTrue refuses a wait on something that has happened: the agent is
@@ -130,6 +132,14 @@ func (f *facts) assess(ctx context.Context, wait *agentwait.Wait, now int64) (*i
 
 	case agentwait.KindDocumentRead:
 		return f.assessDocumentRead(ctx, tenant, c, now)
+
+	case agentwait.KindReportRun:
+		return f.assessReportRun(ctx, wait, now)
+
+	case agentwait.KindRecordChanged:
+		// Register reads the record as the person (checkRecord); a change on
+		// the stream, not a time, ends it.
+		return nil, nil //nolint:nilnil // no time ends it
 
 	case agentwait.KindHOSDriveBelow:
 		state, err := f.telematics.GetWorkerHOSState(ctx, telematicsports.GetWorkerHOSStateRequest{
@@ -269,6 +279,9 @@ func (f *facts) recheck(
 	c := wait.Condition
 
 	switch wait.Kind { //nolint:exhaustive // only timed waits come due
+	case agentwait.KindReportRun:
+		return f.recheckReportRun(ctx, wait, now)
+
 	case agentwait.KindAppointmentNear:
 		stop, err := f.stop(ctx, tenant, c.ShipmentMoveID, c.StopID)
 		if err != nil {
