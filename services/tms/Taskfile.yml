@@ -299,6 +299,14 @@ tasks:
     cmds:
       - scripts/gofuzz.sh run {{.time | default "30s"}} {{.name}}
 
+  test-chains:
+    desc: Run the API chains against the in-process API (CHAIN_UPDATE=1 rewrites the goldens)
+    deps: [test-db-up]
+    env:
+      TRENOVA_TEST_POSTGRES_DSN: "{{.TEST_POSTGRES_DSN}}"
+    cmds:
+      - go test -count=1 -tags={{.GO_TAGS_INTEGRATION}} ./internal/apichains/ {{.CLI_ARGS}}
+
   test-integration:
     desc: Run integration tests only
     deps: [test-db-up]

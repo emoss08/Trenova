@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -24,8 +25,13 @@ func Refresh(ctx context.Context, db *keel.DB, itemIDs ...pulid.ID) error {
 	}
 
 	bq := billingqueuedb.BillingQueueItems
-	lane := LaneExpr(bq)
-	if _, err := bq.Where(
+	allTenants := dbscope.IsSystem(ctx)
+	lane := laneExpr(bq, allTenants)
+	query := bq.Query()
+	if allTenants {
+		query = query.AllTenants()
+	}
+	if _, err := query.Where(
 		bq.ID.In(ids...),
 		bq.Lane.Text().IsDistinctFromExpr(lane),
 	).Update(
@@ -48,7 +54,11 @@ func MarkChecked(ctx context.Context, db *keel.DB, at int64, itemIDs ...pulid.ID
 	}
 
 	bq := billingqueuedb.BillingQueueItems
-	if _, err := bq.Where(bq.ID.In(ids...)).Update(
+	query := bq.Query()
+	if dbscope.IsSystem(ctx) {
+		query = query.AllTenants()
+	}
+	if _, err := query.Where(bq.ID.In(ids...)).Update(
 		ctx,
 		db,
 		bq.CheckedAt.To(at),
@@ -62,31 +72,43 @@ func MarkChecked(ctx context.Context, db *keel.DB, at int64, itemIDs ...pulid.ID
 }
 
 func LaneExpr(bq *billingqueuedb.BillingQueueItemsTable) keel.StringExpr {
+	return laneExpr(bq, false)
+}
+
+func laneExpr(bq *billingqueuedb.BillingQueueItemsTable, allTenants bool) keel.StringExpr {
 	return keel.CaseString().
 		When(bq.Status.In(billingqueue.ClosedStatuses()...), lane(billingqueue.LaneClosed)).
 		When(bq.Status.Eq(billingqueue.StatusApproved), lane(billingqueue.LaneApproved)).
 		When(bq.Status.In(billingqueue.HeldStatuses()...), lane(billingqueue.LaneHeld)).
 		When(bq.CheckedAt.IsNull(), lane(billingqueue.LaneChecking)).
 		When(
-			keel.Or(bq.AssignedBillerID.IsNull(), HasActionableIssue(bq)),
+			keel.Or(bq.AssignedBillerID.IsNull(), keel.Exists(actionableIssues(bq, allTenants))),
 			lane(billingqueue.LaneNeedsYou),
 		).
-		When(HasOpenIssue(bq), lane(billingqueue.LaneWaiting)).
+		When(keel.Exists(openIssues(bq, allTenants)), lane(billingqueue.LaneWaiting)).
 		Else(lane(billingqueue.LaneReady))
 }
 
 func HasOpenIssue(bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
-	return keel.Exists(openIssues(bq))
+	return keel.Exists(openIssues(bq, false))
 }
 
 func HasActionableIssue(bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
-	return keel.Exists(actionableIssues(bq))
+	return keel.Exists(actionableIssues(bq, false))
 }
 
-func openIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
+func openIssues(
+	bq *billingqueuedb.BillingQueueItemsTable,
+	allTenants bool,
+) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(openIssueAlias)
 
-	return iss.Pick(iss.ID).Where(
+	query := iss.Pick(iss.ID)
+	if allTenants {
+		query = query.AllTenants()
+	}
+
+	return query.Where(
 		iss.ItemID.EqCol(bq.ID),
 		iss.OrganizationID.EqCol(bq.OrganizationID),
 		iss.BusinessUnitID.EqCol(bq.BusinessUnitID),
@@ -95,10 +117,18 @@ func openIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqu
 	)
 }
 
-func actionableIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
+func actionableIssues(
+	bq *billingqueuedb.BillingQueueItemsTable,
+	allTenants bool,
+) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(actionableIssueAlias)
 
-	return iss.Pick(iss.ID).Where(
+	query := iss.Pick(iss.ID)
+	if allTenants {
+		query = query.AllTenants()
+	}
+
+	return query.Where(
 		iss.ItemID.EqCol(bq.ID),
 		iss.OrganizationID.EqCol(bq.OrganizationID),
 		iss.BusinessUnitID.EqCol(bq.BusinessUnitID),

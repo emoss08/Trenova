@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,6 +26,26 @@ import (
 const rlsTestScopeKeyID = "ktest"
 
 func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connection {
+	t.Helper()
+
+	lifecycle := fxtest.NewLifecycle(t)
+	conn, err := postgres.NewConnection(postgres.ConnectionParams{
+		Lifecycle:       lifecycle,
+		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
+		DatabaseConfig:  RLSDatabaseConfig(t, admin, dsn),
+		ReportingConfig: &reportingconfig.Config{},
+		Logger:          zaptest.NewLogger(t),
+		Metrics:         &metrics.Registry{},
+		Observers:       shapetest.Observers(t),
+	})
+	require.NoError(t, err)
+	lifecycle.RequireStart()
+	t.Cleanup(lifecycle.RequireStop)
+
+	return conn
+}
+
+func RLSDatabaseConfig(t *testing.T, admin *keel.DB, dsn string) *databaseconfig.Config {
 	t.Helper()
 
 	ctx := t.Context()
@@ -69,20 +90,7 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 	_, err = postgres.ProvisionRLS(ctx, admin, database)
 	require.NoError(t, err)
 
-	lifecycle := fxtest.NewLifecycle(t)
-	conn, err := postgres.NewConnection(postgres.ConnectionParams{
-		Lifecycle:       lifecycle,
-		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
-		DatabaseConfig:  database,
-		ReportingConfig: &reportingconfig.Config{},
-		Logger:          zaptest.NewLogger(t),
-		Observers:       shapetest.Observers(t),
-	})
-	require.NoError(t, err)
-	lifecycle.RequireStart()
-	t.Cleanup(lifecycle.RequireStop)
-
-	return conn
+	return database
 }
 
 func randomBytes(t *testing.T, size int) []byte {
