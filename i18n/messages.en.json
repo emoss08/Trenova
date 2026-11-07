@@ -10679,6 +10679,15 @@
       "routes/desk"
     ]
   },
+  "A record change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A record changed after it was written; the evidence chain no longer verifies": {
     "sites": 1,
     "scope": [
@@ -11019,11 +11028,12 @@
     ]
   },
   "A report": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -11082,6 +11092,15 @@
     ]
   },
   "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A report run is waited on by the conversation that started it": {
     "sites": 1,
     "scope": [
       "go"
@@ -80981,6 +81000,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Desk picking work back up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Desk settings": {
@@ -200105,6 +200133,15 @@
       "routes/desk"
     ]
   },
+  "Picks up when it changes; gives up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Pickup": {
     "sites": 26,
     "scope": [
@@ -232742,7 +232779,7 @@
     ]
   },
   "Running": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -341178,6 +341215,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "recordId does not name a kind of record Trenova keeps. Use the id a tool returned.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "reference": {

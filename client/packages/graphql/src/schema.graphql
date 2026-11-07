@@ -1846,6 +1846,7 @@ enum AIUsageFeature {
   AgentRecommendation
   AgentReflection
   AgentTurn
+  AgentWakeUp
   BillingQueueBrief
   BillingQueueReview
   BillingQueueSearch

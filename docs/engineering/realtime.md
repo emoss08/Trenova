@@ -126,6 +126,16 @@ record it is working with changed; see "The world changing under a turn" in
 [agent-runtime.md](agent-runtime.md). Events addressed to one person and scoped
 presence or typing events are never returned.
 
+`realtimebroker.RecordWatchFeed` (`realtimeports.RecordWatchFeed`) is the same stream
+read for records something waits on across turns, with no cursor to keep. `Watch`
+and `Unwatch` keep a per-tenant register (a sorted set scored by when each watch
+ends); `Follow`, run only in workers, reads every shard through a consumer group
+without acknowledging, so each entry reaches one worker, and checks each batch
+against the registers in two pipelined round trips (which tenants watch anything,
+then which of their records), decoding payloads only for tenants that watch. Reuse it, not a new hook in a module, whenever work must hear that a record
+changed: every write already publishes. Agent waits are its first follower; see
+"Hearing a record change" in [agent-waits.md](agent-waits.md).
+
 ## A stream
 
 `GET /api/v1/realtime/stream/` (add `?presence=users` to join the tenant's online

@@ -26,6 +26,9 @@ type QueryToolParams struct {
 	DataAccessCeiling permission.FieldSensitivity
 	ThreadID          pulid.ID
 	RunID             pulid.ID
+	// Delegated is a call made for a task another agent handed over, which
+	// may not park the conversation's work on a wait.
+	Delegated bool
 	// Broker is set only for the tool that runs a script: every read the
 	// script makes goes through it, as the run's actor.
 	Broker codemode.Broker

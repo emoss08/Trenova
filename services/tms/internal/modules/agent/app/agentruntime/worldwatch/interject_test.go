@@ -113,3 +113,29 @@ func TestWorldChangeNotice_SaysWhoChangedIt(t *testing.T) {
 	assert.Contains(t, notice, otherShipment+" was deleted by an agent.")
 	assert.NotContains(t, notice, otherShipment+" ("+otherShipment+")")
 }
+
+func TestWorldState_ARefusedWriteWatchesTheRecordsItNamed(t *testing.T) {
+	t.Parallel()
+
+	world := OpenWorld("0.1-0", nil, 100)
+	world.Refused(&llmports.ToolCall{
+		Name: "invoice_post",
+		Arguments: map[string]any{
+			"invoiceId":      "inv_01J9REFUSEDREFUSEDREFUSED0",
+			"shipmentMoveId": "smv_01J9REFUSEDREFUSEDREFUSED0",
+			"shipmentIds":    []any{watchedShipment, "short", otherShipment},
+			"note":           "shp_01J9NOTANIDNOTANIDNOTANI0",
+		},
+	})
+
+	got := make(map[string]string, len(world.Records))
+	for _, record := range world.Records {
+		got[record.ID] = record.Type
+	}
+	assert.Equal(t, map[string]string{
+		"inv_01J9REFUSEDREFUSEDREFUSED0": "invoice",
+		"smv_01J9REFUSEDREFUSEDREFUSED0": "shipment_move",
+		watchedShipment:                  "shipment",
+		otherShipment:                    "shipment",
+	}, got)
+}

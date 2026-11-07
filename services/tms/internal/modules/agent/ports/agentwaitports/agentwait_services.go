@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,4 +84,64 @@ type AgentWaitNotifier interface {
 		tenant pagination.TenantInfo,
 		positions []*telematics.VehiclePosition,
 	)
+}
+
+// FoundRecord is what a record finder knows of one record: whether it reads
+// records of that kind at all, whether this one is the organization's, and
+// what it is called.
+type FoundRecord struct {
+	Known  bool
+	Exists bool
+	Label  string
+}
+
+// RecordFinder reads whether a record a wait names is there and what it is
+// called, and the names of the people who change watched records.
+type RecordFinder interface {
+	Find(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		resource permission.Resource,
+		id pulid.ID,
+	) (*FoundRecord, error)
+	UserNames(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		ids []pulid.ID,
+	) (map[pulid.ID]string, error)
+}
+
+type PersonSpokeSinceRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Since      int64
+}
+
+// ConversationActivity reads what a conversation's owner did after a time:
+// a change they made and then told the conversation about needs no second
+// turn to pick it up.
+type ConversationActivity interface {
+	PersonSpokeSince(ctx context.Context, req *PersonSpokeSinceRequest) (bool, error)
+}
+
+// RecordChangeNotifier hands changes to watched records, read off the
+// realtime change stream, to the waits watching them.
+type RecordChangeNotifier interface {
+	NotifyRecordChanges(ctx context.Context, changes []realtimeports.TenantRecordChange)
+}
+
+type WaitForReportRunRequest struct {
+	Actor        *permissionports.RequestActor
+	DefinitionID pulid.ID
+	ThreadID     pulid.ID
+	Delegated    bool
+	ReportRunID  pulid.ID
+	ReportName   string
+	Then         string
+}
+
+// ReportRunWaiter parks the work that started a report run still going, so
+// it picks up what the person asked of the report once the run finishes.
+type ReportRunWaiter interface {
+	WaitForReportRun(ctx context.Context, req *WaitForReportRunRequest) (*agentwait.Wait, error)
 }

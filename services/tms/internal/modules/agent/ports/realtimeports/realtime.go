@@ -272,3 +272,41 @@ type RecordChangeFeed interface {
 	Head(ctx context.Context, orgID, buID pulid.ID) (string, error)
 	Since(ctx context.Context, req *RecordChangesRequest) (*RecordChanges, error)
 }
+
+// TenantRecordChange is a change to a watched record, with the tenant it
+// happened in.
+type TenantRecordChange struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Change         WatchedRecordChange
+}
+
+// WatchRecordRequest registers a record with the change stream until a time:
+// changes to it reach RecordWatchFeed.Follow until then.
+type WatchRecordRequest struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	RecordID       pulid.ID
+	Until          int64
+}
+
+// RecordWatchFeed is the change stream read for records something waits on.
+// Every committed write already publishes an invalidation; the feed keeps a
+// per-tenant register of watched records and hands each follower only the
+// changes to them, so nothing else is read or decoded twice.
+type RecordWatchFeed interface {
+	// Watch adds the record to the register, keeping the later of its
+	// current and given expiry.
+	Watch(ctx context.Context, req *WatchRecordRequest) error
+	// Unwatch removes the record, unless it is watched past Until: a later
+	// wait on the same record keeps it.
+	Unwatch(ctx context.Context, req *WatchRecordRequest) error
+	// Follow hands changes to watched records to handle, in batches, until
+	// ctx ends. Followers in the same group share the stream: each change
+	// reaches one of them.
+	Follow(
+		ctx context.Context,
+		group string,
+		handle func(ctx context.Context, changes []TenantRecordChange),
+	) error
+}

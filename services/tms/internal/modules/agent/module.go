@@ -134,7 +134,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchcoveragewatch"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
@@ -165,6 +164,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs/paperworkcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
@@ -238,6 +238,7 @@ func SharedOptions() fx.Option {
 			agentruneventrepository.New,
 			agentrunsteprepository.New,
 			assistantturnrepository.New,
+			assistantturnrepository.NewConversationActivity,
 			agentproposalrepository.New,
 			agentplanrepository.New,
 			agentmemoryrepository.New,
@@ -262,6 +263,7 @@ func SharedOptions() fx.Option {
 			),
 			agentproposalbaselinerepository.New,
 			recordlabelrepository.New,
+			recordlabelrepository.NewRecordFinder,
 			recordsummaryrepository.New,
 			fx.Annotate(
 				boardcardservice.New,

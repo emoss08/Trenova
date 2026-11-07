@@ -463,6 +463,7 @@ export type AiUsageFeature =
   | 'AgentRecommendation'
   | 'AgentReflection'
   | 'AgentTurn'
+  | 'AgentWakeUp'
   | 'BillingQueueBrief'
   | 'BillingQueueReview'
   | 'BillingQueueSearch'

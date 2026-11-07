@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/bankreceipttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
@@ -44,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/triagequeuetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/triageworktools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/waittools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/webwatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -151,8 +151,8 @@ func ToolProviders() []any {
 		provideAttachDocumentTool,
 		movetools.NewAssignMoveTool,
 		exceptiontools.NewRaiseExceptionTool,
-		carriertools.NewWaitUntilTool,
-		carriertools.NewCancelWaitTool,
+		waittools.NewWaitUntilTool,
+		waittools.NewCancelWaitTool,
 		scheduletools.NewCreateScheduleTool,
 		shipmentcommenttools.NewAddShipmentCommentTool,
 		shipmenttools.NewPlaceShipmentHoldTool,

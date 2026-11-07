@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
@@ -43,6 +46,7 @@ func newTestBroker(t *testing.T, mutate func(*realtimeconfig.Config)) (*Broker, 
 			RealtimeConfig: &cfg.Realtime,
 			Logger:         zap.NewNop(),
 			LC:             lc,
+			Metrics:        disabledMetrics(t),
 		},
 	)
 	broker := NewBroker(BrokerParams{
@@ -50,12 +54,23 @@ func newTestBroker(t *testing.T, mutate func(*realtimeconfig.Config)) (*Broker, 
 		Client:         client,
 		RealtimeConfig: &cfg.Realtime,
 		Logger:         zap.NewNop(),
+		Metrics:        disabledMetrics(t),
 		LC:             lc,
 	})
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
 
 	return broker, client
+}
+
+// disabledMetrics is the registry a process with metrics off holds: every
+// recorder is there and records nothing.
+func disabledMetrics(t *testing.T) *metrics.Registry {
+	t.Helper()
+	registry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
+	require.NoError(t, err)
+
+	return registry
 }
 
 type tenant struct {
