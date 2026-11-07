@@ -1,4 +1,4 @@
-package carriertools
+package waittools
 
 import (
 	"context"
