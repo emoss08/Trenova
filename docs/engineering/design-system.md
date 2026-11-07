@@ -347,8 +347,10 @@ replace the page rather than float over it, and follow the theme.
 
 The primitives do this themselves by putting the `dark` class on the positioner,
 so the popup and everything in it resolves the dark token set. Never write `dark`
-on a `PopoverContent` by hand. A popover that genuinely must follow the theme
-takes `inverted={false}`; expect to be asked why.
+on a `PopoverContent` by hand. A popover or hover card that genuinely must follow
+the theme takes `inverted={false}` and floats on `ui-lift-float`; expect to be asked
+why. The freight outlook's move card is one: it explains a row at length beside a
+panel in the page's own theme, so an inverted card would read as a tooltip.
 
 Because the content is in a dark scope in both themes, anything inside a popover
 must be built from tokens. A hard-coded light value that "works" in light mode is

@@ -544,6 +544,8 @@ func FromServices(s *Services) *Resolver {
 		DispatchConsoleService:    s.DispatchConsoleService,
 		DispatchAutoAssignService: s.DispatchAutoAssignService,
 		DemandForecastService:     s.DemandForecastService,
+		FreightOutlookService:     s.FreightOutlookService,
+		DriverPositioningService:  s.DriverPositioningService,
 		AssignmentService:         s.AssignmentService,
 	}
 	dispatchstyleDeps := &dispatchstyleresolver.Deps{

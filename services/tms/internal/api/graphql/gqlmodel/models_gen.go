@@ -4651,7 +4651,7 @@ type DispatchCandidate struct {
 	Blocked   bool                `json:"blocked"`
 	// Empty miles to the pickup; null when where the driver is is unknown.
 	DeadheadMiles *float64 `json:"deadheadMiles,omitempty"`
-	// Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown.
+	// Where the empty miles start: commitment (the end of the driver's last load), positioning (the area the driver was sent toward from the freight outlook), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown.
 	OriginSource     string  `json:"originSource"`
 	LoadedMiles      float64 `json:"loadedMiles"`
 	EstimatedDriveMs int     `json:"estimatedDriveMs"`
@@ -4801,6 +4801,15 @@ type DispatchForecastCustomer struct {
 	ExpectedLoads float64 `json:"expectedLoads"`
 }
 
+// One day of the forecast's track record: the network range forecast out of sample, and what came.
+type DispatchForecastDay struct {
+	DayStart int     `json:"dayStart"`
+	Low      int     `json:"low"`
+	High     int     `json:"high"`
+	Mean     float64 `json:"mean"`
+	Actual   int     `json:"actual"`
+}
+
 // How the freight forecast did when it was tested on the last weeks of the organization's own
 // history: each week forecast from the weeks before it, then compared with what came.
 type DispatchForecastQuality struct {
@@ -4822,38 +4831,173 @@ type DispatchForecastQuality struct {
 	FittedAt *int `json:"fittedAt,omitempty"`
 }
 
+// A forecast area (a map tile about 50 miles across) over the next 48 hours.
+type DispatchFreightArea struct {
+	Cell      int     `json:"cell"`
+	Label     string  `json:"label"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	// What one more driver ending there is worth to the plan at its worst window, in cents.
+	ValueCents int                            `json:"valueCents"`
+	Slots      []*DispatchFreightSlot         `json:"slots"`
+	Customers  []*DispatchFreightAreaCustomer `json:"customers"`
+}
+
+type DispatchFreightAreaCustomer struct {
+	CustomerID string `json:"customerId"`
+	Name       string `json:"name"`
+	// Share of the freight expected in the area over the outlook.
+	Share float64 `json:"share"`
+}
+
+type DispatchFreightAreaDetail struct {
+	Quality     *DispatchForecastQuality `json:"quality"`
+	GeneratedAt int                      `json:"generatedAt"`
+	Area        *DispatchFreightArea     `json:"area"`
+	// The window the sheet reads: the one asked for, or the area's worst.
+	SlotStart int                     `json:"slotStart"`
+	Reach     []*DispatchFreightReach `json:"reach"`
+	Moves     []*DispatchFreightMove  `json:"moves"`
+	Pace      []*DispatchFreightPace  `json:"pace"`
+	// Loads in this area and window of the week in each of the last eight weeks, oldest first.
+	Recent []int `json:"recent"`
+	// The usual range for this area and window of the week (10th to 90th percentile).
+	RecentLow    int                    `json:"recentLow"`
+	RecentHigh   int                    `json:"recentHigh"`
+	Positionings []*DispatchPositioning `json:"positionings"`
+	// The area's active locations (up to 100), to read the loads delivering into it.
+	DeliveryLocationIds []string `json:"deliveryLocationIds"`
+}
+
+// One ranked suggestion of the freight outlook. Money is in cents.
+type DispatchFreightMove struct {
+	Kind       DispatchFreightMoveKind `json:"kind"`
+	WorkerID   *string                 `json:"workerId,omitempty"`
+	WorkerName string                  `json:"workerName"`
+	FromCell   int                     `json:"fromCell"`
+	FromLabel  string                  `json:"fromLabel"`
+	ToCell     int                     `json:"toCell"`
+	ToLabel    string                  `json:"toLabel"`
+	// The window the move is for.
+	SlotStart int `json:"slotStart"`
+	// Loads with no truck nearby in that window.
+	Short          float64 `json:"short"`
+	FreeAt         *int    `json:"freeAt,omitempty"`
+	ArriveAt       *int    `json:"arriveAt,omitempty"`
+	Miles          float64 `json:"miles"`
+	EmptyCostCents int     `json:"emptyCostCents"`
+	// What the driver is worth at the target.
+	DropCents int `json:"dropCents"`
+	// What the driver is worth where they are.
+	StayCents int `json:"stayCents"`
+	NetCents  int `json:"netCents"`
+	// Book only: the empty-mile cost a load saves against running empty.
+	SavedCents int `json:"savedCents"`
+	// Book: the load to give; Keep: the load to hand to partner.
+	MoveID    *string `json:"moveId,omitempty"`
+	ProNumber string  `json:"proNumber"`
+	// Book only: every open load that would do, nearest first.
+	LaneMoveIds []string `json:"laneMoveIds"`
+	PartnerID   *string  `json:"partnerId,omitempty"`
+	PartnerName string   `json:"partnerName"`
+	// Keep only: the forecast area the partner frees up in.
+	PartnerCell   int     `json:"partnerCell"`
+	PartnerLabel  string  `json:"partnerLabel"`
+	PartnerFreeAt *int    `json:"partnerFreeAt,omitempty"`
+	PartnerMiles  float64 `json:"partnerMiles"`
+	CustomerID    *string `json:"customerId,omitempty"`
+	CustomerName  string  `json:"customerName"`
+	// Call only: loads the customer usually sends in the next 24 hours, usually in by now, and in so far.
+	Usual    float64 `json:"usual"`
+	ByNow    float64 `json:"byNow"`
+	Tendered int     `json:"tendered"`
+	// Call only: loads still expected from the customer.
+	Loads float64 `json:"loads"`
+}
+
+// The whole network's four-hour window: loads likely against every driver, as if drivers could be
+// anywhere. The gap between short here and uncovered (summed over areas) is placement.
+type DispatchFreightNetworkSlot struct {
+	Start int `json:"start"`
+	// Every load likely in the window, booked or not, the 10th to 90th percentile.
+	LikelyLow  int `json:"likelyLow"`
+	LikelyHigh int `json:"likelyHigh"`
+	// Loads likely that still need a driver: open booked loads plus those still to be booked.
+	Need float64 `json:"need"`
+	// The 10th to 90th percentile of need, the range drivers are measured against.
+	NeedLow  int `json:"needLow"`
+	NeedHigh int `json:"needHigh"`
+	// Drivers free by the end of the window and not yet used by earlier windows.
+	Drivers float64 `json:"drivers"`
+	Short   float64 `json:"short"`
+	// Loads with no truck nearby, summed over areas.
+	Uncovered float64 `json:"uncovered"`
+	// Drivers with nothing nearby, summed over areas.
+	Idle float64 `json:"idle"`
+}
+
 type DispatchFreightOutlook struct {
 	Quality     *DispatchForecastQuality `json:"quality"`
 	GeneratedAt int                      `json:"generatedAt"`
-	// The windows ahead, most short of drivers first.
-	Windows []*DispatchFreightWindow `json:"windows"`
+	// The twelve four-hour windows the outlook covers, from the one under way.
+	SlotStarts []int                         `json:"slotStarts"`
+	Network    []*DispatchFreightNetworkSlot `json:"network"`
+	// The areas most short or most spare, at most 40.
+	Areas []*DispatchFreightArea `json:"areas"`
+	// Every forecast area, before the cut to 40.
+	AreaCount    int                    `json:"areaCount"`
+	Moves        []*DispatchFreightMove `json:"moves"`
+	Pace         []*DispatchFreightPace `json:"pace"`
+	Record       []*DispatchForecastDay `json:"record"`
+	Positionings []*DispatchPositioning `json:"positionings"`
 }
 
-// Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
-// there.
-type DispatchFreightWindow struct {
-	AreaLabel   string `json:"areaLabel"`
-	WindowStart int    `json:"windowStart"`
-	WindowEnd   int    `json:"windowEnd"`
-	// The usual range of loads in the window (10th to 90th percentile).
-	TypicalLow  int `json:"typicalLow"`
-	TypicalHigh int `json:"typicalHigh"`
-	// The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked.
+// One customer's freight in one area against its own booking curve.
+type DispatchFreightPace struct {
+	CustomerID   string                     `json:"customerId"`
+	CustomerName string                     `json:"customerName"`
+	Cell         int                        `json:"cell"`
+	Label        string                     `json:"label"`
+	Slots        []*DispatchFreightPaceSlot `json:"slots"`
+}
+
+type DispatchFreightPaceSlot struct {
+	Start    int     `json:"start"`
+	Usual    float64 `json:"usual"`
+	ByNow    float64 `json:"byNow"`
+	Tendered int     `json:"tendered"`
+}
+
+// A driver measured against one area's window: whether they can get there in time and what it would net.
+type DispatchFreightReach struct {
+	WorkerID   string                   `json:"workerId"`
+	WorkerName string                   `json:"workerName"`
+	Label      string                   `json:"label"`
+	Latitude   float64                  `json:"latitude"`
+	Longitude  float64                  `json:"longitude"`
+	FreeAt     int                      `json:"freeAt"`
+	ArriveAt   int                      `json:"arriveAt"`
+	Miles      float64                  `json:"miles"`
+	NetCents   int                      `json:"netCents"`
+	Reach      DispatchFreightReachKind `json:"reach"`
+}
+
+// One area's four-hour window in the freight outlook: the loads likely to start there against the
+// drivers expected, served in order, so a driver used in one window is not counted again.
+type DispatchFreightSlot struct {
+	Start int `json:"start"`
+	// Loads likely to start in the window, booked included (10th to 90th percentile).
 	LikelyLow  int `json:"likelyLow"`
 	LikelyHigh int `json:"likelyHigh"`
-	// Loads already booked for the window.
-	Booked int `json:"booked"`
-	// Loads still expected to be booked for the window.
-	ExpectedUnbooked float64 `json:"expectedUnbooked"`
-	// Drivers expected to be free in the area by the end of the window.
-	DriversExpected int `json:"driversExpected"`
-	// Expected loads beyond the drivers expected; zero when the area is covered.
-	Shortfall float64 `json:"shortfall"`
-	// What one more driver ending there is worth to the plan, in cents.
-	ValueCents int                         `json:"valueCents"`
-	Customers  []*DispatchForecastCustomer `json:"customers"`
-	// The same window in a sentence.
-	Explanation string `json:"explanation"`
+	Booked     int `json:"booked"`
+	// Loads expected to need a driver: booked but not yet covered, plus still to be booked.
+	Need float64 `json:"need"`
+	// Drivers free in the area by the end of the window.
+	Drivers int `json:"drivers"`
+	// Loads likely to have no truck nearby.
+	Short float64 `json:"short"`
+	// Drivers likely to have nothing nearby once the window's loads are served.
+	Spare float64 `json:"spare"`
 }
 
 type DispatchMoveCandidatesInput struct {
@@ -4982,6 +5126,29 @@ type DispatchPlannedAssignment struct {
 	// on their clock afterwards. These are projections from the plan, not commitments.
 	ProjectedStartAt    int `json:"projectedStartAt"`
 	ProjectedCompleteAt int `json:"projectedCompleteAt"`
+}
+
+type DispatchPositionDriverInput struct {
+	WorkerID  string `json:"workerId"`
+	ToCell    int    `json:"toCell"`
+	SlotStart int    `json:"slotStart"`
+}
+
+// An empty driver sent toward an area from the freight outlook.
+type DispatchPositioning struct {
+	ID         string                    `json:"id"`
+	WorkerID   string                    `json:"workerId"`
+	WorkerName string                    `json:"workerName"`
+	FromLabel  string                    `json:"fromLabel"`
+	ToCell     int                       `json:"toCell"`
+	ToLabel    string                    `json:"toLabel"`
+	SlotStart  int                       `json:"slotStart"`
+	FreeAt     int                       `json:"freeAt"`
+	ArriveAt   int                       `json:"arriveAt"`
+	Miles      float64                   `json:"miles"`
+	ValueCents int                       `json:"valueCents"`
+	Status     DispatchPositioningStatus `json:"status"`
+	CreatedAt  int                       `json:"createdAt"`
 }
 
 type DispatchTimeOff struct {
@@ -14623,6 +14790,187 @@ func (e *DispatchForecastStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e DispatchForecastStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DispatchFreightMoveKind string
+
+const (
+	// Send an empty driver toward a short area.
+	DispatchFreightMoveKindSend DispatchFreightMoveKind = "Send"
+	// Give a driver a load that ends in a short area instead of running empty.
+	DispatchFreightMoveKindBook DispatchFreightMoveKind = "Book"
+	// Keep a driver whose next load would carry them out of an area that is about to run short; partner takes the load.
+	DispatchFreightMoveKindKeep DispatchFreightMoveKind = "Keep"
+	// Ask a customer behind its usual booking pace for its freight.
+	DispatchFreightMoveKindCall DispatchFreightMoveKind = "Call"
+)
+
+var AllDispatchFreightMoveKind = []DispatchFreightMoveKind{
+	DispatchFreightMoveKindSend,
+	DispatchFreightMoveKindBook,
+	DispatchFreightMoveKindKeep,
+	DispatchFreightMoveKindCall,
+}
+
+func (e DispatchFreightMoveKind) IsValid() bool {
+	switch e {
+	case DispatchFreightMoveKindSend, DispatchFreightMoveKindBook, DispatchFreightMoveKindKeep, DispatchFreightMoveKindCall:
+		return true
+	}
+	return false
+}
+
+func (e DispatchFreightMoveKind) String() string {
+	return string(e)
+}
+
+func (e *DispatchFreightMoveKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchFreightMoveKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchFreightMoveKind", str)
+	}
+	return nil
+}
+
+func (e DispatchFreightMoveKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchFreightMoveKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchFreightMoveKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DispatchFreightReachKind string
+
+const (
+	DispatchFreightReachKindHere     DispatchFreightReachKind = "Here"
+	DispatchFreightReachKindOnTime   DispatchFreightReachKind = "OnTime"
+	DispatchFreightReachKindNotWorth DispatchFreightReachKind = "NotWorth"
+	DispatchFreightReachKindTooLate  DispatchFreightReachKind = "TooLate"
+	DispatchFreightReachKindTooFar   DispatchFreightReachKind = "TooFar"
+)
+
+var AllDispatchFreightReachKind = []DispatchFreightReachKind{
+	DispatchFreightReachKindHere,
+	DispatchFreightReachKindOnTime,
+	DispatchFreightReachKindNotWorth,
+	DispatchFreightReachKindTooLate,
+	DispatchFreightReachKindTooFar,
+}
+
+func (e DispatchFreightReachKind) IsValid() bool {
+	switch e {
+	case DispatchFreightReachKindHere, DispatchFreightReachKindOnTime, DispatchFreightReachKindNotWorth, DispatchFreightReachKindTooLate, DispatchFreightReachKindTooFar:
+		return true
+	}
+	return false
+}
+
+func (e DispatchFreightReachKind) String() string {
+	return string(e)
+}
+
+func (e *DispatchFreightReachKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchFreightReachKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchFreightReachKind", str)
+	}
+	return nil
+}
+
+func (e DispatchFreightReachKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchFreightReachKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchFreightReachKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DispatchPositioningStatus string
+
+const (
+	DispatchPositioningStatusActive   DispatchPositioningStatus = "Active"
+	DispatchPositioningStatusCanceled DispatchPositioningStatus = "Canceled"
+	DispatchPositioningStatusReplaced DispatchPositioningStatus = "Replaced"
+)
+
+var AllDispatchPositioningStatus = []DispatchPositioningStatus{
+	DispatchPositioningStatusActive,
+	DispatchPositioningStatusCanceled,
+	DispatchPositioningStatusReplaced,
+}
+
+func (e DispatchPositioningStatus) IsValid() bool {
+	switch e {
+	case DispatchPositioningStatusActive, DispatchPositioningStatusCanceled, DispatchPositioningStatusReplaced:
+		return true
+	}
+	return false
+}
+
+func (e DispatchPositioningStatus) String() string {
+	return string(e)
+}
+
+func (e *DispatchPositioningStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchPositioningStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchPositioningStatus", str)
+	}
+	return nil
+}
+
+func (e DispatchPositioningStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchPositioningStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchPositioningStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

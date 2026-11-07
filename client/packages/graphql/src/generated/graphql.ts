@@ -4038,6 +4038,23 @@ export type DispatchForecastStatus =
   | 'NoSkill'
   | 'Ready';
 
+export type DispatchFreightMoveKind =
+  /** Give a driver a load that ends in a short area instead of running empty. */
+  | 'Book'
+  /** Ask a customer behind its usual booking pace for its freight. */
+  | 'Call'
+  /** Keep a driver whose next load would carry them out of an area that is about to run short; partner takes the load. */
+  | 'Keep'
+  /** Send an empty driver toward a short area. */
+  | 'Send';
+
+export type DispatchFreightReachKind =
+  | 'Here'
+  | 'NotWorth'
+  | 'OnTime'
+  | 'TooFar'
+  | 'TooLate';
+
 export type DispatchMoveCandidatesInput = {
   fleetCodeIds?: Array<string | number> | null | undefined;
   includeBlocked?: boolean | null | undefined;
@@ -4051,6 +4068,17 @@ export type DispatchPlanInput = {
   windowEnd?: number | null | undefined;
   windowStart?: number | null | undefined;
 };
+
+export type DispatchPositionDriverInput = {
+  slotStart: number;
+  toCell: number;
+  workerId: string | number;
+};
+
+export type DispatchPositioningStatus =
+  | 'Active'
+  | 'Canceled'
+  | 'Replaced';
 
 /** A soft cost whose weight the planner learns from the organization's dispatchers. */
 export type DispatchStyleComponent =
@@ -13240,18 +13268,45 @@ export type DeleteDetentionPolicyMutation = { deleteDetentionPolicy: boolean };
 
 export type DispatchForecastQualityFieldsFragment = { status: DispatchForecastStatus, historyWeeks: number, historyLoads: number, weeksTested: number, loadsTested: number, intervalCoverage: number, meanAbsoluteError: number, naiveMeanAbsoluteError: number, skill: number, fittedAt: number | null } & { ' $fragmentName'?: 'DispatchForecastQualityFieldsFragment' };
 
-export type DispatchFreightOutlookQueryVariables = Exact<{
-  hours?: number | null | undefined;
-  limit?: number | null | undefined;
+export type DispatchFreightAreaFieldsFragment = { cell: number, label: string, latitude: number, longitude: number, valueCents: number, slots: Array<{ start: number, likelyLow: number, likelyHigh: number, booked: number, need: number, drivers: number, short: number, spare: number }>, customers: Array<{ customerId: string, name: string, share: number }> } & { ' $fragmentName'?: 'DispatchFreightAreaFieldsFragment' };
+
+export type DispatchFreightMoveFieldsFragment = { kind: DispatchFreightMoveKind, workerId: string | null, workerName: string, fromCell: number, fromLabel: string, toCell: number, toLabel: string, slotStart: number, short: number, freeAt: number | null, arriveAt: number | null, miles: number, emptyCostCents: number, dropCents: number, stayCents: number, netCents: number, savedCents: number, moveId: string | null, proNumber: string, laneMoveIds: Array<string>, partnerId: string | null, partnerName: string, partnerCell: number, partnerLabel: string, partnerFreeAt: number | null, partnerMiles: number, customerId: string | null, customerName: string, usual: number, byNow: number, tendered: number, loads: number } & { ' $fragmentName'?: 'DispatchFreightMoveFieldsFragment' };
+
+export type DispatchFreightPaceFieldsFragment = { customerId: string, customerName: string, cell: number, label: string, slots: Array<{ start: number, usual: number, byNow: number, tendered: number }> } & { ' $fragmentName'?: 'DispatchFreightPaceFieldsFragment' };
+
+export type DispatchPositioningFieldsFragment = { id: string, workerId: string, workerName: string, fromLabel: string, toCell: number, toLabel: string, slotStart: number, freeAt: number, arriveAt: number, miles: number, valueCents: number, status: DispatchPositioningStatus, createdAt: number } & { ' $fragmentName'?: 'DispatchPositioningFieldsFragment' };
+
+export type DispatchFreightOutlookQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, slotStarts: Array<number>, areaCount: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, network: Array<{ start: number, likelyLow: number, likelyHigh: number, needLow: number, needHigh: number, need: number, drivers: number, short: number, uncovered: number, idle: number }>, areas: Array<{ ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, record: Array<{ dayStart: number, low: number, high: number, mean: number, actual: number }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
+
+export type DispatchFreightAreaQueryVariables = Exact<{
+  cell: number;
+  slotStart?: number | null | undefined;
 }>;
 
 
-export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, windows: Array<{ areaLabel: string, windowStart: number, windowEnd: number, typicalLow: number, typicalHigh: number, likelyLow: number, likelyHigh: number, booked: number, expectedUnbooked: number, driversExpected: number, shortfall: number, valueCents: number, explanation: string, customers: Array<{ customerId: string, name: string, expectedLoads: number }> }> } };
+export type DispatchFreightAreaQuery = { dispatchFreightArea: { generatedAt: number, slotStart: number, recent: Array<number>, recentLow: number, recentHigh: number, deliveryLocationIds: Array<string>, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, area: { ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }, reach: Array<{ workerId: string, workerName: string, label: string, latitude: number, longitude: number, freeAt: number, arriveAt: number, miles: number, netCents: number, reach: DispatchFreightReachKind }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
 
 export type DispatchForecastQualityQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type DispatchForecastQualityQuery = { dispatchForecastQuality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } } };
+
+export type DispatchPositionDriverMutationVariables = Exact<{
+  input: DispatchPositionDriverInput;
+}>;
+
+
+export type DispatchPositionDriverMutation = { dispatchPositionDriver: { ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } } };
+
+export type DispatchCallOffPositioningMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DispatchCallOffPositioningMutation = { dispatchCallOffPositioning: { ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } } };
 
 export type DispatchBoardMoveFieldsFragment = { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null, liveTender: { id: string, status: TenderStatus, mode: TenderMode, currentRank: number, offerCount: number, currentCarrierName: string, currentOfferExpiresAt: number | null } | null, pendingProposal: { id: string, workerId: string, workerName: string, tractorId: string, trailerId: string | null, confidence: number, rationale: string, createdAt: number, expiresAt: number | null, stale: boolean } | null, failedProposal: { id: string, workerId: string, workerName: string, reason: string, failedAt: number } | null, planPrice: { workerId: string | null, workerName: string, costCents: number, preferenceFloorCents: number, coveragePriceCents: number, driverValueCents: number, uncoveredReason: DispatchUncoveredReason | null, generatedAt: number, alternatives: Array<{ workerId: string, workerName: string, extraCents: number }> } | null } & { ' $fragmentName'?: 'DispatchBoardMoveFieldsFragment' };
 
@@ -20658,7 +20713,7 @@ export { DeskDetentionCardDocument } from "./documents/detention/card";
 export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDoc, DetentionNoticeFieldsFragmentDoc, DetentionCollectabilityFieldsFragmentDoc, DetentionDeskDocument, DetentionOccurrenceDetailDocument, ShipmentDetentionDocument, DetentionDisputePacketDocument, WaiveDetentionOccurrenceDocument, ApproveDetentionOccurrenceDocument, DisputeDetentionOccurrenceDocument, SendDetentionNoticeDocument } from "./documents/detention/desk";
 export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
-export { DispatchForecastQualityFieldsFragmentDoc, DispatchFreightOutlookDocument, DispatchForecastQualityDocument } from "./documents/dispatch-console/freight-forecast";
+export { DispatchForecastQualityFieldsFragmentDoc, DispatchFreightAreaFieldsFragmentDoc, DispatchFreightMoveFieldsFragmentDoc, DispatchFreightPaceFieldsFragmentDoc, DispatchPositioningFieldsFragmentDoc, DispatchFreightOutlookDocument, DispatchFreightAreaDocument, DispatchForecastQualityDocument, DispatchPositionDriverDocument, DispatchCallOffPositioningDocument } from "./documents/dispatch-console/freight-forecast";
 export { DispatchBoardMoveFieldsFragmentDoc, DispatchCandidateFieldsFragmentDoc, DispatchMoveDocument, DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
 export { DispatchStyleDocument, ResetDispatchStyleDocument } from "./documents/dispatch-control/dispatch-style";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";

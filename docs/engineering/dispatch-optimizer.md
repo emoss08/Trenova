@@ -266,6 +266,11 @@ week and compares:
 | `demand_forecast_areas` | per area: label (busiest origin city), median revenue, loads |
 | `demand_booking_curves` | booking shares per lead bucket; no `customer_id` is the tenant curve |
 | `demand_forecast_quality` | one row per organization: status and the backtest numbers |
+| `demand_forecast_days` | the track record: 14 days of out-of-sample network ranges against actual loads |
+| `driver_positionings` | drivers sent toward an area from the outlook (see below) |
+
+Area rates also carry `recent`: the last 8 weeks of loads in that area and slot, oldest
+first, which the outlook's area sheet draws against the slot's usual range.
 
 The Temporal schedule `demand-forecast-fit` (cron `15 3 * * *`, overlap skipped) fans out
 with a bounded concurrency over every tenant that has a dispatch controls row. Each tenant
@@ -273,16 +278,79 @@ aggregates its history in one statement, fits, backtests and replaces its rows i
 transaction. Turning `anticipateFreight` on starts `FitDemandForecastWorkflow` for that tenant
 (one workflow ID per tenant, an existing run reused); a failed start only logs a warning and
 the nightly run fits it. Nothing is fitted on a request path. `anticipateFreight` lives on
-dispatch controls and is off by default. The console's **Outlook** tab
-(`dispatchFreightOutlook`), the quality card (`dispatchForecastQuality`) and Nova's
-`dispatch_forecast_demand` read the same service (`demandforecastports.Service`).
+dispatch controls and is off by default. The freight outlook (`dispatchFreightOutlook`,
+`dispatchFreightArea`) and Nova's `dispatch_forecast_demand` read
+`freightoutlookports.Service`; the quality card reads `dispatchForecastQuality`.
 
 Where a driver starts, read in SQL, is one join in `adapters/postgres/driverstart`: the drop
 of their last open (assigned or in-transit) move, else a GPS position under 4 hours old, else
-the tractor's last drop. The Outlook's supply (`demandforecastrepository.ListDriverStarts`)
+the tractor's last drop, and before all of them a live positioning (below). The Outlook's supply (`demandforecastrepository.ListDriverStarts`)
 and the console's nearest-driver order use the join; the console's filters and summary take
 its open move statuses and freshness from it. A new reader joins it instead of writing its
 own precedence.
+
+### The freight outlook
+
+`/dispatch/outlook` reads one service,
+`freightoutlookservice`, over the same forecaster:
+
+- **Balance per area and four-hour slot** (`Forecaster.Balance`): the next 12 slots. Demand in
+  a slot is open booked loads (less those a plan is covering) plus the nowcast still to be
+  booked. Drivers are a stock: a pool gains the drivers freeing up in the slot, serves the
+  slot's demand, and what it cannot serve is `short`; what is left is `spare`. A driver serves
+  one load; a load with no truck is not carried into the next slot. Counting drivers free by
+  each slot against each slot's loads (stock against flow) would count one driver against
+  every window.
+- **The network** (`Forecaster.Network`): the same pool over every driver against all demand,
+  as if drivers could be anywhere. The gap between its `short` and the areas' summed `short`
+  (`uncovered`) is placement, which is usually most of it.
+- **Moves** (`domain/freightmove.Plan`), on one dollar scale, greedy by net with each driver
+  used once and each short slot taking `round(short)` drivers:
+  - **Send**: an idle driver (in an area with spare at their free time, or in no forecast
+    area) to a short slot they reach before it ends: drop value − stay value − empty miles
+    at `EmptyMileCents`.
+  - **Book**: a Send for which an open load picks up within 60 miles of the driver and
+    delivers within 60 miles of the target before the slot ends replaces it; the empty
+    miles are to the pickup only.
+  - **Keep**: an assigned, not started load whose driver would leave an area that turns
+    short (by a load or more) at or after its pickup, handed to an idle driver who reaches
+    the pickup in time: the area's value − the partner's stay value − their empty miles.
+    The optimizer only ever pulls drivers in; Keep is the outlook's own.
+  - **Call**: a customer behind its own booking curve (tendered at least a load under what
+    it usually has in by now, over the next 24 hours), ranked by a quarter of what its
+    missing loads are worth (`CallRecoveryShare`): most late freight still comes.
+- **Reach** (`freightmove.Reach`): every driver within 900 miles of an area, whether they
+  arrive before its window ends and what it would net, including the ones who don't.
+- **Track record**: `TrackRecord` runs at every fit: each of the last 14 days, forecast for
+  the whole network from the weeks before that day's week only, against the loads that came.
+
+The outlook is bounded: 40 areas (those a move names, then the biggest gap, then volume), 12
+slots, 12 moves, 20 customer paces, 14 days; the planner prices only the 120 biggest short windows
+(`MaxTargets`); the board reads are horizon bounded (2,000 open
+loads, 2,000 departures).
+
+### Positioning
+
+A **Send** acted on records a `driver_positionings` row (Active, one per driver, a new one
+replaces the old) and tells the driver in Dash (`notification.dash.positioning`, a starter
+template carriers can reword). While it is live, the driver starts at the target from
+`arrive_at` in the forecast's supply (`driverstart.Join`) and in the planner
+(`resolveOrigin`, `OriginPositioned`), so the outlook stops suggesting the same move and plans
+expect the driver there. It stops being live when it is called off, 12 hours after its slot
+ends, or when the driver is given an assignment created after it
+(`driverstart.LivePositioning`, the one predicate every reader uses): the next load you assign
+always wins. Sending needs `driver_positioning:create`, calling off
+`driver_positioning:cancel`; both are audited, and the audit trail's `audited:driver_positioning`
+refreshes every open outlook. Once the forecast counts a sent driver at the target, the move
+that suggested them is gone, so the brief lists live positionings it no longer suggests as
+**Sent** rows with their own call-off; drop that and a dispatcher loses sight of who they sent.
+
+The page is a console-shaped workspace (`routes/freight-outlook/`): figures, then the board
+(`outlook-board.tsx`, the network tide drawn on the same pixel columns as every area's twelve
+windows) beside an inspector holding the brief (`outlook-brief-panel.tsx`) or an area
+(`area-inspector.tsx`). A move pointed at in the brief is drawn on the board from
+`moveTrail`: Send and Book start at `fromCell` and the window of `freeAt`, Keep at
+`partnerCell` and `partnerFreeAt`, Call nowhere.
 
 ### Evidence
 
@@ -331,6 +399,12 @@ counting bug (booked loads added to a mean instead of as a known count) had made
   mode the second pass recounts supply from where the first solve leaves every driver and
   reprices both windows of every forecast arc; skipping it credits two drivers for one likely
   load.
+- **Drivers are a stock, loads a flow.** An outlook balance serves each slot's loads from a
+  pool of drivers and keeps what is left; it never sets drivers free by a slot against that
+  slot's loads alone.
+- **One live-positioning predicate.** Supply SQL, the planner's snapshot and the outlook all
+  read positionings through `driverstart.LivePositioning`; a reader with its own rule will
+  count a driver at a place their newer load has taken them away from.
 - **Judge anticipation by contribution.** It covers more loads at a little more empty driving
   each; empty miles per load alone reads a win as a loss.
 - **Change the solver only with its exactness tests.** `sparse_test.go` compares the optimum,

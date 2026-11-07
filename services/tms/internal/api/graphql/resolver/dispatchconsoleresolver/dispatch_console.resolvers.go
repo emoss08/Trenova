@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -21,7 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -447,7 +449,7 @@ func (r *QueryResolver) DispatchMove(ctx context.Context, moveID string) (*gqlmo
 	return mapped, nil
 }
 
-func (r *QueryResolver) DispatchFreightOutlook(ctx context.Context, hours *int, limit *int) (*gqlmodel.DispatchFreightOutlook, error) {
+func (r *QueryResolver) DispatchFreightOutlook(ctx context.Context) (*gqlmodel.DispatchFreightOutlook, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
 		permission.ResourceShipmentMove,
@@ -457,10 +459,8 @@ func (r *QueryResolver) DispatchFreightOutlook(ctx context.Context, hours *int, 
 		return nil, err
 	}
 
-	outlook, err := r.DemandForecastService.Outlook(ctx, &demandforecastports.OutlookRequest{
+	outlook, err := r.FreightOutlookService.Outlook(ctx, &freightoutlookports.Request{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
-		Hours:      gqlscalar.IntValue(hours),
-		Limit:      gqlscalar.IntValue(limit),
 	})
 	if err != nil {
 		return nil, err
@@ -485,4 +485,80 @@ func (r *QueryResolver) DispatchForecastQuality(ctx context.Context) (*gqlmodel.
 	}
 
 	return mapDispatchForecastQuality(quality), nil
+}
+
+func (r *MutationResolver) DispatchPositionDriver(ctx context.Context, input gqlmodel.DispatchPositionDriverInput) (*gqlmodel.DispatchPositioning, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceDriverPositioning,
+		permission.OpCreate,
+	)
+	if err != nil {
+		return nil, err
+	}
+	workerID, err := gqlid.ParseIDField("workerId", input.WorkerID)
+	if err != nil {
+		return nil, err
+	}
+
+	positioning, err := r.DriverPositioningService.Create(ctx, &driverpositioningports.CreateRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx),
+		WorkerID:   workerID,
+		ToCell:     int64(input.ToCell),
+		SlotStart:  int64(input.SlotStart),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchPositioning(positioning, ""), nil
+}
+
+func (r *MutationResolver) DispatchCallOffPositioning(ctx context.Context, id string) (*gqlmodel.DispatchPositioning, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceDriverPositioning,
+		permission.OpCancel,
+	)
+	if err != nil {
+		return nil, err
+	}
+	positioningID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	positioning, err := r.DriverPositioningService.CallOff(ctx, &driverpositioningports.CallOffRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx),
+		ID:         positioningID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchPositioning(positioning, ""), nil
+}
+
+func (r *QueryResolver) DispatchFreightArea(ctx context.Context, cell int, slotStart *int) (*gqlmodel.DispatchFreightAreaDetail, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	detail, err := r.FreightOutlookService.Area(ctx, &freightoutlookports.AreaRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Cell:       int64(cell),
+		SlotStart:  int64(gqlscalar.IntValue(slotStart)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchFreightAreaDetail(detail), nil
 }

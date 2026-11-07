@@ -4,7 +4,6 @@ import {
   getDispatchCarrierAssignmentPreviewGraphQL,
   getDispatchDriverMovesGraphQL,
   getDispatchForecastQualityGraphQL,
-  getDispatchFreightOutlookGraphQL,
   getDispatchMoveCandidatesGraphQL,
   getDispatchMoveGraphQL,
 } from "@/lib/graphql/dispatch-console";
@@ -14,7 +13,6 @@ import type {
   DispatchBoardInput,
   DispatchCarrierAssignmentPreviewInput,
   DispatchDriverMovesInput,
-  DispatchFreightOutlookQueryVariables,
   DispatchMoveCandidatesInput,
 } from "@trenova/graphql/generated/graphql";
 
@@ -29,9 +27,6 @@ import type {
 // RESOURCE_QUERY_KEY_MAP fans those out to both keys below.
 const LIVE_TENDER_REFETCH_MS = 15_000;
 const SHIPMENT_TENDERS_REFETCH_MS = 30_000;
-// The forecast is fitted nightly; what moves within the day is what is booked and which
-// drivers will be free, so the outlook polls slowly rather than with the board.
-const FREIGHT_OUTLOOK_REFETCH_MS = 300_000;
 
 export const DISPATCH_BOARD_KEY = "dispatch-board";
 export const DISPATCH_MOVE_CANDIDATES_KEY = "dispatch-move-candidates";
@@ -40,7 +35,6 @@ export const DISPATCH_ASSIGNMENT_PREVIEW_KEY = "dispatch-assignment-preview";
 export const DISPATCH_CARRIER_PREVIEW_KEY = "dispatch-carrier-assignment-preview";
 export const DISPATCH_LIVE_TENDER_KEY = "dispatch-live-tender";
 export const DISPATCH_SHIPMENT_TENDERS_KEY = "dispatch-shipment-tenders";
-export const DISPATCH_FREIGHT_OUTLOOK_KEY = "dispatch-freight-outlook";
 export const DISPATCH_FORECAST_QUALITY_KEY = "dispatch-forecast-quality";
 
 export const dispatchConsoleQueries = {
@@ -85,12 +79,6 @@ export const dispatchConsoleQueries = {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       getTendersByShipmentGraphQL(shipmentId, { signal }),
     refetchInterval: SHIPMENT_TENDERS_REFETCH_MS,
-  }),
-  freightOutlook: (variables: DispatchFreightOutlookQueryVariables) => ({
-    queryKey: [DISPATCH_FREIGHT_OUTLOOK_KEY, variables] as const,
-    queryFn: ({ signal }: { signal?: AbortSignal }) =>
-      getDispatchFreightOutlookGraphQL(variables, { signal }),
-    refetchInterval: FREIGHT_OUTLOOK_REFETCH_MS,
   }),
   forecastQuality: () => ({
     queryKey: [DISPATCH_FORECAST_QUALITY_KEY] as const,

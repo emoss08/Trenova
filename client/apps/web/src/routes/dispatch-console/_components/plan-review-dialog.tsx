@@ -1,3 +1,4 @@
+import { formatCentsWhole } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   DispatchFinding,
@@ -19,7 +20,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { AlertTriangleIcon, SearchXIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { verdictMeta } from "./dispatch-vocabulary";
-import { formatCents, UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
+import { UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
 import { FindingList } from "./finding-list";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 
@@ -40,7 +41,7 @@ function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssig
           </span>
           <span className="truncate text-xs">{assignment.workerName}</span>
           <span className="ml-auto shrink-0 font-mono text-xs tabular-nums">
-            {formatCents(assignment.planCostCents)}
+            {formatCentsWhole(assignment.planCostCents)}
           </span>
           <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
             {t(verdict.label)}
@@ -50,14 +51,14 @@ function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssig
           {next
             ? t(
                 "Worth {0} to cover · {1} instead adds {2} · {3}% confidence",
-                formatCents(assignment.coveragePriceCents),
+                formatCentsWhole(assignment.coveragePriceCents),
                 next.workerName,
-                formatCents(next.extraCents),
+                formatCentsWhole(next.extraCents),
                 Math.round(assignment.confidence * 100),
               )
             : t(
                 "Worth {0} to cover · {1}% confidence",
-                formatCents(assignment.coveragePriceCents),
+                formatCentsWhole(assignment.coveragePriceCents),
                 Math.round(assignment.confidence * 100),
               )}
         </span>

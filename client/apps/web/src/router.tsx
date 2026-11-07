@@ -1499,6 +1499,19 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/dispatch/outlook",
+            loader: combineLoaders(
+              protectedLoader,
+              createCapabilityLoader(OrganizationCapability.AssetOperations),
+              createPermissionLoader(Resource.ShipmentMove),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/freight-outlook/page"))),
+            ),
+            async lazy() {
+              const { FreightOutlookPage } = await import("@/routes/freight-outlook/page");
+              return { Component: FreightOutlookPage };
+            },
+          },
+          {
             path: "/hr/workers",
             loader: combineLoaders(
               protectedLoader,

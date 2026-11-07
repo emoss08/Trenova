@@ -794,3 +794,11 @@ gains a required relation or a derived row the application always writes (as eve
 there too; write an optional relation only in the states where the application would have written
 it (a billing queue item only once a shipment is ready to invoice, a draft invoice only once the
 item is approved, an email only for a customer with an email profile).
+
+A volume data set is generated around the moment it ran, so it goes stale: loads in transit
+then still read as assigned days later, their drivers count as free, and the dispatch screens
+(the freight outlook above all) see an idle fleet. `task db-roll-forward` (`trenova-devdb
+roll-forward`, package `internal/seeds/volume/rollforward`) slides every open shipment, its stops
+and its assignments forward by the time since the newest shipment was entered, the data set's own
+"now". Creation times move with them, so running it again measures from the new present and never
+shifts twice; finished freight and history stay where they are.

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geo"
 	"github.com/paulmach/orb/maptile"
 )
 
@@ -62,6 +63,44 @@ func CellOf(p Point) (int64, bool) {
 
 	//nolint:gosec // G115: a zoom-8 quadkey is below 4^8, far inside int64.
 	return int64(maptile.At(orb.Point{p.Longitude, p.Latitude}, CellZoom).Quadkey()), true
+}
+
+func CenterOf(cell int64) Point {
+	//nolint:gosec // G115: a cell is a zoom-8 quadkey, never negative.
+	center := maptile.FromQuadkey(uint64(cell), CellZoom).Center()
+
+	return Point{Latitude: center.Lat(), Longitude: center.Lon()}
+}
+
+type Bounds struct {
+	South float64
+	West  float64
+	North float64
+	East  float64
+}
+
+func BoundsOf(cell int64) Bounds {
+	//nolint:gosec // G115: a cell is a zoom-8 quadkey, never negative.
+	bound := maptile.FromQuadkey(uint64(cell), CellZoom).Bound()
+
+	return Bounds{
+		South: bound.Min.Lat(),
+		West:  bound.Min.Lon(),
+		North: bound.Max.Lat(),
+		East:  bound.Max.Lon(),
+	}
+}
+
+func (b Bounds) Contains(p Point) bool {
+	return p.Latitude >= b.South && p.Latitude < b.North &&
+		p.Longitude >= b.West && p.Longitude < b.East
+}
+
+func CoverMeters(cell int64) float64 {
+	center, bounds := CenterOf(cell), BoundsOf(cell)
+	corner := orb.Point{bounds.East, bounds.North}
+
+	return geo.Distance(orb.Point{center.Longitude, center.Latitude}, corner)
 }
 
 func SlotOf(at int64) int16 {

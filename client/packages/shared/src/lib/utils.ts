@@ -199,6 +199,12 @@ export function formatCurrencyWhole(num: number, currency: string = "USD"): stri
   }).format(num);
 }
 
+/** Whole dollars from cents, with a true minus sign: "−$1,240". */
+export function formatCentsWhole(cents: number): string {
+  const dollars = formatCurrencyWhole(Math.round(Math.abs(cents) / 100));
+  return cents < 0 ? `−${dollars}` : dollars;
+}
+
 export function formatCompactCurrency(num: number, currency: string = "USD"): string {
   return numberFormatter({
     style: "currency",

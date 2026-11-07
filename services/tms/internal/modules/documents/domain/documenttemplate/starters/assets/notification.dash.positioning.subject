@@ -1,0 +1,1 @@
+{{ if .Canceled }}{{ t "Positioning called off" }}{{ else }}{{ t "Head to {0}" .AreaName }}{{ end }}

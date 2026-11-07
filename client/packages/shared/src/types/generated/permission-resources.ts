@@ -56,6 +56,7 @@ export const Resource = {
   WorkerPTO: "worker_pto",
   PTOPolicy: "pto_policy",
   WorkerDispatchHold: "worker_dispatch_hold",
+  DriverPositioning: "driver_positioning",
   WorkerCredential: "worker_credential",
   WorkerCredentialType: "worker_credential_type",
   WorkerEmploymentEvent: "worker_employment_event",

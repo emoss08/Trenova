@@ -20,9 +20,12 @@ function HoverCardContent({
   sideOffset = 4,
   align = "center",
   alignOffset = 4,
+  inverted = true,
   ...props
 }: PreviewCardPrimitive.Popup.Props &
-  Pick<PreviewCardPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
+  Pick<PreviewCardPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset"> & {
+    inverted?: boolean;
+  }) {
   return (
     <PreviewCardPrimitive.Portal data-slot="hover-card-portal">
       <PreviewCardPrimitive.Positioner
@@ -30,12 +33,14 @@ function HoverCardContent({
         alignOffset={alignOffset}
         side={side}
         sideOffset={sideOffset}
-        className="dark isolate z-50"
+        className={cn("isolate z-50", inverted && "dark")}
       >
         <PreviewCardPrimitive.Popup
           data-slot="hover-card-content"
           className={cn(
-            "z-50 w-64 origin-(--transform-origin) rounded-lg bg-popover p-2.5 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-hidden ease-settle animation-duration-150 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards data-closed:zoom-out-95",
+            "z-50 w-64 origin-(--transform-origin) rounded-lg bg-popover p-2.5 text-sm text-popover-foreground ring-1 outline-hidden",
+            inverted ? "ring-foreground/10" : "ui-lift-float ring-border",
+            "ease-settle animation-duration-150 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:fill-mode-forwards data-closed:zoom-out-95",
             className,
           )}
           {...props}

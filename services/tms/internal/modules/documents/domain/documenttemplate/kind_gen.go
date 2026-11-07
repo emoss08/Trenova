@@ -140,6 +140,9 @@ const (
 	KindNotificationDispatchMessage Kind = "notification.dash.dispatch_message"
 	// KindNotificationObligationsDigest bundles everything a driver owes into one notice.
 	KindNotificationObligationsDigest Kind = "notification.dash.obligations_digest"
+	// KindNotificationPositioning sends an empty driver toward an area where freight is
+	// expected, or tells them the office called it off.
+	KindNotificationPositioning Kind = "notification.dash.positioning"
 
 	// KindNotificationSettlementPosted announces an issued settlement statement.
 	KindNotificationSettlementPosted Kind = "notification.dash.settlement_posted"
@@ -227,6 +230,7 @@ func AllKinds() []Kind {
 		KindNotificationHOSAlert,
 		KindNotificationDispatchMessage,
 		KindNotificationObligationsDigest,
+		KindNotificationPositioning,
 		KindNotificationSettlementPosted,
 		KindNotificationSettlementPaid,
 		KindNotificationPayHeld,

@@ -93,6 +93,10 @@ func buildProfile(
 	}
 	profile.trailerID, profile.hasTrailer = currentTrailer(commitments)
 	profile.origin, profile.originSource = resolveOrigin(snapshot, driver, profile, commitments)
+	if positioning := snapshot.PositionedByWorker[driver.WorkerID]; positioning != nil &&
+		profile.originSource == dispatchplanports.OriginPositioned {
+		profile.availableAt = max(profile.availableAt, positioning.ArriveAt)
+	}
 	applyHomeProfile(snapshot, profile)
 	applyHOSProfile(snapshot, profile)
 	applyHistoryProfile(snapshot, profile)
@@ -106,6 +110,12 @@ func resolveOrigin(
 	profile *driverProfile,
 	commitments []*dispatchboardports.WorkerCommitment,
 ) (geoPoint, dispatchplanports.OriginSource) {
+	if positioning := snapshot.PositionedByWorker[driver.WorkerID]; positioning != nil {
+		return geoPoint{
+			lat: positioning.ToLatitude,
+			lon: positioning.ToLongitude,
+		}, dispatchplanports.OriginPositioned
+	}
 	if profile.availableAt > snapshot.Now {
 		if destination, ok := finalCommitmentDestination(commitments); ok {
 			return destination, dispatchplanports.OriginCommitment

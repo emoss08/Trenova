@@ -77,6 +77,7 @@ func (s *Service) Fit(
 		TenantInfo: tenantInfo,
 		Fitted:     fitted,
 		Quality:    quality,
+		Days:       demandforecast.TrackRecord(history),
 	}); err != nil {
 		return nil, err
 	}
@@ -179,10 +180,16 @@ func (s *Service) Forecaster(
 	ctx context.Context,
 	req *demandforecastports.ForecasterRequest,
 ) (*demandforecast.Forecaster, error) {
-	model, err := s.repo.ModelForCells(ctx, &demandforecastports.CellsRequest{
-		TenantInfo: req.TenantInfo,
-		Cells:      req.Cells,
-	})
+	var model *demandforecastports.Model
+	var err error
+	if req.AllCells {
+		model, err = s.repo.Model(ctx, req.TenantInfo)
+	} else {
+		model, err = s.repo.ModelForCells(ctx, &demandforecastports.CellsRequest{
+			TenantInfo: req.TenantInfo,
+			Cells:      req.Cells,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +202,7 @@ func (s *Service) Forecaster(
 		solving:    req.Solving,
 		margin:     req.MarginPercent,
 		capCents:   req.CapCents,
-		location:   time.UTC,
+		horizon:    req.Horizon,
 	})
 }
 
@@ -207,7 +214,6 @@ type forecasterInputs struct {
 	solving    []demandforecast.Booked
 	margin     int64
 	capCents   int64
-	location   *time.Location
 	horizon    int64
 }
 
@@ -291,7 +297,7 @@ func customersOf(rates []*demandforecast.Rate) []pulid.ID {
 	return out
 }
 
-func (s *Service) location(ctx context.Context, tenantInfo pagination.TenantInfo) *time.Location {
+func (s *Service) Location(ctx context.Context, tenantInfo pagination.TenantInfo) *time.Location {
 	org, err := s.organizations.GetByID(ctx, tenantports.GetOrganizationByIDRequest{
 		TenantInfo: tenantInfo,
 	})
@@ -313,7 +319,7 @@ func (s *Service) location(ctx context.Context, tenantInfo pagination.TenantInfo
 	return location
 }
 
-func (s *Service) economics(
+func (s *Service) Economics(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (margin, capCents int64, err error) {

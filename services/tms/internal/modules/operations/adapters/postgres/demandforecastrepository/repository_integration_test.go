@@ -9,11 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/demandforecastrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -165,5 +168,149 @@ func TestListBookedAndDriverStarts_ReadTheBoardAhead(t *testing.T) {
 	for _, start := range starts {
 		assert.False(t, start.WorkerID.IsNil())
 		assert.Positive(t, start.FreeAt)
+	}
+}
+
+func TestOpenLanesAndDepartures_ReadBothEndsOfTheBoardAhead(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	sm := shipmentdb.ShipmentMoves
+	move, err := sm.AllTenants().Order(sm.ID.Asc()).First(dbscope.WithSystem(ctx, "test"), db)
+	require.NoError(t, err)
+	tenant := pagination.TenantInfo{OrgID: move.OrganizationID, BuID: move.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+	repo := demandforecastrepository.New(demandforecastrepository.Params{
+		DB:     postgres.WrapDB(db),
+		Logger: zap.NewNop(),
+	})
+	window := &demandforecastports.WindowRequest{
+		TenantInfo: tenant,
+		From:       0,
+		Until:      time.Now().Unix() + 365*86_400,
+	}
+
+	lanes, err := repo.ListOpenLanes(ctx, window)
+	require.NoError(t, err)
+	assert.LessOrEqual(t, len(lanes), demandforecastports.MaxOpenLanes)
+	for _, lane := range lanes {
+		assert.False(t, lane.MoveID.IsNil())
+		assert.GreaterOrEqual(t, lane.PickupEnd, lane.PickupStart)
+		assert.NotZero(t, lane.OriginLatitude)
+		assert.NotZero(t, lane.DestinationLatitude)
+		assert.Positive(t, lane.DeliveryEnd)
+	}
+
+	departures, err := repo.ListDepartures(ctx, window)
+	require.NoError(t, err)
+	for _, departure := range departures {
+		assert.False(t, departure.WorkerID.IsNil(), "a planned departure belongs to a driver")
+		assert.GreaterOrEqual(t, departure.PickupEnd, departure.PickupStart)
+		assert.NotZero(t, departure.OriginLatitude)
+	}
+}
+
+func TestReplace_StoresTheTrackRecordAndDaysReadsItInOrder(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	sm := shipmentdb.ShipmentMoves
+	move, err := sm.AllTenants().Order(sm.ID.Asc()).First(dbscope.WithSystem(ctx, "test"), db)
+	require.NoError(t, err)
+	tenant := pagination.TenantInfo{OrgID: move.OrganizationID, BuID: move.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+	repo := demandforecastrepository.New(demandforecastrepository.Params{
+		DB:     postgres.WrapDB(db),
+		Logger: zap.NewNop(),
+	})
+	now := time.Now().Unix()
+	replace := func(days ...*demandforecast.Day) {
+		require.NoError(t, repo.Replace(ctx, &demandforecastports.ReplaceRequest{
+			TenantInfo: tenant,
+			Fitted:     &demandforecast.Fitted{},
+			Quality:    &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: now},
+			Days:       days,
+		}))
+	}
+
+	replace(
+		&demandforecast.Day{
+			DayStart: now - 86_400,
+			Low:      3,
+			High:     9,
+			Mean:     6,
+			Actual:   7,
+			FittedAt: now,
+		},
+		&demandforecast.Day{
+			DayStart: now - 2*86_400,
+			Low:      2,
+			High:     8,
+			Mean:     5,
+			Actual:   9,
+			FittedAt: now,
+		},
+	)
+	days, err := repo.Days(ctx, tenant)
+	require.NoError(t, err)
+	require.Len(t, days, 2)
+	assert.Equal(t, now-2*86_400, days[0].DayStart, "oldest first")
+	assert.EqualValues(t, 9, days[0].Actual)
+
+	replace(
+		&demandforecast.Day{
+			DayStart: now - 86_400,
+			Low:      1,
+			High:     4,
+			Mean:     2,
+			Actual:   3,
+			FittedAt: now,
+		},
+	)
+	days, err = repo.Days(ctx, tenant)
+	require.NoError(t, err)
+	require.Len(t, days, 1, "every fit replaces the track record whole")
+}
+
+func TestListAreaLocations_ReadsTheActiveLocationsInsideTheAreasTile(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	l := locationdb.Locations
+	seed, err := l.AllTenants().
+		Where(
+			l.Status.Eq(domaintypes.StatusActive),
+			l.Latitude.IsNotNull(),
+			l.Longitude.IsNotNull(),
+		).
+		Order(l.ID.Asc()).
+		First(dbscope.WithSystem(ctx, "test"), db)
+	require.NoError(t, err)
+	tenant := pagination.TenantInfo{OrgID: seed.OrganizationID, BuID: seed.BusinessUnitID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+	cell, ok := dispatchmarket.CellOf(
+		dispatchmarket.Point{Latitude: *seed.Latitude, Longitude: *seed.Longitude},
+	)
+	require.True(t, ok)
+	repo := demandforecastrepository.New(demandforecastrepository.Params{
+		DB:     postgres.WrapDB(db),
+		Logger: zap.NewNop(),
+	})
+
+	ids, err := repo.ListAreaLocations(ctx, &demandforecastports.AreaLocationsRequest{
+		TenantInfo: tenant,
+		Cell:       cell,
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, ids, seed.ID)
+	assert.LessOrEqual(t, len(ids), demandforecastports.MaxAreaLocations)
+	found, err := l.Where(l.ID.In(ids...)).Limit(len(ids)).List(ctx, db)
+	require.NoError(t, err)
+	bounds := dispatchmarket.BoundsOf(cell)
+	for _, location := range found {
+		assert.True(t, bounds.Contains(dispatchmarket.Point{
+			Latitude: *location.Latitude, Longitude: *location.Longitude,
+		}), "%s lies inside the area", location.ID)
 	}
 }

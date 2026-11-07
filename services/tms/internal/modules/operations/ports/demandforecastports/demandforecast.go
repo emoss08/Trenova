@@ -2,6 +2,7 @@ package demandforecastports
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -9,10 +10,9 @@ import (
 )
 
 const (
-	DefaultOutlookHours = 48
-	MaxOutlookHours     = 96
-	DefaultOutlookLimit = 20
-	MaxOutlookLimit     = 50
+	MaxOpenLanes     = 2_000
+	MaxDepartures    = 2_000
+	MaxAreaLocations = 100
 )
 
 type LocationCount struct {
@@ -49,6 +49,7 @@ type ReplaceRequest struct {
 	TenantInfo pagination.TenantInfo
 	Fitted     *demandforecast.Fitted
 	Quality    *demandforecast.Quality
+	Days       []*demandforecast.Day
 }
 
 type CellsRequest struct {
@@ -70,11 +71,12 @@ type BookedRequest struct {
 }
 
 type BookedSlot struct {
-	Latitude  float64
-	Longitude float64
-	SlotStart int64
-	Total     int64
-	Open      int64
+	CustomerID pulid.ID
+	Latitude   float64
+	Longitude  float64
+	SlotStart  int64
+	Total      int64
+	Open       int64
 }
 
 type Repository interface {
@@ -83,10 +85,19 @@ type Repository interface {
 	Quality(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
 	ModelForCells(ctx context.Context, req *CellsRequest) (*Model, error)
 	Model(ctx context.Context, tenantInfo pagination.TenantInfo) (*Model, error)
+	Days(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*demandforecast.Day, error)
 	ListBooked(ctx context.Context, req *BookedRequest) ([]BookedSlot, error)
 	ListDriverStarts(ctx context.Context, req *DriverStartsRequest) ([]DriverStart, error)
+	ListOpenLanes(ctx context.Context, req *WindowRequest) ([]OpenLane, error)
+	ListDepartures(ctx context.Context, req *WindowRequest) ([]Departure, error)
+	ListAreaLocations(ctx context.Context, req *AreaLocationsRequest) ([]pulid.ID, error)
 	CustomerNames(ctx context.Context, req *CustomerNamesRequest) (map[pulid.ID]string, error)
 	ListTenants(ctx context.Context, req *ListTenantsRequest) ([]pagination.TenantInfo, error)
+}
+
+type AreaLocationsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Cell       int64
 }
 
 type ListTenantsRequest struct {
@@ -102,18 +113,52 @@ type CustomerNamesRequest struct {
 type DriverStartsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Now        int64
+	WorkerIDs  []pulid.ID
 }
 
 type DriverStart struct {
-	WorkerID  pulid.ID
-	Latitude  float64
-	Longitude float64
-	FreeAt    int64
+	WorkerID      pulid.ID
+	Name          string
+	Latitude      float64
+	Longitude     float64
+	FreeAt        int64
+	PositioningID pulid.ID
+}
+
+type WindowRequest struct {
+	TenantInfo pagination.TenantInfo
+	From       int64
+	Until      int64
+}
+
+type OpenLane struct {
+	MoveID               pulid.ID
+	ProNumber            string
+	OriginLatitude       float64
+	OriginLongitude      float64
+	PickupStart          int64
+	PickupEnd            int64
+	DestinationLatitude  float64
+	DestinationLongitude float64
+	DeliveryEnd          int64
+}
+
+type Departure struct {
+	MoveID           pulid.ID
+	ProNumber        string
+	WorkerID         pulid.ID
+	OriginLatitude   float64
+	OriginLongitude  float64
+	PickupStart      int64
+	PickupEnd        int64
+	DestinationLabel string
 }
 
 type ForecasterRequest struct {
 	TenantInfo    pagination.TenantInfo
 	Now           int64
+	AllCells      bool
+	Horizon       int64
 	Cells         []int64
 	Supply        []demandforecast.Driver
 	Solving       []demandforecast.Booked
@@ -121,41 +166,15 @@ type ForecasterRequest struct {
 	CapCents      int64
 }
 
-type OutlookRequest struct {
-	TenantInfo pagination.TenantInfo
-	Hours      int
-	Limit      int
-}
-
-type OutlookWindow struct {
-	Cell             int64
-	AreaLabel        string
-	WindowStart      int64
-	WindowEnd        int64
-	TypicalLow       int
-	TypicalHigh      int
-	LikelyLow        int
-	LikelyHigh       int
-	Booked           int
-	ExpectedUnbooked float64
-	DriversExpected  int
-	Shortfall        float64
-	ValueCents       int64
-	Customers        []demandforecast.CustomerShare
-	Explanation      string
-}
-
-type Outlook struct {
-	Quality     *demandforecast.Quality
-	GeneratedAt int64
-	Windows     []*OutlookWindow
-}
-
 type Service interface {
 	Fit(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
 	Quality(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
 	Forecaster(ctx context.Context, req *ForecasterRequest) (*demandforecast.Forecaster, error)
-	Outlook(ctx context.Context, req *OutlookRequest) (*Outlook, error)
+	Location(ctx context.Context, tenantInfo pagination.TenantInfo) *time.Location
+	Economics(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (margin, capCents int64, err error)
 }
 
 type TenantLister interface {

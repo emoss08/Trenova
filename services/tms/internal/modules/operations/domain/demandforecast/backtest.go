@@ -110,15 +110,19 @@ func scoreWeek(
 ) {
 	for _, cell := range sortedCells(agg.areas) {
 		area := agg.areas[cell]
-		weekly := area.total / w.total
 		for slot := range slotsPerWeek {
 			key := slotKey{cell: cell, slot: int16(slot)}
-			alpha, beta := posterior(weekly*agg.tenantShare(slot), area.slot[slot], w.total)
-			predicted := GammaPoisson(alpha, beta)
+			predicted := agg.predict(area, w, slot)
 			if actual[key] == 0 && previous[key] == 0 && predicted.Mean < minScoredMean {
 				continue
 			}
 			total.add(predicted, actual[key], previous[key])
 		}
 	}
+}
+
+func (a *aggregate) predict(area *series, w window, slot int) Count {
+	alpha, beta := posterior(area.total/w.total*a.tenantShare(slot), area.slot[slot], w.total)
+
+	return GammaPoisson(alpha, beta)
 }

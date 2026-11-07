@@ -1044,6 +1044,529 @@ func valueBookingCurve(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+// daysTable is the schema of demandforecast.Day.
+var daysTable = schema.Table{
+	Name:   "demand_forecast_days",
+	Quoted: `"demand_forecast_days"`,
+	Alias:  "dfd",
+	Model:  "demandforecast.Day",
+	Label:  `Day`,
+	Plural: `Days`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "day_start", Quoted: `"day_start"`, Field: "DayStart", Kind: schema.KindInt64, Flags: 0, Label: `Day Start`, JSON: `dayStart`},
+		{Name: "low", Quoted: `"low"`, Field: "Low", Kind: schema.KindInt32, Flags: 0, Label: `Low`, JSON: `low`},
+		{Name: "high", Quoted: `"high"`, Field: "High", Kind: schema.KindInt32, Flags: 0, Label: `High`, JSON: `high`},
+		{Name: "mean", Quoted: `"mean"`, Field: "Mean", Kind: schema.KindFloat64, Flags: 0, Label: `Mean`, JSON: `mean`},
+		{Name: "actual", Quoted: `"actual"`, Field: "Actual", Kind: schema.KindInt32, Flags: 0, Label: `Actual`, JSON: `actual`},
+		{Name: "fitted_at", Quoted: `"fitted_at"`, Field: "FittedAt", Kind: schema.KindInt64, Flags: 0, Label: `Fitted At`, JSON: `fittedAt`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:     []int32{3, 4, 5, 6, 7, 8},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 9,
+	AutoUpdate: -1,
+	IDPrefix:   "dfd_",
+	New:        newDay,
+	NewN:       newNDay,
+	Size:       unsafe.Sizeof(demandforecast.Day{}),
+	Ptr:        ptrDay,
+	Value:      valueDay,
+}
+
+var daysRef = keel.Ref{Table: &daysTable}
+
+// DaysTable is the table of demandforecast.Day.
+type DaysTable struct {
+	keel.TableBase
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	DayStart       keel.Int64Col
+	Low            keel.Int32Col
+	High           keel.Int32Col
+	Mean           keel.Float64Col
+	Actual         keel.Int32Col
+	FittedAt       keel.Int64Col
+	CreatedAt      keel.Int64Col
+}
+
+// Days references the demand_forecast_days table.
+var Days = &DaysTable{
+	TableBase:      keel.TableBase{Ref: &daysRef},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &daysRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &daysRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &daysRef, Index: 2}}},
+	DayStart:       keel.Int64Col{Col: keel.Col{Ref: &daysRef, Index: 3}},
+	Low:            keel.Int32Col{Col: keel.Col{Ref: &daysRef, Index: 4}},
+	High:           keel.Int32Col{Col: keel.Col{Ref: &daysRef, Index: 5}},
+	Mean:           keel.Float64Col{Col: keel.Col{Ref: &daysRef, Index: 6}},
+	Actual:         keel.Int32Col{Col: keel.Col{Ref: &daysRef, Index: 7}},
+	FittedAt:       keel.Int64Col{Col: keel.Col{Ref: &daysRef, Index: 8}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &daysRef, Index: 9}},
+}
+
+// BuildDays builds the table of demand_forecast_days for ref. Generated relation and alias methods call it.
+func BuildDays(r *keel.Ref) *DaysTable {
+	return &DaysTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DayStart:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		Low:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
+		High:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 5}},
+		Mean:           keel.Float64Col{Col: keel.Col{Ref: r, Index: 6}},
+		Actual:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 7}},
+		FittedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+	}
+}
+
+// DaysSchema returns the schema of demand_forecast_days.
+func DaysSchema() *schema.Table { return &daysTable }
+
+// As returns a handle that references demand_forecast_days under its own alias.
+func (t *DaysTable) As(alias string) *DaysTable { return keel.Alias(t.Ref, alias, BuildDays) }
+
+// Get returns the demand_forecast_days row with the given key, or keel.ErrNotFound.
+func (t *DaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*demandforecast.Day, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DaysQuery is a query over demandforecast.Day.
+type DaysQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*demandforecast.Day] = (*DaysQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DaysTable) Query() keel.Query[*demandforecast.Day] {
+	return &DaysQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DaysQuery.Where.
+func (t *DaysTable) Where(ps ...keel.Pred) keel.Query[*demandforecast.Day] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DaysQuery.Pick.
+func (t *DaysTable) Pick(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DaysQuery.Load.
+func (t *DaysTable) Load(ls ...keel.Loader) keel.Query[*demandforecast.Day] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DaysQuery.Omit.
+func (t *DaysTable) Omit(cols ...keel.Column) keel.Query[*demandforecast.Day] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DaysQuery.Order.
+func (t *DaysTable) Order(os ...keel.Order) keel.Query[*demandforecast.Day] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DaysQuery.Limit.
+func (t *DaysTable) Limit(n int) keel.Query[*demandforecast.Day] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DaysQuery.Group.
+func (t *DaysTable) Group(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DaysQuery.GroupingSets.
+func (t *DaysTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DaysQuery.Rollup.
+func (t *DaysTable) Rollup(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DaysQuery.Cube.
+func (t *DaysTable) Cube(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DaysQuery.AllTenants.
+func (t *DaysTable) AllTenants() keel.Query[*demandforecast.Day] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DaysQuery.Join.
+func (t *DaysTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*demandforecast.Day] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DaysQuery.LeftJoin.
+func (t *DaysTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*demandforecast.Day] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DaysQuery.LeftJoinLateral.
+func (t *DaysTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*demandforecast.Day] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DaysQuery.JoinLateral.
+func (t *DaysTable) JoinLateral(sub keel.LateralSource) keel.Query[*demandforecast.Day] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DaysQuery.Lock.
+func (t *DaysTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*demandforecast.Day] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DaysQuery.DistinctOn.
+func (t *DaysTable) DistinctOn(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DaysQuery.Cache.
+func (t *DaysTable) Cache(opts ...keel.CacheOption) keel.Query[*demandforecast.Day] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DaysQuery.LoadStrategy.
+func (t *DaysTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*demandforecast.Day] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DaysQuery.With.
+func (t *DaysTable) With(ctes ...*keel.CTETable) keel.Query[*demandforecast.Day] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DaysQuery.Compute.
+func (t *DaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*demandforecast.Day] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DaysTable) Create(ctx context.Context, db *keel.DB, row *demandforecast.Day) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*demandforecast.Day) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *DaysTable) Save(ctx context.Context, db *keel.DB, row *demandforecast.Day, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *demandforecast.Day, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *demandforecast.Day) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*demandforecast.Day, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*demandforecast.Day, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DaysTable) Copy(ctx context.Context, db *keel.DB, rows []*demandforecast.Day) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DaysQuery) Where(ps ...keel.Pred) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DaysQuery) Pick(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DaysQuery) Omit(cols ...keel.Column) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DaysQuery) Load(ls ...keel.Loader) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DaysQuery) Order(os ...keel.Order) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DaysQuery) Distinct() keel.Query[*demandforecast.Day] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DaysQuery) Group(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DaysQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DaysQuery) Rollup(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DaysQuery) Cube(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DaysQuery) Window(name string, w keel.Window) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DaysQuery) Having(ps ...keel.Pred) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DaysQuery) Limit(n int) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DaysQuery) Offset(n int) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DaysQuery) DistinctOn(es ...keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DaysQuery) AllTenants() keel.Query[*demandforecast.Day] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DaysQuery) CustomPlan() keel.Query[*demandforecast.Day] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DaysQuery) Timeout(d time.Duration) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DaysQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DaysQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DaysQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*demandforecast.Day] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DaysQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*demandforecast.Day] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DaysQuery) JoinLateral(sub keel.LateralSource) keel.Query[*demandforecast.Day] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DaysQuery) Cache(opts ...keel.CacheOption) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DaysQuery) With(ctes ...*keel.CTETable) keel.Query[*demandforecast.Day] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DaysQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*demandforecast.Day] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DaysQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*demandforecast.Day] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DaysQuery) Clone() keel.Query[*demandforecast.Day] {
+	return &DaysQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DaysQuery) One(ctx context.Context, db *keel.DB) (*demandforecast.Day, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*demandforecast.Day)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DaysQuery) First(ctx context.Context, db *keel.DB) (*demandforecast.Day, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*demandforecast.Day)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DaysQuery) List(ctx context.Context, db *keel.DB) ([]*demandforecast.Day, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*demandforecast.Day)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DaysQuery) All(ctx context.Context, db *keel.DB) ([]*demandforecast.Day, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*demandforecast.Day)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*demandforecast.Day, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*demandforecast.Day)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*demandforecast.Day], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*demandforecast.Day])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*demandforecast.Day) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*demandforecast.Day)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newDay() unsafe.Pointer { return unsafe.Pointer(new(demandforecast.Day)) }
+
+func newNDay(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]demandforecast.Day, n)))
+}
+
+func ptrDay(p unsafe.Pointer, c int32) any {
+	r := (*demandforecast.Day)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return &r.DayStart
+	case 4:
+		return &r.Low
+	case 5:
+		return &r.High
+	case 6:
+		return &r.Mean
+	case 7:
+		return &r.Actual
+	case 8:
+		return &r.FittedAt
+	case 9:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueDay(p unsafe.Pointer, c int32) any {
+	r := (*demandforecast.Day)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.DayStart
+	case 4:
+		return r.Low
+	case 5:
+		return r.High
+	case 6:
+		return r.Mean
+	case 7:
+		return r.Actual
+	case 8:
+		return r.FittedAt
+	case 9:
+		return r.CreatedAt
+	}
+	return nil
+}
+
 // qualitiesTable is the schema of demandforecast.Quality.
 var qualitiesTable = schema.Table{
 	Name:   "demand_forecast_quality",
@@ -1622,18 +2145,19 @@ var ratesTable = schema.Table{
 		{Name: "alpha", Quoted: `"alpha"`, Field: "Alpha", Kind: schema.KindFloat64, Flags: 0, Label: `Alpha`, JSON: `alpha`},
 		{Name: "beta", Quoted: `"beta"`, Field: "Beta", Kind: schema.KindFloat64, Flags: 0, Label: `Beta`, JSON: `beta`},
 		{Name: "loads", Quoted: `"loads"`, Field: "Loads", Kind: schema.KindInt32, Flags: 0, Label: `Loads`, JSON: `loads`},
+		{Name: "recent", Quoted: `"recent"`, Field: "Recent", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Recent`, JSON: `recent`},
 		{Name: "fitted_at", Quoted: `"fitted_at"`, Field: "FittedAt", Kind: schema.KindInt64, Flags: 0, Label: `Fitted At`, JSON: `fittedAt`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     0,
-	AutoCreate: 10,
+	AutoCreate: 11,
 	AutoUpdate: -1,
 	IDPrefix:   "dfr_",
 	New:        newRate,
@@ -1657,6 +2181,7 @@ type RatesTable struct {
 	Alpha          keel.Float64Col
 	Beta           keel.Float64Col
 	Loads          keel.Int32Col
+	Recent         keel.JSONBCol
 	FittedAt       keel.Int64Col
 	CreatedAt      keel.Int64Col
 }
@@ -1673,8 +2198,9 @@ var Rates = &RatesTable{
 	Alpha:          keel.Float64Col{Col: keel.Col{Ref: &ratesRef, Index: 6}},
 	Beta:           keel.Float64Col{Col: keel.Col{Ref: &ratesRef, Index: 7}},
 	Loads:          keel.Int32Col{Col: keel.Col{Ref: &ratesRef, Index: 8}},
-	FittedAt:       keel.Int64Col{Col: keel.Col{Ref: &ratesRef, Index: 9}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ratesRef, Index: 10}},
+	Recent:         keel.JSONBCol{Col: keel.Col{Ref: &ratesRef, Index: 9}},
+	FittedAt:       keel.Int64Col{Col: keel.Col{Ref: &ratesRef, Index: 10}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ratesRef, Index: 11}},
 }
 
 // BuildRates builds the table of demand_forecast_rates for ref. Generated relation and alias methods call it.
@@ -1690,8 +2216,9 @@ func BuildRates(r *keel.Ref) *RatesTable {
 		Alpha:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Beta:           keel.Float64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Loads:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
-		FittedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		Recent:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
+		FittedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
 }
 
@@ -2099,8 +2626,10 @@ func ptrRate(p unsafe.Pointer, c int32) any {
 	case 8:
 		return &r.Loads
 	case 9:
-		return &r.FittedAt
+		return &r.Recent
 	case 10:
+		return &r.FittedAt
+	case 11:
 		return &r.CreatedAt
 	}
 	return nil
@@ -2131,8 +2660,13 @@ func valueRate(p unsafe.Pointer, c int32) any {
 	case 8:
 		return r.Loads
 	case 9:
-		return r.FittedAt
+		if r.Recent == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Recent
 	case 10:
+		return r.FittedAt
+	case 11:
 		return r.CreatedAt
 	}
 	return nil

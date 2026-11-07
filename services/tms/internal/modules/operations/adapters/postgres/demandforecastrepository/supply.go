@@ -3,6 +3,7 @@ package demandforecastrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -21,11 +22,12 @@ import (
 const maxDriverStarts = 10_000
 
 type bookedRow struct {
-	Latitude  float64
-	Longitude float64
-	SlotStart int64
-	Total     int64
-	Open      int64
+	CustomerID pulid.ID
+	Latitude   float64
+	Longitude  float64
+	SlotStart  int64
+	Total      int64
+	Open       int64
 }
 
 func (r *repository) ListBooked(
@@ -45,9 +47,9 @@ func (r *repository) ListBooked(
 
 			rows, err := keel.Into[bookedRow](ctx, r.db.Keel(ctx), l.q.
 				Join(loc, loc.ID.EqCol(l.st.LocationID)).
-				Pick(loc.Latitude, loc.Longitude, slotStart, keel.Count(), open).
+				Pick(text(l.sp.CustomerID), loc.Latitude, loc.Longitude, slotStart, keel.Count(), open).
 				Where(loc.Latitude.IsNotNull(), loc.Longitude.IsNotNull()).
-				Group(loc.Latitude, loc.Longitude, slotStart))
+				Group(l.sp.CustomerID, loc.Latitude, loc.Longitude, slotStart))
 			if err != nil {
 				return nil, fmt.Errorf("read booked loads: %w", err)
 			}
@@ -63,10 +65,13 @@ func (r *repository) ListBooked(
 }
 
 type startRow struct {
-	WorkerID  pulid.ID
-	Latitude  *float64
-	Longitude *float64
-	FreeAt    int64
+	WorkerID      pulid.ID
+	FirstName     string
+	LastName      string
+	Latitude      *float64
+	Longitude     *float64
+	FreeAt        int64
+	PositioningID *string
 }
 
 func (r *repository) ListDriverStarts(
@@ -87,8 +92,17 @@ func (r *repository) ListDriverStarts(
 
 			q, start := driverstart.Join(w.LeftJoinLateral(primary), w, wt, req.Now)
 			rows, err := keel.Into[startRow](ctx, r.db.Keel(ctx), q.
-				Pick(w.ID, start.Latitude, start.Longitude, start.FreeAt).
+				Pick(
+					w.ID,
+					w.FirstName,
+					w.LastName,
+					start.Latitude,
+					start.Longitude,
+					start.FreeAt,
+					keel.StringOf(start.PositioningID),
+				).
 				Where(
+					keel.When(len(req.WorkerIDs) > 0, w.ID.In(req.WorkerIDs...)),
 					w.Status.Eq(domaintypes.StatusActive),
 					w.CanBeAssigned.IsTrue(),
 					w.AvailableForDispatch.IsTrue(),
@@ -104,12 +118,17 @@ func (r *repository) ListDriverStarts(
 				if row.Latitude == nil || row.Longitude == nil {
 					continue
 				}
-				out = append(out, demandforecastports.DriverStart{
+				start := demandforecastports.DriverStart{
 					WorkerID:  row.WorkerID,
+					Name:      strings.TrimSpace(row.FirstName + " " + row.LastName),
 					Latitude:  *row.Latitude,
 					Longitude: *row.Longitude,
 					FreeAt:    row.FreeAt,
-				})
+				}
+				if row.PositioningID != nil {
+					start.PositioningID = pulid.ID(*row.PositioningID)
+				}
+				out = append(out, start)
 			}
 
 			return out, nil

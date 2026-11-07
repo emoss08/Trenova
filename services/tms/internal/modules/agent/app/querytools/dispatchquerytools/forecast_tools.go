@@ -1,6 +1,7 @@
 package dispatchquerytools
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math"
@@ -11,13 +12,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/freightmove"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
-	paramHoursAhead = "hoursAhead"
+	paramHoursAhead      = "hoursAhead"
+	defaultForecastHours = 24
+	maxForecastHours     = 48
+	defaultForecastLimit = 8
+	maxForecastLimit     = 20
 
 	forecastStatusReady        = "Ready"
 	forecastStatusNoSkill      = "NoSkill"
@@ -31,8 +38,8 @@ const (
 type freightOutlookReader interface {
 	Outlook(
 		ctx context.Context,
-		req *demandforecastports.OutlookRequest,
-	) (*demandforecastports.Outlook, error)
+		req *freightoutlookports.Request,
+	) (*freightoutlookports.Outlook, error)
 }
 
 type forecastDemandTool struct {
@@ -48,14 +55,13 @@ func (t *forecastDemandTool) Name() string { return "dispatch_forecast_demand" }
 func (t *forecastDemandTool) Description() string {
 	return "Say which areas will be busy in the coming days and where to send trucks, " +
 		"weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how " +
-		"many loads usually appear on a given day and which regions will need more trucks. " +
-		"Learned from this organization's own shipment history, not market data: each " +
-		"twelve-hour window gives the usual range of loads, what is booked, the loads still " +
-		"expected, the drivers expected free there, the shortfall and what one more driver " +
-		"ending there is worth in dollars. Plans use it only once quality.status is Ready; " +
-		"until then it lists no windows, so say it is not proven yet and why, from " +
-		"quality.meaning, rather than guessing. Answer by naming the areas, the windows and " +
-		"the shortfall; act on it through dispatch_plan."
+		"many loads usually appear and which regions will need more trucks. Learned from " +
+		"this organization's own shipment history, not market data: for each area and " +
+		"four-hour window it gives loads likely, what is booked, the drivers expected and the " +
+		"loads with no truck nearby, then ranked moves (send an empty driver, book a load " +
+		"that ends there, keep a driver, call a customer behind its usual pace) with what " +
+		"each is worth in dollars. Plans use it only once quality.status is Ready; until then " +
+		"say it is not proven yet and why, from quality.meaning, rather than guessing."
 }
 
 func (t *forecastDemandTool) SearchTerms() []string {
@@ -69,20 +75,14 @@ func (t *forecastDemandTool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(map[string]any{
 		paramHoursAhead: toolschema.Clamped(map[string]any{
 			toolschema.KeyType:    toolschema.TypeInteger,
-			toolschema.KeyMinimum: 1,
-			toolschema.KeyMaximum: demandforecastports.MaxOutlookHours,
+			toolschema.KeyMinimum: 4,
+			toolschema.KeyMaximum: maxForecastHours,
 			toolschema.KeyDescription: fmt.Sprintf(
-				"How many hours ahead to look, from now: %d unless you ask, at most %d. Ask "+
-					"for enough to reach the day in question; a weekend can need all %d.",
-				demandforecastports.DefaultOutlookHours,
-				demandforecastports.MaxOutlookHours,
-				demandforecastports.MaxOutlookHours,
+				"How many hours ahead to look, from now: %d unless you ask, at most %d.",
+				defaultForecastHours, maxForecastHours,
 			),
 		}),
-		querytool.ParamLimit: querytool.LimitSchema(
-			demandforecastports.DefaultOutlookLimit,
-			demandforecastports.MaxOutlookLimit,
-		),
+		querytool.ParamLimit: querytool.LimitSchema(defaultForecastLimit, maxForecastLimit),
 	})
 }
 
@@ -103,35 +103,41 @@ type forecastQualityView struct {
 	FittedAt                string `json:"fittedAt"`
 }
 
-type forecastCustomerView struct {
-	CustomerID    string  `json:"customerId"`
-	Name          string  `json:"name"`
-	ExpectedLoads float64 `json:"expectedLoads"`
+type forecastAreaView struct {
+	Area               string   `json:"area"`
+	WindowStart        string   `json:"windowStart"`
+	WindowEnd          string   `json:"windowEnd"`
+	LikelyLow          int      `json:"likelyLow"`
+	LikelyHigh         int      `json:"likelyHigh"`
+	Booked             int      `json:"booked"`
+	DriversExpected    int      `json:"driversExpected"`
+	LoadsWithNoTruck   float64  `json:"loadsWithNoTruck,omitempty"`
+	DriversToSpare     float64  `json:"driversToSpare,omitempty"`
+	OneMoreDriverWorth string   `json:"oneMoreDriverWorth"`
+	Customers          []string `json:"customers"`
 }
 
-type freightWindowView struct {
-	Area               string                 `json:"area"`
-	WindowStart        string                 `json:"windowStart"`
-	WindowEnd          string                 `json:"windowEnd"`
-	TypicalLow         int                    `json:"typicalLow"`
-	TypicalHigh        int                    `json:"typicalHigh"`
-	LikelyLow          int                    `json:"likelyLow"`
-	LikelyHigh         int                    `json:"likelyHigh"`
-	Booked             int                    `json:"booked"`
-	ExpectedUnbooked   float64                `json:"expectedUnbooked"`
-	DriversExpected    int                    `json:"driversExpected"`
-	Shortfall          float64                `json:"shortfall"`
-	OneMoreDriverWorth string                 `json:"oneMoreDriverWorth"`
-	Customers          []forecastCustomerView `json:"customers"`
-	Explanation        string                 `json:"explanation"`
+type forecastMoveView struct {
+	Kind        string  `json:"kind"`
+	Driver      string  `json:"driver,omitempty"`
+	From        string  `json:"from,omitempty"`
+	To          string  `json:"to"`
+	Window      string  `json:"window"`
+	Miles       float64 `json:"emptyMiles,omitempty"`
+	Worth       string  `json:"worth,omitempty"`
+	ProNumber   string  `json:"proNumber,omitempty"`
+	HandTo      string  `json:"handTo,omitempty"`
+	Customer    string  `json:"customer,omitempty"`
+	LoadsMissed float64 `json:"loadsNotTendered,omitempty"`
 }
 
 type freightOutlookView struct {
 	Quality     forecastQualityView `json:"quality"`
 	Hours       int                 `json:"hoursAhead"`
 	GeneratedAt string              `json:"generatedAt"`
-	Count       int                 `json:"count"`
-	Windows     []freightWindowView `json:"windows"`
+	Short       []forecastAreaView  `json:"shortOfTrucks"`
+	Spare       []forecastAreaView  `json:"trucksToSpare"`
+	Moves       []forecastMoveView  `json:"moves"`
 	Note        string              `json:"note"`
 }
 
@@ -144,96 +150,137 @@ func (t *forecastDemandTool) Query(
 	}
 
 	hours := forecastHours(params.Params)
-	outlook, err := t.outlook.Outlook(ctx, &demandforecastports.OutlookRequest{
+	limit := querytool.ReadLimit(params.Params, defaultForecastLimit, maxForecastLimit)
+	outlook, err := t.outlook.Outlook(ctx, &freightoutlookports.Request{
 		TenantInfo: querytool.TenantOf(params),
-		Hours:      hours,
-		Limit: querytool.ReadLimit(
-			params.Params,
-			demandforecastports.DefaultOutlookLimit,
-			demandforecastports.MaxOutlookLimit,
-		),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return freightOutlookViewOf(outlook, hours, timeutils.LoadLocation(params.Timezone)), nil
+	return freightOutlookViewOf(outlook, hours, limit, timeutils.LoadLocation(params.Timezone)), nil
 }
 
 func forecastHours(params map[string]any) int {
-	hours := querytool.OptionalInt(
-		params,
-		paramHoursAhead,
-		demandforecastports.DefaultOutlookHours,
-	)
+	hours := querytool.OptionalInt(params, paramHoursAhead, defaultForecastHours)
 	if hours <= 0 {
-		return demandforecastports.DefaultOutlookHours
+		return defaultForecastHours
 	}
 
-	return min(hours, demandforecastports.MaxOutlookHours)
+	return min(hours, maxForecastHours)
 }
 
 func freightOutlookViewOf(
-	outlook *demandforecastports.Outlook,
-	hours int,
+	outlook *freightoutlookports.Outlook,
+	hours, limit int,
 	location *time.Location,
 ) *freightOutlookView {
 	if outlook == nil {
-		outlook = &demandforecastports.Outlook{}
+		outlook = &freightoutlookports.Outlook{}
 	}
 	view := &freightOutlookView{
 		Quality: forecastQualityViewOf(outlook.Quality, location),
 		Hours:   hours,
-		Windows: make([]freightWindowView, 0, len(outlook.Windows)),
+		Short:   []forecastAreaView{},
+		Spare:   []forecastAreaView{},
+		Moves:   []forecastMoveView{},
 	}
 	if outlook.GeneratedAt > 0 {
 		view.GeneratedAt = timeutils.FormatStamp(outlook.GeneratedAt, location)
 	}
 	ready := view.Quality.Status == forecastStatusReady
-	for _, window := range outlook.Windows {
-		if window == nil || !ready {
-			continue
+	if ready {
+		slots := min(int(math.Ceil(float64(hours)/4)), demandforecast.OutlookSlots)
+		for _, area := range outlook.Areas {
+			if short, ok := forecastAreaViewOf(area, slots, true, location); ok &&
+				len(view.Short) < limit {
+				view.Short = append(view.Short, short)
+			}
+			if spare, ok := forecastAreaViewOf(area, slots, false, location); ok &&
+				len(view.Spare) < limit {
+				view.Spare = append(view.Spare, spare)
+			}
 		}
-		view.Windows = append(view.Windows, freightWindowViewOf(window, location))
+		cutoff := outlook.GeneratedAt + int64(hours)*3600
+		for _, step := range outlook.Steps {
+			if step.SlotStart >= cutoff || len(view.Moves) >= limit {
+				continue
+			}
+			view.Moves = append(view.Moves, forecastMoveViewOf(&step, location))
+		}
 	}
-	view.Count = len(view.Windows)
-	view.Note = outlookNote(ready, view.Quality.Status, view.Count, hours)
+	view.Note = outlookNote(ready, view.Quality.Status, len(view.Short), hours)
 
 	return view
 }
 
-func freightWindowViewOf(
-	window *demandforecastports.OutlookWindow,
+func forecastAreaViewOf(
+	area *freightoutlookports.Area,
+	slots int,
+	short bool,
 	location *time.Location,
-) freightWindowView {
-	out := freightWindowView{
-		Area:               window.AreaLabel,
-		WindowStart:        timeutils.FormatStamp(window.WindowStart, location),
-		WindowEnd:          timeutils.FormatStamp(window.WindowEnd, location),
-		TypicalLow:         window.TypicalLow,
-		TypicalHigh:        window.TypicalHigh,
-		LikelyLow:          window.LikelyLow,
-		LikelyHigh:         window.LikelyHigh,
-		Booked:             window.Booked,
-		ExpectedUnbooked:   tenths(window.ExpectedUnbooked),
-		DriversExpected:    window.DriversExpected,
-		Shortfall:          tenths(window.Shortfall),
-		OneMoreDriverWorth: dispatcheconomics.Dollars(window.ValueCents),
-		Customers:          make([]forecastCustomerView, 0, len(window.Customers)),
-		Explanation:        window.Explanation,
+) (forecastAreaView, bool) {
+	best, at := 0.0, -1
+	for i, slot := range area.Balance.Slots[:min(slots, len(area.Balance.Slots))] {
+		value := slot.Spare
+		if short {
+			value = slot.Short
+		}
+		if value > best {
+			best, at = value, i
+		}
 	}
-	if out.Area == "" {
-		out.Area = unnamedArea
-	}
-	for _, customer := range window.Customers {
-		out.Customers = append(out.Customers, forecastCustomerView{
-			CustomerID:    customer.CustomerID.String(),
-			Name:          customer.Name,
-			ExpectedLoads: tenths(customer.Expected),
-		})
+	if at < 0 || best < freightmove.MinShort {
+		return forecastAreaView{}, false
 	}
 
-	return out
+	slot := area.Balance.Slots[at]
+	view := forecastAreaView{
+		Area:               cmp.Or(area.Balance.Label, unnamedArea),
+		WindowStart:        timeutils.FormatStamp(slot.Start, location),
+		WindowEnd:          timeutils.FormatStamp(slot.Start+dispatchmarket.SlotSeconds, location),
+		LikelyLow:          slot.Low,
+		LikelyHigh:         slot.High,
+		Booked:             slot.Booked,
+		DriversExpected:    slot.Drivers,
+		OneMoreDriverWorth: dispatcheconomics.Dollars(area.ValueCents),
+		Customers:          make([]string, 0, len(area.Customers)),
+	}
+	if short {
+		view.LoadsWithNoTruck = tenths(best)
+	} else {
+		view.DriversToSpare = tenths(best)
+	}
+	for _, customer := range area.Customers {
+		view.Customers = append(view.Customers, customer.Name)
+	}
+
+	return view, true
+}
+
+func forecastMoveViewOf(step *freightmove.Step, location *time.Location) forecastMoveView {
+	view := forecastMoveView{
+		Kind:      string(step.Kind),
+		Driver:    step.WorkerName,
+		From:      step.FromLabel,
+		To:        cmp.Or(step.ToLabel, unnamedArea),
+		Window:    timeutils.FormatStamp(step.SlotStart, location),
+		Miles:     math.Round(step.Miles),
+		ProNumber: step.ProNumber,
+		Customer:  step.CustomerName,
+	}
+	switch step.Kind {
+	case freightmove.KindCall:
+		view.Driver, view.From = "", ""
+		view.LoadsMissed = tenths(step.Loads)
+	case freightmove.KindKeep:
+		view.HandTo = step.PartnerName
+		view.Worth = dispatcheconomics.Dollars(step.NetCents)
+	case freightmove.KindSend, freightmove.KindBook:
+		view.Worth = dispatcheconomics.Dollars(step.NetCents)
+	}
+
+	return view
 }
 
 func forecastQualityViewOf(
@@ -282,25 +329,26 @@ func forecastQualityViewOf(
 func outlookNote(ready bool, status string, count, hours int) string {
 	if !ready {
 		return fmt.Sprintf(
-			"The forecast is not Ready (status %s), so plans do not use it and no windows "+
-				"are listed: it has not yet shown it predicts this organization's freight "+
-				"better than repeating last week. Say so and why, from quality.meaning; do "+
-				"not guess where freight will appear.",
+			"The forecast is not Ready (status %s), so plans do not use it and nothing is "+
+				"listed: it has not yet shown it predicts this organization's freight better "+
+				"than repeating last week. Say so and why, from quality.meaning; do not guess "+
+				"where freight will appear.",
 			status,
 		)
 	}
 	if count == 0 {
 		return fmt.Sprintf(
-			"The forecast lists no area with freight beyond the drivers expected there in the "+
-				"next %d hours.",
+			"No area is short of trucks in the next %d hours. trucksToSpare lists where "+
+				"drivers will wait with little to haul.",
 			hours,
 		)
 	}
 
 	return fmt.Sprintf(
-		"%d windows in the next %d hours, the most short of drivers first. Name the area, "+
-			"the window and the shortfall; oneMoreDriverWorth is what a plan credits a driver "+
-			"who ends there, and explanation says it in a sentence.",
+		"%d areas run short of trucks in the next %d hours, the worst window of each. moves "+
+			"are ranked by what each is worth: Send an empty driver, Book a load ending there, "+
+			"Keep a driver whose next load would leave a short area (handTo takes it), or Call "+
+			"a customer behind its usual pace. They act through the freight outlook page.",
 		count, hours,
 	)
 }

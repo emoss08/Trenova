@@ -939,8 +939,12 @@ writes:
     tools: [dispatch_create_carrier_assignment]
   "mutation dispatchAssignMoves":
     tools: [dispatch_assign_move]
+  "mutation dispatchCallOffPositioning":
+    pending: "Call off a driver positioning the outlook made and tell the driver in Dash"
   "mutation dispatchCancelCarrierAssignment":
     tools: [dispatch_cancel_carrier_assignment]
+  "mutation dispatchPositionDriver":
+    pending: "Send an empty driver toward a short area from the freight outlook and tell them in Dash"
   "mutation dispatchPlanAutoAssign":
     exempt: read-only
     reason: "Plans coverage for review: it files pending proposals a person decides with decideAgentProposal and refreshes the stored plan prices, and assigns nothing."

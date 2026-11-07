@@ -603,6 +603,12 @@ tasks:
     cmds:
       - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -lanes {{.lanes | default 40}} -seed {{.seed | default 0}}"
 
+  db-roll-forward:
+    desc: "Slide the volume data set's open freight forward to now, so the dispatch screens read a working week"
+    deps: [build-devdb]
+    cmds:
+      - "{{.DEVDB_PATH}} roll-forward"
+
   db-reset:
     desc: Recreate the database from the migrated template, then apply the fixtures
     deps: [build-devdb]

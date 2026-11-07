@@ -236,7 +236,7 @@ export function QueuePane({
                 aria-hidden
                 className={cn(
                   QUEUE_GRID_CLASS,
-                  "h-7.5 shrink-0 items-center border-b border-border bg-background uppercase pr-5.5 pl-3.5 text-2xs font-medium text-muted-foreground",
+                  "h-7.5 shrink-0 items-center border-b border-border bg-background pr-5.5 pl-3.5 text-2xs font-medium text-muted-foreground uppercase",
                 )}
               >
                 <span>{t("Pickup")}</span>

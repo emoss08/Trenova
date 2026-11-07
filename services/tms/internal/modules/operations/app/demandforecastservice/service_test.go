@@ -6,22 +6,16 @@ import (
 	"errors"
 	"slices"
 	"testing"
-	"time"
 	_ "time/tzdata"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -118,6 +112,34 @@ func (f *fakeRepository) CustomerNames(
 	*demandforecastports.CustomerNamesRequest,
 ) (map[pulid.ID]string, error) {
 	return map[pulid.ID]string{}, nil
+}
+
+func (f *fakeRepository) Days(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*demandforecast.Day, error) {
+	return nil, errUnexpected
+}
+
+func (f *fakeRepository) ListOpenLanes(
+	context.Context,
+	*demandforecastports.WindowRequest,
+) ([]demandforecastports.OpenLane, error) {
+	return nil, errUnexpected
+}
+
+func (f *fakeRepository) ListDepartures(
+	context.Context,
+	*demandforecastports.WindowRequest,
+) ([]demandforecastports.Departure, error) {
+	return nil, errUnexpected
+}
+
+func (f *fakeRepository) ListAreaLocations(
+	context.Context,
+	*demandforecastports.AreaLocationsRequest,
+) ([]pulid.ID, error) {
+	return nil, errUnexpected
 }
 
 func (f *fakeRepository) ListTenants(
@@ -262,6 +284,8 @@ func TestFit_ReadsTheBacktestSpanAndSavesTheModelForTheTenant(t *testing.T) {
 	require.NotEmpty(t, replaced.Fitted.Rates)
 	require.NotEmpty(t, replaced.Fitted.Areas)
 	require.Len(t, replaced.Fitted.Curves, 2)
+	assert.Equal(t, demandforecast.TrackRecord(HistoryOf(testNow, rows)), replaced.Days,
+		"every fit stores the out-of-sample track record beside the model")
 	for _, rate := range replaced.Fitted.Rates {
 		assert.True(t, rate.OrganizationID.IsNil(), "keel fills tenant columns on insert")
 	}
@@ -302,267 +326,6 @@ func TestFit_ReturnsTheRepositoryError(t *testing.T) {
 			require.ErrorIs(t, err, tt.want)
 			assert.Nil(t, quality)
 			assert.Len(t, tt.repo.replaced, tt.wantReplaced)
-		})
-	}
-}
-
-type area struct {
-	point dispatchmarket.Point
-	label string
-}
-
-var (
-	tenantCurve = []float64{1, 0.9, 0.8, 0.7, 0.6, 0.45, 0.35, 0.25, 0.15, 0.1, 0.05, 0.02, 0}
-	dallasArea  = area{point: dallasPoint, label: "Dallas, TX"}
-	sixAreas    = []area{
-		dallasArea,
-		{point: houstonPoint, label: "Houston, TX"},
-		{point: point(29.4241, -98.4936), label: "San Antonio, TX"},
-		{point: point(35.4676, -97.5164), label: "Oklahoma City, OK"},
-		{point: point(39.7392, -104.9903), label: "Denver, CO"},
-		{point: point(41.8781, -87.6298), label: "Chicago, IL"},
-	}
-)
-
-func point(latitude, longitude float64) dispatchmarket.Point {
-	return dispatchmarket.Point{Latitude: latitude, Longitude: longitude}
-}
-
-func forecastModel(
-	t *testing.T,
-	quality *demandforecast.Quality,
-	areas ...area,
-) *demandforecastports.Model {
-	t.Helper()
-	model := &demandforecastports.Model{
-		Quality: quality,
-		Curves:  []*demandforecast.BookingCurve{{Shares: tenantCurve}},
-	}
-	cells := map[int64]struct{}{}
-	for _, a := range areas {
-		cell := cellOf(t, a.point)
-		cells[cell] = struct{}{}
-		model.Areas = append(model.Areas, &demandforecast.Area{
-			Cell: cell, Label: a.label, MedianRevenueCents: 50_000, Loads: 400,
-		})
-		for slot := range dispatchmarket.SlotsPerWeek {
-			model.Rates = append(model.Rates, &demandforecast.Rate{
-				Cell:  cell,
-				Slot:  slot,
-				Alpha: 10 + float64(slot%5)*10,
-				Beta:  10,
-			})
-		}
-	}
-	require.Len(t, cells, len(areas), "every area is its own map cell")
-
-	return model
-}
-
-func readyOutlookService(t *testing.T, areas ...area) (*Service, *fakeRepository) {
-	t.Helper()
-	repo := &fakeRepository{
-		model: forecastModel(
-			t,
-			&demandforecast.Quality{Status: demandforecast.StatusReady},
-			areas...,
-		),
-		starts: []demandforecastports.DriverStart{{
-			WorkerID:  pulid.ID("wrk_ana"),
-			Latitude:  dallasPoint.Latitude,
-			Longitude: dallasPoint.Longitude,
-			FreeAt:    testNow,
-		}},
-		booked: []demandforecastports.BookedSlot{{
-			Latitude:  dallasPoint.Latitude,
-			Longitude: dallasPoint.Longitude,
-			SlotStart: mondayMidnight + 12*hour,
-			Total:     2,
-			Open:      1,
-		}},
-	}
-	controls := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
-	controls.EXPECT().GetOrCreate(mock.Anything, org, bu).
-		Return(dispatchcontrol.NewDefaultDispatchControl(org, bu), nil)
-	organizations := tenantportsmock.NewMockOrganizationRepository(t)
-	organizations.EXPECT().
-		GetByID(mock.Anything, tenantports.GetOrganizationByIDRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.Organization{Timezone: "America/Chicago"}, nil)
-
-	return newService(repo, controls, organizations), repo
-}
-
-func TestOutlook_ClampsTheHorizonAndTheLimit(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		hours   int
-		limit   int
-		windows int
-		latest  int64
-	}{
-		{
-			name:    "unset reads 48 hours and keeps 20 windows",
-			windows: 20,
-			latest:  mondayMidnight + 48*hour,
-		},
-		{
-			name:    "too much reads 96 hours and keeps 50 windows",
-			hours:   500,
-			limit:   500,
-			windows: 50,
-			latest:  mondayMidnight + 96*hour,
-		},
-		{
-			name:    "a short horizon keeps every window it has",
-			hours:   24,
-			windows: 18,
-			latest:  mondayMidnight + 24*hour,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			svc, repo := readyOutlookService(t, sixAreas...)
-
-			outlook, err := svc.Outlook(t.Context(), &demandforecastports.OutlookRequest{
-				TenantInfo: tenantInfo,
-				Hours:      tt.hours,
-				Limit:      tt.limit,
-			})
-			require.NoError(t, err)
-
-			assert.Equal(t, []*demandforecastports.DriverStartsRequest{{
-				TenantInfo: tenantInfo,
-				Now:        testNow,
-			}}, repo.startsFor)
-			assert.Equal(t, testNow, outlook.GeneratedAt)
-			require.Len(t, outlook.Windows, tt.windows)
-			latest := int64(0)
-			for _, window := range outlook.Windows {
-				latest = max(latest, window.WindowStart)
-			}
-			assert.Equal(t, tt.latest, latest)
-		})
-	}
-}
-
-func TestOutlook_PutsTheBiggestShortfallFirst(t *testing.T) {
-	t.Parallel()
-
-	svc, _ := readyOutlookService(t, dallasArea)
-	req := &demandforecastports.OutlookRequest{TenantInfo: tenantInfo, Hours: 96, Limit: 50}
-
-	full, err := svc.Outlook(t.Context(), req)
-	require.NoError(t, err)
-	req.Limit = 3
-	limited, err := svc.Outlook(t.Context(), req)
-	require.NoError(t, err)
-
-	require.Len(t, full.Windows, 9)
-	for i := 1; i < len(full.Windows); i++ {
-		before, after := full.Windows[i-1], full.Windows[i]
-		assert.GreaterOrEqual(t, before.Shortfall, after.Shortfall, "window %d", i)
-		if before.Shortfall == after.Shortfall {
-			assert.GreaterOrEqual(t, before.ValueCents, after.ValueCents, "window %d", i)
-		}
-	}
-	assert.Greater(t, full.Windows[0].Shortfall, full.Windows[8].Shortfall)
-	assert.NotEqual(t, mondayMidnight, full.Windows[0].WindowStart,
-		"the soonest window is mostly booked already, so it is not the biggest shortfall")
-	assert.Equal(t, full.Windows[:3], limited.Windows)
-}
-
-func TestOutlook_DescribesEachWindowInTheOrganizationsTimeZone(t *testing.T) {
-	t.Parallel()
-
-	chicago, err := time.LoadLocation("America/Chicago")
-	require.NoError(t, err)
-	svc, _ := readyOutlookService(t, dallasArea)
-
-	outlook, err := svc.Outlook(t.Context(), &demandforecastports.OutlookRequest{
-		TenantInfo: tenantInfo,
-	})
-	require.NoError(t, err)
-
-	require.Len(t, outlook.Windows, 5)
-	byStart := map[int64]*demandforecastports.OutlookWindow{}
-	for _, window := range outlook.Windows {
-		byStart[window.WindowStart] = window
-		assert.Equal(t, cellOf(t, dallasPoint), window.Cell)
-		assert.Equal(t, "Dallas, TX", window.AreaLabel)
-		assert.Equal(t, window.WindowStart+12*hour, window.WindowEnd)
-		assert.Equal(t, 1, window.DriversExpected)
-		assert.Equal(t, demandforecast.Explain(&demandforecast.Reason{
-			AreaLabel:       window.AreaLabel,
-			WindowStart:     window.WindowStart,
-			WindowEnd:       window.WindowEnd,
-			TypicalLow:      window.TypicalLow,
-			TypicalHigh:     window.TypicalHigh,
-			Booked:          window.Booked,
-			DriversExpected: window.DriversExpected,
-			Customers:       window.Customers,
-			ValueCents:      window.ValueCents,
-		}, chicago), window.Explanation)
-	}
-
-	require.Contains(t, byStart, mondayMidnight)
-	first := byStart[mondayMidnight]
-	assert.Contains(t, first.Explanation, "Ending near Dallas, TX is worth ")
-	assert.Contains(t, first.Explanation, " usually appear there Sun 18:00–Mon 06:00",
-		"Monday 00:00 UTC is Sunday evening in Chicago")
-	assert.Zero(t, first.Booked)
-	require.Contains(t, byStart, mondayMidnight+12*hour)
-	assert.Equal(t, 2, byStart[mondayMidnight+12*hour].Booked)
-}
-
-func TestOutlook_ShowsNoWindowsUntilTheForecastIsReady(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		quality *demandforecast.Quality
-		areas   []area
-	}{
-		{name: "never fitted", areas: []area{dallasArea}},
-		{
-			name:    "not enough history",
-			quality: &demandforecast.Quality{Status: demandforecast.StatusInsufficientHistory},
-			areas:   []area{dallasArea},
-		},
-		{
-			name:    "no better than last week",
-			quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill},
-			areas:   []area{dallasArea},
-		},
-		{
-			name:    "ready with no areas",
-			quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			repo := &fakeRepository{model: forecastModel(t, tt.quality, tt.areas...)}
-			svc := newService(
-				repo,
-				dispatchcontrolportsmock.NewMockDispatchControlRepository(t),
-				tenantportsmock.NewMockOrganizationRepository(t),
-			)
-
-			outlook, err := svc.Outlook(t.Context(), &demandforecastports.OutlookRequest{
-				TenantInfo: tenantInfo,
-			})
-			require.NoError(t, err)
-
-			assert.Same(t, tt.quality, outlook.Quality)
-			assert.Equal(t, testNow, outlook.GeneratedAt)
-			assert.NotNil(t, outlook.Windows)
-			assert.Empty(t, outlook.Windows)
-			assert.Empty(t, repo.startsFor, "driver starts are not read for a forecast nobody sees")
 		})
 	}
 }

@@ -13172,7 +13172,7 @@ type DispatchCandidate {
   blocked: Boolean!
   "Empty miles to the pickup; null when where the driver is is unknown."
   deadheadMiles: Float
-  "Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown."
+  "Where the empty miles start: commitment (the end of the driver's last load), positioning (the area the driver was sent toward from the freight outlook), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown."
   originSource: String!
   loadedMiles: Float!
   estimatedDriveMs: Int!
@@ -13835,45 +13835,248 @@ type DispatchForecastQuality {
 }
 
 """
-Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
-there.
+One area's four-hour window in the freight outlook: the loads likely to start there against the
+drivers expected, served in order, so a driver used in one window is not counted again.
 """
-type DispatchFreightWindow {
-  areaLabel: String!
-  windowStart: Timestamp!
-  windowEnd: Timestamp!
-  "The usual range of loads in the window (10th to 90th percentile)."
-  typicalLow: Int!
-  typicalHigh: Int!
-  "The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked."
+type DispatchFreightSlot {
+  start: Timestamp!
+  "Loads likely to start in the window, booked included (10th to 90th percentile)."
   likelyLow: Int!
   likelyHigh: Int!
-  "Loads already booked for the window."
   booked: Int!
-  "Loads still expected to be booked for the window."
-  expectedUnbooked: Float!
-  "Drivers expected to be free in the area by the end of the window."
-  driversExpected: Int!
-  "Expected loads beyond the drivers expected; zero when the area is covered."
-  shortfall: Float!
-  "What one more driver ending there is worth to the plan, in cents."
+  "Loads expected to need a driver: booked but not yet covered, plus still to be booked."
+  need: Float!
+  "Drivers free in the area by the end of the window."
+  drivers: Int!
+  "Loads likely to have no truck nearby."
+  short: Float!
+  "Drivers likely to have nothing nearby once the window's loads are served."
+  spare: Float!
+}
+
+type DispatchFreightAreaCustomer {
+  customerId: ID!
+  name: String!
+  "Share of the freight expected in the area over the outlook."
+  share: Float!
+}
+
+"A forecast area (a map tile about 50 miles across) over the next 48 hours."
+type DispatchFreightArea {
+  cell: Int!
+  label: String!
+  latitude: Float!
+  longitude: Float!
+  "What one more driver ending there is worth to the plan at its worst window, in cents."
   valueCents: Int!
-  customers: [DispatchForecastCustomer!]!
-  "The same window in a sentence."
-  explanation: String!
+  slots: [DispatchFreightSlot!]!
+  customers: [DispatchFreightAreaCustomer!]!
+}
+
+"""
+The whole network's four-hour window: loads likely against every driver, as if drivers could be
+anywhere. The gap between short here and uncovered (summed over areas) is placement.
+"""
+type DispatchFreightNetworkSlot {
+  start: Timestamp!
+  "Every load likely in the window, booked or not, the 10th to 90th percentile."
+  likelyLow: Int!
+  likelyHigh: Int!
+  "Loads likely that still need a driver: open booked loads plus those still to be booked."
+  need: Float!
+  "The 10th to 90th percentile of need, the range drivers are measured against."
+  needLow: Int!
+  needHigh: Int!
+  "Drivers free by the end of the window and not yet used by earlier windows."
+  drivers: Float!
+  short: Float!
+  "Loads with no truck nearby, summed over areas."
+  uncovered: Float!
+  "Drivers with nothing nearby, summed over areas."
+  idle: Float!
+}
+
+enum DispatchFreightMoveKind {
+  "Send an empty driver toward a short area."
+  Send
+  "Give a driver a load that ends in a short area instead of running empty."
+  Book
+  "Keep a driver whose next load would carry them out of an area that is about to run short; partner takes the load."
+  Keep
+  "Ask a customer behind its usual booking pace for its freight."
+  Call
+}
+
+"One ranked suggestion of the freight outlook. Money is in cents."
+type DispatchFreightMove {
+  kind: DispatchFreightMoveKind!
+  workerId: ID
+  workerName: String!
+  fromCell: Int!
+  fromLabel: String!
+  toCell: Int!
+  toLabel: String!
+  "The window the move is for."
+  slotStart: Timestamp!
+  "Loads with no truck nearby in that window."
+  short: Float!
+  freeAt: Timestamp
+  arriveAt: Timestamp
+  miles: Float!
+  emptyCostCents: Int!
+  "What the driver is worth at the target."
+  dropCents: Int!
+  "What the driver is worth where they are."
+  stayCents: Int!
+  netCents: Int!
+  "Book only: the empty-mile cost a load saves against running empty."
+  savedCents: Int!
+  "Book: the load to give; Keep: the load to hand to partner."
+  moveId: ID
+  proNumber: String!
+  "Book only: every open load that would do, nearest first."
+  laneMoveIds: [ID!]!
+  partnerId: ID
+  partnerName: String!
+  "Keep only: the forecast area the partner frees up in."
+  partnerCell: Int!
+  partnerLabel: String!
+  partnerFreeAt: Timestamp
+  partnerMiles: Float!
+  customerId: ID
+  customerName: String!
+  "Call only: loads the customer usually sends in the next 24 hours, usually in by now, and in so far."
+  usual: Float!
+  byNow: Float!
+  tendered: Int!
+  "Call only: loads still expected from the customer."
+  loads: Float!
+}
+
+type DispatchFreightPaceSlot {
+  start: Timestamp!
+  usual: Float!
+  byNow: Float!
+  tendered: Int!
+}
+
+"One customer's freight in one area against its own booking curve."
+type DispatchFreightPace {
+  customerId: ID!
+  customerName: String!
+  cell: Int!
+  label: String!
+  slots: [DispatchFreightPaceSlot!]!
+}
+
+"One day of the forecast's track record: the network range forecast out of sample, and what came."
+type DispatchForecastDay {
+  dayStart: Timestamp!
+  low: Int!
+  high: Int!
+  mean: Float!
+  actual: Int!
+}
+
+enum DispatchPositioningStatus {
+  Active
+  Canceled
+  Replaced
+}
+
+"An empty driver sent toward an area from the freight outlook."
+type DispatchPositioning {
+  id: ID!
+  workerId: ID!
+  workerName: String!
+  fromLabel: String!
+  toCell: Int!
+  toLabel: String!
+  slotStart: Timestamp!
+  freeAt: Timestamp!
+  arriveAt: Timestamp!
+  miles: Float!
+  valueCents: Int!
+  status: DispatchPositioningStatus!
+  createdAt: Timestamp!
 }
 
 type DispatchFreightOutlook {
   quality: DispatchForecastQuality!
   generatedAt: Timestamp!
-  "The windows ahead, most short of drivers first."
-  windows: [DispatchFreightWindow!]!
+  "The twelve four-hour windows the outlook covers, from the one under way."
+  slotStarts: [Timestamp!]!
+  network: [DispatchFreightNetworkSlot!]!
+  "The areas most short or most spare, at most 40."
+  areas: [DispatchFreightArea!]!
+  "Every forecast area, before the cut to 40."
+  areaCount: Int!
+  moves: [DispatchFreightMove!]!
+  pace: [DispatchFreightPace!]!
+  record: [DispatchForecastDay!]!
+  positionings: [DispatchPositioning!]!
+}
+
+enum DispatchFreightReachKind {
+  Here
+  OnTime
+  NotWorth
+  TooLate
+  TooFar
+}
+
+"A driver measured against one area's window: whether they can get there in time and what it would net."
+type DispatchFreightReach {
+  workerId: ID!
+  workerName: String!
+  label: String!
+  latitude: Float!
+  longitude: Float!
+  freeAt: Timestamp!
+  arriveAt: Timestamp!
+  miles: Float!
+  netCents: Int!
+  reach: DispatchFreightReachKind!
+}
+
+type DispatchFreightAreaDetail {
+  quality: DispatchForecastQuality!
+  generatedAt: Timestamp!
+  area: DispatchFreightArea!
+  "The window the sheet reads: the one asked for, or the area's worst."
+  slotStart: Timestamp!
+  reach: [DispatchFreightReach!]!
+  moves: [DispatchFreightMove!]!
+  pace: [DispatchFreightPace!]!
+  "Loads in this area and window of the week in each of the last eight weeks, oldest first."
+  recent: [Int!]!
+  "The usual range for this area and window of the week (10th to 90th percentile)."
+  recentLow: Int!
+  recentHigh: Int!
+  positionings: [DispatchPositioning!]!
+  "The area's active locations (up to 100), to read the loads delivering into it."
+  deliveryLocationIds: [ID!]!
+}
+
+input DispatchPositionDriverInput {
+  workerId: ID!
+  toCell: Int!
+  slotStart: Timestamp!
 }
 
 extend type Query {
-  "Freight likely to appear in the hours ahead, by area, against the drivers expected there."
-  dispatchFreightOutlook(hours: Int, limit: Int): DispatchFreightOutlook!
+  "Where trucks will be short or idle over the next 48 hours, the moves that fix it and how far to trust the forecast."
+  dispatchFreightOutlook: DispatchFreightOutlook!
+  "One area of the freight outlook: its windows, who books there, who can reach it and its track record."
+  dispatchFreightArea(cell: Int!, slotStart: Timestamp): DispatchFreightAreaDetail!
   dispatchForecastQuality: DispatchForecastQuality!
+}
+
+extend type Mutation {
+  "Send an empty driver toward an area and tell them in Dash. Replaces the driver's earlier positioning."
+  dispatchPositionDriver(input: DispatchPositionDriverInput!): DispatchPositioning!
+  "Call off a positioning and tell the driver."
+  dispatchCallOffPositioning(id: ID!): DispatchPositioning!
 }
 `, BuiltIn: false},
 	{Name: "../schema/dispatch_style.graphqls", Input: `"A soft cost whose weight the planner learns from the organization's dispatchers."

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:2fa463561c818c5b7aae457fd05a0a1b3ab7c702eef7ae3551cc255776b91235",
+  "version": "sha256:01e3f21465527b7b9ce847ccefc897cd8625812dd872ed37ce083dfbfdc53097",
   "modules": [
     {
       "id": "home",
@@ -12020,7 +12020,7 @@
         "Console"
       ],
       "description": "Cover open moves against available capacity without opening a shipment",
-      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.\n\nThe **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. A fourth tab, **Outlook**, looks ahead instead: where freight is likely to appear in the next 48 hours, before it is booked, against the drivers expected there. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.",
+      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.\n\nThe **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. To look ahead at where trucks will be short or idle, open the [Freight outlook](/dispatch/outlook). Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.",
       "requires": [
         {
           "resource": "shipment_move",
@@ -12037,9 +12037,7 @@
         "load coverage",
         "dispatch desk",
         "tender board",
-        "nova proposals",
-        "freight outlook",
-        "where to send trucks"
+        "nova proposals"
       ],
       "tasks": [
         {
@@ -12108,38 +12106,6 @@
           ]
         },
         {
-          "title": "See where freight is likely to appear",
-          "keywords": [
-            "freight forecast",
-            "where to send trucks",
-            "position drivers",
-            "busy areas",
-            "short of drivers",
-            "likely loads"
-          ],
-          "steps": [
-            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
-            "Each row is an area and a twelve-hour window in the next 48 hours, the most short of drivers first: - **Area**: the area, named for its busiest pickup city, with the customers who usually bring freight there. - **Window**: when the twelve hours start and end, and how soon they start. - **Likely loads**: how many loads usually appear there in that window, and how many are already booked. - **Drivers expected**: drivers expected to be free in the area by the end of the window. - **Short by**: loads expected beyond those drivers, highlighted when the area is likely to miss a driver. - **One more driver**: what one more driver ending there is worth to the plan.",
-            "Select a row to read it as a sentence, with who usually books there and how many loads are still expected to be booked.",
-            "When the drivers expected cover everything likely, the tab says **Drivers cover the freight ahead**. If it can't be read, it says **The outlook didn't load**; select **Try again**.",
-            "To have plans position drivers for this freight, turn on **Anticipate freight** in [Dispatch control](/admin/dispatch-controls)."
-          ]
-        },
-        {
-          "title": "When the outlook says the forecast isn't ready",
-          "keywords": [
-            "forecast not ready",
-            "not enough history",
-            "outlook empty",
-            "forecast not better than last week"
-          ],
-          "steps": [
-            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
-            "The forecast is learned from your own shipment history and tested every night. Until it has proven itself, the tab shows why instead of rows: **Not fitted yet**, **Not enough history yet** (it needs 8 weeks and 200 loads of history) or **Not better than last week yet** (it has not yet beaten repeating the same time last week).",
-            "Select **See the forecast in Dispatch controls** to see how it was tested. The outlook and **Anticipate freight** use the forecast only once it is **Ready**, so drivers are not moved for freight it cannot yet predict."
-          ]
-        },
-        {
           "title": "Work the exceptions",
           "keywords": [
             "late delivery",
@@ -12204,7 +12170,8 @@
         "/dispatch/routing-guides",
         "/dispatch/carriers",
         "/hr/workers",
-        "/desk/watchtower"
+        "/desk/watchtower",
+        "/dispatch/outlook"
       ],
       "covers": [],
       "createAction": null,
@@ -12305,6 +12272,125 @@
           "panelType": "create"
         }
       },
+      "inNavigation": true
+    },
+    {
+      "path": "/dispatch/outlook",
+      "name": "Freight outlook",
+      "module": "dispatch",
+      "breadcrumb": [
+        "Dispatch management",
+        "Freight outlook"
+      ],
+      "description": "Where trucks will be short or idle over the next two days, the moves that fix it and how far to trust the forecast",
+      "summary": "The freight outlook shows where your trucks will be short or idle over the next two days, before the freight is booked, and the moves that fix it. It is learned from your own shipment history, not market data, and it appears once the forecast has proven itself on that history (**Ready**). Until then the page says why, and selecting **See the forecast in Dispatch controls** shows how it was tested.\n\nThe page fills the screen like the dispatch console. Across the top, the figures show **Loads with no truck nearby**, **Drivers with nothing nearby**, **Across the network** (whether you have enough drivers overall, which usually you do, so the trouble is where they are), **Worth acting on** and **Range held** (how many of the last fourteen days landed inside the forecast's range). Under them, a paragraph reads the outlook in words: which areas will run short, how many drivers will sit with little to haul and what moving them is worth, and which customer is behind its usual booking pace. **12 h**, **24 h** and **48 h** at the top right set how far ahead the page reads.\n\nThe middle of the page is the board, and the panel on the right is the brief: the track record, the next moves and customer pace in one scroll. Selecting an area turns the panel into that area; **Brief** or Escape brings it back. Select **Hide the brief** (the double arrow in the panel's header) to fold it to a narrow rail and give the board the room; the rail still shows how many moves are waiting, and **Show the brief** brings it back. The page remembers which way you left it.",
+      "requires": [
+        {
+          "resource": "shipment_move",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [
+        "assetOperations"
+      ],
+      "aliases": [
+        "freight outlook",
+        "freight forecast",
+        "where to send trucks",
+        "position drivers",
+        "reposition",
+        "deadhead toward freight",
+        "short of trucks",
+        "trucks to spare",
+        "booking pace",
+        "customer behind pace",
+        "forecast track record"
+      ],
+      "tasks": [
+        {
+          "title": "Read the board",
+          "keywords": [
+            "freight forecast chart",
+            "when trucks are short",
+            "busiest window",
+            "area heat map"
+          ],
+          "steps": [
+            "Open [Freight outlook](/dispatch/outlook).",
+            "The chart at the top of **Loads against drivers** shows every four-hour window across your whole network: the loads still needing a driver with their usual range (the shaded band), the drivers free for that window, and underneath, the loads that will have no truck nearby (amber) and the idle drivers (blue) once each area is counted on its own.",
+            "Under the chart, every area has a row of the same windows, so a window is a column you read top to bottom: amber with a minus is trucks short, blue with a plus is trucks to spare. Areas are grouped into **Short of trucks**, **Could run short**, **Trucks to spare** and **Balanced** (folded; select it to open). Each row says when the area is worst and why, and on the right what one more driver ending there is worth. An area with drivers to spare, or exactly enough, reads **Not needed**, and an area the forecast has no revenue for yet reads **No price**; hover either for why.",
+            "Hover a cell or a window for its numbers. Select a window, in the chart or in the row of times, to read the whole page at that hour: the paragraph, the figures, the brief and the areas all change to it. Select it again, or **Show all**, to return."
+          ]
+        },
+        {
+          "title": "Send a driver toward freight",
+          "keywords": [
+            "reposition driver",
+            "deadhead",
+            "send empty truck",
+            "position driver",
+            "move truck before load"
+          ],
+          "steps": [
+            "Open [Freight outlook](/dispatch/outlook) and find a **Send** move under **Next moves** in the brief. Each row says who goes where, where they are free and when, and the empty miles; the figure on the right is what it is worth after them.",
+            "Rest the pointer on a move to see why: the window it is for, how the figure adds up (what the area gains, what the driver's own area loses and the empty miles) and what the button does. The board draws the move at the same time, from the window the driver frees up in to the window they fill, and dims every other area.",
+            "Select **Send**. The driver is told in Dash where to head and by when, and the forecast and the planner count them at that area from their arrival.",
+            "The driver stays in **Next moves** as **Sent** until they arrive. Select **On the way · Undo** to call it off; the driver is told.",
+            "A driver who is given a load after being sent is no longer counted at that area, so the next load you assign always wins."
+          ]
+        },
+        {
+          "title": "Book, keep or call instead",
+          "keywords": [
+            "load ending near",
+            "swap a load",
+            "keep a driver",
+            "customer behind pace",
+            "ask for tenders"
+          ],
+          "steps": [
+            "**Book** finds an open load that picks up near a driver and delivers near an area that will be short, so the driver gets there loaded instead of empty. Select **See loads** to open the load with the driver picked in the console, and assign it from there.",
+            "**Keep** names a driver whose next load would carry them out of an area that is about to run short, and another driver who can take that load in time. Select **Review** to open the load with the other driver picked in the console, and reassign it from there.",
+            "**Call** names a customer that has tendered less than it usually has by this hour for an area. Select **Open** to reach them before the freight goes to another carrier.",
+            "Select **Not now** (the cross at the end of a move) to hide it for now; the button under the list brings hidden moves back. When no free driver can reach a short area in time, the brief says so under the moves."
+          ]
+        },
+        {
+          "title": "Open an area",
+          "keywords": [
+            "area outlook",
+            "who can get there",
+            "one more driver worth"
+          ],
+          "steps": [
+            "Select an area on the board, or an underlined area name anywhere on the page.",
+            "The panel shows the area: its worst window and what one more driver is worth there, the moves into or out of it, the window by window chart, who books there and whether they are on pace, drivers already on the way, who can get there in time (on a map, with what each would net, including those who arrive too late or are not worth the miles), and the last eight weeks of that window against its usual range.",
+            "Select the button named for the area (Loads into, then the area) to open the shipments list filtered to the open loads delivering to any of your locations there. When none of your locations are in the area yet, the panel says so instead.",
+            "Select **Brief**, **Close** or press Escape to go back."
+          ]
+        },
+        {
+          "title": "Check how far to trust it",
+          "keywords": [
+            "forecast accuracy",
+            "track record",
+            "backtest",
+            "range held"
+          ],
+          "steps": [
+            "Open [Freight outlook](/dispatch/outlook) and look at **Track record** at the top of the brief, or select **Range held** in the figures.",
+            "Each of the last fourteen days shows the range the forecast gave for the whole network, worked out only from the weeks before that day, and the loads that came. A dot outside its range is a miss. Under the chart: how many days were busier than the range, and how far a typical day lands from the middle."
+          ]
+        }
+      ],
+      "notes": "",
+      "related": [
+        "/dispatch/console",
+        "/admin/dispatch-controls",
+        "/hr/workers"
+      ],
+      "covers": [],
+      "createAction": null,
       "inNavigation": true
     },
     {

@@ -1,7 +1,7 @@
 import type { DispatchCandidate } from "@/lib/graphql/dispatch-console";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import { costComponentLabel, costLineFact, endMarketReason, formatCents } from "./cost-vocabulary";
+import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
+import { costComponentLabel, costLineFact, endMarketReason } from "./cost-vocabulary";
 
 /**
  * What a driver taking a move costs, line by line, in money. The planner picks the plan
@@ -33,11 +33,11 @@ export function CostBreakdown({
         <span className="text-muted-foreground text-xs font-medium">{t("Cost to cover")}</span>
         <span className="flex items-baseline gap-1.5">
           <span className="text-lg leading-none font-semibold tabular-nums">
-            {formatCents(candidate.costCents - preferenceFloorCents)}
+            {formatCentsWhole(candidate.costCents - preferenceFloorCents)}
           </span>
           {coveragePriceCents != null ? (
             <span className="text-muted-foreground text-2xs">
-              {t("of {0} the move is worth", formatCents(coveragePriceCents))}
+              {t("of {0} the move is worth", formatCentsWhole(coveragePriceCents))}
             </span>
           ) : null}
         </span>
@@ -58,7 +58,7 @@ export function CostBreakdown({
                     {t("Less what the best driver pays in preferences")}
                   </span>
                   <span className="text-success-foreground text-xs font-medium tabular-nums">
-                    {formatCents(-preferenceFloorCents)}
+                    {formatCentsWhole(-preferenceFloorCents)}
                   </span>
                 </div>
               ) : null}
@@ -105,7 +105,7 @@ function CostLines({
                     credit ? "text-success-foreground" : "text-muted-foreground",
                   )}
                 >
-                  {formatCents(line.cents)}
+                  {formatCentsWhole(line.cents)}
                 </span>
               </div>
               <div className="bg-muted h-1 w-full overflow-hidden rounded-full">

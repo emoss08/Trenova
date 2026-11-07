@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchmarketrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchplanpricerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/documentshipmentdraftrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/driverpositioningrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/ratingreviewrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/recurringshipmentrepository"
@@ -63,7 +64,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchlearningservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchmarketservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchplanservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/driverpositioningservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/etatrigger"
+	"github.com/emoss08/trenova/internal/modules/operations/app/freightoutlookservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/globalsearchservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
@@ -116,6 +119,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchmarketports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -215,6 +220,19 @@ func SharedOptions() fx.Option {
 				fx.As(new(demandforecastports.Service)),
 			),
 			demandforecastcontract.NewStarter,
+			fx.Annotate(
+				driverpositioningrepository.New,
+				fx.As(fx.Self()),
+				fx.As(new(driverpositioningports.LiveReader)),
+			),
+			fx.Annotate(
+				driverpositioningservice.New,
+				fx.As(new(driverpositioningports.Service)),
+			),
+			fx.Annotate(
+				freightoutlookservice.New,
+				fx.As(new(freightoutlookports.Service)),
+			),
 			fx.Annotate(
 				dispatchlearningservice.New,
 				fx.As(fx.Self()),

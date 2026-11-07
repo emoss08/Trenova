@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { RateConfirmationActions } from "@/components/carrier-assignment/rate-confirmation-actions";
 import { VerifyEquipmentDialog } from "@/components/carrier-assignment/verify-equipment-dialog";
@@ -14,6 +13,7 @@ import type {
 import { dispatchConsoleQueries } from "@/lib/queries/dispatch-console";
 import type { TimeRange } from "@/lib/timeline/time-scale";
 import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
+import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import {
   Building07Icon,
@@ -32,6 +32,7 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
 import {
@@ -39,17 +40,16 @@ import {
   OrganizationCapability,
 } from "@trenova/shared/types/organization-capability";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { previousAssignmentOf } from "./assignment-input";
 import { CandidateList, isPickable, MAX_HOTKEY_RANK } from "./candidate-list";
 import { InspectorSkeleton } from "./console-skeletons";
-import { DriverInspector } from "./driver-inspector";
-import { InspectorScroll } from "./inspector-scroll";
 import { formatMiles, pickupState } from "./dispatch-vocabulary";
-import { formatWhen } from "./format-when";
+import { DriverInspector } from "./driver-inspector";
 import { FailedApproval } from "./failed-approval";
+import { formatWhen } from "./format-when";
+import { InspectorScroll } from "./inspector-scroll";
 import { NovaProposalPanel, useProposalApproval, type DeclineDraft } from "./nova-proposal-panel";
 import { PlanPricePanel } from "./plan-price-panel";
 import { TenderHistory } from "./tender-history";
@@ -79,16 +79,16 @@ function CarrierCoverageCard({ move }: { move: DispatchBoardMove }) {
   const [verifyOpen, setVerifyOpen] = useState(false);
 
   return (
-    <div className="bg-card border-border flex flex-col gap-1.5 rounded-md border px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 rounded-md border border-border bg-card px-3 py-2.5">
       <div className="flex items-center gap-1.5">
-        <Building07Icon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        <Building07Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
         <span className="truncate text-xs font-medium">{move.assignedCarrierName}</span>
         <Badge variant="success" className="h-4 shrink-0 rounded-md px-1 text-3xs">
           {t("Carrier")}
         </Badge>
       </div>
       {move.carrierTotalCost != null && (
-        <span className="text-muted-foreground text-2xs tabular-nums">
+        <span className="text-2xs text-muted-foreground tabular-nums">
           {t("Total cost {0}", formatCurrency(move.carrierTotalCost))}
         </span>
       )}
@@ -169,7 +169,7 @@ function TenderCoverageCard({
   }
 
   return (
-    <div className="bg-card border-border flex flex-col gap-1.5 rounded-md border px-3 py-2.5">
+    <div className="flex flex-col gap-1.5 rounded-md border border-border bg-card px-3 py-2.5">
       {isLoading ? (
         <Skeleton className="h-20 rounded-md" />
       ) : liveTender ? (
@@ -488,12 +488,12 @@ function MoveInspector({
   );
 
   return (
-    <div ref={scopeRef} className="animate-panel-in flex min-h-0 flex-1 flex-col">
+    <div ref={scopeRef} className="flex min-h-0 flex-1 animate-panel-in flex-col bg-card">
       <InspectorScroll className="flex flex-col gap-3 p-3.5">
         <MoveHeader move={move} nowSeconds={nowSeconds} onClose={onClose} />
 
         {outsideWindow ? (
-          <div className="bg-brand-subtle border-brand/30 flex items-start gap-2 rounded-md border px-3 py-2.5 text-xs">
+          <div className="flex items-start gap-2 rounded-md border border-brand/30 bg-brand-subtle px-3 py-2.5 text-xs">
             <CalendarIcon className="mt-px size-3.5 shrink-0" aria-hidden />
             <div>
               <span className="font-medium">{t("Outside this window.")}</span>{" "}
@@ -514,9 +514,9 @@ function MoveInspector({
         ) : null}
 
         {move.isCovered && !isCarrierCovered ? (
-          <div className="bg-success-subtle border-success/30 flex items-start gap-2 rounded-md border px-3 py-2.5 text-xs">
+          <div className="flex items-start gap-2 rounded-md border border-success/30 bg-success-subtle px-3 py-2.5 text-xs">
             <CheckCircleIcon
-              className="text-success-foreground mt-px size-3.5 shrink-0"
+              className="mt-px size-3.5 shrink-0 text-success-foreground"
               aria-hidden
             />
             <div className="min-w-0 flex-1">
@@ -526,7 +526,7 @@ function MoveInspector({
                   : t("Covered by {0}", move.assignedWorkerName)}
               </span>
               {canAssign ? (
-                <span className="text-muted-foreground block">
+                <span className="block text-muted-foreground">
                   {t("Pick another driver below to reassign it.")}
                 </span>
               ) : null}
@@ -580,7 +580,7 @@ function MoveInspector({
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1"
+                className="flex-1 bg-background"
                 disabled={actions.isAssigning}
                 onClick={() => openCarrierAssign(move)}
               >
@@ -592,7 +592,7 @@ function MoveInspector({
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1"
+                className="flex-1 bg-background"
                 disabled={actions.isAssigning}
                 onClick={() => openTender(move)}
               >
@@ -633,7 +633,7 @@ function MoveInspector({
 
         {tenderHistory}
       </InspectorScroll>
-      <footer className="border-border text-muted-foreground flex flex-wrap gap-x-3.5 gap-y-1 border-t px-3.5 py-2 text-2xs">
+      <footer className="flex flex-wrap gap-x-3.5 gap-y-1 border-t border-border px-3.5 py-2 text-2xs text-muted-foreground">
         {candidatesQuery.dataUpdatedAt > 0 ? (
           <span>
             {t("Ranked {0}", formatUnixTime(Math.floor(candidatesQuery.dataUpdatedAt / 1000)))}
