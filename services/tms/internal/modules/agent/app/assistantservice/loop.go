@@ -56,6 +56,7 @@ type TurnRequest struct {
 	Facts          []string
 	Anchors        []agentturn.RuntimeAnchor
 	TrenovaWritten bool
+	Asked          string
 	EarlierFiles   map[string]string
 	// OutsideText says the turn's input carries text written outside the
 	// organization, such as a portal's answer a wait picked up.
@@ -123,6 +124,8 @@ func (s *Service) admit(
 		Context:             runtimeContext,
 		History:             req.History,
 		Input:               req.Input,
+		TrenovaWritten:      req.TrenovaWritten,
+		Asked:               req.Asked,
 		PreferredProviderID: req.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
 		// default on the agent is only where the order starts.

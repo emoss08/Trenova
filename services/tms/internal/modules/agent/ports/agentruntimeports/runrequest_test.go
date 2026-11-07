@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,6 +45,24 @@ func TestAsk_IsOnlyWhatAPersonTyped(t *testing.T) {
 			want: "",
 		},
 	}
+	cases["a turn Trenova opened after a decision"] = struct {
+		req  agentruntimeports.RunRequest
+		want string
+	}{
+		req: agentruntimeports.RunRequest{
+			Input:          "Approved billing_approve_queue_item, and it ran.\nDecision on proposal ap_1",
+			TrenovaWritten: true,
+			Asked:          "Watch this and post it once I'm done",
+		},
+		want: "Watch this and post it once I'm done",
+	}
+	cases["a turn Trenova opened before the person typed anything"] = struct {
+		req  agentruntimeports.RunRequest
+		want string
+	}{
+		req:  agentruntimeports.RunRequest{Input: "A wait ended", TrenovaWritten: true},
+		want: "",
+	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -51,4 +70,21 @@ func TestAsk_IsOnlyWhatAPersonTyped(t *testing.T) {
 			assert.Equal(t, tc.want, tc.req.Ask())
 		})
 	}
+}
+
+func TestLastAsked_IsTheLastMessageThePersonTyped(t *testing.T) {
+	t.Parallel()
+
+	history := []conversation.Message{
+		{Role: conversation.RoleUser, Kind: conversation.MessageKindMessage,
+			Content: "Watch this and post it once I'm done"},
+		{Role: conversation.RoleAssistant, Content: "I'm watching it."},
+		{Role: conversation.RoleUser, Kind: conversation.MessageKindDecisionNote,
+			Content: "Approved billing_approve_queue_item"},
+		{Role: conversation.RoleUser, Kind: conversation.MessageKindWaitNote,
+			Content: "The wait ended"},
+	}
+
+	assert.Equal(t, "Watch this and post it once I'm done", agentruntimeports.LastAsked(history))
+	assert.Empty(t, agentruntimeports.LastAsked(nil))
 }

@@ -128,6 +128,11 @@ type RunRequest struct {
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string
+	// TrenovaWritten says Input is Trenova's own note, such as a decision on
+	// a proposal or a wait picked up, rather than words the person typed.
+	// Asked is then the last thing the person did type, from LastAsked.
+	TrenovaWritten bool
+	Asked          string
 	Emit    kernelports.AssistantStreamEmitter
 	// PreferredProviderID is the reader's own choice for this turn, which wins
 	// over the definition's. An administrator pins a default for everyone on
@@ -193,12 +198,32 @@ type RunRequest struct {
 	UsageFeature aiusage.Feature
 }
 
+// Ask is what the person asked for in their own words. A turn Trenova opened
+// in the conversation answers the last thing they typed: quoting its note
+// put "Decision on proposal … Tell the person in one or two sentences" on a
+// proposal card as if the person had written it.
 func (r *RunRequest) Ask() string {
 	if r.Unattended || r.Delegation != nil {
 		return ""
 	}
+	if r.TrenovaWritten {
+		return r.Asked
+	}
 
 	return r.Input
+}
+
+// LastAsked is the last message the person typed in the conversation.
+func LastAsked(history []conversation.Message) string {
+	for idx := len(history) - 1; idx >= 0; idx-- {
+		message := &history[idx]
+		if message.Role == conversation.RoleUser &&
+			(message.Kind == "" || message.Kind == conversation.MessageKindMessage) {
+			return message.Content
+		}
+	}
+
+	return ""
 }
 
 func (r *RunRequest) AttributedPurpose() kernelports.AIUsagePurpose {

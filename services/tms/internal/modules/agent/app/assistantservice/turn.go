@@ -51,7 +51,10 @@ type TurnPlan struct {
 	Input    string `json:"input"`
 	FollowUp bool   `json:"followUp"`
 	// WaitNote says the input is the note of a wait the turn picks up.
-	WaitNote bool                `json:"waitNote,omitempty"`
+	WaitNote bool `json:"waitNote,omitempty"`
+	// Asked is, on a follow-up or a wait picked up, the last thing the person
+	// typed, which a proposal the turn makes is said to answer.
+	Asked    string              `json:"asked,omitempty"`
 	Decision agentguard.Decision `json:"decision"`
 	// Page, Attachments and Mentions are what the person handed over with
 	// the question. They are kept on the question when it is saved.
@@ -107,6 +110,8 @@ func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentruntime
 		Actor:               actor,
 		Context:             agentturn.RuntimeContext{Timezone: p.Timezone},
 		Input:               p.Input,
+		TrenovaWritten:      p.FollowUp || p.WaitNote,
+		Asked:               p.Asked,
 		PreferredProviderID: p.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
 		// default on the agent is only where the order starts.
@@ -239,6 +244,10 @@ func (s *Service) prepareTurn(
 
 	s.keepProviderChoice(ctx, thread, req, actor)
 
+	asked := ""
+	if followUp || resumesWait {
+		asked = agentruntimeports.LastAsked(history)
+	}
 	turnReq := &TurnRequest{
 		Definition:          definition,
 		Actor:               actor,
@@ -256,6 +265,7 @@ func (s *Service) prepareTurn(
 		Facts:               thread.PinnedFacts,
 		Anchors:             checks.anchors,
 		TrenovaWritten:      followUp || resumesWait,
+		Asked:               asked,
 		EarlierFiles:        checks.earlierFiles,
 		OutsideText:         outsideText,
 		CodeMode:            req.CodeMode,
@@ -268,6 +278,7 @@ func (s *Service) prepareTurn(
 		Input:               content,
 		FollowUp:            followUp,
 		WaitNote:            resumesWait,
+		Asked:               asked,
 		Decision:            decision,
 		Page:                page,
 		Attachments:         attachments,
