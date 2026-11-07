@@ -18,10 +18,18 @@ function validation(field, message) {
   throw error;
 }
 
+const DETAIL_FIELDS = new Set([
+  "changes",
+  "previousState",
+  "currentState",
+  "metadata",
+  "userAgent",
+  "traceId",
+  "apiKeyId",
+]);
+
 function summary(entry) {
-  const { changes, previousState, currentState, metadata, userAgent, traceId, apiKeyId, ...row } =
-    entry;
-  return row;
+  return Object.fromEntries(Object.entries(entry).filter(([key]) => !DETAIL_FIELDS.has(key)));
 }
 
 function matchesFilter(entry, filter) {
