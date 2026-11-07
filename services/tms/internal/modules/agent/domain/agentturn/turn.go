@@ -100,6 +100,10 @@ type RuntimeContext struct {
 	// rather than proposing the same change again.
 	PendingProposals []PendingProposal
 	DecisionRequests bool
+	// OpenWaits are the waits this agent set in the conversation that have
+	// not ended, so it cancels one whose work it did itself rather than
+	// being started again later to do it twice.
+	OpenWaits []OpenWait
 	// Artifacts says the conversation keeps what the turn produces beside it:
 	// lists as tables, records as cards, and documents the model publishes.
 	Artifacts bool
@@ -253,6 +257,12 @@ type RuntimePage struct {
 }
 
 // PendingProposal is one undecided proposal as the prompt names it.
+type OpenWait struct {
+	WaitID      pulid.ID
+	Description string
+	Then        string
+}
+
 type PendingProposal struct {
 	ProposalID pulid.ID
 	PlanID     pulid.ID

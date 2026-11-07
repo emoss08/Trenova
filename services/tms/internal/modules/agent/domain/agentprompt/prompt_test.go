@@ -851,3 +851,28 @@ func TestBuildSystemPrompt_NamesThePersonsClockWhereItIsNotTheOrganizations(t *t
 	assert.NotContains(t, agentprompt.BuildSystemPrompt(definition, rc), "Their own clock",
 		"a person on the organization's clock is not told it twice")
 }
+
+// A model that did the work a wait was for, because the person told it they
+// had fixed the record, left the wait set and was started again to do it
+// twice. The prompt names each open wait and says to cancel it.
+func TestBuildSystemPrompt_NamesTheOpenWaitsToCancel(t *testing.T) {
+	t.Parallel()
+
+	d := &agentdefinition.Definition{Name: "Billing exceptions", Instructions: "Bill."}
+	d.ApplyDefaults()
+
+	prompt := agentprompt.BuildSystemPrompt(d, agentturn.RuntimeContext{
+		OpenWaits: []agentturn.OpenWait{{
+			WaitID:      pulid.ID("awt_01JWAITING0000000000000000"),
+			Description: "Fuel surcharge check settled on INV2511000148",
+			Then:        "propose approving the item",
+		}},
+	})
+
+	assert.Contains(t, prompt, "## Waits you set in this conversation")
+	assert.Contains(t, prompt, "- Fuel surcharge check settled on INV2511000148 "+
+		"(waitId awt_01JWAITING0000000000000000): then propose approving the item")
+	assert.Contains(t, prompt, "cancel it with agent_cancel_wait")
+	assert.NotContains(t, agentprompt.BuildSystemPrompt(d, agentturn.RuntimeContext{}),
+		"Waits you set")
+}

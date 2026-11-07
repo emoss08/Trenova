@@ -266,6 +266,7 @@ func (s *Service) prepareTurn(
 		Anchors:             checks.anchors,
 		TrenovaWritten:      followUp || resumesWait,
 		Asked:               asked,
+		OpenWaits:           OpenWaitsFor(definition, checks.waits),
 		EarlierFiles:        checks.earlierFiles,
 		OutsideText:         outsideText,
 		CodeMode:            req.CodeMode,

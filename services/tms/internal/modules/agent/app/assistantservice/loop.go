@@ -57,6 +57,7 @@ type TurnRequest struct {
 	Anchors        []agentturn.RuntimeAnchor
 	TrenovaWritten bool
 	Asked          string
+	OpenWaits      []agentturn.OpenWait
 	EarlierFiles   map[string]string
 	// OutsideText says the turn's input carries text written outside the
 	// organization, such as a portal's answer a wait picked up.
@@ -116,6 +117,7 @@ func (s *Service) admit(
 
 	runtimeContext.Frame = agenttaskframe.ChatFrame(decision.Goal, decision.Need)
 	runtimeContext.PendingProposals = proposaloutcomes.Pending(req.Proposals)
+	runtimeContext.OpenWaits = req.OpenWaits
 	runtimeContext.Anchors = req.Anchors
 
 	return decision, &agentruntimeports.RunRequest{

@@ -8,9 +8,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -218,4 +221,49 @@ func TestAdmit_ANoteTrenovaWroteIsNotClassified(t *testing.T) {
 	decision, runReq = svc.admit(t.Context(), req)
 	assert.False(t, decision.Allowed, "a person's message is still classified")
 	assert.Nil(t, runReq)
+}
+
+// A turn Trenova opened carries the person's own words for its proposals, and
+// every turn is told the agent's open waits.
+func TestAdmit_CarriesWhatThePersonAskedAndTheOpenWaits(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{
+		logger:   zap.NewNop(),
+		guard:    patientGuard(&countingClassifier{}),
+		contexts: assistanttest.BareContexts{},
+	}
+	req := admitRequest()
+	req.Input = "Approved billing_approve_queue_item, and it ran."
+	req.TrenovaWritten = true
+	req.Asked = "Watch this and post it once I'm done"
+	req.OpenWaits = []agentturn.OpenWait{{WaitID: pulid.MustNew("awt_"), Description: "x"}}
+
+	_, runReq := svc.admit(t.Context(), req)
+
+	require.NotNil(t, runReq)
+	assert.Equal(t, "Watch this and post it once I'm done", runReq.Ask())
+	assert.Equal(t, req.OpenWaits, runReq.Context.OpenWaits)
+}
+
+func TestOpenWaitsFor_KeepsOnlyTheAgentsOwnWaits(t *testing.T) {
+	t.Parallel()
+
+	definition := &agentdefinition.Definition{ID: pulid.MustNew("agdef_")}
+	own := &agentwait.Wait{
+		ID:                pulid.MustNew("awt_"),
+		AgentDefinitionID: definition.ID,
+		Description:       "Fuel surcharge check settled",
+		Then:              "propose approving it",
+	}
+	other := &agentwait.Wait{ID: pulid.MustNew("awt_"), AgentDefinitionID: pulid.MustNew("agdef_")}
+
+	got := OpenWaitsFor(definition, []*agentwait.Wait{own, other})
+
+	assert.Equal(t, []agentturn.OpenWait{{
+		WaitID:      own.ID,
+		Description: "Fuel surcharge check settled",
+		Then:        "propose approving it",
+	}}, got, "another agent's wait is not this agent's to cancel")
+	assert.Empty(t, OpenWaitsFor(nil, []*agentwait.Wait{own}))
 }

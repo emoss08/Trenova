@@ -249,6 +249,7 @@ func BuildSystemPromptParts(
 	}
 
 	section(&volatile, buildPendingProposalSection(rc.PendingProposals, rc.DecisionRequests))
+	section(&volatile, buildOpenWaitSection(rc.OpenWaits))
 
 	return SystemPrompt{Stable: stable.String(), Volatile: volatile.String()}
 }
@@ -949,6 +950,36 @@ func buildOutputSection(d *agentdefinition.Definition) string {
 		"arithmetic on the page, or " +
 		"write out the records you are weighing up. The person wants the answer, not the " +
 		"process that produced it."
+}
+
+// buildOpenWaitSection tells the model the waits it set here that are still
+// open. Without it a model that did the work a wait was for, because the
+// person told it they had fixed the record, left the wait set, and was
+// started again later to do the same work twice.
+func buildOpenWaitSection(waits []agentturn.OpenWait) string {
+	if len(waits) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	builder.WriteString("## Waits you set in this conversation\n")
+	builder.WriteString("These are still open: each starts you again when what it waits for " +
+		"happens. When you do the work one was for yourself, or it no longer matters, cancel " +
+		"it with agent_cancel_wait and its waitId in the same turn. Do not set a second wait " +
+		"on the same thing.")
+	for _, wait := range waits {
+		builder.WriteString("\n- ")
+		builder.WriteString(wait.Description)
+		builder.WriteString(" (waitId ")
+		builder.WriteString(wait.WaitID.String())
+		builder.WriteString(")")
+		if then := strings.TrimSpace(wait.Then); then != "" {
+			builder.WriteString(": then ")
+			builder.WriteString(then)
+		}
+	}
+
+	return builder.String()
 }
 
 const maxPendingProposalRationaleChars = 200

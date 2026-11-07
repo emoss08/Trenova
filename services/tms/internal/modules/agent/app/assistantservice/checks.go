@@ -9,11 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
 )
 
 // turnChecks is everything a question is checked against and read with
@@ -38,6 +43,7 @@ type turnChecks struct {
 	historyErr error
 
 	proposals    []agentruntimeports.ProposalOutcome
+	waits        []*agentwait.Wait
 	subject      *agentturn.RuntimeSubject
 	anchors      []agentturn.RuntimeAnchor
 	earlierFiles map[string]string
@@ -124,6 +130,9 @@ func (s *Service) checkTurn(
 		checks.proposals = s.outcomes().Outcomes(ctx, thread, req.TenantInfo)
 	})
 	wg.Go(func() {
+		checks.waits = s.openWaits(ctx, thread, req.TenantInfo)
+	})
+	wg.Go(func() {
 		checks.subject = s.describeSubject(ctx, thread, actor, req.TenantInfo)
 	})
 	wg.Go(func() {
@@ -170,4 +179,51 @@ func (s *Service) directedTask(
 		Delegate: agentturn.AsDelegate(definition),
 		Task:     strings.TrimSpace(req.Content),
 	}, nil
+}
+
+// openWaits are the conversation's waits that have not ended. A turn that
+// cannot read them answers without them: they only help it tidy up.
+func (s *Service) openWaits(
+	ctx context.Context,
+	thread *conversation.Thread,
+	tenant pagination.TenantInfo,
+) []*agentwait.Wait {
+	if s.waits == nil {
+		return nil
+	}
+	open, err := s.waits.ListOpenByThreads(ctx, &agentwaitports.ListOpenWaitsByThreadsRequest{
+		TenantInfo: tenant,
+		UserID:     thread.UserID,
+		ThreadIDs:  []pulid.ID{thread.ID},
+	})
+	if err != nil {
+		s.logger.Warn("could not read the conversation's open waits", zap.Error(err))
+		return nil
+	}
+
+	return open[thread.ID]
+}
+
+// OpenWaitsFor are the open waits the agent itself set, as the turn is told
+// them; it cannot cancel another agent's.
+func OpenWaitsFor(
+	definition *agentdefinition.Definition,
+	waits []*agentwait.Wait,
+) []agentturn.OpenWait {
+	if definition == nil || len(waits) == 0 {
+		return nil
+	}
+	out := make([]agentturn.OpenWait, 0, len(waits))
+	for _, wait := range waits {
+		if wait.AgentDefinitionID != definition.ID {
+			continue
+		}
+		out = append(out, agentturn.OpenWait{
+			WaitID:      wait.ID,
+			Description: wait.Description,
+			Then:        wait.Then,
+		})
+	}
+
+	return out
 }
