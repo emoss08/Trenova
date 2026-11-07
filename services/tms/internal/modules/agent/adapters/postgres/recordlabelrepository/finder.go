@@ -26,8 +26,8 @@ func (l *Labeler) Find(
 	resource permission.Resource,
 	id pulid.ID,
 ) (*agentwaitports.FoundRecord, error) {
-	if src, ok := sources[resource]; ok {
-		return dbtx.Read(ctx, l.db, func(ctx context.Context) (*agentwaitports.FoundRecord, error) {
+	return dbtx.Read(ctx, l.db, func(ctx context.Context) (*agentwaitports.FoundRecord, error) {
+		if src, ok := sources[resource]; ok {
 			rows, err := keel.Into[labelRow](ctx, l.db.Keel(ctx), src([]pulid.ID{id}))
 			if err != nil {
 				return nil, err
@@ -41,20 +41,20 @@ func (l *Labeler) Find(
 				Exists: true,
 				Label:  strings.TrimSpace(rows[0].Label),
 			}, nil
-		})
-	}
+		}
 
-	read := l.reader(resource)
-	if read == nil {
-		return &agentwaitports.FoundRecord{}, nil
-	}
-	found, err := read(ctx, tenant, []pulid.ID{id})
-	if err != nil {
-		return nil, err
-	}
-	label, exists := found[id]
+		read := l.reader(resource)
+		if read == nil {
+			return &agentwaitports.FoundRecord{}, nil
+		}
+		found, err := read(ctx, tenant, []pulid.ID{id})
+		if err != nil {
+			return nil, err
+		}
+		label, exists := found[id]
 
-	return &agentwaitports.FoundRecord{Known: true, Exists: exists, Label: label}, nil
+		return &agentwaitports.FoundRecord{Known: true, Exists: exists, Label: label}, nil
+	})
 }
 
 func (l *Labeler) UserNames(
