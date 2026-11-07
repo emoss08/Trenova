@@ -1,6 +1,6 @@
 ---
 path: /organization/data-retention
-aliases: [retention policy, purge settings, audit log retention, EDI payload retention, data purge, AI audit trail retention, AI feedback retention]
+aliases: [retention policy, purge settings, audit log retention, legal hold retention, EDI payload retention, data purge, AI audit trail retention, AI feedback retention]
 related:
   - /admin/audit-logs
   - /admin/agent-control
@@ -21,9 +21,11 @@ audit history or replay EDI traffic.
 ## Tasks
 
 ### Change how long audit entries are kept
-Keywords: audit history, audit log retention, keep audit logs
+Keywords: audit history, audit log retention, keep audit logs, financial audit retention, seven years
 1. Open [Data retention](/organization/data-retention).
-2. Enter the number of days for **Audit entries**. It must be at least 1.
+2. Under **Audit**, enter the number of days for each kind of entry: **Reads and downloads** (at
+   least 90), **Operational changes** (at least two years), **Financial changes** (at least seven
+   years) and **Security entries** (at least two years). None can be kept more than 3,650 days.
 3. Select **Save changes**.
 
 ### Change how long the AI audit trail is kept
@@ -45,7 +47,10 @@ Keywords: EDI purge, X12 retention, raw file retention, blank payloads
 Opening the page needs read access to the organization; people without update access see the
 table read-only, and **Save changes** appears only once something has changed.
 
-Audit entries older than the audit window are deleted by the nightly purge. Events on the
+Audit entries older than their kind's window are deleted by the nightly purge, unless a legal
+hold on [Audit log](/admin/audit-logs) covers them. The shortest windows are floors that cannot be
+lowered, so the trail always meets common audit requirements. A change to these windows is itself
+recorded as a security entry. Events on the
 [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly
 sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI,
 the purge blanks the raw contents but keeps the file and message records and their metadata. A

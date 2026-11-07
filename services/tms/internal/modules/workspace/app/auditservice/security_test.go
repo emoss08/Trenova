@@ -23,15 +23,18 @@ import (
 type capturingAuditService struct {
 	auditports.AuditService
 
+	ctx    context.Context
 	params *auditports.LogActionParams
 	entry  *audit.Entry
 	err    error
 }
 
 func (c *capturingAuditService) LogAction(
+	ctx context.Context,
 	params *auditports.LogActionParams,
 	opts ...auditports.LogOption,
 ) error {
+	c.ctx = ctx
 	c.params = params
 	c.entry = &audit.Entry{Metadata: map[string]any{}}
 	for _, opt := range opts {
@@ -69,6 +72,7 @@ func TestSecurityAuditorRecordsACriticalEntryWithTheRequest(t *testing.T) {
 		BusinessUnitID: tenant.BuID,
 		Before:         map[string]any{"status": "active"},
 		After:          map[string]any{"status": "revoked"},
+		Action:         "api_key.revoked",
 		Comment:        "API key revoked",
 		Metadata:       map[string]any{"reason": "rotation"},
 	})
@@ -80,10 +84,13 @@ func TestSecurityAuditorRecordsACriticalEntryWithTheRequest(t *testing.T) {
 	assert.Equal(t, tenant.OrgID, capture.params.OrganizationID)
 	assert.Equal(t, "active", capture.params.PreviousState["status"])
 	assert.Equal(t, "revoked", capture.params.CurrentState["status"])
-	assert.Equal(t, audit.CategoryUser, capture.entry.Category)
-	assert.Equal(t, "192.0.2.10", capture.entry.IPAddress)
-	assert.Equal(t, "admin-browser", capture.entry.UserAgent)
-	assert.Equal(t, "req-7", capture.entry.CorrelationID)
+	assert.Equal(t, audit.CategorySecurity, capture.entry.Category)
+	assert.True(t, capture.entry.Critical)
+	assert.Equal(t, "api_key.revoked", capture.entry.Action)
+	meta, ok := requestmeta.From(capture.ctx)
+	require.True(t, ok, "the request reaches the audit service, which records it")
+	assert.Equal(t, "192.0.2.10", meta.ClientIP)
+	assert.Equal(t, "req-7", meta.RequestID)
 	assert.Equal(t, "API key revoked", capture.entry.Comment)
 	assert.Equal(t, "rotation", capture.entry.Metadata["reason"])
 	assert.NotEmpty(t, capture.entry.Changes)

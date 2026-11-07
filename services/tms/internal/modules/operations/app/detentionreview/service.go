@@ -440,7 +440,7 @@ func (s *Service) saveWaiver(
 			saved.WaivedAmount.StringFixed(2), saved.Currency, p.Reason, p.Note),
 		change.Now)
 
-	s.effects.Audit(change.Before, saved, p.UserID, "Detention charge waived")
+	s.effects.Audit(ctx, change.Before, saved, p.UserID, "Detention charge waived")
 	s.effects.PublishBillingHoldChange(ctx, change.Before, saved, p.UserID)
 
 	return saved, nil
@@ -468,7 +468,7 @@ func (s *Service) Approve(
 	s.effects.AppendEvidence(ctx, saved, detentionevidence.EvidenceKindStatusChange,
 		detentionevidence.EvidenceSourceManual, summary, change.Now)
 
-	s.effects.Audit(change.Before, saved, p.UserID, "Detention charge approved")
+	s.effects.Audit(ctx, change.Before, saved, p.UserID, "Detention charge approved")
 	s.effects.PublishBillingHoldChange(ctx, change.Before, saved, p.UserID)
 
 	return saved, nil
@@ -495,7 +495,7 @@ func (s *Service) Dispute(
 		detentionevidence.EvidenceSourceManual,
 		"Customer disputed the charge: "+p.Note, now)
 
-	s.effects.Audit(original, saved, p.UserID, "Detention charge disputed")
+	s.effects.Audit(ctx, original, saved, p.UserID, "Detention charge disputed")
 	s.effects.PublishBillingHoldChange(ctx, original, saved, p.UserID)
 
 	return saved, nil
@@ -537,7 +537,7 @@ func (s *Service) Escalate(
 		detentionevidence.EvidenceSourceManual,
 		EscalationSummary(p.Reason), now)
 
-	s.effects.Audit(&original, saved, p.UserID, "Detention escalated: "+p.Reason)
+	s.effects.Audit(ctx, &original, saved, p.UserID, "Detention escalated: "+p.Reason)
 	s.effects.PublishBillingHoldChange(ctx, &original, saved, p.UserID)
 
 	return saved, nil

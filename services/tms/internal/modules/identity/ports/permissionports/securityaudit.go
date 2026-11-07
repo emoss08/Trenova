@@ -12,6 +12,7 @@ type SecurityChange struct {
 	Resource       permission.Resource
 	ResourceID     string
 	Operation      permission.Operation
+	Action         string
 	Actor          kernelports.AuditActor
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID

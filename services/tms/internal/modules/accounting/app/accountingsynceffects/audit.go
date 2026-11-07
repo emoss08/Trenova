@@ -1,6 +1,8 @@
 package accountingsynceffects
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -20,7 +22,7 @@ type AuditEntry struct {
 	Comment    string
 }
 
-func (e *Effects) LogAudit(entry *AuditEntry) {
+func (e *Effects) LogAudit(ctx context.Context, entry *AuditEntry) {
 	params := &auditports.LogActionParams{
 		Resource:       entry.Resource,
 		ResourceID:     entry.ResourceID.String(),
@@ -31,7 +33,7 @@ func (e *Effects) LogAudit(entry *AuditEntry) {
 		OrganizationID: entry.Tenant.OrgID,
 		BusinessUnitID: entry.Tenant.BuID,
 	}
-	if err := e.audit.LogAction(params, auditservice.WithComment(entry.Comment)); err != nil {
+	if err := e.audit.LogAction(ctx, params, auditservice.WithComment(entry.Comment)); err != nil {
 		e.l.Error("failed to log accounting sync audit", zap.Error(err))
 	}
 }

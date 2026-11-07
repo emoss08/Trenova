@@ -851,7 +851,7 @@ func (s *Service) runSynchronousFinalization(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     createdDoc.GetID().String(),
 		Operation:      permission.OpCreate,

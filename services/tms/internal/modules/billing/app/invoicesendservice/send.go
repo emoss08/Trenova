@@ -245,7 +245,7 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		updated,
 		actor.AuditActor(),
 		permission.OpSubmit,
@@ -427,7 +427,7 @@ func (s *Service) SendFromWorkflow(
 	if err != nil {
 		return nil, err
 	}
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		updated,
 		actor.AuditActor(),
 		permission.OpSubmit,
@@ -510,7 +510,7 @@ func (s *Service) markInvoiceSendFailed(
 		s.l.Error("failed to mark invoice send failure", zap.Error(err))
 		return
 	}
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		updated,
 		actor.AuditActor(),
 		permission.OpSubmit,

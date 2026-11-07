@@ -115,8 +115,8 @@ func TestCreatePermit_RecordsAnAuditEntry(t *testing.T) {
 
 	var captured *auditports.LogActionParams
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})
@@ -154,8 +154,8 @@ func TestWaiveRequirement_RecordsWhoAcceptedTheRiskAndWhy(t *testing.T) {
 
 	var captured *auditports.LogActionParams
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})
@@ -193,7 +193,7 @@ func TestWaiveRequirement_DoesNotAuditARejectedWaiver(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	auditService.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	auditService.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 // The service must stay usable where no audit service is wired, matching how

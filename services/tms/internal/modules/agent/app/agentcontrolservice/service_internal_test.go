@@ -163,8 +163,8 @@ func TestAgentControlAuditOptions_MoneyLimitChangesAreCritical(t *testing.T) {
 
 	assert.True(t, agentMoneyChanged(before, &after))
 	assert.False(t, agentMoneyChanged(before, before))
-	assert.Len(t, agentControlAuditOptions(t.Context(), before, &after), 3)
-	assert.Len(t, agentControlAuditOptions(t.Context(), before, before), 2)
+	assert.Len(t, agentControlAuditOptions(before, &after), 2)
+	assert.Len(t, agentControlAuditOptions(before, before), 1)
 }
 
 func TestUpdateRecordsTheVersionTheControlsBecome(t *testing.T) {

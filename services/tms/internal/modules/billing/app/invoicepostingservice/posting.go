@@ -125,7 +125,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 		posted = updated
 
-		s.rec.LogAction(
+		s.rec.LogAction(ctx,
 			updated,
 			auditActor,
 			permission.OpUpdate,
@@ -134,7 +134,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			"Invoice posted",
 		)
 		s.rec.PublishInvalidation(txCtx, updated, auditActor, "updated", updated)
-		s.logBillingQueuePosted(queueUpdate, auditActor)
+		s.logBillingQueuePosted(ctx, queueUpdate, auditActor)
 		s.rec.PublishBillingQueueInvalidation(txCtx, queueUpdate, auditActor)
 		s.notifyReconciliationWarning(txCtx, updated, legs)
 
@@ -175,7 +175,7 @@ func (s *Service) confirmQueuePosted(
 		return err
 	}
 
-	s.logBillingQueuePosted(queueUpdate, auditActor)
+	s.logBillingQueuePosted(ctx, queueUpdate, auditActor)
 	s.rec.PublishBillingQueueInvalidation(ctx, queueUpdate, auditActor)
 
 	return nil
@@ -485,6 +485,7 @@ func (s *Service) EnqueueAutoPost(
 }
 
 func (s *Service) logBillingQueuePosted(
+	ctx context.Context,
 	result *invoiceaction.PostedBillingQueueResult,
 	actor kernelports.AuditActor,
 ) {
@@ -492,7 +493,7 @@ func (s *Service) logBillingQueuePosted(
 		return
 	}
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceBillingQueue,
 		ResourceID:     result.Updated.ID.String(),
 		Operation:      permission.OpUpdate,

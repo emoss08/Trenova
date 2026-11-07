@@ -5,8 +5,10 @@ A dependency-free Node server that stands in for the TMS API, so the shipments b
 tracking page (`/shipment-tracking/<token>`), AI control (`/admin/agent-control`), Triage (`/triage`, the
 redesign of `/inbox`), the Desk (`/desk`), the Formula Studio
 (`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries, the
-Lading studio (`/edi/lading/<partnerId>`) and the integrations page with its accounting setup
-(`/admin/integrations?type=QuickBooksOnline`) can be run, clicked through and screenshotted without Postgres, Redis,
+Lading studio (`/edi/lading/<partnerId>`), the integrations page with its accounting setup
+(`/admin/integrations?type=QuickBooksOnline`), the audit log (`/admin/audit-logs`, with its
+exports, legal holds and alerts; `node e2e/mock-api/audit-screenshots.mjs` shoots every state) and
+Data retention (`/organization/data-retention`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
 

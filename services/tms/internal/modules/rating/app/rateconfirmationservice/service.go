@@ -132,7 +132,7 @@ func (s *Service) Generate(
 		return nil, err
 	}
 
-	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+	s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 		TenantInfo: tenantInfo,
 		Operation:  permission.OpCreate,
 		UserID:     actor.UserIDOrNil(),
@@ -338,7 +338,7 @@ func (s *Service) Send(
 		return nil, err
 	}
 
-	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+	s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 		TenantInfo: tenantInfo,
 		Operation:  permission.OpUpdate,
 		UserID:     tenantInfo.UserID,
@@ -372,7 +372,7 @@ func (s *Service) MarkConfirmed(
 		return nil, err
 	}
 
-	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+	s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 		TenantInfo: tenantInfo,
 		Operation:  permission.OpApprove,
 		UserID:     tenantInfo.UserID,
@@ -457,7 +457,7 @@ func (s *Service) Void(
 
 	s.revokeTokens(ctx, tenantInfo, updated.ID)
 
-	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+	s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 		TenantInfo: tenantInfo,
 		Operation:  permission.OpUpdate,
 		UserID:     tenantInfo.UserID,

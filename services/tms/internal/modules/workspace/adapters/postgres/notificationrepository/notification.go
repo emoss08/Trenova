@@ -84,6 +84,24 @@ func (r *repository) ExistsRecent(
 	})
 }
 
+func (r *repository) NotifiedUsers(
+	ctx context.Context,
+	req notificationports.ExistsRecentNotificationRequest,
+) ([]pulid.ID, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		n := notificationdb.Notifications
+		return keel.Into[pulid.ID](ctx, r.db.Keel(ctx), notifications(ctx, req.OrganizationID).
+			Pick(n.TargetUserID).
+			Where(
+				n.BusinessUnitID.Eq(req.BusinessUnitID),
+				n.EventType.Eq(req.EventType),
+				n.CorrelationID.Eq(req.CorrelationID),
+				n.CreatedAt.Gte(req.Since),
+				n.TargetUserID.IsNotNull(),
+			))
+	})
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *notification.Notification,

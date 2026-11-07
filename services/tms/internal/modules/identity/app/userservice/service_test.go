@@ -101,7 +101,7 @@ func setupTest(t *testing.T) *testDeps {
 
 // expectAuditLog arms the audit service for scenarios that mutate a user.
 func (d *testDeps) expectAuditLog() {
-	d.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	d.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 }
 
 func newTestUser() *tenant.User {
@@ -242,7 +242,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return(updated, nil)
 	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user1.ID).Return(nil).Once()
 	deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, user2.ID).Return(nil).Once()
-	deps.audit.On("LogActions", mock.Anything).Return(nil)
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
 
@@ -593,7 +593,7 @@ func TestUpdateMySettings_Success(t *testing.T) {
 	assert.Equal(t, user.EmailAddress, result.EmailAddress)
 	assert.Equal(t, domaintypes.TimeFormat24Hour, result.TimeFormat)
 	deps.repo.AssertExpectations(t)
-	deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 type passwordChangeFixture struct {
@@ -746,7 +746,7 @@ func TestChangeMyPassword_EndsEverySessionWhenAnotherCannotBeEnded(t *testing.T)
 	require.NoError(t, err)
 	assert.Empty(t, result.SessionToken)
 	f.deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
-	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 	require.Len(t, events.records, 1)
 	assert.Equal(t, iamports.SessionRevocationPasswordChange, events.records[0].MFAState)
 }
@@ -786,7 +786,7 @@ func TestChangeMyPassword_AuditsTheChangeEvenWhenNoSessionCanBeEnded(t *testing.
 
 	require.Error(t, err)
 	assert.Nil(t, result)
-	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 	f.deps.repo.AssertNotCalled(t, "GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo:         f.tenantInfo,
 		IncludeMemberships: true,
@@ -858,7 +858,7 @@ func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	deps.repo.AssertNotCalled(t, "UpdatePassword")
-	deps.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	deps.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 type refusingStepUp struct{}
@@ -993,7 +993,7 @@ func TestChangeMyPassword_KeepsTheCurrentCookieWorkingWhenTheAuditFails(t *testi
 	t.Parallel()
 
 	f := setupPasswordChange(t)
-	f.deps.audit.On("LogAction", mock.Anything, mock.Anything).
+	f.deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).
 		Return(errors.New("audit unavailable"))
 	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
 		Return([]*session.Session{f.current, f.other}, nil).

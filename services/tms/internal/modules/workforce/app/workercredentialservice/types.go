@@ -142,7 +142,7 @@ func (s *Service) CreateType(
 		return nil, err
 	}
 
-	s.auditType(created, nil, permission.OpCreate, userID, "Credential type created", log)
+	s.auditType(ctx, created, nil, permission.OpCreate, userID, "Credential type created", log)
 	s.publish(
 		ctx,
 		typeTenant(created),
@@ -190,7 +190,7 @@ func (s *Service) UpdateType(
 		return nil, err
 	}
 
-	s.auditType(updated, original, permission.OpUpdate, userID, "Credential type updated", log)
+	s.auditType(ctx, updated, original, permission.OpUpdate, userID, "Credential type updated", log)
 	s.publish(
 		ctx,
 		typeTenant(updated),
@@ -263,7 +263,7 @@ func (s *Service) changeTypeStatus(
 		return nil, err
 	}
 
-	s.auditType(
+	s.auditType(ctx,
 		saved,
 		original,
 		operation,

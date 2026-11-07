@@ -347,9 +347,9 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		return nil, err
 	}
 
-	s.logAudit(created, nil, actor.UserID, permission.OpCreate, "Customer payment posted")
+	s.logAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Customer payment posted")
 	for idx, inv := range invoices {
-		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.logInvoiceAudit(ctx, originalInvoices[idx], inv, actor.UserID)
 		s.announceInvoice(ctx, inv, actor)
 	}
 	return created, nil
@@ -490,7 +490,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(
+	s.logAudit(ctx,
 		payment,
 		&originalPayment,
 		actor.UserID,
@@ -498,7 +498,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 		"Customer payment unapplied amount applied",
 	)
 	for idx, inv := range invoices {
-		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.logInvoiceAudit(ctx, originalInvoices[idx], inv, actor.UserID)
 		s.announceInvoice(ctx, inv, actor)
 	}
 	return payment, nil
@@ -650,7 +650,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(
+	s.logAudit(ctx,
 		payment,
 		&originalPayment,
 		actor.UserID,
@@ -658,7 +658,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 		"Customer payment reversed",
 	)
 	for idx, inv := range invoices {
-		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.logInvoiceAudit(ctx, originalInvoices[idx], inv, actor.UserID)
 		s.announceInvoice(ctx, inv, actor)
 	}
 	return payment, nil
@@ -710,6 +710,7 @@ func cloneInvoices(invoices []*invoice.Invoice) []*invoice.Invoice {
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current *customerpayment.Payment,
 	previous *customerpayment.Payment,
 	userID pulid.ID,
@@ -732,7 +733,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log customer payment audit action",
 			zap.Error(err),
@@ -770,6 +771,7 @@ func (s *Service) announceInvoice(
 }
 
 func (s *Service) logInvoiceAudit(
+	ctx context.Context,
 	previous *invoice.Invoice,
 	current *invoice.Invoice,
 	userID pulid.ID,
@@ -787,7 +789,7 @@ func (s *Service) logInvoiceAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment("Invoice updated from customer payment application"),
 		auditservice.WithDiff(previous, current),

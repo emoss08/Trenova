@@ -19,9 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/sensitivetext"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -73,7 +73,7 @@ func aiAuditMetrics(registry *metrics.Registry) *aimetrics.AIAudit {
 func New(p Params) Components {
 	keyring := aiauditkeyring.New(&p.AIAuditConfig.Chain, p.Logger)
 	registryMetrics := aiAuditMetrics(p.Metrics)
-	masker := auditservice.NewSensitiveDataManager(&p.SecurityConfig.Encryption)
+	masker := sensitivetext.Scanner{}
 	redactor := aiauditredact.New(p.Registry, p.Policies, masker)
 
 	projector := aiauditprojector.New(&aiauditprojector.Params{

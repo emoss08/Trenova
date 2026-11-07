@@ -239,7 +239,7 @@ func TestCreate_Success(t *testing.T) {
 	created.OrganizationID = entity.OrganizationID
 
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -772,7 +772,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		Return([]*trailer.Trailer{original1, original2}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).
 		Return([]*trailer.Trailer{entity1, entity2}, nil)
-	deps.audit.On("LogActions", mock.Anything).Return(nil)
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
 
@@ -977,7 +977,7 @@ func TestCreate_AuditLogError(t *testing.T) {
 	created.OrganizationID = entity.OrganizationID
 
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(errors.New("audit error"))
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("audit error"))
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -1018,7 +1018,7 @@ func TestCreate_WithCustomFields(t *testing.T) {
 	deps.defRepo.On("GetActiveByResourceType", mock.Anything, mock.Anything).
 		Return(defs, nil)
 	deps.valueRepo.On("Upsert", mock.Anything, mock.Anything).Return(nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -1268,7 +1268,7 @@ func TestBulkUpdateStatus_AuditLogError(t *testing.T) {
 
 	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).Return([]*trailer.Trailer{original}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).Return([]*trailer.Trailer{entity}, nil)
-	deps.audit.On("LogActions", mock.Anything).Return(errors.New("audit error"))
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(errors.New("audit error"))
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
 

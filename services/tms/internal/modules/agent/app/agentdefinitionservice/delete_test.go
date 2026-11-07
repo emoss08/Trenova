@@ -114,7 +114,7 @@ type silentAudit struct {
 	logged int
 }
 
-func (a *silentAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (a *silentAudit) LogAction(context.Context, *auditports.LogActionParams, ...auditports.LogOption) error {
 	a.logged++
 	return nil
 }

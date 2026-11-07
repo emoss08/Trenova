@@ -83,7 +83,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -134,7 +134,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -178,7 +178,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDistanceOverride,
 		ResourceID:     existing.GetID().String(),
 		Operation:      permission.OpDelete,

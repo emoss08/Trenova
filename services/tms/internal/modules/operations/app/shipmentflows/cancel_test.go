@@ -82,7 +82,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		Return(nil).
 		Once()
 	audit.EXPECT().
-		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).
 		Once()
 	realtime.EXPECT().
@@ -200,7 +200,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		Return(updated, nil).
 		Once()
 	audit.EXPECT().
-		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).
 		Once()
 	realtime.EXPECT().

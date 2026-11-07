@@ -252,7 +252,7 @@ func (s *Service) Create(
 		createdEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceTrailer,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -329,7 +329,7 @@ func (s *Service) Update(
 		updatedEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(
+	if err = s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceTrailer,
 			ResourceID:     updatedEntity.GetID().String(),
@@ -403,7 +403,7 @@ func (s *Service) BulkUpdateStatus(
 		auditservice.WithComment("Trailer status updated"),
 	)
 
-	if err = s.auditService.LogActions(entries); err != nil {
+	if err = s.auditService.LogActions(ctx, entries); err != nil {
 		log.Error("failed to log audit actions", zap.Error(err))
 	}
 

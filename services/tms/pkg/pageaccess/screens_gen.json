@@ -2016,7 +2016,15 @@
         }
       ],
       "operations": [
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportDownload",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BulkEditFields",
         "DataTableAggregates",
         "DataTableFacets",
@@ -2024,12 +2032,16 @@
         "ExportTableView",
         "MyBulkEdit",
         "MyTableLayout",
+        "PlaceAuditLegalHold",
         "PreviewBulkEdit",
+        "ReleaseAuditLegalHold",
+        "RequestAuditExport",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateAuditAlertPolicy"
       ],
       "rest": [
         {
@@ -2253,7 +2265,19 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchStyle",
+        "LiveTenderByMove",
+        "ResetDispatchStyle",
+        "TendersByShipment"
+      ],
       "rest": [
         {
           "method": "GET",
@@ -6321,7 +6345,14 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -6333,6 +6364,7 @@
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "DeskInvoiceCard",
+        "DeskRecordActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
@@ -6373,6 +6405,14 @@
         "WithdrawInvoiceDispute"
       ],
       "rest": [
+        {
+          "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
         {
           "method": "GET",
           "path": "/billing-queue/"
@@ -6659,7 +6699,27 @@
         },
         {
           "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
           "path": "/integrations/GoogleMaps/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
         },
         {
           "method": "GET",
@@ -6713,7 +6773,14 @@
       "operations": [
         "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -6725,6 +6792,7 @@
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
+        "DeskRecordActivity",
         "MyActiveBillingTransferRun",
         "RetryBillingTransferRun",
         "ShipmentCheckCalls",
@@ -10422,8 +10490,11 @@
         }
       ],
       "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
         "CarrierEquipmentVerifications",
         "CarrierIntelligence",
+        "DecideAgentProposal",
         "DispatchAssignMoveToCarrier",
         "DispatchAssignMoves",
         "DispatchAssignmentPreview",
@@ -10431,16 +10502,21 @@
         "DispatchCancelCarrierAssignment",
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchPlanAutoAssign",
         "DispatchUnassignMoves",
         "GrantCarrierIntelOverride",
         "LiveTenderByMove",
         "MatchRoutingGuide",
+        "MyPlanPreview",
+        "MyProposalPreview",
         "OverrideCarrierEquipmentVerification",
         "RoutingGuideOptions",
         "RoutingGuideTable",
         "TendersByShipment",
+        "UndoMyDecision",
         "VerifyCarrierEquipment"
       ],
       "rest": [
@@ -10539,14 +10615,6 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/insights/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/insights/browse/"
         },
         {
           "method": "POST",
@@ -10683,6 +10751,52 @@
         {
           "method": "POST",
           "path": "/tables/:param/compose/"
+        }
+      ]
+    },
+    {
+      "path": "/dispatch/outlook",
+      "name": "Freight outlook",
+      "requires": [
+        {
+          "resource": "shipment_move",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "DispatchCallOffPositioning",
+        "DispatchFreightArea",
+        "DispatchFreightOutlook",
+        "DispatchPositionDriver"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
         }
       ]
     },
@@ -15040,6 +15154,14 @@
       "rest": [
         {
           "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/assignments/:param/"
         },
         {
@@ -15193,6 +15315,34 @@
         {
           "method": "GET",
           "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "POST",
+          "path": "/google-maps/autocomplete/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/GoogleMaps/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
         },
         {
           "method": "POST",
@@ -16436,7 +16586,14 @@
       "operations": [
         "AddOrderCharge",
         "AttachOrderShipments",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BulkEditFields",
         "CancelOrder",
         "CloseOrder",
@@ -16445,6 +16602,7 @@
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeskRecordActivity",
         "DetachOrderShipment",
         "ExportTableView",
         "MyBulkEdit",
@@ -16596,7 +16754,14 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
@@ -16628,6 +16793,7 @@
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DecideAgentProposals",
         "DecideShipmentSuggestion",
         "DeskCustomerCard",
         "DeskCustomerRateAgreements",
@@ -16636,6 +16802,7 @@
         "DeskLocationCard",
         "DeskLocationDwell",
         "DeskLocationPolicies",
+        "DeskRecordActivity",
         "DeskServiceFailureCard",
         "DetentionIntelligence",
         "DispatchAssignMoves",

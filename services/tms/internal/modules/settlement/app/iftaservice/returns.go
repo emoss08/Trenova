@@ -424,7 +424,7 @@ func (s *Service) createAndCompute(
 	}
 
 	tenantInfo := returnTenant(computed)
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: computed.ID.String(),
 		operation:  permission.OpCreate,
@@ -553,7 +553,7 @@ func (s *Service) Recompute(ctx context.Context, req *ReturnActionRequest) (*ift
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: computed.ID.String(),
 		operation:  permission.OpUpdate,
@@ -611,7 +611,7 @@ func (s *Service) Finalize(ctx context.Context, req *ReturnActionRequest) (*ifta
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: finalized.ID.String(),
 		operation:  permission.OpApprove,
@@ -675,7 +675,7 @@ func (s *Service) Reopen(ctx context.Context, req *ReopenReturnRequest) (*ifta.R
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: reopened.ID.String(),
 		operation:  permission.OpReopen,
@@ -738,7 +738,7 @@ func (s *Service) MarkFiled(ctx context.Context, req *MarkFiledRequest) (*ifta.R
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: filed.ID.String(),
 		operation:  permission.OpSubmit,
@@ -847,7 +847,7 @@ func (s *Service) Delete(ctx context.Context, req *ReturnActionRequest) error {
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTAReturn,
 		resourceID: ret.ID.String(),
 		operation:  permission.OpDelete,

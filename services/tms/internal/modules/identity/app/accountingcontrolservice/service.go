@@ -72,7 +72,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAccountingControl,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

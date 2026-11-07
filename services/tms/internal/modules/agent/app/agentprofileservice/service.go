@@ -618,7 +618,7 @@ func (s *Service) AddGuidance(
 	}
 
 	if created.IsSuggested() {
-		s.logGuidance(
+		s.logGuidance(ctx,
 			created,
 			nil,
 			req.Actor,
@@ -630,7 +630,14 @@ func (s *Service) AddGuidance(
 		return created, nil
 	}
 
-	s.logGuidance(created, nil, req.Actor, permission.OpCreate, guidanceComment(created, "Added"))
+	s.logGuidance(
+		ctx,
+		created,
+		nil,
+		req.Actor,
+		permission.OpCreate,
+		guidanceComment(created, "Added"),
+	)
 	s.announce(ctx, req.Ref, created.ID, "guided")
 	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
 
@@ -714,7 +721,7 @@ func (s *Service) ApproveGuidance(
 		return nil, err
 	}
 
-	s.logGuidance(updated, previous, req.Actor, permission.OpManage,
+	s.logGuidance(ctx, updated, previous, req.Actor, permission.OpManage,
 		guidanceComment(updated, "Approved offered"))
 	s.announce(ctx, req.Ref, updated.ID, "guided")
 	s.schedule(ctx, req.Ref, agentprofile.TriggerGuidance, req.Actor.UserID)
@@ -746,7 +753,7 @@ func (s *Service) DismissGuidance(
 		return nil, err
 	}
 
-	s.logGuidance(updated, previous, req.Actor, permission.OpManage,
+	s.logGuidance(ctx, updated, previous, req.Actor, permission.OpManage,
 		guidanceComment(updated, "Dismissed offered"))
 	s.announce(ctx, req.Ref, updated.ID, "guided")
 
@@ -821,7 +828,7 @@ func (s *Service) RetireGuidance(
 		return nil, err
 	}
 
-	s.logGuidance(
+	s.logGuidance(ctx,
 		updated,
 		previous,
 		req.Actor,
@@ -986,6 +993,7 @@ func guidanceComment(entity *agentprofile.Guidance, verb string) string {
 }
 
 func (s *Service) logGuidance(
+	ctx context.Context,
 	entity *agentprofile.Guidance,
 	previous map[string]any,
 	actor *permissionports.RequestActor,
@@ -993,7 +1001,7 @@ func (s *Service) logGuidance(
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentMemory,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,

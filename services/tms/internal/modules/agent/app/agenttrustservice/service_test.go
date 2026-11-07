@@ -210,7 +210,7 @@ func (f fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 
 type fakeAudit struct{ entries []*auditports.LogActionParams }
 
-func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (f *fakeAudit) LogAction(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	f.entries = append(f.entries, params)
 
 	return nil

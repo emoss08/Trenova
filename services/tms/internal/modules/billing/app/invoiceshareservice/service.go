@@ -107,7 +107,7 @@ func (s *Service) Share(
 		return nil, err
 	}
 
-	s.logShare(entity, actor, recipients, input)
+	s.logShare(ctx, entity, actor, recipients, input)
 
 	emailsQueued, emailStatus := s.deliver(ctx, &deliveryParams{
 		invoice:    entity,
@@ -170,6 +170,7 @@ func buildShares(
 }
 
 func (s *Service) logShare(
+	ctx context.Context,
 	entity *invoice.Invoice,
 	actor *permissionports.RequestActor,
 	recipients []*tenant.User,
@@ -181,7 +182,7 @@ func (s *Service) logShare(
 		recipientIDs = append(recipientIDs, recipient.ID.String())
 	}
 
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoice,
 			ResourceID:     entity.ID.String(),

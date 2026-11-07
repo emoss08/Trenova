@@ -2,13 +2,11 @@ package auditservice
 
 import (
 	"testing"
-	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -149,18 +147,6 @@ func TestWithTags(t *testing.T) {
 	assert.Equal(t, "tag1,tag2", entry.Metadata["tags"])
 }
 
-func TestWithTimestamp(t *testing.T) {
-	t.Parallel()
-
-	now := time.Now()
-	entry := &audit.Entry{}
-	opt := WithTimestamp(now)
-	err := opt(entry)
-
-	require.NoError(t, err)
-	assert.Equal(t, now.Unix(), entry.Timestamp)
-}
-
 func TestWithDiff(t *testing.T) {
 	t.Parallel()
 
@@ -263,25 +249,31 @@ func TestBuildBulkLogEntries(t *testing.T) {
 	_ = auditports.BulkLogEntry{}
 }
 
-func TestWithRequest(t *testing.T) {
+func TestWithAction_RefusesACodeThatIsNotDottedLowerCase(t *testing.T) {
 	t.Parallel()
 
-	ctx := requestmeta.With(t.Context(), requestmeta.New("req-9", "198.51.100.1", "browser"))
+	entry := &audit.Entry{}
+	require.NoError(t, WithAction("role.assigned")(entry))
+	assert.Equal(t, "role.assigned", entry.Action)
+
+	require.Error(t, WithAction("Role Assigned")(&audit.Entry{}))
+	require.Error(t, WithAction("role")(&audit.Entry{}))
+}
+
+func TestWithSecurity_MakesTheEntryACriticalSecurityEntry(t *testing.T) {
+	t.Parallel()
+
+	entry := &audit.Entry{Category: audit.CategoryUser}
+	require.NoError(t, WithSecurity()(entry))
+	assert.Equal(t, audit.CategorySecurity, entry.Category)
+	assert.True(t, entry.Critical)
+}
+
+func TestWithChannel_RefusesAnUnknownChannel(t *testing.T) {
+	t.Parallel()
 
 	entry := &audit.Entry{}
-	require.NoError(t, WithRequest(ctx)(entry))
-	assert.Equal(t, "198.51.100.1", entry.IPAddress)
-	assert.Equal(t, "browser", entry.UserAgent)
-	assert.Equal(t, "req-9", entry.CorrelationID)
-	assert.Equal(t, "req-9", entry.Metadata["requestId"])
-
-	explicit := &audit.Entry{IPAddress: "192.0.2.1", CorrelationID: "corr"}
-	require.NoError(t, WithRequest(ctx)(explicit))
-	assert.Equal(t, "192.0.2.1", explicit.IPAddress)
-	assert.Equal(t, "corr", explicit.CorrelationID)
-
-	bare := &audit.Entry{}
-	require.NoError(t, WithRequest(t.Context())(bare))
-	assert.Empty(t, bare.IPAddress)
-	assert.Nil(t, bare.Metadata)
+	require.NoError(t, WithChannel(audit.ChannelSCIM)(entry))
+	assert.Equal(t, audit.ChannelSCIM, entry.Channel)
+	require.Error(t, WithChannel(audit.Channel("fax"))(&audit.Entry{}))
 }

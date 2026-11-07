@@ -39,7 +39,7 @@ type Effects struct {
 	lifecycle        carrierintelports.CarrierLifecycleObserver
 }
 
-func (s *Effects) LogAudit(p *AuditParams) {
+func (s *Effects) LogAudit(ctx context.Context, p *AuditParams) {
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceTender,
 		ResourceID:     p.TenderID.String(),
@@ -64,7 +64,7 @@ func (s *Effects) LogAudit(p *AuditParams) {
 		}
 	}
 
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log tender audit action", zap.Error(err))
 	}
 }

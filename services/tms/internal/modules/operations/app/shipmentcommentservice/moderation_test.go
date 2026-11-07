@@ -163,7 +163,7 @@ func TestCreate_ReplyForcesRequiresAcknowledgmentOff(t *testing.T) {
 			return comment, nil
 		}).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).
@@ -233,7 +233,7 @@ func TestCreate_WithBodyDerivesPlainTextAndMentions(t *testing.T) {
 			return comment, nil
 		}).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).
@@ -346,7 +346,7 @@ func TestDelete_TombstonesWhenCommentHasReplies(t *testing.T) {
 			DeletedAt:      &now,
 		}, nil).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
@@ -392,7 +392,7 @@ func TestDelete_HardDeletesWithoutReplies(t *testing.T) {
 		})).
 		Return(nil).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
@@ -434,7 +434,7 @@ func TestDelete_ModeratorCanDeleteOthersComment(t *testing.T) {
 		Once()
 	m.repo.EXPECT().CountReplies(mock.Anything, mock.Anything).Return(0, nil).Once()
 	m.repo.EXPECT().Delete(mock.Anything, mock.Anything).Return(nil).Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).
@@ -484,7 +484,7 @@ func TestUpdate_ModeratorPreservesOriginalAuthor(t *testing.T) {
 			return comment, nil
 		}).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.Anything).
 		Return(nil).
@@ -622,7 +622,7 @@ func TestPin_PublishesPinnedAction(t *testing.T) {
 			PinnedAt:       &now,
 		}, nil).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
@@ -730,7 +730,7 @@ func TestResolve_PublishesResolvedAction(t *testing.T) {
 			ResolvedAt:     &now,
 		}, nil).
 		Once()
-	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	m.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	m.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,

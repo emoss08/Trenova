@@ -168,7 +168,7 @@ func TestCreateUserMapsTheInputAndInvites(t *testing.T) {
 			return req.User, nil
 		}).
 		Once()
-	h.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil).Once()
+	h.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	created, err := resolver.CreateUser(h.ctx(t), gqlmodel.CreateUserInput{
 		Name:               "Dana Whitfield",
@@ -272,7 +272,7 @@ func TestPatchUserWritesOnlyWhatWasSent(t *testing.T) {
 			return req.Entity, nil
 		}).
 		Once()
-	h.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil).Once()
+	h.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	updated, err := resolver.PatchUser(h.ctx(t), target.ID.String(), gqlmodel.UserPatchInput{
 		IsLocked:   graphql.OmittableOf(&unlocked),

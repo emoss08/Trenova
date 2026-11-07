@@ -619,7 +619,7 @@ func (a *Activities) FinalizeRunActivity(
 		return err
 	}
 
-	a.emitAudit(run)
+	a.emitAudit(ctx, run)
 	a.emitNotification(ctx, run)
 	a.emitInvalidation(ctx, run)
 	a.recordScheduleRunOutcome(ctx, run)
@@ -635,8 +635,8 @@ func (a *Activities) FinalizeRunActivity(
 	return nil
 }
 
-func (a *Activities) emitAudit(run *report.ReportRun) {
-	if err := a.audit.LogAction(&auditports.LogActionParams{
+func (a *Activities) emitAudit(ctx context.Context, run *report.ReportRun) {
+	if err := a.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,

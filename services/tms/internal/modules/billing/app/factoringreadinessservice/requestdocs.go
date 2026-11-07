@@ -71,7 +71,7 @@ func (s *ReadinessService) RequestMissingDocuments(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceInvoice,
 		Entity:   request.inv,
 		Op:       permission.OpUpdate,

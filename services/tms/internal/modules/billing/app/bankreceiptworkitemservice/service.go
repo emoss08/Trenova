@@ -112,7 +112,7 @@ func (s *Service) save(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, change.Before, change.After.UpdatedByID, comment)
+	s.logAudit(ctx, updated, change.Before, change.After.UpdatedByID, comment)
 	return updated, nil
 }
 
@@ -185,7 +185,7 @@ func (s *Service) Resolve(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, &original, userID, "Bank receipt work item resolved")
+	s.logAudit(ctx, updated, &original, userID, "Bank receipt work item resolved")
 	return updated, nil
 }
 
@@ -216,7 +216,7 @@ func (s *Service) Dismiss(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, &original, userID, "Bank receipt work item dismissed")
+	s.logAudit(ctx, updated, &original, userID, "Bank receipt work item dismissed")
 	return updated, nil
 }
 
@@ -230,6 +230,7 @@ func requireWorkItemUser(actor *permissionports.RequestActor) (pulid.ID, error) 
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current, previous *bankreceiptworkitem.WorkItem,
 	userID pulid.ID,
 	comment string,
@@ -250,7 +251,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log bank receipt work item audit action",
 			zap.Error(err),

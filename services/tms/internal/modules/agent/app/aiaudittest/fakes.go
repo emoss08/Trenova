@@ -771,7 +771,7 @@ type FakeAudit struct {
 	Entries []*auditports.LogActionParams
 }
 
-func (f *FakeAudit) LogAction(
+func (f *FakeAudit) LogAction(_ context.Context, 
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

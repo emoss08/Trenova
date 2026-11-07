@@ -67,7 +67,7 @@ func (s *service) setPinned(
 		action = actionUnpinned
 		auditComment = "Shipment comment unpinned"
 	}
-	s.logCommentAction(updated, auditActor, op, comment, updated, auditComment)
+	s.logCommentAction(ctx, updated, auditActor, op, comment, updated, auditComment)
 	s.publishCommentInvalidation(ctx, updated, auditActor, action, updated)
 
 	return updated, nil
@@ -127,7 +127,15 @@ func (s *service) setResolved(
 		action = actionUnresolved
 		auditComment = "Shipment comment reopened"
 	}
-	s.logCommentAction(updated, auditActor, permission.OpResolve, comment, updated, auditComment)
+	s.logCommentAction(
+		ctx,
+		updated,
+		auditActor,
+		permission.OpResolve,
+		comment,
+		updated,
+		auditComment,
+	)
 	s.publishCommentInvalidation(ctx, updated, auditActor, action, updated)
 
 	return updated, nil
@@ -180,7 +188,7 @@ func (s *service) Acknowledge(
 
 	if inserted {
 		auditActor := actor.AuditActor()
-		s.logCommentAction(
+		s.logCommentAction(ctx,
 			updated,
 			auditActor,
 			permission.OpUpdate,

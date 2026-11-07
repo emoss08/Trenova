@@ -266,7 +266,7 @@ func (s *service) UploadLogo(
 		}
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceOrganization,
 		ResourceID:     updatedEntity.GetResourceID(),
 		Operation:      permission.OpUpdate,

@@ -87,7 +87,7 @@ func (s *Service) PlanReview(
 		return nil, err
 	}
 
-	change, err := s.approvals().Plan(ctx, req, transition)
+	change, err := s.approvals(ctx).Plan(ctx, req, transition)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	return s.approvals().Apply(ctx, req, transition)
+	return s.approvals(ctx).Apply(ctx, req, transition)
 }
 
 func (s *Service) PlanCreate(

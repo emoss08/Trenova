@@ -420,8 +420,12 @@ func FromServices(s *Services) *Resolver {
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
 	}
 	auditlogDeps := &auditlogresolver.Deps{
-		Core:         s.Core,
-		AuditService: s.AuditService,
+		Core:                  s.Core,
+		AuditService:          s.AuditService,
+		AuditLegalHoldService: s.AuditLegalHoldService,
+		AuditExportService:    s.AuditExportService,
+		AuditAlertService:     s.AuditAlertService,
+		AuditIntegrity:        s.AuditIntegrity,
 	}
 	benefitsDeps := &benefitsresolver.Deps{
 		Core:                             s.Core,
@@ -1115,7 +1119,11 @@ func FromServices(s *Services) *Resolver {
 	agentqualityAgentWorstRatedAnswer := &agentqualityresolver.AgentWorstRatedAnswerResolver{Deps: agentqualityDeps}
 	apikeyApiKey := &apikeyresolver.ApiKeyResolver{Deps: apikeyDeps}
 	orgstructureApprovalDelegation := &orgstructureresolver.ApprovalDelegationResolver{Deps: orgstructureDeps}
+	auditlogAuditAlertPolicy := &auditlogresolver.AuditAlertPolicyResolver{Deps: auditlogDeps}
+	auditlogAuditChainStatus := &auditlogresolver.AuditChainStatusResolver{Deps: auditlogDeps}
 	auditlogAuditEntry := &auditlogresolver.AuditEntryResolver{Deps: auditlogDeps}
+	auditlogAuditExport := &auditlogresolver.AuditExportResolver{Deps: auditlogDeps}
+	auditlogAuditLegalHold := &auditlogresolver.AuditLegalHoldResolver{Deps: auditlogDeps}
 	securityactivityAuthEvent := &securityactivityresolver.AuthEventResolver{Deps: securityactivityDeps}
 	briefingBriefingSection := &briefingresolver.BriefingSectionResolver{Deps: briefingDeps}
 	captureCaptureBatch := &captureresolver.CaptureBatchResolver{Deps: captureDeps}
@@ -1274,6 +1282,7 @@ func FromServices(s *Services) *Resolver {
 	aifeedbackMutation := &aifeedbackresolver.MutationResolver{Deps: aifeedbackDeps}
 	aiproviderMutation := &aiproviderresolver.MutationResolver{Deps: aiproviderDeps}
 	airetrievalMutation := &airetrievalresolver.MutationResolver{Deps: airetrievalDeps}
+	auditlogMutation := &auditlogresolver.MutationResolver{Deps: auditlogDeps}
 	benefitsMutation := &benefitsresolver.MutationResolver{Deps: benefitsDeps}
 	billingqueueMutation := &billingqueueresolver.MutationResolver{Deps: billingqueueDeps}
 	billingtransferMutation := &billingtransferresolver.MutationResolver{Deps: billingtransferDeps}
@@ -1647,7 +1656,11 @@ func FromServices(s *Services) *Resolver {
 			"AgentWorstRatedAnswer@agentquality":                   agentqualityAgentWorstRatedAnswer,
 			"ApiKey@apikey":                                        apikeyApiKey,
 			"ApprovalDelegation@orgstructure":                      orgstructureApprovalDelegation,
+			"AuditAlertPolicy@auditlog":                            auditlogAuditAlertPolicy,
+			"AuditChainStatus@auditlog":                            auditlogAuditChainStatus,
 			"AuditEntry@auditlog":                                  auditlogAuditEntry,
+			"AuditExport@auditlog":                                 auditlogAuditExport,
+			"AuditLegalHold@auditlog":                              auditlogAuditLegalHold,
 			"AuthEvent@securityactivity":                           securityactivityAuthEvent,
 			"BriefingSection@briefing":                             briefingBriefingSection,
 			"CaptureBatch@capture":                                 captureCaptureBatch,
@@ -1806,6 +1819,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@aifeedback":                                  aifeedbackMutation,
 			"Mutation@aiprovider":                                  aiproviderMutation,
 			"Mutation@airetrieval":                                 airetrievalMutation,
+			"Mutation@auditlog":                                    auditlogMutation,
 			"Mutation@benefits":                                    benefitsMutation,
 			"Mutation@billingqueue":                                billingqueueMutation,
 			"Mutation@billingtransfer":                             billingtransferMutation,
@@ -2184,7 +2198,11 @@ var (
 	_ agentqualityexec.AgentWorstRatedAnswerResolver                   = (*agentqualityresolver.AgentWorstRatedAnswerResolver)(nil)
 	_ apikeyexec.ApiKeyResolver                                        = (*apikeyresolver.ApiKeyResolver)(nil)
 	_ orgstructureexec.ApprovalDelegationResolver                      = (*orgstructureresolver.ApprovalDelegationResolver)(nil)
+	_ auditlogexec.AuditAlertPolicyResolver                            = (*auditlogresolver.AuditAlertPolicyResolver)(nil)
+	_ auditlogexec.AuditChainStatusResolver                            = (*auditlogresolver.AuditChainStatusResolver)(nil)
 	_ auditlogexec.AuditEntryResolver                                  = (*auditlogresolver.AuditEntryResolver)(nil)
+	_ auditlogexec.AuditExportResolver                                 = (*auditlogresolver.AuditExportResolver)(nil)
+	_ auditlogexec.AuditLegalHoldResolver                              = (*auditlogresolver.AuditLegalHoldResolver)(nil)
 	_ securityactivityexec.AuthEventResolver                           = (*securityactivityresolver.AuthEventResolver)(nil)
 	_ briefingexec.BriefingSectionResolver                             = (*briefingresolver.BriefingSectionResolver)(nil)
 	_ captureexec.CaptureBatchResolver                                 = (*captureresolver.CaptureBatchResolver)(nil)
@@ -2343,6 +2361,7 @@ var (
 	_ aifeedbackexec.MutationResolver                                  = (*aifeedbackresolver.MutationResolver)(nil)
 	_ aiproviderexec.MutationResolver                                  = (*aiproviderresolver.MutationResolver)(nil)
 	_ airetrievalexec.MutationResolver                                 = (*airetrievalresolver.MutationResolver)(nil)
+	_ auditlogexec.MutationResolver                                    = (*auditlogresolver.MutationResolver)(nil)
 	_ benefitsexec.MutationResolver                                    = (*benefitsresolver.MutationResolver)(nil)
 	_ billingqueueexec.MutationResolver                                = (*billingqueueresolver.MutationResolver)(nil)
 	_ billingtransferexec.MutationResolver                             = (*billingtransferresolver.MutationResolver)(nil)

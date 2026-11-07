@@ -136,7 +136,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.audit(created, nil, permission.OpCreate, userID, "PTO policy created", log)
+	s.audit(ctx, created, nil, permission.OpCreate, userID, "PTO policy created", log)
 	s.publish(ctx, created, permission.OpCreate, userID)
 
 	return created, nil
@@ -175,7 +175,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(updated, original, permission.OpUpdate, userID, "PTO policy updated", log)
+	s.audit(ctx, updated, original, permission.OpUpdate, userID, "PTO policy updated", log)
 	s.publish(ctx, updated, permission.OpUpdate, userID)
 
 	return updated, nil
@@ -245,7 +245,7 @@ func (s *Service) changeStatus(
 		return nil, err
 	}
 
-	s.audit(saved, original, operation, req.UserID, fmt.Sprintf("PTO policy %s", target), log)
+	s.audit(ctx, saved, original, operation, req.UserID, fmt.Sprintf("PTO policy %s", target), log)
 	s.publish(ctx, saved, operation, req.UserID)
 
 	return saved, nil
@@ -297,6 +297,7 @@ func pluralSuffix(count int) string {
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	current, previous *pto.PTOPolicy,
 	operation permission.Operation,
 	userID pulid.ID,
@@ -317,7 +318,7 @@ func (s *Service) audit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

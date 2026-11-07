@@ -130,7 +130,7 @@ func (s *Exceptions) applyException(
 	}
 
 	s.projector.publish(ctx, saved, "updated")
-	s.auditException(before, saved, change.actor, events)
+	s.auditException(ctx, before, saved, change.actor, events)
 	if change.after != nil {
 		change.after(ctx, before, saved)
 	}
@@ -350,7 +350,7 @@ func (s *Exceptions) CommentOnException(
 		return nil, err
 	}
 	s.projector.publish(ctx, item, "commented")
-	s.auditException(item, item, actor, []*watchtower.Event{event})
+	s.auditException(ctx, item, item, actor, []*watchtower.Event{event})
 	if item.AssigneeID.IsNotNil() && item.AssigneeID != actorUserID(actor) {
 		s.notifyAssignee(ctx, item, commentedNotice)
 	}
@@ -445,6 +445,7 @@ func (s *Exceptions) ExceptionHistory(
 }
 
 func (s *Exceptions) auditException(
+	ctx context.Context,
 	before, after *watchtower.Item,
 	actor *permissionports.RequestActor,
 	events []*watchtower.Event,
@@ -475,7 +476,7 @@ func (s *Exceptions) auditException(
 			},
 		})
 	}
-	if err := s.audit.LogActions(entries); err != nil {
+	if err := s.audit.LogActions(ctx, entries); err != nil {
 		s.l.Error("failed to audit exception change",
 			zap.String("item", after.ID.String()),
 			zap.Error(err))

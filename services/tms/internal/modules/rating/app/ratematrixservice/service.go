@@ -362,7 +362,6 @@ func (s *Service) audit(ctx context.Context, record *auditRecord) {
 
 	opts := []auditports.LogOption{
 		auditservice.WithComment(record.comment),
-		auditservice.WithRequest(ctx),
 	}
 	if record.original != nil {
 		params.PreviousState = jsonutils.MustToJSON(record.original)
@@ -372,7 +371,7 @@ func (s *Service) audit(ctx context.Context, record *auditRecord) {
 		opts = append(opts, auditservice.WithCritical())
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action",
 			zap.String("rateMatrixID", record.entity.ID.String()),
 			zap.Error(err),

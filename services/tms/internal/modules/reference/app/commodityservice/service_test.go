@@ -111,7 +111,7 @@ func TestCreate_Success(t *testing.T) {
 
 	deps.transformer.On("TransformCommodity", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -209,7 +209,7 @@ func TestCreate_AuditLogError(t *testing.T) {
 
 	deps.transformer.On("TransformCommodity", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(errors.New("audit error"))
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("audit error"))
 
 	result, err := deps.svc.Create(
 		ctx,

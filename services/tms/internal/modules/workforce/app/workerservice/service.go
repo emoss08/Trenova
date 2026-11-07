@@ -285,7 +285,7 @@ func (s *Service) Create(
 		createdEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorker,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -408,7 +408,7 @@ func (s *Service) update(
 		updatedEntity.CustomFields = entity.CustomFields
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorker,
 		ResourceID:     updatedEntity.GetResourceID(),
 		Operation:      permission.OpUpdate,

@@ -130,18 +130,19 @@ func (s *Service) UpdateControl(
 		return nil, err
 	}
 
-	s.logControl(saved, previous, actor)
+	s.logControl(ctx, saved, previous, actor)
 	s.scheduler.Sync(ctx, tenant)
 
 	return saved, nil
 }
 
 func (s *Service) logControl(
+	ctx context.Context,
 	saved, previous *agentqualitycontrol.Control,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     saved.ID.String(),
 		Operation:      permission.OpUpdate,

@@ -114,7 +114,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.audit(created, nil, permission.OpCreate, userID, "Holiday added", log)
+	s.audit(ctx, created, nil, permission.OpCreate, userID, "Holiday added", log)
 	s.publish(ctx, created, permission.OpCreate, userID)
 	return created, nil
 }
@@ -147,7 +147,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(updated, original, permission.OpUpdate, userID, "Holiday updated", log)
+	s.audit(ctx, updated, original, permission.OpUpdate, userID, "Holiday updated", log)
 	s.publish(ctx, updated, permission.OpUpdate, userID)
 	return updated, nil
 }
@@ -174,12 +174,13 @@ func (s *Service) Delete(
 		return err
 	}
 
-	s.audit(original, nil, permission.OpDelete, userID, "Holiday removed", log)
+	s.audit(ctx, original, nil, permission.OpDelete, userID, "Holiday removed", log)
 	s.publish(ctx, original, permission.OpDelete, userID)
 	return nil
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	current, previous *pto.OrgHoliday,
 	operation permission.Operation,
 	userID pulid.ID,
@@ -203,7 +204,7 @@ func (s *Service) audit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

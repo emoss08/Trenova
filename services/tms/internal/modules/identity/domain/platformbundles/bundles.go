@@ -381,7 +381,19 @@ func adminSecurityBundle() permissionspec.Bundle {
 			},
 			{
 				Resource:   permission.ResourceAuditLog,
-				Operations: []permission.Operation{permission.OpRead},
+				Operations: []permission.Operation{permission.OpRead, permission.OpExport},
+			},
+			{
+				Resource:   permission.ResourceSecurityAuditLog,
+				Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
+			},
+			{
+				Resource: permission.ResourceAuditLegalHold,
+				Operations: []permission.Operation{
+					permission.OpRead,
+					permission.OpCreate,
+					permission.OpUpdate,
+				},
 			},
 			{
 				Resource: permission.ResourceAPIKey,

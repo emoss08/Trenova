@@ -186,7 +186,7 @@ func (x *Exports) Request(
 	if err != nil {
 		return nil, err
 	}
-	x.auditExport(created, actor, "export_requested", summary.Count)
+	x.auditExport(ctx, created, actor, "export_requested", summary.Count)
 
 	if summary.Count <= int64(x.cfg.GetSyncMaxRows()) {
 		return x.Run(ctx, tenantInfo, created.ID, nil)
@@ -442,7 +442,7 @@ func (x *Exports) Download(
 		)
 	}
 
-	x.auditExport(export, actor, "export_downloaded", export.RowCount)
+	x.auditExport(ctx, export, actor, "export_downloaded", export.RowCount)
 
 	return &aiauditports.AIAuditExportDownload{
 		URL:       url,
@@ -453,6 +453,7 @@ func (x *Exports) Download(
 }
 
 func (x *Exports) auditExport(
+	ctx context.Context,
 	export *aiaudit.AIAuditExport,
 	actor *permissionports.RequestActor,
 	event string,
@@ -462,7 +463,7 @@ func (x *Exports) auditExport(
 		return
 	}
 
-	if err := x.audit.LogAction(&auditports.LogActionParams{
+	if err := x.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAIAuditTrail,
 		ResourceID:     export.ID.String(),
 		Operation:      permission.OpExport,

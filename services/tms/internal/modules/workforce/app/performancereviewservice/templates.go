@@ -106,7 +106,7 @@ func (s *Service) CreateTemplate(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReviewTemplate, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: userID, tenant: templateTenant(created),
 		current: created, comment: "Review template created", log: log,
@@ -156,7 +156,7 @@ func (s *Service) UpdateTemplate(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourcePerformanceReviewTemplate, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: userID, tenant: templateTenant(updated),
 		current: updated, previous: original, comment: "Review template updated", log: log,
@@ -235,7 +235,7 @@ func (s *Service) changeTemplateStatus(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourcePerformanceReviewTemplate,
 		resourceID: saved.GetResourceID(),
 		operation:  operation,

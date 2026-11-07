@@ -1,6 +1,7 @@
 package carrierassignmentservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,7 +23,7 @@ type recordingAuditService struct {
 	entries []*auditports.LogActionParams
 }
 
-func (r *recordingAuditService) LogAction(
+func (r *recordingAuditService) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

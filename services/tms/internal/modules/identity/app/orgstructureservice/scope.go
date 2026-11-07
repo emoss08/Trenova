@@ -218,7 +218,7 @@ func (s *Service) Delegate(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceApprovalDelegation, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: req.UserID, tenant: req.TenantInfo,
 		current: created,
@@ -306,7 +306,7 @@ func (s *Service) RevokeDelegation(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceApprovalDelegation, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: userID, tenant: tenantInfo,
 		current: updated, previous: &previous, comment: "Delegation revoked",

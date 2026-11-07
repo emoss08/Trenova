@@ -144,7 +144,7 @@ func (s *Service) Create(
 		})
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     createdEntity.GetResourceID(),
 		Operation:      permission.OpCreate,
@@ -183,7 +183,7 @@ func (s *Service) Update(
 	}
 	s.publishPTOInvalidation(ctx, updated, permission.OpUpdate, userID)
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     updated.GetResourceID(),
 		Operation:      permission.OpUpdate,
@@ -373,7 +373,7 @@ func (s *Service) transition(
 	}
 
 	operation := transitionOperation(params.target)
-	s.logTransitionAudit(current, updated, operation, req, log)
+	s.logTransitionAudit(ctx, current, updated, operation, req, log)
 	s.publishPTOInvalidation(ctx, updated, operation, req.UserID)
 
 	if params.notifyWorker {
@@ -397,6 +397,7 @@ func transitionOperation(target worker.PTOStatus) permission.Operation {
 }
 
 func (s *Service) logTransitionAudit(
+	ctx context.Context,
 	previous, updated *worker.WorkerPTO,
 	operation permission.Operation,
 	req *workerptoports.UpdatePTOStatusRequest,
@@ -413,7 +414,7 @@ func (s *Service) logTransitionAudit(
 		comment = fmt.Sprintf("%s: %s", comment, req.Reason)
 	}
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     updated.GetResourceID(),
 		Operation:      operation,

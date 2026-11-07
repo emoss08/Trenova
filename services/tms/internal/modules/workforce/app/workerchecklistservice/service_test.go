@@ -265,7 +265,7 @@ func newHarness(t *testing.T) *harness {
 	h.docs = documentportsmock.NewMockDocumentRepository(t)
 	h.docs.EXPECT().GetByResourceID(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.template = &workerchecklist.WorkerChecklistTemplate{
 		ID:             pulid.MustNew("wclt_"),

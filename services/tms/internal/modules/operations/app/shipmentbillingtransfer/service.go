@@ -254,7 +254,7 @@ func (s *Service) markReadyToInvoice(
 		}
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err = s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		p.Actor,
 		permission.OpUpdate,

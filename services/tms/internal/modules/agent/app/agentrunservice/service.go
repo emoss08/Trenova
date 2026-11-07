@@ -209,7 +209,7 @@ func (s *Service) StartForDefinition(
 		return nil, err
 	}
 
-	s.logStart(
+	s.logStart(ctx,
 		updated,
 		actor,
 		fmt.Sprintf("Run of agent %s started (%s)", definition.Name, trigger),
@@ -306,7 +306,7 @@ func (s *Service) StartInline(
 	if comment == "" {
 		comment = "Inline agent run started"
 	}
-	s.logStart(created, actor, comment)
+	s.logStart(ctx, created, actor, comment)
 
 	return created, nil
 }
@@ -326,12 +326,13 @@ func (s *Service) GetByID(
 }
 
 func (s *Service) logStart(
+	ctx context.Context,
 	run *agent.AgentRun,
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentRun,
 		ResourceID:     run.GetID().String(),
 		Operation:      permission.OpCreate,

@@ -80,7 +80,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		}).
 		Once()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Maybe()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).

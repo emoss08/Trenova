@@ -133,7 +133,7 @@ func (s *Service) auditAssignment(
 		)
 		return
 	}
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceJobPosition, resourceID: position.GetResourceID(),
 		operation: permission.OpUpdate, userID: req.UserID, tenant: req.TenantInfo,
 		current: position,

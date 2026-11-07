@@ -4,7 +4,10 @@ export const dataRetentionSchema = z.object({
   id: z.string().nullish(),
   organizationId: z.string(),
   businessUnitId: z.string(),
-  auditRetentionPeriod: z.number(),
+  auditAccessRetentionDays: z.number().default(90),
+  auditOperationalRetentionDays: z.number().default(730),
+  auditFinancialRetentionDays: z.number().default(2555),
+  auditSecurityRetentionDays: z.number().default(730),
   ediInboundFileRetentionPeriod: z.number().default(0),
   ediMessageRetentionPeriod: z.number().default(0),
   agentEvalCaseRetentionPeriod: z.number().default(365),
@@ -19,7 +22,10 @@ export const dataRetentionSchema = z.object({
 export type DataRetention = z.infer<typeof dataRetentionSchema>;
 
 export type UpdateDataRetentionRequest = {
-  auditRetentionPeriod: number;
+  auditAccessRetentionDays: number;
+  auditOperationalRetentionDays: number;
+  auditFinancialRetentionDays: number;
+  auditSecurityRetentionDays: number;
   ediInboundFileRetentionPeriod: number;
   ediMessageRetentionPeriod: number;
   agentEvalCaseRetentionPeriod: number;

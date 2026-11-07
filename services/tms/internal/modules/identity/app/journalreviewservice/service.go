@@ -369,7 +369,7 @@ func (s *Service) record(
 		BusinessUnitID: current.BusinessUnitID,
 		Critical:       current.Status == journalentry.StatusPosted,
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log journal review audit action", zap.Error(err))
 	}
 }

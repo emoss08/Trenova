@@ -19,10 +19,19 @@ func NewMockAuditRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAuditRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAuditRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -40,25 +49,25 @@ func (_m *MockAuditRepository) EXPECT() *MockAuditRepository_Expecter {
 	return &MockAuditRepository_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAuditEntries provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) DeleteAuditEntries(ctx context.Context, req auditports.DeleteAuditEntriesRequest) (int64, error) {
+// DeleteExpired provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) DeleteExpired(ctx context.Context, req auditports.DeleteExpiredAuditEntriesRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteAuditEntries")
+		panic("no return value specified for DeleteExpired")
 	}
 
 	var r0 int64
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.DeleteAuditEntriesRequest) (int64, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.DeleteExpiredAuditEntriesRequest) (int64, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.DeleteAuditEntriesRequest) int64); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.DeleteExpiredAuditEntriesRequest) int64); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, auditports.DeleteAuditEntriesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, auditports.DeleteExpiredAuditEntriesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -66,27 +75,27 @@ func (_mock *MockAuditRepository) DeleteAuditEntries(ctx context.Context, req au
 	return r0, r1
 }
 
-// MockAuditRepository_DeleteAuditEntries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAuditEntries'
-type MockAuditRepository_DeleteAuditEntries_Call struct {
+// MockAuditRepository_DeleteExpired_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteExpired'
+type MockAuditRepository_DeleteExpired_Call struct {
 	*mock.Call
 }
 
-// DeleteAuditEntries is a helper method to define mock.On call
+// DeleteExpired is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.DeleteAuditEntriesRequest
-func (_e *MockAuditRepository_Expecter) DeleteAuditEntries(ctx any, req any) *MockAuditRepository_DeleteAuditEntries_Call {
-	return &MockAuditRepository_DeleteAuditEntries_Call{Call: _e.mock.On("DeleteAuditEntries", ctx, req)}
+//   - req auditports.DeleteExpiredAuditEntriesRequest
+func (_e *MockAuditRepository_Expecter) DeleteExpired(ctx any, req any) *MockAuditRepository_DeleteExpired_Call {
+	return &MockAuditRepository_DeleteExpired_Call{Call: _e.mock.On("DeleteExpired", ctx, req)}
 }
 
-func (_c *MockAuditRepository_DeleteAuditEntries_Call) Run(run func(ctx context.Context, req auditports.DeleteAuditEntriesRequest)) *MockAuditRepository_DeleteAuditEntries_Call {
+func (_c *MockAuditRepository_DeleteExpired_Call) Run(run func(ctx context.Context, req auditports.DeleteExpiredAuditEntriesRequest)) *MockAuditRepository_DeleteExpired_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 auditports.DeleteAuditEntriesRequest
+		var arg1 auditports.DeleteExpiredAuditEntriesRequest
 		if args[1] != nil {
-			arg1 = args[1].(auditports.DeleteAuditEntriesRequest)
+			arg1 = args[1].(auditports.DeleteExpiredAuditEntriesRequest)
 		}
 		run(
 			arg0,
@@ -96,18 +105,86 @@ func (_c *MockAuditRepository_DeleteAuditEntries_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockAuditRepository_DeleteAuditEntries_Call) Return(n int64, err error) *MockAuditRepository_DeleteAuditEntries_Call {
+func (_c *MockAuditRepository_DeleteExpired_Call) Return(n int64, err error) *MockAuditRepository_DeleteExpired_Call {
 	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockAuditRepository_DeleteAuditEntries_Call) RunAndReturn(run func(ctx context.Context, req auditports.DeleteAuditEntriesRequest) (int64, error)) *MockAuditRepository_DeleteAuditEntries_Call {
+func (_c *MockAuditRepository_DeleteExpired_Call) RunAndReturn(run func(ctx context.Context, req auditports.DeleteExpiredAuditEntriesRequest) (int64, error)) *MockAuditRepository_DeleteExpired_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ExportPage provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) ExportPage(ctx context.Context, req *auditports.ExportPageRequest) ([]*audit.Entry, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExportPage")
+	}
+
+	var r0 []*audit.Entry
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ExportPageRequest) ([]*audit.Entry, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ExportPageRequest) []*audit.Entry); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*audit.Entry)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.ExportPageRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuditRepository_ExportPage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExportPage'
+type MockAuditRepository_ExportPage_Call struct {
+	*mock.Call
+}
+
+// ExportPage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *auditports.ExportPageRequest
+func (_e *MockAuditRepository_Expecter) ExportPage(ctx any, req any) *MockAuditRepository_ExportPage_Call {
+	return &MockAuditRepository_ExportPage_Call{Call: _e.mock.On("ExportPage", ctx, req)}
+}
+
+func (_c *MockAuditRepository_ExportPage_Call) Run(run func(ctx context.Context, req *auditports.ExportPageRequest)) *MockAuditRepository_ExportPage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *auditports.ExportPageRequest
+		if args[1] != nil {
+			arg1 = args[1].(*auditports.ExportPageRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuditRepository_ExportPage_Call) Return(entrys []*audit.Entry, err error) *MockAuditRepository_ExportPage_Call {
+	_c.Call.Return(entrys, err)
+	return _c
+}
+
+func (_c *MockAuditRepository_ExportPage_Call) RunAndReturn(run func(ctx context.Context, req *auditports.ExportPageRequest) ([]*audit.Entry, error)) *MockAuditRepository_ExportPage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) GetByID(ctx context.Context, req auditports.GetAuditEntryByIDOptions) (*audit.Entry, error) {
+func (_mock *MockAuditRepository) GetByID(ctx context.Context, req *auditports.GetAuditEntryByIDOptions) (*audit.Entry, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -116,17 +193,17 @@ func (_mock *MockAuditRepository) GetByID(ctx context.Context, req auditports.Ge
 
 	var r0 *audit.Entry
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.GetAuditEntryByIDOptions) (*audit.Entry, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.GetAuditEntryByIDOptions) (*audit.Entry, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auditports.GetAuditEntryByIDOptions) *audit.Entry); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.GetAuditEntryByIDOptions) *audit.Entry); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*audit.Entry)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, auditports.GetAuditEntryByIDOptions) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.GetAuditEntryByIDOptions) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -141,20 +218,20 @@ type MockAuditRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetAuditEntryByIDOptions
+//   - req *auditports.GetAuditEntryByIDOptions
 func (_e *MockAuditRepository_Expecter) GetByID(ctx any, req any) *MockAuditRepository_GetByID_Call {
 	return &MockAuditRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
 
-func (_c *MockAuditRepository_GetByID_Call) Run(run func(ctx context.Context, req auditports.GetAuditEntryByIDOptions)) *MockAuditRepository_GetByID_Call {
+func (_c *MockAuditRepository_GetByID_Call) Run(run func(ctx context.Context, req *auditports.GetAuditEntryByIDOptions)) *MockAuditRepository_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 auditports.GetAuditEntryByIDOptions
+		var arg1 *auditports.GetAuditEntryByIDOptions
 		if args[1] != nil {
-			arg1 = args[1].(auditports.GetAuditEntryByIDOptions)
+			arg1 = args[1].(*auditports.GetAuditEntryByIDOptions)
 		}
 		run(
 			arg0,
@@ -169,17 +246,17 @@ func (_c *MockAuditRepository_GetByID_Call) Return(entry *audit.Entry, err error
 	return _c
 }
 
-func (_c *MockAuditRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req auditports.GetAuditEntryByIDOptions) (*audit.Entry, error)) *MockAuditRepository_GetByID_Call {
+func (_c *MockAuditRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *auditports.GetAuditEntryByIDOptions) (*audit.Entry, error)) *MockAuditRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// InsertAuditEntries provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error {
+// Insert provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) Insert(ctx context.Context, entries []*audit.Entry) error {
 	ret := _mock.Called(ctx, entries)
 
 	if len(ret) == 0 {
-		panic("no return value specified for InsertAuditEntries")
+		panic("no return value specified for Insert")
 	}
 
 	var r0 error
@@ -191,19 +268,19 @@ func (_mock *MockAuditRepository) InsertAuditEntries(ctx context.Context, entrie
 	return r0
 }
 
-// MockAuditRepository_InsertAuditEntries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertAuditEntries'
-type MockAuditRepository_InsertAuditEntries_Call struct {
+// MockAuditRepository_Insert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Insert'
+type MockAuditRepository_Insert_Call struct {
 	*mock.Call
 }
 
-// InsertAuditEntries is a helper method to define mock.On call
+// Insert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entries []*audit.Entry
-func (_e *MockAuditRepository_Expecter) InsertAuditEntries(ctx any, entries any) *MockAuditRepository_InsertAuditEntries_Call {
-	return &MockAuditRepository_InsertAuditEntries_Call{Call: _e.mock.On("InsertAuditEntries", ctx, entries)}
+func (_e *MockAuditRepository_Expecter) Insert(ctx any, entries any) *MockAuditRepository_Insert_Call {
+	return &MockAuditRepository_Insert_Call{Call: _e.mock.On("Insert", ctx, entries)}
 }
 
-func (_c *MockAuditRepository_InsertAuditEntries_Call) Run(run func(ctx context.Context, entries []*audit.Entry)) *MockAuditRepository_InsertAuditEntries_Call {
+func (_c *MockAuditRepository_Insert_Call) Run(run func(ctx context.Context, entries []*audit.Entry)) *MockAuditRepository_Insert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -221,34 +298,34 @@ func (_c *MockAuditRepository_InsertAuditEntries_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockAuditRepository_InsertAuditEntries_Call) Return(err error) *MockAuditRepository_InsertAuditEntries_Call {
+func (_c *MockAuditRepository_Insert_Call) Return(err error) *MockAuditRepository_Insert_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockAuditRepository_InsertAuditEntries_Call) RunAndReturn(run func(ctx context.Context, entries []*audit.Entry) error) *MockAuditRepository_InsertAuditEntries_Call {
+func (_c *MockAuditRepository_Insert_Call) RunAndReturn(run func(ctx context.Context, entries []*audit.Entry) error) *MockAuditRepository_Insert_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// List provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) List(ctx context.Context, req *auditports.ListAuditEntriesRequest) (*pagination.ListResult[*audit.Entry], error) {
+// ListConnection provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) ListConnection(ctx context.Context, req *auditports.ListAuditEntriesRequest) (*pagination.CursorListResult[*audit.Entry], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for List")
+		panic("no return value specified for ListConnection")
 	}
 
-	var r0 *pagination.ListResult[*audit.Entry]
+	var r0 *pagination.CursorListResult[*audit.Entry]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesRequest) (*pagination.ListResult[*audit.Entry], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesRequest) (*pagination.CursorListResult[*audit.Entry], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesRequest) *pagination.ListResult[*audit.Entry]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesRequest) *pagination.CursorListResult[*audit.Entry]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*audit.Entry])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*audit.Entry])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.ListAuditEntriesRequest) error); ok {
@@ -259,19 +336,19 @@ func (_mock *MockAuditRepository) List(ctx context.Context, req *auditports.List
 	return r0, r1
 }
 
-// MockAuditRepository_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
-type MockAuditRepository_List_Call struct {
+// MockAuditRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
+type MockAuditRepository_ListConnection_Call struct {
 	*mock.Call
 }
 
-// List is a helper method to define mock.On call
+// ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListAuditEntriesRequest
-func (_e *MockAuditRepository_Expecter) List(ctx any, req any) *MockAuditRepository_List_Call {
-	return &MockAuditRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
+//   - req *auditports.ListAuditEntriesRequest
+func (_e *MockAuditRepository_Expecter) ListConnection(ctx any, req any) *MockAuditRepository_ListConnection_Call {
+	return &MockAuditRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
 
-func (_c *MockAuditRepository_List_Call) Run(run func(ctx context.Context, req *auditports.ListAuditEntriesRequest)) *MockAuditRepository_List_Call {
+func (_c *MockAuditRepository_ListConnection_Call) Run(run func(ctx context.Context, req *auditports.ListAuditEntriesRequest)) *MockAuditRepository_ListConnection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -289,148 +366,146 @@ func (_c *MockAuditRepository_List_Call) Run(run func(ctx context.Context, req *
 	return _c
 }
 
-func (_c *MockAuditRepository_List_Call) Return(listResult *pagination.ListResult[*audit.Entry], err error) *MockAuditRepository_List_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockAuditRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *auditports.ListAuditEntriesRequest) (*pagination.ListResult[*audit.Entry], error)) *MockAuditRepository_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListByResourceID provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) ListByResourceID(ctx context.Context, req *auditports.ListByResourceIDRequest) (*pagination.ListResult[*audit.Entry], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListByResourceID")
-	}
-
-	var r0 *pagination.ListResult[*audit.Entry]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListByResourceIDRequest) (*pagination.ListResult[*audit.Entry], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListByResourceIDRequest) *pagination.ListResult[*audit.Entry]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*audit.Entry])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.ListByResourceIDRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAuditRepository_ListByResourceID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListByResourceID'
-type MockAuditRepository_ListByResourceID_Call struct {
-	*mock.Call
-}
-
-// ListByResourceID is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListByResourceIDRequest
-func (_e *MockAuditRepository_Expecter) ListByResourceID(ctx any, req any) *MockAuditRepository_ListByResourceID_Call {
-	return &MockAuditRepository_ListByResourceID_Call{Call: _e.mock.On("ListByResourceID", ctx, req)}
-}
-
-func (_c *MockAuditRepository_ListByResourceID_Call) Run(run func(ctx context.Context, req *auditports.ListByResourceIDRequest)) *MockAuditRepository_ListByResourceID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *auditports.ListByResourceIDRequest
-		if args[1] != nil {
-			arg1 = args[1].(*auditports.ListByResourceIDRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAuditRepository_ListByResourceID_Call) Return(listResult *pagination.ListResult[*audit.Entry], err error) *MockAuditRepository_ListByResourceID_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockAuditRepository_ListByResourceID_Call) RunAndReturn(run func(ctx context.Context, req *auditports.ListByResourceIDRequest) (*pagination.ListResult[*audit.Entry], error)) *MockAuditRepository_ListByResourceID_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListConnection provides a mock function for the type MockAuditRepository
-func (_mock *MockAuditRepository) ListConnection(ctx context.Context, req *auditports.ListAuditEntriesConnectionRequest) (*pagination.CursorListResult[*audit.Entry], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListConnection")
-	}
-
-	var r0 *pagination.CursorListResult[*audit.Entry]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesConnectionRequest) (*pagination.CursorListResult[*audit.Entry], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.ListAuditEntriesConnectionRequest) *pagination.CursorListResult[*audit.Entry]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*audit.Entry])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.ListAuditEntriesConnectionRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAuditRepository_ListConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListConnection'
-type MockAuditRepository_ListConnection_Call struct {
-	*mock.Call
-}
-
-// ListConnection is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListAuditEntriesConnectionRequest
-func (_e *MockAuditRepository_Expecter) ListConnection(ctx any, req any) *MockAuditRepository_ListConnection_Call {
-	return &MockAuditRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
-}
-
-func (_c *MockAuditRepository_ListConnection_Call) Run(run func(ctx context.Context, req *auditports.ListAuditEntriesConnectionRequest)) *MockAuditRepository_ListConnection_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *auditports.ListAuditEntriesConnectionRequest
-		if args[1] != nil {
-			arg1 = args[1].(*auditports.ListAuditEntriesConnectionRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
 func (_c *MockAuditRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*audit.Entry], err error) *MockAuditRepository_ListConnection_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockAuditRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *auditports.ListAuditEntriesConnectionRequest) (*pagination.CursorListResult[*audit.Entry], error)) *MockAuditRepository_ListConnection_Call {
+func (_c *MockAuditRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *auditports.ListAuditEntriesRequest) (*pagination.CursorListResult[*audit.Entry], error)) *MockAuditRepository_ListConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PartitionHorizon provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) PartitionHorizon(ctx context.Context) (int64, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PartitionHorizon")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuditRepository_PartitionHorizon_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PartitionHorizon'
+type MockAuditRepository_PartitionHorizon_Call struct {
+	*mock.Call
+}
+
+// PartitionHorizon is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockAuditRepository_Expecter) PartitionHorizon(ctx any) *MockAuditRepository_PartitionHorizon_Call {
+	return &MockAuditRepository_PartitionHorizon_Call{Call: _e.mock.On("PartitionHorizon", ctx)}
+}
+
+func (_c *MockAuditRepository_PartitionHorizon_Call) Run(run func(ctx context.Context)) *MockAuditRepository_PartitionHorizon_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuditRepository_PartitionHorizon_Call) Return(n int64, err error) *MockAuditRepository_PartitionHorizon_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockAuditRepository_PartitionHorizon_Call) RunAndReturn(run func(ctx context.Context) (int64, error)) *MockAuditRepository_PartitionHorizon_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TenantsWithEntries provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) TenantsWithEntries(ctx context.Context, from int64, to int64) ([]auditports.TenantKey, error) {
+	ret := _mock.Called(ctx, from, to)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TenantsWithEntries")
+	}
+
+	var r0 []auditports.TenantKey
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) ([]auditports.TenantKey, error)); ok {
+		return returnFunc(ctx, from, to)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64) []auditports.TenantKey); ok {
+		r0 = returnFunc(ctx, from, to)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]auditports.TenantKey)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
+		r1 = returnFunc(ctx, from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuditRepository_TenantsWithEntries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TenantsWithEntries'
+type MockAuditRepository_TenantsWithEntries_Call struct {
+	*mock.Call
+}
+
+// TenantsWithEntries is a helper method to define mock.On call
+//   - ctx context.Context
+//   - from int64
+//   - to int64
+func (_e *MockAuditRepository_Expecter) TenantsWithEntries(ctx any, from any, to any) *MockAuditRepository_TenantsWithEntries_Call {
+	return &MockAuditRepository_TenantsWithEntries_Call{Call: _e.mock.On("TenantsWithEntries", ctx, from, to)}
+}
+
+func (_c *MockAuditRepository_TenantsWithEntries_Call) Run(run func(ctx context.Context, from int64, to int64)) *MockAuditRepository_TenantsWithEntries_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuditRepository_TenantsWithEntries_Call) Return(tenantKeys []auditports.TenantKey, err error) *MockAuditRepository_TenantsWithEntries_Call {
+	_c.Call.Return(tenantKeys, err)
+	return _c
+}
+
+func (_c *MockAuditRepository_TenantsWithEntries_Call) RunAndReturn(run func(ctx context.Context, from int64, to int64) ([]auditports.TenantKey, error)) *MockAuditRepository_TenantsWithEntries_Call {
 	_c.Call.Return(run)
 	return _c
 }

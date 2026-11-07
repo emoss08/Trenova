@@ -107,6 +107,7 @@ type traceAudit struct {
 }
 
 func (traceAudit) LogAction(
+	context.Context,
 	*auditports.LogActionParams,
 	...auditports.LogOption,
 ) error {

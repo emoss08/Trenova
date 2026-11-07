@@ -31,6 +31,6 @@ func TestAudit_ApprovalIsCriticalAndCarriesTheRequest(t *testing.T) {
 
 	entry := logged.Last(t)
 	assert.True(t, entry.Critical)
-	assert.Equal(t, "req-42", entry.Metadata["requestId"])
+	assert.Equal(t, "req-42", entry.CorrelationID)
 	assert.Equal(t, "10.0.0.7", entry.IPAddress)
 }

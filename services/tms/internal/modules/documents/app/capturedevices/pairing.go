@@ -482,7 +482,7 @@ func (s *Service) ExchangePairing(ctx context.Context, deviceCode string) (*Toke
 		BuID:   pair.BusinessUnitID,
 		UserID: pair.UserID,
 	}
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureDevice,
 		ResourceID:     pair.DeviceID.String(),
 		Operation:      permission.OpCreate,

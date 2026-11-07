@@ -119,7 +119,7 @@ func (s *Service) IssueLink(
 		Link: link,
 		URL:  plan.base + trackingLinkPath + url.PathEscape(token),
 	}
-	s.logLinkAudit(&linkAuditParams{
+	s.logLinkAudit(ctx, &linkAuditParams{
 		tenant:    req.TenantInfo,
 		userID:    req.IssuedByID,
 		link:      link,
@@ -212,7 +212,7 @@ func (s *Service) RevokeLink(
 		return err
 	}
 	active.RevokedAt = &now
-	s.logLinkAudit(&linkAuditParams{
+	s.logLinkAudit(ctx, &linkAuditParams{
 		tenant:    req.TenantInfo,
 		userID:    req.TenantInfo.UserID,
 		link:      active,
@@ -469,7 +469,7 @@ type linkAuditParams struct {
 	comment   string
 }
 
-func (s *Service) logLinkAudit(p *linkAuditParams) {
+func (s *Service) logLinkAudit(ctx context.Context, p *linkAuditParams) {
 	if p.link == nil {
 		return
 	}
@@ -493,7 +493,7 @@ func (s *Service) logLinkAudit(p *linkAuditParams) {
 		params.PrincipalID = permissionports.SystemPrincipalID
 	}
 	comment := p.comment
-	if err := s.auditService.LogAction(params, func(entry *audit.Entry) error {
+	if err := s.auditService.LogAction(ctx, params, func(entry *audit.Entry) error {
 		entry.Comment = comment
 		return nil
 	}); err != nil {

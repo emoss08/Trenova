@@ -208,7 +208,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.logAudit(&auditParams{
+	s.logAudit(ctx, &auditParams{
 		provider:  created,
 		previous:  nil,
 		operation: permission.OpCreate,
@@ -276,7 +276,7 @@ func (s *Service) Update(
 		})
 	}
 
-	s.logAudit(&auditParams{
+	s.logAudit(ctx, &auditParams{
 		provider:  saved,
 		previous:  previous,
 		operation: permission.OpUpdate,
@@ -302,7 +302,7 @@ func (s *Service) Delete(
 		return err
 	}
 
-	s.logAudit(&auditParams{
+	s.logAudit(ctx, &auditParams{
 		provider:  existing,
 		previous:  existing.Redacted(),
 		operation: permission.OpDelete,
@@ -660,7 +660,7 @@ type auditParams struct {
 	comment   string
 }
 
-func (s *Service) logAudit(p *auditParams) {
+func (s *Service) logAudit(ctx context.Context, p *auditParams) {
 	auditActor := p.actor.AuditActor()
 
 	// The redacted form is what is recorded: an audit trail that carried the
@@ -670,7 +670,7 @@ func (s *Service) logAudit(p *auditParams) {
 		previousState = jsonutils.MustToJSON(p.previous)
 	}
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     p.provider.GetID().String(),
 		Operation:      p.operation,

@@ -346,6 +346,10 @@ type quietAudit struct {
 	auditports.AuditService
 }
 
-func (quietAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (quietAudit) LogAction(
+	context.Context,
+	*auditports.LogActionParams,
+	...auditports.LogOption,
+) error {
 	return nil
 }

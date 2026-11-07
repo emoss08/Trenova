@@ -188,11 +188,14 @@ export function userInitials(name?: string) {
 }
 
 export function formatFieldLabel(path: string) {
-  return path
-    .split(/[._]/)
+  const words = path
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .split(/[\s._]+/)
     .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+    .map((word) => (/^[A-Z0-9]+$/.test(word) && word.length > 1 ? word : word.toLowerCase()));
+  if (words.length === 0) return path;
+  return [words[0].charAt(0).toUpperCase() + words[0].slice(1), ...words.slice(1)].join(" ");
 }
 
 export function changeTypeLabel(type: AuditChangeType) {
@@ -291,7 +294,7 @@ export function isSensitiveOmittedValue(value: unknown): boolean {
     return false;
   }
 
-  return normalized === "[REDACTED]" || normalized === "****" || /^\*{4,}$/.test(normalized);
+  return normalized.startsWith("[REDACTED]") || /^\*{4,}$/.test(normalized);
 }
 
 export function containsSensitiveOmittedData(value: unknown): boolean {
@@ -315,4 +318,21 @@ export function containsSensitiveOmittedData(value: unknown): boolean {
   }
 
   return false;
+}
+
+export const AUDIT_CHANNEL_LABELS = defineLabels({
+  web: "Web app",
+  api: "API key",
+  portal: "Portal",
+  agent_conversation: "Agent, in a conversation",
+  agent_run: "Agent, on its own",
+  support: "Trenova support",
+  scim: "SCIM directory",
+  job: "Background job",
+  cli: "Command line",
+  system: "System",
+} as const);
+
+export function channelLabel(channel: string): string {
+  return (AUDIT_CHANNEL_LABELS as Record<string, string>)[channel] ?? channel;
 }

@@ -455,7 +455,7 @@ func TestCreate(t *testing.T) {
 		deps.repo.On("Create", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
 			return w.UserID.IsNil()
 		})).Return(created, nil)
-		deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		_, err := deps.svc.Create(
 			t.Context(),
@@ -481,7 +481,7 @@ func TestCreate(t *testing.T) {
 		created.LastName = entity.LastName
 
 		deps.repo.On("Create", mock.Anything, entity).Return(created, nil)
-		deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		result, err := deps.svc.Create(
 			t.Context(),
@@ -647,7 +647,7 @@ func TestCreate(t *testing.T) {
 		created.Type = worker.WorkerTypeContractor
 
 		deps.repo.On("Create", mock.Anything, entity).Return(created, nil)
-		deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+		deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		result, err := deps.svc.Create(
 			t.Context(),

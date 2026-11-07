@@ -3,10 +3,11 @@ package carrierservice
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -96,7 +97,7 @@ func TestServiceCreate(t *testing.T) {
 				e.ID = pulid.MustNew("car_")
 				return e, nil
 			})
-		deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+		deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		created, err := deps.svc.Create(
 			t.Context(),
@@ -147,7 +148,7 @@ func TestServiceUpdate(t *testing.T) {
 			})).
 			Return(&original, nil)
 		deps.repo.EXPECT().Update(mock.Anything, entity).Return(entity, nil)
-		deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		updated, err := deps.svc.Update(
 			t.Context(),
@@ -205,7 +206,7 @@ func TestServiceBulkUpdateStatus(t *testing.T) {
 	deps.repo.EXPECT().BulkUpdateStatus(mock.Anything, req).Return(
 		[]*carrier.Carrier{&updatedEntity}, nil,
 	)
-	deps.audit.EXPECT().LogActions(mock.Anything).Return(nil)
+	deps.audit.EXPECT().LogActions(mock.Anything, mock.Anything).Return(nil)
 
 	entities, err := deps.svc.BulkUpdateStatus(t.Context(), req)
 	require.NoError(t, err)
