@@ -448,11 +448,7 @@ func (t *runReportTool) Description() string {
 		"returns a run id, and you say that it has started and stop there. The " +
 		"conversation tracks the run and shows the person its progress, its row " +
 		"count and a download button as soon as it finishes, so there is nothing " +
-		"to poll and nowhere to send them. When the person asked something of the " +
-		"rows (who is past 90 days, the total, the worst lane), say in then what you " +
-		"will do with them: a run still going then picks this conversation up again " +
-		"when it finishes, and you answer from its rows. Never describe figures you " +
-		"have not seen."
+		"to poll and nowhere to send them. Never describe figures you have not seen."
 }
 
 func (t *runReportTool) ParamSchema() map[string]any {
@@ -487,8 +483,9 @@ func (t *runReportTool) ParamSchema() map[string]any {
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "Only when the person asked something of the report's " +
 					"rows: what you will do with them once the run finishes (\"name the customers " +
-					"over 90 days and their balances\"). Leave it out when they only asked for " +
-					"the report itself.",
+					"over 90 days and their balances\"). A run still going then picks this " +
+					"conversation up again when it finishes, and you answer from its rows. Leave " +
+					"it out when they only asked for the report itself.",
 			},
 		},
 		toolschema.KeyAdditionalProperties: false,
@@ -586,7 +583,7 @@ func (t *runReportTool) followNote(
 		name, run.ID.String(),
 	)
 	then := strings.TrimSpace(querytool.OptionalString(params.Params, "then"))
-	if then == "" || t.waits == nil || params.Delegated {
+	if then == "" || t.waits == nil || params.Delegated || params.ThreadID.IsNil() {
 		return started
 	}
 
@@ -594,7 +591,6 @@ func (t *runReportTool) followNote(
 		Actor:        params.Actor,
 		DefinitionID: params.AgentDefinitionID,
 		ThreadID:     params.ThreadID,
-		RunID:        params.RunID,
 		ReportRunID:  run.ID,
 		ReportName:   name,
 		Then:         then,

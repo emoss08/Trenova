@@ -3,11 +3,13 @@
 How an agent parks its work until something happens in the world and picks it
 up again when it does: a truck reaching or leaving a stop, a reply about a
 shipment or from a carrier or customer, an appointment coming round, detention
-free time running out, a driver's drive time falling low, or a time.
+free time running out, a driver's drive time falling low, a record being changed
+by a person or the system, a report run finishing, or a time.
 
 Read this before changing `domain/agentwait`, `agentwaitservice`,
-`temporaljobs/agentwaitjobs`, the `agent_create_wait` / `agent_cancel_wait` tools, or any of
-the places that tell waits what happened (below).
+`temporaljobs/agentwaitjobs`, the `agent_create_wait` / `agent_cancel_wait` tools,
+`realtimebroker.RecordWatchFeed`, `report_run`'s `then`, or any of the places that tell
+waits what happened (below).
 
 ## The shape of it
 
@@ -16,7 +18,8 @@ agent_create_wait (tool) ──▶ agentwaitservice.Register ──▶ agent_wai
                          reads the records first        (system-queue, id agent-wait:<id>)
                                                                  │
    agent event ─▶ agentevents.Publisher ─▶ NotifyEvent ─┐        │ timer (due / expiry)
-   HOS poll ─────────────────────────────▶ NotifyHOS ───┴─signal─┤
+   HOS poll ─────────────────────────────▶ NotifyHOS ───┤        │
+   realtime stream ─▶ RecordWatchFeed ─▶ NotifyRecordChanges ┴─signal─┤ (settles: RecordChanged)
                                                                  ▼
                                     FinishWaitActivity ─▶ Finish: close the row, then
                                        conversation: a turn, origin WaitResolved
@@ -40,6 +43,8 @@ The workflow costs nothing while it waits and survives every restart.
 | `PortalRun` | `portalRunId` | the portal task an approved `web_use_portal` started, or a `web_read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
 | `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `WebWatchWorkflow`), or fails |
+| `RecordChanged` | `recordId` (any record, by its id) | someone other than this conversation's own turn changes the record, then it is quiet for 30 s (at most 2 min from the first change) |
+| `ReportRun` | `reportRunId` | the report run finishes (its `report-run` invalidation), or a look every two minutes finds it finished |
 
 `PortalRun` is not one an agent asks for: `agent_create_wait` offers only `AgentKinds()`, and the
 `web_use_portal` tool registers it itself (`RegisterPortalRunWait`, idempotent per run) on the
@@ -71,6 +76,26 @@ the next one for the same work while the watch goes on. It cannot be cancelled o
 ends with its watch (`web_stop_watch`, or **Stop watching** on the Desk's row). Listing a
 conversation's waits attaches `webWatch` (the watch, its cadence, when it ends and its findings
 so far). See [agent-web-watching.md](agent-web-watching.md).
+
+`RecordChanged` is the wait for "a person has to fix something before I can go on": an
+invoice that will not post until the shipment has its POD, a queue item missing a rate. The
+agent names the record that holds the problem (not the one it will change afterwards). A write
+refused before filing (`refusedBeforeFiling`, `validateCall`) tells a conversation's agent to
+do exactly that instead of ending on "tell me when it is done" (`personFixNote`); a delegated
+task is never told, since it cannot set one. `Register` reads the record as the person
+(`checkRecord`): its kind from its id prefix (`recordkind.OfIDPrefix`), their read grant on that
+kind, and that the record is the organization's (`agentwaitports.RecordFinder`, the record
+labeler's projections, which also give the label the wait keeps on `Condition.RecordLabel`). A
+record they may not read is refused with the same words as a missing one. See "Hearing a
+record change" below.
+
+`ReportRun` is not one an agent asks for. `report_run` sets it (`WaitForReportRun`, one open
+wait per run and conversation, two-hour expiry) when the run is still going after the tool's
+few seconds and the agent said in `then` what it will do with the rows ("name the customers
+over 90 days"). A report asked for on its own sets none: the card already shows it. The run is
+read as the person who requested it; one already finished is refused with its outcome, so the
+agent reads it now. The pick-up says how many rows and tells the agent to read them with
+`report_get_run`; it never quotes them. A delegated task never sets one.
 
 Every wait also has an expiry (`giveUpAfterHours`, default 24, at most 168; a
 `Time` wait stays open at least five minutes past its time). A wait that runs
@@ -141,6 +166,41 @@ never picks up clean what it set aside after reading outside content; see
   every organization (`ListOverdueAcrossTenants`, under the system scope and
   listed in the RLS allowlist), is closed as run out and its work picked up.
 
+## Hearing a record change
+
+Every committed write already publishes a tenant-wide `resource.invalidation` to the realtime
+stream ([realtime.md](realtime.md)), so a record change needs no new hook in any module. The
+streamed kinds (`Kind.Streamed`: `RecordChanged`, `ReportRun`) register their watched id with
+`realtimeports.RecordWatchFeed` (`realtimebroker.RecordWatchFeed`):
+
+- **The register** is one sorted set per tenant (`trenova:realtime:watch:{org}:{bu}`), member
+  the record id, score the wait's expiry. `Watch` keeps the later expiry (`ZADD GT`), trims
+  expired members and keeps the key alive an hour past its last watch. When a streamed wait
+  closes, `release` takes the record off only if no other open wait watches it, and `Unwatch`
+  removes it only when it is not watched past that wait's expiry (a Lua check), so a later
+  wait on the same record keeps it. A record whose release failed drops off at its expiry.
+- **The follower** (`agentwaitjobs.WorkerModule`, worker processes only) reads every shard
+  through one consumer group (`agent-waits`) with `NOACK`: each entry reaches one worker, and a
+  change lost to a crash is what the wait's expiry is for. Each batch (up to 512 entries) keeps
+  the tenant-wide invalidations by their headers, asks which of the batch's tenants hold a
+  register (`EXISTS`, pipelined), decodes payloads only for those, and checks their records in
+  one pipelined `ZMSCORE` round trip. Only watched changes are handed to `NotifyRecordChanges`, which reads
+  the open waits on them, one query per tenant in the batch (`idx_agent_waits_open_watch`), and
+  the names of whoever made them in one more.
+- **A record change** older than the wait (`At < CreatedAt`) is what the agent already read and
+  is dropped. Otherwise the wait's workflow is signalled with the change in one line
+  (`worldwatch.DescribeChange`: the record, what became of it, who did it, the fields), keyed by
+  record. `Kind.Settle` gives the workflow a quiet period (30 s) and a limit (2 min): it keeps
+  the latest notice per record until nothing has arrived for the quiet period, then picks the
+  work up once with what it gathered. A person fixing a record makes several edits; the agent
+  reads it once, after the last.
+- **A report run** notice reads the run; only a finished one ends the wait.
+
+When a settled wait is picked up, `Finish` asks whether the conversation's owner started a
+turn after the first change (`ConversationActivity.PersonSpokeSince`, the newest turns of the
+thread by `idx_assistant_turns_thread`). If they did, they fixed the record and said so, and the
+turn that answered them already read it: the wait closes as met and nothing is started.
+
 ## Picking the work up
 
 `FinishWaitActivity` closes the row (only an open wait closes; a retry finds it
@@ -149,7 +209,11 @@ closed and picks up only what it has not) and then:
 - **Conversation:** starts a turn with origin `WaitResolved` and
   `AssistantTurnRequest.ResumeWaitID`, as the conversation's owner. Its input is
   `Wait.ResumeNote()`, saved as a `WaitNote` message that the Desk draws as the
-  wait it records. A conversation busy with another reply is
+  wait it records. A met `RecordChanged` note tells the agent to read the record
+  again, carry on if what held it up is resolved, and otherwise say what is still
+  missing and set the wait again. The turn's model calls are kept under the
+  `AgentWakeUp` usage feature (`RunRequest.UsageFeature`), so what waking up costs
+  reads on its own line in AI usage. A conversation busy with another reply is
   `ErrConversationBusy`, retried with backoff for up to a day.
 - **Background run:** starts a run of the same agent on the same record with
   trigger `Wait` and `AgentRunPayload.WaitID`; the run's input ends with the note
@@ -187,7 +251,9 @@ web read they are capped at Propose like every other write.
 
 `GET /assistant/threads/:threadID/waits/` lists a conversation's waits; the
 composer shows the open ones ("Waiting on …", when each comes due or gives up,
-cancel), moved by the `agent_waits` realtime event addressed to the owner.
+cancel), moved by the `agent_waits` realtime event addressed to the owner. A
+record change reads "Picks up when it changes" with when it gives up, and a
+report run "Running": their due times are rechecks, not when the work comes back.
 
 ## Known limits
 
@@ -195,4 +261,7 @@ None that the code can remove. What remains is the data: a wait hears an
 arrival as soon as the provider reports a geofence event, a stop actual is
 recorded, or a polled position shows it, whichever is first; and drive time is
 projected exactly only while the duty status the last clock read reported still
-holds.
+holds. A record change is heard at most once: a worker that dies holding a batch
+loses it, and the wait picks the work up when it runs out, told so. A write that
+publishes no invalidation is never heard; every write is meant to publish one
+([realtime.md](realtime.md)).

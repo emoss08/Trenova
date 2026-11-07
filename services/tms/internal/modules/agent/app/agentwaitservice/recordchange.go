@@ -245,6 +245,9 @@ func (s *Service) recordChanged(
 	if change.At > 0 && change.At < wait.CreatedAt {
 		return
 	}
+	if !s.ownerMayStillRead(ctx, wait) {
+		return
+	}
 	described := *change
 	described.Label = watchedLabel(wait.Condition)
 	owner := &permissionports.RequestActor{UserID: wait.UserID}
@@ -256,6 +259,35 @@ func (s *Service) recordChanged(
 		At:     change.At,
 		Key:    change.RecordID,
 	})
+}
+
+// ownerMayStillRead checks a conversation's owner may still read the kind of
+// record the wait watches: a grant withdrawn since the wait was set stops
+// the conversation hearing who changed what on it. The wait runs out as
+// usual. A background run's wait has no person to check; it is its agent's.
+func (s *Service) ownerMayStillRead(ctx context.Context, wait *agentwait.Wait) bool {
+	if wait.UserID.IsNil() {
+		return true
+	}
+	resource := recordkind.Kind(wait.Condition.RecordKind).Resource()
+	if resource == "" {
+		return false
+	}
+	allowed, err := subjectaccess.MayReadResource(ctx, s.permissions,
+		&permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
+			PrincipalID:    wait.UserID,
+			UserID:         wait.UserID,
+			OrganizationID: wait.OrganizationID,
+			BusinessUnitID: wait.BusinessUnitID,
+		}, resource)
+	if err != nil {
+		s.l.Debug("could not check the owner may still read a watched record",
+			zap.String("wait", wait.ID.String()), zap.Error(err))
+		return false
+	}
+
+	return allowed
 }
 
 // watchedLabel names the watched record as the wait was told it: its kind

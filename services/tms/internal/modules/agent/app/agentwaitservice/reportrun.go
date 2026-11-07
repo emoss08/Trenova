@@ -31,35 +31,34 @@ const (
 
 func NewReportRunWaiter(s *Service) agentwaitports.ReportRunWaiter { return s }
 
-// WaitForReportRun parks the work that started a report run still going.
-// One wait serves a run in a conversation: starting it again keeps the wait
-// already open.
+// WaitForReportRun parks the conversation that started a report run still
+// going. One wait serves a run in a conversation: starting it again keeps the
+// wait already open. A run is read as the person who asked for it, so only a
+// conversation, which has one, parks on it.
 func (s *Service) WaitForReportRun(
 	ctx context.Context,
 	req *agentwaitports.WaitForReportRunRequest,
 ) (*agentwait.Wait, error) {
-	if req.Actor == nil || req.ReportRunID.IsNil() {
+	if req.Actor == nil || req.ReportRunID.IsNil() || req.ThreadID.IsNil() {
 		return nil, errortypes.NewBusinessError(
-			"A report run is waited on by the work that started it",
+			"A report run is waited on by the conversation that started it",
 		)
 	}
-	if req.ThreadID.IsNotNil() {
-		open, err := s.waits.ListOpenWatching(ctx, &agentwaitports.ListOpenWaitsWatchingRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: req.Actor.OrganizationID,
-				BuID:  req.Actor.BusinessUnitID,
-			},
-			Kinds:    []agentwait.Kind{agentwait.KindReportRun},
-			WatchIDs: []pulid.ID{req.ReportRunID},
-		})
-		if err != nil {
-			return nil, err
-		}
-		if idx := slices.IndexFunc(open, func(wait *agentwait.Wait) bool {
-			return wait.ThreadID == req.ThreadID
-		}); idx >= 0 {
-			return open[idx], nil
-		}
+	open, err := s.waits.ListOpenWatching(ctx, &agentwaitports.ListOpenWaitsWatchingRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.Actor.OrganizationID,
+			BuID:  req.Actor.BusinessUnitID,
+		},
+		Kinds:    []agentwait.Kind{agentwait.KindReportRun},
+		WatchIDs: []pulid.ID{req.ReportRunID},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if idx := slices.IndexFunc(open, func(wait *agentwait.Wait) bool {
+		return wait.ThreadID == req.ThreadID
+	}); idx >= 0 {
+		return open[idx], nil
 	}
 
 	name := clip(cmp.Or(req.ReportName, "The report"), maxWaitedReportNameRunes)
@@ -68,7 +67,6 @@ func (s *Service) WaitForReportRun(
 		Actor:           req.Actor,
 		DefinitionID:    req.DefinitionID,
 		ThreadID:        req.ThreadID,
-		RunID:           req.RunID,
 		Delegated:       req.Delegated,
 		Kind:            agentwait.KindReportRun,
 		Condition:       agentwait.Condition{ReportRunID: req.ReportRunID},

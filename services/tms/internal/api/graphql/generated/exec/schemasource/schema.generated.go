@@ -6956,6 +6956,7 @@ The product feature that made a model call.
 """
 enum AIUsageFeature {
   AgentTurn
+  AgentWakeUp
   AgentEvaluation
   TableQuery
   FormulaGenerate
