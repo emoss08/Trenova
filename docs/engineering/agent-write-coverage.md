@@ -85,35 +85,35 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 93 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 97 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1123 writes: 663 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1128 writes: 668 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 678 |
-| — Security | 93 |
+| Exempt | 683 |
+| — Security | 97 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
 | — Agent administration | 104 |
 | — Counterparty | 35 |
-| — Read-only | 47 |
+| — Read-only | 48 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1123 |
+| Total | 1128 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -151,6 +151,7 @@ The writes no tool performs yet, and what the tool would do.
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 35 | 4 | 31 | 0 |
+| auditlog | 5 | 0 | 5 | 0 |
 | auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -593,6 +594,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PUT /api/v1/assistant/threads/:threadID/case/`<br>assistanthandler.bindCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |
 | `PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/`<br>assistanthandler.saveProposalEdits | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `PUT /api/v1/assistant/threads/:threadID/queue/order/`<br>assistanthandler.reorderQueue | Exempt, agent-administration: Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words. |
+
+### auditlog
+
+| Write | Decision |
+| --- | --- |
+| `mutation auditExportDownload` | Exempt, read-only: Returns a short-lived link to an export the person already asked for; the download is itself audited. |
+| `mutation placeAuditLegalHold` | Exempt, security: A legal hold overrides retention for litigation or an investigation; only a person accountable for that decision places one. |
+| `mutation releaseAuditLegalHold` | Exempt, security: Releasing a legal hold lets retention delete evidence; only a person accountable for that decision releases one. |
+| `mutation requestAuditExport` | Exempt, security: An audit log export carries the organization's whole trail out of Trenova; a person asks for it and is recorded doing so. |
+| `mutation updateAuditAlertPolicy` | Exempt, security: Security alerts are how administrators learn of access changes; an agent must not be able to silence them. |
 
 ### auth
 
