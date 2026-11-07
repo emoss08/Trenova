@@ -54,7 +54,10 @@ func (f *fakeHealth) Check(_ context.Context, p health.CheckParams) ([]health.Co
 	if f.ready {
 		return []health.Component{{Name: "api", Ready: true}, {Name: "postgres", Ready: true}}, nil
 	}
-	return []health.Component{{Name: "api", Ready: true}, {Name: "release", Message: "running"}}, nil
+	return []health.Component{
+		{Name: "api", Ready: true},
+		{Name: "release", Message: "running"},
+	}, nil
 }
 
 func (f *fakeHealth) set(ready bool) {
@@ -109,6 +112,41 @@ func (f *fakeUsage) fail(err error) {
 	f.err = err
 }
 
+type fakeAdmins struct {
+	mu      sync.Mutex
+	invites []tms.Invite
+	answer  tms.Administrator
+	err     error
+}
+
+func (f *fakeAdmins) InstallInvite(
+	_ context.Context,
+	invite tms.Invite,
+) (tms.Administrator, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.invites = append(f.invites, invite)
+	if f.err != nil {
+		return tms.Administrator{}, f.err
+	}
+	if f.answer.SetUp {
+		return tms.Administrator{SetUp: true}, nil
+	}
+	return tms.Administrator{InviteTokenSHA256: invite.TokenSHA256}, nil
+}
+
+func (f *fakeAdmins) calls() []tms.Invite {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]tms.Invite(nil), f.invites...)
+}
+
+func (f *fakeAdmins) set(answer tms.Administrator, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.answer, f.err = answer, err
+}
+
 type world struct {
 	cp       *controlplanetest.Server
 	kube     *fake.Clientset
@@ -116,6 +154,7 @@ type world struct {
 	health   *fakeHealth
 	releases *countingReleases
 	usage    *fakeUsage
+	admins   *fakeAdmins
 	now      time.Time
 }
 
@@ -148,13 +187,18 @@ func newWorldWith(
 
 	logger := slog.New(slog.NewTextHandler(testWriter{t}, nil))
 	transport := &credential.Transport{}
-	client, err := controlplane.New(cp.URL, &http.Client{Transport: transport, Timeout: 10 * time.Second})
+	client, err := controlplane.New(
+		cp.URL,
+		&http.Client{Transport: transport, Timeout: 10 * time.Second},
+	)
 	require.NoError(t, err)
-	w := &world{cp: cp, kube: kube, health: &fakeHealth{}, now: time.Now()}
+	w := &world{cp: cp, kube: kube, health: &fakeHealth{}, admins: &fakeAdmins{}, now: time.Now()}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
 	var relayer reconcile.Usage = w.usage
 	if relay != nil {
-		relayer = relay(relayParams{kube: kube, client: client, now: func() time.Time { return w.now }})
+		relayer = relay(
+			relayParams{kube: kube, client: client, now: func() time.Time { return w.now }},
+		)
 	}
 	creds := credential.NewManager(&credential.ManagerParams{
 		Store: credential.NewStore(credential.StoreParams{
@@ -191,14 +235,15 @@ func newWorldWith(
 			Name:         values.EscrowSecret,
 			Logger:       logger,
 		}),
-		Usage:      relayer,
-		Base:       map[string]any{"clamav": map[string]any{"enabled": true}},
-		Namespace:  "trenova-system",
-		Logger:     logger,
-		Now:        func() time.Time { return w.now },
-		Poll:       15 * time.Second,
-		Report:     time.Minute,
-		UsageEvery: 15 * time.Minute,
+		Usage:          relayer,
+		Administrators: w.admins,
+		Base:           map[string]any{"clamav": map[string]any{"enabled": true}},
+		Namespace:      "trenova-system",
+		Logger:         logger,
+		Now:            func() time.Time { return w.now },
+		Poll:           15 * time.Second,
+		Report:         time.Minute,
+		UsageEvery:     15 * time.Minute,
 	})
 	return w
 }
@@ -429,7 +474,10 @@ func TestRetriesUsageAfterAFailure(t *testing.T) {
 		{name: "failure", err: errors.New("the TMS is unreachable"), wait: time.Minute},
 		{
 			name: "rate limited",
-			err:  &controlplane.RetryLaterError{Reason: "rate limited", RetryAfter: 5 * time.Minute},
+			err: &controlplane.RetryLaterError{
+				Reason:     "rate limited",
+				RetryAfter: 5 * time.Minute,
+			},
 			wait: 5 * time.Minute,
 		},
 		{
@@ -671,4 +719,116 @@ func TestARefusedCertificateWhileFetchingSecretsGoesToRecovery(t *testing.T) {
 	require.Zero(t, w.releases.applies)
 	require.Empty(t, w.cp.Reports())
 	require.Error(t, w.loop.Healthy(), "the same bundle cannot enrol again")
+}
+
+const inviteHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+func specWithInvite(id uuid.UUID, expires time.Time) instanceapi.InstanceSpec {
+	spec := controlplanetest.Spec(id)
+	spec.FirstAdministrator.Invite = &instanceapi.SpecAdministratorInvite{
+		TokenSha256: inviteHash,
+		ExpiresAt:   expires,
+	}
+	return spec
+}
+
+func TestInstallsTheFirstAdministratorsInviteAndReportsIt(t *testing.T) {
+	t.Parallel()
+	expires := time.Now().Add(7 * 24 * time.Hour).Truncate(time.Second)
+	w := newWorldWith(t, specWithInvite(uuid.New(), expires), nil)
+
+	w.loop.Tick(t.Context())
+	require.Empty(t, w.admins.calls(), "not before the TMS is ready")
+	require.Nil(t, w.lastReport(t).Administrator)
+
+	w.health.set(true)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	calls := w.admins.calls()
+	require.Len(t, calls, 1)
+	require.Equal(t, inviteHash, calls[0].TokenSHA256)
+	require.True(t, calls[0].ExpiresAt.Equal(expires))
+	r := w.lastReport(t)
+	require.True(t, r.Ready)
+	require.NotNil(t, r.Administrator)
+	require.False(t, r.Administrator.SetUp)
+	require.Equal(t, inviteHash, *r.Administrator.InviteTokenSha256)
+	reports := len(w.cp.Reports())
+
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.admins.calls(), 1, "asked again at most every minute")
+	require.Len(t, w.cp.Reports(), reports, "an unchanged answer waits for the report interval")
+
+	w.admins.set(tms.Administrator{SetUp: true}, nil)
+	w.now = w.now.Add(time.Minute)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.admins.calls(), 2)
+	require.Len(t, w.cp.Reports(), reports+1, "a changed answer is reported at once")
+	r = w.lastReport(t)
+	require.True(t, r.Administrator.SetUp)
+	require.Nil(t, r.Administrator.InviteTokenSha256)
+}
+
+func TestANewInviteIsInstalledAtOnce(t *testing.T) {
+	t.Parallel()
+	id := uuid.New()
+	expires := time.Now().Add(time.Hour).Truncate(time.Second)
+	w := newWorldWith(t, specWithInvite(id, expires), nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.admins.calls(), 1)
+
+	next := specWithInvite(id, expires.Add(time.Hour))
+	next.FirstAdministrator.Invite.TokenSha256 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+	w.cp.SetSpec(next)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	calls := w.admins.calls()
+	require.Len(t, calls, 2, "a new invite does not wait for the recheck")
+	require.Equal(t, next.FirstAdministrator.Invite.TokenSha256, calls[1].TokenSHA256)
+	require.Equal(t, next.FirstAdministrator.Invite.TokenSha256,
+		*w.lastReport(t).Administrator.InviteTokenSha256)
+}
+
+func TestAnInviteFailureIsOmittedAndRetried(t *testing.T) {
+	t.Parallel()
+	w := newWorldWith(t, specWithInvite(uuid.New(), time.Now().Add(time.Hour)), nil)
+	w.health.set(true)
+	w.admins.set(tms.Administrator{}, errors.New("the TMS answered 503"))
+
+	w.loop.Tick(t.Context())
+	r := w.lastReport(t)
+	require.True(t, r.Ready, "a failed invite never holds the report back")
+	require.Nil(t, r.Administrator)
+	require.Equal(t, 1, w.releases.applies)
+
+	w.admins.set(tms.Administrator{}, nil)
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Len(t, w.admins.calls(), 2, "retried on the next tick")
+	require.Equal(t, inviteHash, *w.lastReport(t).Administrator.InviteTokenSha256)
+}
+
+func TestNoInviteMeansNoCall(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+	w.now = w.now.Add(2 * time.Minute)
+	w.loop.Tick(t.Context())
+	require.Empty(t, w.admins.calls())
+	require.Nil(t, w.lastReport(t).Administrator)
+}
+
+func TestTheInviteWaitsWhileSuspended(t *testing.T) {
+	t.Parallel()
+	spec := specWithInvite(uuid.New(), time.Now().Add(time.Hour))
+	spec.Lifecycle = instanceapi.Suspended
+	w := newWorldWith(t, spec, nil)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+	require.True(t, w.lastReport(t).Ready)
+	require.Empty(t, w.admins.calls())
+	require.Nil(t, w.lastReport(t).Administrator)
 }

@@ -92,6 +92,7 @@ jobs:
             [ci]="-f $CHART/ci/install-values.yaml"
             [managed]="-f $CHART/ci/managed-values.yaml"
             [escrow]="--set secrets.escrowSecret=trenova-escrow"
+            [setup-link]="--set bootstrap.adminEmail=admin@example.com --set bootstrap.orgName=Acme --set bootstrap.adminName=Dana --set bootstrap.adminSetup=link"
           )
           for shape in "${!shapes[@]}"; do
             echo "::group::$shape"
@@ -122,6 +123,9 @@ jobs:
             python3 -I tools/helm/check-escrow.py "$RUNNER_TEMP/$shape.yaml" trenova-escrow trenova-secrets
           done
           python3 -I tools/helm/check-escrow.py "$RUNNER_TEMP/default.yaml" trenova-secrets trenova-secrets
+          # A first administrator who sets up from a link is never handed a password.
+          python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/setup-link.yaml" link
+          python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/ci.yaml" password
 
       - name: The symlinked files resolve
         run: |

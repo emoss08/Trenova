@@ -22,14 +22,18 @@ type Server struct {
 	states   []tms.State
 	refused  int
 	fail     int
+	invites  []tms.Invite
+	spoiled  map[string]bool
+	setUp    bool
 }
 
 func New(t testing.TB, token string) *Server {
 	t.Helper()
-	s := &Server{token: token}
+	s := &Server{token: token, spoiled: map[string]bool{}}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /managed/v1/readings", s.getReadings)
 	mux.HandleFunc("PUT /managed/v1/state", s.putState)
+	mux.HandleFunc("PUT /managed/v1/first-administrator/invite", s.putInvite)
 	srv := httptest.NewServer(s.authenticate(mux))
 	t.Cleanup(srv.Close)
 	s.URL = srv.URL
@@ -64,6 +68,24 @@ func (s *Server) States() []tms.State {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]tms.State(nil), s.states...)
+}
+
+func (s *Server) SetAdministratorSetUp(setUp bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.setUp = setUp
+}
+
+func (s *Server) SpoilInvite(tokenSHA256 string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.spoiled[tokenSHA256] = true
+}
+
+func (s *Server) Invites() []tms.Invite {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]tms.Invite(nil), s.invites...)
 }
 
 func (s *Server) Refused() int {
@@ -125,6 +147,29 @@ func (s *Server) putState(w http.ResponseWriter, r *http.Request) {
 	s.states = append(s.states, state)
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) putInvite(w http.ResponseWriter, r *http.Request) {
+	var invite tms.Invite
+	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&invite); err != nil ||
+		len(invite.TokenSHA256) != 64 || invite.ExpiresAt.IsZero() {
+		problem(w, http.StatusBadRequest, "Invalid invite")
+		return
+	}
+	s.mu.Lock()
+	s.invites = append(s.invites, invite)
+	answer := tms.Administrator{SetUp: s.setUp}
+	if !s.setUp && !s.spoiled[invite.TokenSHA256] {
+		answer.InviteTokenSHA256 = invite.TokenSHA256
+	}
+	s.mu.Unlock()
+	out, err := sonic.Marshal(answer)
+	if err != nil {
+		problem(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(out)
 }
 
 func problem(w http.ResponseWriter, status int, title string) {

@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 )
@@ -20,6 +22,14 @@ const (
 
 const EscrowSecret = "trenova-escrow"
 
+const AdminSetupLink = "link"
+
+const (
+	maxAdminName = 100
+	maxOrgName   = 100
+	maxEmail     = 254
+)
+
 const (
 	keyPostgres = "postgres"
 	keyTMS      = "tms"
@@ -32,6 +42,7 @@ var (
 	ErrSchemaVersion = errors.New("this operator does not know the spec's schema version")
 	ErrInvalidSpec   = errors.New("the spec cannot be applied")
 
+	emailPattern    = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
 	versionPattern  = regexp.MustCompile(`^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`)
 	hostnamePattern = regexp.MustCompile(
 		`^([a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?\.)+[a-z][-a-z0-9]{0,61}[a-z0-9]$`,
@@ -73,6 +84,10 @@ func Render(
 	if err != nil {
 		return Rendered{}, err
 	}
+	admin, err := bootstrap(&spec.FirstAdministrator)
+	if err != nil {
+		return Rendered{}, err
+	}
 	out := deepCopy(base)
 	docling := slices.Contains(spec.Components, "docling")
 	merge(out, map[string]any{
@@ -84,6 +99,7 @@ func Render(
 		keyPostgres:     map[string]any{"hibernate": hibernate},
 		"managed":       managed(operatorNamespace),
 		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
+		"bootstrap":     admin,
 	})
 	sized, err := size(sizeInput{
 		vcpu:      spec.Plan.Vcpu,
@@ -98,6 +114,31 @@ func Render(
 	}
 	merge(out, sized)
 	return Rendered{Version: spec.Release.Version, Values: out}, nil
+}
+
+func bootstrap(admin *instanceapi.SpecFirstAdministrator) (map[string]any, error) {
+	email := string(admin.Email)
+	switch {
+	case !text(admin.Name, maxAdminName):
+		return nil, fmt.Errorf("%w: the first administrator's name", ErrInvalidSpec)
+	case !text(admin.OrganizationName, maxOrgName):
+		return nil, fmt.Errorf("%w: the first organization's name", ErrInvalidSpec)
+	case len(email) > maxEmail || !emailPattern.MatchString(email):
+		return nil, fmt.Errorf("%w: the first administrator's email", ErrInvalidSpec)
+	}
+	return map[string]any{
+		"adminSetup": AdminSetupLink,
+		"orgName":    admin.OrganizationName,
+		"adminName":  admin.Name,
+		"adminEmail": email,
+	}, nil
+}
+
+func text(s string, maxRunes int) bool {
+	if strings.TrimSpace(s) == "" || !utf8.ValidString(s) || utf8.RuneCountInString(s) > maxRunes {
+		return false
+	}
+	return !strings.ContainsFunc(s, unicode.IsControl)
 }
 
 func managed(operatorNamespace string) map[string]any {

@@ -585,5 +585,10 @@ func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {
 		Components: []string{},
 		AiProvider: instanceapi.Trenova,
 		Allowances: []instanceapi.SpecAllowance{},
+		FirstAdministrator: instanceapi.SpecFirstAdministrator{
+			Name:             "Dana Whitfield",
+			Email:            "dana@acme.example",
+			OrganizationName: "Acme Freight",
+		},
 	}
 }

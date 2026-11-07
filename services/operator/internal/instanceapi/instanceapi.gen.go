@@ -216,6 +216,16 @@ func (e SpecReleaseChannel) Valid() bool {
 	}
 }
 
+// AdministratorStatus Where the first administrator's handoff stands on the instance, reported once the spec has
+// an `invite` and the instance answered for it.
+type AdministratorStatus struct {
+	// InviteTokenSha256 The invite the instance holds and will redeem; absent when it holds none that works.
+	InviteTokenSha256 *string `json:"inviteTokenSha256,omitempty"`
+
+	// SetUp Whether the first administrator has chosen a password or signed in.
+	SetUp bool `json:"setUp"`
+}
+
 // ComponentStatus defines model for ComponentStatus.
 type ComponentStatus struct {
 	Message *string `json:"message,omitempty"`
@@ -278,6 +288,12 @@ type InstanceSpec struct {
 
 	// Features The TMS catalog features to turn on.
 	Features []string `json:"features"`
+
+	// FirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
+	// their organization's name, as they were when it was ordered. The first install creates
+	// them, with no usable password; the administrator chooses one through `invite`. Later
+	// revisions carry the same values, so they never conflict with what was installed.
+	FirstAdministrator SpecFirstAdministrator `json:"firstAdministrator"`
 
 	// Hostname Where the instance is served, at the root path.
 	Hostname   string             `json:"hostname"`
@@ -359,6 +375,19 @@ type RenewCertificateRequest struct {
 	Csr string `json:"csr"`
 }
 
+// SpecAdministratorInvite A one-time link for the first administrator to choose their password. The control plane
+// holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+// the instance holds only its SHA-256, as an account invite for the administrator, and
+// reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+// one before. Absent until the instance first runs, and once the administrator is set up.
+type SpecAdministratorInvite struct {
+	// ExpiresAt When the link stops working; at most 7 days after it was made.
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// TokenSha256 The lowercase hex SHA-256 of the token's text.
+	TokenSha256 string `json:"tokenSha256"`
+}
+
 // SpecAllowance defines model for SpecAllowance.
 type SpecAllowance struct {
 	// AppMeter The TMS meter this allowance limits; absent for an instance counter.
@@ -373,6 +402,23 @@ type SpecAllowance struct {
 
 // SpecAllowanceUnit defines model for SpecAllowance.Unit.
 type SpecAllowanceUnit string
+
+// SpecFirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
+// their organization's name, as they were when it was ordered. The first install creates
+// them, with no usable password; the administrator chooses one through `invite`. Later
+// revisions carry the same values, so they never conflict with what was installed.
+type SpecFirstAdministrator struct {
+	Email openapi_types.Email `json:"email"`
+
+	// Invite A one-time link for the first administrator to choose their password. The control plane
+	// holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+	// the instance holds only its SHA-256, as an account invite for the administrator, and
+	// reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+	// one before. Absent until the instance first runs, and once the administrator is set up.
+	Invite           *SpecAdministratorInvite `json:"invite,omitempty"`
+	Name             string                   `json:"name"`
+	OrganizationName string                   `json:"organizationName"`
+}
 
 // SpecPlacement defines model for SpecPlacement.
 type SpecPlacement struct {
@@ -427,6 +473,10 @@ type SpecReleaseChannel string
 
 // StatusReport defines model for StatusReport.
 type StatusReport struct {
+	// Administrator Where the first administrator's handoff stands on the instance, reported once the spec has
+	// an `invite` and the instance answered for it.
+	Administrator *AdministratorStatus `json:"administrator,omitempty"`
+
 	// AppliedRevision The spec revision the instance runs; absent before the first converge.
 	AppliedRevision *int64            `json:"appliedRevision,omitempty"`
 	Components      []ComponentStatus `json:"components"`

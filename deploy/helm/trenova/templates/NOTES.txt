@@ -15,7 +15,11 @@ No Ingress was created. To try it from this machine:
 
   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "trenova.name" (dict "root" . "component" "client") }} 8080:80
 {{- end }}
-{{- if .Values.bootstrap.adminEmail }}
+{{- if and .Values.bootstrap.adminEmail (eq .Values.bootstrap.adminSetup "link") }}
+
+{{ .Values.bootstrap.adminEmail }} is the first administrator, with no password yet: they
+choose one from a one-time account setup link (/auth/reset?token=…&purpose=invite).
+{{- else if .Values.bootstrap.adminEmail }}
 
 Sign in as {{ .Values.bootstrap.adminEmail }}. The password:
 

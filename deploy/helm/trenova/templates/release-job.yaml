@@ -140,6 +140,8 @@ spec:
             {{- include "trenova.tmsEnv" . | nindent 12 }}
             {{- include "trenova.migratorEnv" . | nindent 12 }}
             {{- with .Values.bootstrap }}
+            - name: TRENOVA_BOOTSTRAP_ADMIN_SETUP
+              value: {{ .adminSetup | default "password" | quote }}
             - name: TRENOVA_BOOTSTRAP_ORG_NAME
               value: {{ .orgName | quote }}
             - name: TRENOVA_BOOTSTRAP_ADMIN_NAME
@@ -161,7 +163,7 @@ spec:
             - name: TRENOVA_BOOTSTRAP_DOT_NUMBER
               value: {{ .dotNumber | quote }}
             {{- end }}
-            {{- if .Values.bootstrap.adminEmail }}
+            {{- if and .Values.bootstrap.adminEmail (ne .Values.bootstrap.adminSetup "link") }}
             {{- include "trenova.secretEnv" (dict "name" "TRENOVA_BOOTSTRAP_ADMIN_PASSWORD" "secret" $app "key" "bootstrapAdminPassword") | nindent 12 }}
             {{- end }}
           {{- with .Values.tms.extraEnvFrom }}

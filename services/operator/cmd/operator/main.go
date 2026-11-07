@@ -148,13 +148,14 @@ func run(logger *slog.Logger) error {
 			Name:         values.EscrowSecret,
 			Logger:       logger,
 		}),
-		Usage:      usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
-		Base:       base,
-		Namespace:  cfg.namespace,
-		Logger:     logger,
-		Poll:       cfg.poll,
-		Report:     cfg.report,
-		UsageEvery: cfg.usage,
+		Usage:          usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
+		Administrators: tmsClient,
+		Base:           base,
+		Namespace:      cfg.namespace,
+		Logger:         logger,
+		Poll:           cfg.poll,
+		Report:         cfg.report,
+		UsageEvery:     cfg.usage,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

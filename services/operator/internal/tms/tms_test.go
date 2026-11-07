@@ -151,3 +151,50 @@ func TestRefusesABadURL(t *testing.T) {
 	_, err := tms.New(tms.Params{URL: "http://trenova-api.trenova.svc:8090"})
 	require.Error(t, err, "a token source is required")
 }
+
+const inviteHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+func TestInstallsTheFirstAdministratorsInvite(t *testing.T) {
+	t.Parallel()
+	srv := tmstest.New(t, "token")
+	kube := fake.NewClientset(secretWith("token"))
+	c := client(t, kube, srv.URL)
+	expires := time.Date(2026, 11, 14, 10, 0, 0, 0, time.FixedZone("EST", -5*3600))
+
+	admin, err := c.InstallInvite(
+		t.Context(),
+		tms.Invite{TokenSHA256: inviteHash, ExpiresAt: expires},
+	)
+	require.NoError(t, err)
+	require.Equal(t, tms.Administrator{InviteTokenSHA256: inviteHash}, admin)
+	invites := srv.Invites()
+	require.Len(t, invites, 1)
+	require.Equal(t, inviteHash, invites[0].TokenSHA256)
+	require.True(t, invites[0].ExpiresAt.Equal(expires))
+
+	srv.SpoilInvite(inviteHash)
+	admin, err = c.InstallInvite(
+		t.Context(),
+		tms.Invite{TokenSHA256: inviteHash, ExpiresAt: expires},
+	)
+	require.NoError(t, err)
+	require.Equal(t, tms.Administrator{}, admin, "a used invite is no longer reported")
+
+	srv.SetAdministratorSetUp(true)
+	admin, err = c.InstallInvite(
+		t.Context(),
+		tms.Invite{TokenSHA256: inviteHash, ExpiresAt: expires},
+	)
+	require.NoError(t, err)
+	require.Equal(t, tms.Administrator{SetUp: true}, admin)
+
+	srv.FailNext(1)
+	_, err = c.InstallInvite(t.Context(), tms.Invite{TokenSHA256: inviteHash, ExpiresAt: expires})
+	var se *tms.StatusError
+	require.ErrorAs(t, err, &se)
+	require.Equal(t, 503, se.Status)
+
+	_, err = c.InstallInvite(t.Context(), tms.Invite{TokenSHA256: "short", ExpiresAt: expires})
+	require.ErrorAs(t, err, &se)
+	require.Equal(t, 400, se.Status)
+}

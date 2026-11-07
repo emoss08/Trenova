@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
@@ -26,6 +27,8 @@ const (
 	usageRetry    = time.Minute
 	usageTimeout  = time.Minute
 	defaultUsage  = 15 * time.Minute
+	inviteRecheck = time.Minute
+	inviteTimeout = 30 * time.Second
 )
 
 type ControlPlane interface {
@@ -61,6 +64,16 @@ type Usage interface {
 	Run(ctx context.Context, allowances []instanceapi.SpecAllowance) (usage.Result, error)
 }
 
+type Administrators interface {
+	InstallInvite(ctx context.Context, invite tms.Invite) (tms.Administrator, error)
+}
+
+type inviteAsked struct {
+	tokenSHA256 string
+	at          time.Time
+	answer      *instanceapi.AdministratorStatus
+}
+
 type Loop struct {
 	cp       ControlPlane
 	creds    Credentials
@@ -69,6 +82,7 @@ type Loop struct {
 	health   Health
 	escrow   Escrow
 	usage    Usage
+	admins   Administrators
 	base     map[string]any
 	ownNS    string
 	logger   *slog.Logger
@@ -78,6 +92,7 @@ type Loop struct {
 	every    time.Duration
 
 	usageNext  time.Time
+	invite     inviteAsked
 	etag       string
 	desired    *controlplane.Desired
 	applied    int64
@@ -90,20 +105,21 @@ type Loop struct {
 }
 
 type Params struct {
-	ControlPlane ControlPlane
-	Credentials  Credentials
-	Charts       Charts
-	Releases     Releases
-	Health       Health
-	Escrow       Escrow
-	Usage        Usage
-	Base         map[string]any
-	Namespace    string
-	Logger       *slog.Logger
-	Now          func() time.Time
-	Poll         time.Duration
-	Report       time.Duration
-	UsageEvery   time.Duration
+	ControlPlane   ControlPlane
+	Credentials    Credentials
+	Charts         Charts
+	Releases       Releases
+	Health         Health
+	Escrow         Escrow
+	Usage          Usage
+	Administrators Administrators
+	Base           map[string]any
+	Namespace      string
+	Logger         *slog.Logger
+	Now            func() time.Time
+	Poll           time.Duration
+	Report         time.Duration
+	UsageEvery     time.Duration
 }
 
 func New(p *Params) *Loop {
@@ -123,6 +139,7 @@ func New(p *Params) *Loop {
 		health:   p.Health,
 		escrow:   p.Escrow,
 		usage:    p.Usage,
+		admins:   p.Administrators,
 		base:     p.Base,
 		ownNS:    p.Namespace,
 		logger:   p.Logger,
@@ -207,6 +224,7 @@ func (l *Loop) Tick(ctx context.Context) {
 		return
 	}
 	l.heartbeat.Store(l.now().UnixNano())
+	report.Administrator = l.administrator(ctx, report.Ready)
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
 			if !l.handle(ctx, err) {
@@ -217,6 +235,44 @@ func (l *Loop) Tick(ctx context.Context) {
 		l.last, l.lastSent, l.reported = report, l.now(), true
 	}
 	l.relayUsage(ctx, report.Ready)
+}
+
+func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.AdministratorStatus {
+	invite := l.desired.Spec.FirstAdministrator.Invite
+	if l.admins == nil || invite == nil || !ready ||
+		l.desired.Spec.Lifecycle != instanceapi.Active {
+		l.invite = inviteAsked{}
+		return nil
+	}
+	if l.invite.answer != nil && l.invite.tokenSHA256 == invite.TokenSha256 &&
+		l.now().Sub(l.invite.at) < inviteRecheck {
+		return l.invite.answer
+	}
+	run, cancel := context.WithTimeout(ctx, inviteTimeout)
+	defer cancel()
+	got, err := l.admins.InstallInvite(run, tms.Invite{
+		TokenSHA256: invite.TokenSha256,
+		ExpiresAt:   invite.ExpiresAt,
+	})
+	if err != nil {
+		l.invite = inviteAsked{}
+		l.logger.Warn("cannot install the first administrator's invite; retrying", "error", err)
+		return nil
+	}
+	answer := &instanceapi.AdministratorStatus{SetUp: got.SetUp}
+	if got.InviteTokenSHA256 != "" {
+		hash := got.InviteTokenSHA256
+		answer.InviteTokenSha256 = &hash
+	}
+	if !sameAdministrator(l.invite.answer, answer) {
+		l.logger.Info(
+			"first administrator",
+			"setUp", answer.SetUp,
+			"inviteLive", answer.InviteTokenSha256 != nil,
+		)
+	}
+	l.invite = inviteAsked{tokenSHA256: invite.TokenSha256, at: l.now(), answer: answer}
+	return answer
 }
 
 func (l *Loop) relayUsage(ctx context.Context, ready bool) {
@@ -369,7 +425,15 @@ func (l *Loop) shouldReport(r instanceapi.StatusReport) bool {
 	return r.Ready != l.last.Ready ||
 		value(r.AppliedRevision) != value(l.last.AppliedRevision) ||
 		str(r.Version) != str(l.last.Version) ||
-		str(r.Message) != str(l.last.Message)
+		str(r.Message) != str(l.last.Message) ||
+		!sameAdministrator(r.Administrator, l.last.Administrator)
+}
+
+func sameAdministrator(a, b *instanceapi.AdministratorStatus) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	return a.SetUp == b.SetUp && str(a.InviteTokenSha256) == str(b.InviteTokenSha256)
 }
 
 func (l *Loop) handle(ctx context.Context, err error) bool {

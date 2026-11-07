@@ -69,6 +69,16 @@ type State struct {
 	Meters  []Meter `json:"meters"`
 }
 
+type Invite struct {
+	TokenSHA256 string    `json:"tokenSha256"`
+	ExpiresAt   time.Time `json:"expiresAt"`
+}
+
+type Administrator struct {
+	SetUp             bool   `json:"setUp"`
+	InviteTokenSHA256 string `json:"inviteTokenSha256,omitempty"`
+}
+
 type Tokens interface {
 	Token(ctx context.Context) (string, error)
 	Refresh(ctx context.Context) (string, error)
@@ -130,6 +140,24 @@ func (c *Client) PutState(ctx context.Context, state State) error {
 		return fmt.Errorf("send the usage state to the TMS: %w", err)
 	}
 	return nil
+}
+
+func (c *Client) InstallInvite(ctx context.Context, invite Invite) (Administrator, error) {
+	invite.ExpiresAt = invite.ExpiresAt.UTC()
+	body, err := sonic.Marshal(invite)
+	if err != nil {
+		return Administrator{}, fmt.Errorf("install the first administrator's invite: %w", err)
+	}
+	u := c.base.JoinPath("managed", "v1", "first-administrator", "invite")
+	out, err := c.do(ctx, http.MethodPut, u, body, http.StatusOK)
+	if err != nil {
+		return Administrator{}, fmt.Errorf("install the first administrator's invite: %w", err)
+	}
+	var admin Administrator
+	if err = sonic.Unmarshal(out, &admin); err != nil {
+		return Administrator{}, fmt.Errorf("install the first administrator's invite: %w", err)
+	}
+	return admin, nil
 }
 
 func (c *Client) do(

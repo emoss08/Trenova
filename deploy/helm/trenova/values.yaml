@@ -283,10 +283,14 @@ tms:
 # Creates the first organization and its administrator on the first install
 # (trenova db bootstrap); skipped while adminEmail is empty. Later runs are
 # no-ops; different values, or a database that already has users, are
-# refused and fail the release Job. The password is generated into the
-# chart's Secret (bootstrapAdminPassword) unless secrets.existingSecret holds
-# one.
+# refused and fail the release Job. With adminSetup password, the password is
+# generated into the chart's Secret (bootstrapAdminPassword) unless
+# secrets.existingSecret holds one. With adminSetup link, the administrator
+# gets no usable password and chooses one from a one-time account setup link
+# (Trenova Cloud installs this way and delivers the link); no password is
+# passed to the Job.
 bootstrap:
+  adminSetup: password
   orgName: ""
   adminName: ""
   adminEmail: ""

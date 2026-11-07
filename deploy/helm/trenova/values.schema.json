@@ -360,6 +360,13 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "adminSetup": {
+          "type": "string",
+          "enum": [
+            "password",
+            "link"
+          ]
+        },
         "orgName": {
           "type": "string"
         },

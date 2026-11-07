@@ -258,7 +258,7 @@ components:
         What the instance should be. `schemaVersion` changes when a field's meaning changes; an
         operator refuses a version it does not know.
       required: [schemaVersion, lifecycle, instanceId, organizationId, name, hostname, release, plan, placement,
-                 addons, features, components, aiProvider, allowances]
+                 addons, features, components, aiProvider, allowances, firstAdministrator]
       properties:
         schemaVersion:
           type: integer
@@ -311,6 +311,51 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SpecAllowance"
+        firstAdministrator:
+          $ref: "#/components/schemas/SpecFirstAdministrator"
+
+    SpecFirstAdministrator:
+      type: object
+      description: |
+        The instance's first organization and its administrator: the person who ordered it, and
+        their organization's name, as they were when it was ordered. The first install creates
+        them, with no usable password; the administrator chooses one through `invite`. Later
+        revisions carry the same values, so they never conflict with what was installed.
+      required: [name, email, organizationName]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        organizationName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        invite:
+          $ref: "#/components/schemas/SpecAdministratorInvite"
+
+    SpecAdministratorInvite:
+      type: object
+      description: |
+        A one-time link for the first administrator to choose their password. The control plane
+        holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+        the instance holds only its SHA-256, as an account invite for the administrator, and
+        reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+        one before. Absent until the instance first runs, and once the administrator is set up.
+      required: [tokenSha256, expiresAt]
+      properties:
+        tokenSha256:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: The lowercase hex SHA-256 of the token's text.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the link stops working; at most 7 days after it was made.
 
     SpecRelease:
       type: object
@@ -427,6 +472,8 @@ components:
           description: A short explanation when not ready.
         finalBackup:
           $ref: "#/components/schemas/FinalBackup"
+        administrator:
+          $ref: "#/components/schemas/AdministratorStatus"
 
     UsageReport:
       type: object
@@ -504,6 +551,21 @@ components:
         stopped:
           type: boolean
           description: Whether the metered action must stop.
+
+    AdministratorStatus:
+      type: object
+      description: |
+        Where the first administrator's handoff stands on the instance, reported once the spec has
+        an `invite` and the instance answered for it.
+      required: [setUp]
+      properties:
+        inviteTokenSha256:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: The invite the instance holds and will redeem; absent when it holds none that works.
+        setUp:
+          type: boolean
+          description: Whether the first administrator has chosen a password or signed in.
 
     FinalBackup:
       type: object

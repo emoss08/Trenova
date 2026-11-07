@@ -29,7 +29,11 @@ var plans = []instanceapi.SpecPlan{
 	{Key: "production_plus", Vcpu: 16, MemoryGiB: 64, DiskGiB: 500},
 }
 
-func spec(plan instanceapi.SpecPlan, lc instanceapi.InstanceSpecLifecycle, components ...string) instanceapi.InstanceSpec {
+func spec(
+	plan instanceapi.SpecPlan,
+	lc instanceapi.InstanceSpecLifecycle,
+	components ...string,
+) instanceapi.InstanceSpec {
 	s := controlplanetest.Spec(uuid.New())
 	s.Plan = plan
 	s.Lifecycle = lc
@@ -67,11 +71,16 @@ func TestEveryPlanAndLifecycleRendersThroughTheChart(t *testing.T) {
 					require.NoError(t, err)
 
 					require.NotContains(t, out["trenova/templates/secrets.yaml"], "encryptionKey:")
-					require.Contains(t, out["trenova/templates/tms.yaml"], "name: "+values.EscrowSecret)
+					require.Contains(
+						t,
+						out["trenova/templates/tms.yaml"],
+						"name: "+values.EscrowSecret,
+					)
 
 					job := false
 					for name, body := range out {
-						if strings.HasSuffix(name, "release-job.yaml") && strings.Contains(body, "kind: Job") {
+						if strings.HasSuffix(name, "release-job.yaml") &&
+							strings.Contains(body, "kind: Job") {
 							job = true
 						}
 					}
@@ -148,6 +157,21 @@ func TestRefusesWhatItCannotApply(t *testing.T) {
 		"hostname":  func(s *instanceapi.InstanceSpec) { s.Hostname = "Not A Host" },
 		"lifecycle": func(s *instanceapi.InstanceSpec) { s.Lifecycle = "paused" },
 		"tiny plan": func(s *instanceapi.InstanceSpec) { s.Plan.MemoryGiB = 4 },
+		"no admin name": func(s *instanceapi.InstanceSpec) {
+			s.FirstAdministrator.Name = "  "
+		},
+		"long admin name": func(s *instanceapi.InstanceSpec) {
+			s.FirstAdministrator.Name = strings.Repeat("é", 101)
+		},
+		"control in org name": func(s *instanceapi.InstanceSpec) {
+			s.FirstAdministrator.OrganizationName = "Acme\nFreight"
+		},
+		"long org name": func(s *instanceapi.InstanceSpec) {
+			s.FirstAdministrator.OrganizationName = strings.Repeat("a", 101)
+		},
+		"bad email": func(s *instanceapi.InstanceSpec) {
+			s.FirstAdministrator.Email = "dana"
+		},
 	} {
 		s := spec(plans[0], instanceapi.Active)
 		mutate(&s)
@@ -232,6 +256,34 @@ func TestTheEscrowedKeysComeFromTheOperatorsSecret(t *testing.T) {
 			require.Len(t, reads.FindAllString(body, -1), uses, "%s %s", file, env)
 		}
 	}
+}
+
+func TestTheFirstAdministratorIsBootstrappedForASetupLink(t *testing.T) {
+	t.Parallel()
+	s := spec(plans[0], instanceapi.Active)
+	s.FirstAdministrator.OrganizationName = strings.Repeat("é", 100)
+	r, err := values.Render(&s, base(), operatorNS)
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"adminSetup": values.AdminSetupLink,
+		"orgName":    strings.Repeat("é", 100),
+		"adminName":  "Dana Whitfield",
+		"adminEmail": "dana@acme.example",
+	}, r.Values["bootstrap"])
+
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	require.NoError(t, chartutil.ValidateAgainstSchema(ch, r.Values))
+	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+	job := out["trenova/templates/release-job.yaml"]
+	require.Regexp(t, `- name: TRENOVA_BOOTSTRAP_ADMIN_SETUP\s+value: "link"`, job)
+	require.Regexp(t, `- name: TRENOVA_BOOTSTRAP_ADMIN_EMAIL\s+value: "dana@acme.example"`, job)
+	require.NotContains(t, job, "TRENOVA_BOOTSTRAP_ADMIN_PASSWORD")
 }
 
 func TestNamesFollowTheChart(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -128,8 +129,24 @@ func adminHandler(fake *fakecp.Server) http.Handler {
 		fake.SetSpec(&spec)
 		write(w, map[string]any{"revision": fake.Revision()})
 	})
+	mux.HandleFunc("PUT /invite/{sha256}", func(w http.ResponseWriter, r *http.Request) {
+		hash := r.PathValue("sha256")
+		if !inviteHash.MatchString(hash) {
+			http.Error(w, "the invite is 64 lowercase hex characters", http.StatusBadRequest)
+			return
+		}
+		spec := fake.Spec()
+		spec.FirstAdministrator.Invite = &instanceapi.SpecAdministratorInvite{
+			TokenSha256: hash,
+			ExpiresAt:   time.Now().Add(7 * 24 * time.Hour).UTC().Truncate(time.Second),
+		}
+		fake.SetSpec(&spec)
+		write(w, map[string]any{"revision": fake.Revision()})
+	})
 	return mux
 }
+
+var inviteHash = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 func allowances() []instanceapi.SpecAllowance {
 	allowance := func(
