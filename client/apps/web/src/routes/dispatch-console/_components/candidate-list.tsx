@@ -310,7 +310,7 @@ export function CandidateList({
 
   return (
     <section
-      className="bg-card border-border overflow-hidden rounded-md border"
+      className="bg-background border-border overflow-hidden rounded-md border"
       aria-label={t("Drivers for this move")}
     >
       <header
@@ -415,7 +415,7 @@ export function CandidateList({
           ) : (
             <>
               {shared.length > 0 ? (
-                <div className="border-border flex min-w-0 items-center gap-1.5 border-b px-3 py-1.5">
+                <div className="border-border flex min-w-0 items-center gap-1.5 border-b px-3 py-1.5 bg-card">
                   <span className="text-muted-foreground shrink-0 text-2xs">
                     {t("Every driver:")}
                   </span>

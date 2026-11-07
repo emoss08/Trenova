@@ -96,7 +96,7 @@ export function PlanPricePanel({
       title={t("Plan price")}
       icon={<AssistMark aria-hidden />}
       hint={priced}
-      className="rounded-md"
+      className="rounded-md bg-background"
     >
       <div className="flex flex-col gap-2 px-3 py-2.5 text-xs">
         {price.workerId ? (

@@ -40,7 +40,7 @@ function DryRunLine({ gate, reviewRequired }: { gate: ApprovalGate; reviewRequir
       return (
         <div className="flex items-start gap-1.5">
           <CheckCircleIcon
-            className="text-success-foreground mt-px size-3.5 shrink-0"
+            className="mt-px size-3.5 shrink-0 text-success-foreground"
             aria-hidden
           />
           <span>{t("Dry run: would go through as shown")}</span>
@@ -50,7 +50,7 @@ function DryRunLine({ gate, reviewRequired }: { gate: ApprovalGate; reviewRequir
       return (
         <div className="flex items-start gap-1.5">
           <AlertTriangleIcon
-            className="text-warning-foreground mt-px size-3.5 shrink-0"
+            className="mt-px size-3.5 shrink-0 text-warning-foreground"
             aria-hidden
           />
           <span>
@@ -63,7 +63,7 @@ function DryRunLine({ gate, reviewRequired }: { gate: ApprovalGate; reviewRequir
     case "unavailable":
       return (
         <div className="flex items-start gap-1.5">
-          <HelpCircleIcon className="text-muted-foreground mt-px size-3.5 shrink-0" aria-hidden />
+          <HelpCircleIcon className="mt-px size-3.5 shrink-0 text-muted-foreground" aria-hidden />
           <span>
             {reviewRequired
               ? t("The dry run didn't load, and this change can't be approved without it.")
@@ -128,13 +128,13 @@ export function NovaProposalPanel({
 
   return (
     <section
-      className="bg-card border-border animate-rise rounded-md border"
+      className="animate-rise rounded-md border border-border bg-background"
       aria-label={t("Nova's proposal")}
     >
-      <header className="border-border flex h-8.5 items-center gap-1.5 border-b px-3 text-xs font-semibold">
+      <header className="flex h-8.5 items-center gap-1.5 border-b border-border px-3 text-xs font-semibold">
         <NovaBadge size="sm" label={t("Nova")} />
         {t("Nova proposes")}
-        <span className="text-muted-foreground ml-auto text-2xs font-normal">
+        <span className="ml-auto text-2xs font-normal text-muted-foreground">
           {t("{0} · also in Decisions", formatUnixTime(proposal.createdAt))}
         </span>
       </header>
@@ -147,24 +147,24 @@ export function NovaProposalPanel({
         </div>
 
         {candidate ? (
-          <div className="border-border grid grid-cols-3 rounded-md border">
-            <div className="border-border border-r px-2.5 py-1.75">
+          <div className="grid grid-cols-3 rounded-md border border-border">
+            <div className="border-r border-border px-2.5 py-1.75">
               <span className="block font-mono text-sm leading-4.5 font-medium tabular-nums">
                 {formatMiles(candidate.deadheadMiles)}
               </span>
-              <span className="text-muted-foreground text-2xs">{t("Empty miles")}</span>
+              <span className="text-2xs text-muted-foreground">{t("Empty miles")}</span>
             </div>
-            <div className="border-border border-r px-2.5 py-1.75">
+            <div className="border-r border-border px-2.5 py-1.75">
               <span className="block font-mono text-sm leading-4.5 font-medium tabular-nums">
                 {formatClockDurationMs(candidate.driveRemainingMs)}
               </span>
-              <span className="text-muted-foreground text-2xs">{t("Drive left")}</span>
+              <span className="text-2xs text-muted-foreground">{t("Drive left")}</span>
             </div>
             <div className="px-2.5 py-1.75">
               <span className="block font-mono text-sm leading-4.5 font-medium tabular-nums">
                 {formatMinutesSpan(candidate.minutesOfSlack)}
               </span>
-              <span className="text-muted-foreground text-2xs">
+              <span className="text-2xs text-muted-foreground">
                 {candidate.minutesOfSlack < 0 ? t("Late at pickup") : t("Pickup margin")}
               </span>
             </div>
@@ -175,7 +175,7 @@ export function NovaProposalPanel({
 
         <div className="flex flex-col gap-1">
           {canDecide ? <DryRunLine gate={gate} reviewRequired={reviewRequired} /> : null}
-          <div className="text-muted-foreground flex items-start gap-1.5">
+          <div className="flex items-start gap-1.5 text-muted-foreground">
             <ReverseLeftIcon className="mt-px size-3.5 shrink-0" aria-hidden />
             <span>{t("Can be undone: Undo puts {0} back to uncovered", move.proNumber)}</span>
           </div>
@@ -187,7 +187,7 @@ export function NovaProposalPanel({
           </p>
         ) : decline.open ? (
           <form
-            className="animate-expand-in flex flex-col gap-1.5"
+            className="flex animate-expand-in flex-col gap-1.5"
             onSubmit={(event) => {
               event.preventDefault();
               if (decline.note.trim()) void onDecline(decline.note.trim());

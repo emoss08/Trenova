@@ -76,7 +76,7 @@ export function HoverGlideGroup({
       ref={groupRef}
       onPointerOver={handlePointerOver}
       onPointerLeave={hide}
-      className={cn("relative", className)}
+      className={cn("relative bg-background", className)}
     >
       <span
         aria-hidden
