@@ -89,8 +89,8 @@ Every write that is audited also announces itself, so a list stays live without 
 service publishing anything. When `AuditService.LogAction` or `LogActions` records an
 entry, it publishes `audited:<permission resource>` (`audited:commodity`) with action
 `created`, `updated` or `deleted` and the record's ID, or `bulk_<action>` with no ID
-when one call records several of the same resource. It is published as the entry is
-recorded, not when the audit buffer flushes, and carries no entity and no fields, so it
+when one call records several of the same resource. It is published once the entry
+commits (`kernelports.AfterCommit`), never for a rolled-back write, and carries no entity and no fields, so it
 reveals only that a record of that kind changed. Reads, exports and the audit log's own
 entries announce nothing. The names live in `pkg/realtimeinvalidation/recordchange.go`.
 

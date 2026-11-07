@@ -79,8 +79,10 @@ by RLS and `pkg/readscope`, not by `WHERE` clauses a service adds. Read
 
 ## After the write
 
-- **Audit**: `auditService.LogAction` after a successful write. It also publishes the
-  record-change invalidation, so a CRUD service usually needs no separate realtime call.
+- **Audit**: `auditService.LogAction(ctx, …)` with the request's `ctx`, inside the write's
+  transaction when there is one, so the entry commits or rolls back with the change; never pass
+  request metadata by hand, the service reads it from `ctx`. It also publishes the record-change
+  invalidation after commit, so a CRUD service usually needs no separate realtime call.
 - **Realtime** beyond that: `realtimeinvalidation.Publish`, or `PublishAfterCommit` inside a
   transaction ([realtime.md](../realtime.md)).
 - **Side effects that must not happen on rollback** (emails, workflow starts, webhooks, cache
