@@ -812,12 +812,15 @@ func changeGroups(tools []agentturn.ToolSummary) string {
 	proposals := make([]string, 0, len(tools))
 	personal := make([]string, 0, 2)
 	escalations := make([]string, 0, 2)
+	ownWork := make([]string, 0, 2)
 	decided := make([]string, 0, len(tools))
 	for _, tool := range tools {
 		switch {
 		case tool.Query:
 		case tool.Escalates:
 			escalations = append(escalations, tool.Name)
+		case tool.OwnWork:
+			ownWork = append(ownWork, tool.Name)
 		case tool.PersonalRunsUnasked:
 			personal = append(personal, tool.Name)
 		case tool.AlwaysProposes:
@@ -841,6 +844,12 @@ func changeGroups(tools []agentturn.ToolSummary) string {
 		"Changes that run at once whatever else waits, because they hand the run to a "+
 			"person in the organization",
 		escalations,
+	)
+	writeToolGroup(
+		&builder,
+		"Changes that run at once whatever else waits, because they act only on your own "+
+			"work",
+		ownWork,
 	)
 	writeToolGroup(&builder, toolsDecidedPerCall, decided)
 

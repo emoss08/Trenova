@@ -256,6 +256,10 @@ func condition(policy *agenttoolports.ToolPolicy) string {
 		parts = append(parts, "Runs above the agent's ceiling: it only puts the run in front "+
 			"of a person, so it waits for no one unless a person set its tier on the agent.")
 	}
+	if policy.OwnWork {
+		parts = append(parts, "Runs above the agent's ceiling: it acts only on the agent's "+
+			"own work, so it waits for no one unless a person set its tier on the agent.")
+	}
 	if len(parts) == 0 {
 		return none
 	}

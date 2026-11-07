@@ -201,6 +201,7 @@ type ToolSummary struct {
 	// it from ever running on its own.
 	AlwaysProposes bool
 	Escalates      bool
+	OwnWork        bool
 }
 
 func ToolNamesOf(summaries []ToolSummary) []string {

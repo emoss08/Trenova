@@ -192,7 +192,7 @@ func (s *Dispatcher) dispatchAction(
 		FromScript:     p.scriptStepKey != "",
 	})
 	hold := callHold{tier: decision.Tier, egress: decision.Egress}
-	if p.scriptStepKey != "" || !agenttoolpolicy.Escalates(req.Definition, &policy) {
+	if p.scriptStepKey != "" || !agenttoolpolicy.PastCeiling(req.Definition, &policy) {
 		hold.tier, hold.external = toolaccess.AfterExternalContent(hold.tier, p.afterExternal)
 		hold.tier, hold.hours = s.heldForBusinessHours(ctx, req, hold.tier)
 	}

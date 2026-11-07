@@ -179,6 +179,11 @@ func egressProblems(policy *agenttoolports.ToolPolicy) []string {
 	if policy.PersonalRunsUnasked && !policy.HasEgress(agent.EgressPersonal) {
 		add("runs a personal call unasked, so personal is one of its classes")
 	}
+	if policy.OwnWork && (policy.Scope != agenttooltrust.ToolScopeRun ||
+		len(policy.Egress) != 1 || policy.Egress[0] != agent.EgressInternal) {
+		add("acts only on the agent's own work, so its scope is run and internal is its " +
+			"only class")
+	}
 
 	return problems
 }

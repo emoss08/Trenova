@@ -45,6 +45,7 @@ func (s *Access) Summarize(
 			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
 			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, &policy),
 			Escalates:           agenttoolpolicy.Escalates(definition, &policy),
+			OwnWork:             agenttoolpolicy.OwnWork(definition, &policy),
 			Recipe:              recipeOf(tool),
 		})
 	}

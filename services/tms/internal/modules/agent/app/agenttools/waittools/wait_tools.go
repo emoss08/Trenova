@@ -41,7 +41,8 @@ var errNoWaitService = errors.New("waits are not available here")
 
 // waitPolicy is the policy both wait tools share. A wait changes nothing in
 // the world: it parks the agent's own work and hands it back later, so it
-// runs on its own and leaves nothing for anyone outside the organization.
+// runs on its own whatever the agent's ceiling and leaves nothing for anyone
+// outside the organization.
 func waitPolicy(name, rationale string) agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
 		Name:          name,
@@ -56,6 +57,7 @@ func waitPolicy(name, rationale string) agenttoolports.ToolPolicy {
 		Reversible:    true,
 		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
+		OwnWork:       true,
 		// A wait is part of the agent's own runs: what it reports is read
 		// beside them in AI Control.
 		Artifact:  "agent_run",

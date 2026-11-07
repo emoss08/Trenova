@@ -121,6 +121,26 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			reason: "egress class \"broadcast\" is not valid",
 		},
 		{
+			name: "a tool on the agent's own work stays inside its run",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.OwnWork = true
+				return []Spec{spec}
+			},
+			reason: "acts only on the agent's own work",
+		},
+		{
+			name: "a tool on the agent's own work reaches nothing outside",
+			specs: func() []Spec {
+				spec := validAction()
+				spec.Policy.OwnWork = true
+				spec.Policy.Scope = agenttooltrust.ToolScopeRun
+				spec.Policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
+				return []Spec{spec}
+			},
+			reason: "acts only on the agent's own work",
+		},
+		{
 			name: "a policy declares an egress class",
 			specs: func() []Spec {
 				spec := validAction()

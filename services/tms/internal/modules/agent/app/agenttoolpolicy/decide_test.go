@@ -456,7 +456,47 @@ func TestDecide_AgentCeiling(t *testing.T) {
 			tier:   agent.TierActWithApproval,
 			heldBy: []string{agenttoolpolicy.HeldByAgentCeiling},
 		},
+		{
+			name: "a wait runs above an agent that only proposes",
+			in: agenttoolpolicy.DecideInput{
+				Policy:     registeredPolicy(t, "agent_create_wait"),
+				Params:     call(agentPrincipal(), nil),
+				Definition: definition(agent.TierPropose, nil),
+				Taint:      tainted(),
+			},
+			tier: agent.TierAutoExecute,
+		},
+		{
+			name: "a tier a person set for a wait still decides",
+			in: agenttoolpolicy.DecideInput{
+				Policy: registeredPolicy(t, "agent_create_wait"),
+				Params: call(person(), nil),
+				Definition: definition(agent.TierPropose, map[string]agent.AutonomyTier{
+					"agent_create_wait": agent.TierAutoExecute,
+				}),
+				TierSetByPerson: true,
+				Taint:           clean(),
+			},
+			tier:   agent.TierPropose,
+			heldBy: []string{agenttoolpolicy.HeldByAgentCeiling},
+		},
 	})
+}
+
+func TestOwnWork_WaitsAreTheAgentsOwnWork(t *testing.T) {
+	t.Parallel()
+
+	proposing := definition(agent.TierPropose, nil)
+	for _, name := range []string{"agent_create_wait", "agent_cancel_wait"} {
+		policy := registeredPolicy(t, name)
+		assert.True(t, agenttoolpolicy.OwnWork(proposing, &policy), name)
+		assert.False(t, agenttoolpolicy.AlwaysProposes(proposing, &policy), name)
+		assert.Equal(t, agent.TierAutoExecute, agenttoolpolicy.StaticTier(proposing, &policy), name)
+	}
+
+	schedule := registeredPolicy(t, "agent_create_schedule")
+	assert.False(t, agenttoolpolicy.OwnWork(proposing, &schedule),
+		"a person approves every schedule")
 }
 
 /*

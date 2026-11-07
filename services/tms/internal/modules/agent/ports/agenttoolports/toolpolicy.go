@@ -30,6 +30,7 @@ type ToolPolicy struct {
 	TaintHold           *TaintHold
 	PersonalRunsUnasked bool
 	Escalates           bool
+	OwnWork             bool
 	Effect              agenttooltrust.ToolEffect
 	Artifact            string
 	Reversible          bool

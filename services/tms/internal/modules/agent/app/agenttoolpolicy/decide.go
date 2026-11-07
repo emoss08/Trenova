@@ -60,7 +60,7 @@ func HeldWhenTainted(class agent.EgressClass) bool {
 
 func Decide(ctx context.Context, in DecideInput) Decision {
 	policy := &in.Policy
-	if !in.FromScript && Escalates(in.Definition, policy) {
+	if !in.FromScript && PastCeiling(in.Definition, policy) {
 		return Decision{
 			Tier:   agent.TierAutoExecute,
 			Egress: policy.Classified(in.Params).Egress,
@@ -129,6 +129,23 @@ func Escalates(definition *agentdefinition.Definition, policy *agenttoolports.To
 	return definition == nil || !definition.SetsToolTier(policy.Name)
 }
 
+// PastCeiling reports a tool that runs above the agent's autonomy ceiling: one
+// that escalates to a person, or one that acts only on the agent's own work.
+// A tier a person set for the tool on the agent still decides.
+func PastCeiling(definition *agentdefinition.Definition, policy *agenttoolports.ToolPolicy) bool {
+	if !policy.Escalates && !policy.OwnWork {
+		return false
+	}
+
+	return definition == nil || !definition.SetsToolTier(policy.Name)
+}
+
+// OwnWork reports a tool that acts only on the agent's own work, such as
+// parking it on a wait, and so runs whatever the agent's ceiling.
+func OwnWork(definition *agentdefinition.Definition, policy *agenttoolports.ToolPolicy) bool {
+	return policy.OwnWork && PastCeiling(definition, policy)
+}
+
 func Promotable(policy *agenttoolports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
@@ -144,7 +161,7 @@ func AlwaysProposes(
 	definition *agentdefinition.Definition,
 	policy *agenttoolports.ToolPolicy,
 ) bool {
-	if Escalates(definition, policy) {
+	if PastCeiling(definition, policy) {
 		return false
 	}
 	if agent.TierAutoExecute.Above(Promotable(policy)) {
@@ -161,7 +178,7 @@ func StaticTier(
 	definition *agentdefinition.Definition,
 	policy *agenttoolports.ToolPolicy,
 ) agent.AutonomyTier {
-	if Escalates(definition, policy) {
+	if PastCeiling(definition, policy) {
 		return agent.TierAutoExecute
 	}
 
@@ -186,6 +203,11 @@ func ExplainTier(policy *agenttoolports.ToolPolicy) string {
 	if policy.Escalates {
 		parts = append(parts, "Runs on its own whatever the agent's ceiling, because it only "+
 			"puts the run in front of a person in the organization, unless a person set the "+
+			"tool's tier on the agent.")
+	}
+	if policy.OwnWork {
+		parts = append(parts, "Runs on its own whatever the agent's ceiling, because it acts "+
+			"only on the agent's own work and changes no record, unless a person set the "+
 			"tool's tier on the agent.")
 	}
 	if policy.PersonalRunsUnasked {
