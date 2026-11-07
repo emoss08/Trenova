@@ -190,7 +190,7 @@ func (s *Service) CreateProfile(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(emailProfileAuditParams{
+	s.logAudit(ctx, emailProfileAuditParams{
 		Current: created,
 		UserID:  userID,
 		Op:      permission.OpCreate,
@@ -222,7 +222,7 @@ func (s *Service) UpdateProfile(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(emailProfileAuditParams{
+	s.logAudit(ctx, emailProfileAuditParams{
 		Current:  updated,
 		Previous: original,
 		UserID:   userID,
@@ -244,7 +244,7 @@ func (s *Service) DeleteProfile(
 	if err = s.repo.DeleteProfile(ctx, req); err != nil {
 		return err
 	}
-	s.logAudit(emailProfileAuditParams{
+	s.logAudit(ctx, emailProfileAuditParams{
 		Current:  original,
 		Previous: original,
 		UserID:   userID,
@@ -314,7 +314,7 @@ func (s *Service) UpsertAssignments(
 	if err != nil {
 		return nil, err
 	}
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceEmailProfile,
 		ResourceID:     tenantInfo.OrgID.String() + ":" + tenantInfo.BuID.String(),
 		Operation:      permission.OpUpdate,
@@ -1188,11 +1188,11 @@ type emailProfileAuditParams struct {
 	Comment  string
 }
 
-func (s *Service) logAudit(p emailProfileAuditParams) {
+func (s *Service) logAudit(ctx context.Context, p emailProfileAuditParams) {
 	if p.Current == nil {
 		return
 	}
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceEmailProfile,
 		ResourceID:     p.Current.ID.String(),
 		Operation:      p.Op,

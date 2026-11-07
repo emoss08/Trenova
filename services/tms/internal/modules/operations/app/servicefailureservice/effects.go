@@ -49,7 +49,7 @@ func (s *service) afterServiceFailureCreate(
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
-	s.logServiceFailureAction(serviceFailureActionParams{
+	s.logServiceFailureAction(ctx, &serviceFailureActionParams{
 		entity:  entity,
 		actor:   actor,
 		op:      permission.OpCreate,
@@ -90,7 +90,7 @@ func (s *service) projectToWatchtower(
 	s.watchtower.Resolve(ctx, tenant, watchtower.SourceServiceFailure, entity.ID.String())
 }
 
-func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
+func (s *service) logServiceFailureAction(ctx context.Context, params *serviceFailureActionParams) {
 	auditActor := params.actor.AuditActorOrSystem()
 	logParams := &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailure,
@@ -117,7 +117,7 @@ func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 	if params.previous != nil && params.current != nil {
 		opts = append(opts, auditservice.WithDiff(params.previous, params.current))
 	}
-	if err := s.auditService.LogAction(logParams, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, logParams, opts...); err != nil {
 		s.l.Warn("failed to log service failure audit", zap.Error(err))
 	}
 }

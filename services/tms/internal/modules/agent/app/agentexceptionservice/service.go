@@ -61,7 +61,7 @@ func (s *Service) Flag(
 		return nil, err
 	}
 
-	s.logAction(actor, permission.OpCreate, created, nil, "Agent exception raised")
+	s.logAction(ctx, actor, permission.OpCreate, created, nil, "Agent exception raised")
 	s.watchtower.Upsert(ctx, watchtowersources.DescribeException(created))
 
 	return created, nil
@@ -114,7 +114,7 @@ func (s *Service) Resolve(
 		return nil, err
 	}
 
-	s.logAction(actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
+	s.logAction(ctx, actor, permission.OpUpdate, updated, nil, "Agent exception resolved")
 	if updated.ResolutionState != agentexception.ResolutionStateOpen {
 		s.watchtower.Resolve(
 			ctx,
@@ -128,6 +128,7 @@ func (s *Service) Resolve(
 }
 
 func (s *Service) logAction(
+	ctx context.Context,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
 	entity *agentexception.AgentException,
@@ -153,7 +154,7 @@ func (s *Service) logAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log agent exception audit", zap.Error(err))
 	}
 }

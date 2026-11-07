@@ -196,7 +196,7 @@ func (r *stubDefinitionRepo) Delete(
 
 type stubAudit struct{ auditports.AuditService }
 
-func (stubAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (stubAudit) LogAction(_ context.Context, _ *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	return nil
 }
 

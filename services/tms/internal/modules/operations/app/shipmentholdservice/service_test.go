@@ -86,8 +86,8 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		}).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentHold, params.Resource)
 		}).
 		Return(nil).Once()
@@ -209,8 +209,8 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 		}).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			assert.Equal(t, permission.ResourceShipmentHold, params.Resource)
 			assert.Equal(t, holdID.String(), params.ResourceID)
 		}).

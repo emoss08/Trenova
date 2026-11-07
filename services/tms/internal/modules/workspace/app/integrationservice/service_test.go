@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -34,39 +33,18 @@ type stubAuditService struct {
 	*auditportsmock.MockAuditService
 }
 
-func (s *stubAuditService) List(
-	context.Context,
-	*auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return nil, nil
-}
-
-func (s *stubAuditService) ListByResourceID(
-	context.Context,
-	*auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return nil, nil
-}
-
 func (s *stubAuditService) GetByID(
 	context.Context,
-	auditports.GetAuditEntryByIDOptions,
+	*auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
-func (s *stubAuditService) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (s *stubAuditService) LogAction(context.Context, *auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
-func (s *stubAuditService) LogActions([]auditports.BulkLogEntry) error {
-	return nil
-}
-
-func (s *stubAuditService) RegisterSensitiveFields(
-	permission.Resource,
-	[]auditports.SensitiveField,
-) error {
+func (s *stubAuditService) LogActions(context.Context, []auditports.BulkLogEntry) error {
 	return nil
 }
 

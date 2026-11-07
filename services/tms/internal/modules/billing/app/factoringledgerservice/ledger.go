@@ -217,7 +217,7 @@ func (s *LedgerService) finish(
 	invoiceIDs []pulid.ID,
 ) {
 	kernelports.AfterCommit(ctx, func(committedCtx context.Context) {
-		s.rec.Log(actor, &factoringaction.AuditEntry{
+		s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 			Resource: permission.ResourceFactoringSubmission,
 			Entity:   updated,
 			Previous: before,

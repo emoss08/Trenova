@@ -88,10 +88,10 @@ type receivablesReader interface {
 }
 
 type activityReader interface {
-	ListByResourceID(
+	ListConnection(
 		ctx context.Context,
-		req *auditports.ListByResourceIDRequest,
-	) (*pagination.ListResult[*audit.Entry], error)
+		req *auditports.ListAuditEntriesRequest,
+	) (*pagination.CursorListResult[*audit.Entry], error)
 }
 
 type Service struct {

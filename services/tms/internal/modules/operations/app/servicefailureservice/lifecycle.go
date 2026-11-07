@@ -35,7 +35,7 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	s.logServiceFailureAction(serviceFailureActionParams{
+	s.logServiceFailureAction(ctx, &serviceFailureActionParams{
 		entity:   saved,
 		actor:    actor,
 		op:       permission.OpUpdate,
@@ -121,7 +121,7 @@ func (s *service) lifecycle(
 	if params.next == servicefailure.StatusVoided {
 		op = permission.OpArchive
 	}
-	s.logServiceFailureAction(serviceFailureActionParams{
+	s.logServiceFailureAction(ctx, &serviceFailureActionParams{
 		entity:   saved,
 		actor:    params.actor,
 		op:       op,

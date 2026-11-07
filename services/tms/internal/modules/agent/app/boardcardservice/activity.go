@@ -61,8 +61,10 @@ func (s *Service) events(
 	limit int,
 ) ([]board.Event, error) {
 	tenant := req.Actor.TenantInfo()
-	result, err := s.activity.ListByResourceID(ctx, &auditports.ListByResourceIDRequest{
-		ResourceID: resourceID,
+	result, err := s.activity.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
+		ResourceID:    resourceID.String(),
+		Access:        auditports.EntryAccess{AllResources: true},
+		IncludeDetail: true,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: limit},

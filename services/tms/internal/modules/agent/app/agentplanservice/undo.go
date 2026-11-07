@@ -310,7 +310,7 @@ func (s *Service) reopenPlan(
 	}
 
 	if undo {
-		s.logUndo(reopened, actor)
+		s.logUndo(ctx, reopened, actor)
 		s.announce(ctx, reopened, actor, agentactivityports.ActivityUndone)
 
 		return true
@@ -320,9 +320,13 @@ func (s *Service) reopenPlan(
 	return true
 }
 
-func (s *Service) logUndo(plan *agentplan.AgentPlan, actor *permissionports.RequestActor) {
+func (s *Service) logUndo(
+	ctx context.Context,
+	plan *agentplan.AgentPlan,
+	actor *permissionports.RequestActor,
+) {
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     plan.ID.String(),
 		Operation:      permission.OpUpdate,

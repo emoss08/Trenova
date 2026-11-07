@@ -5,1403 +5,312 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/dbtype"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/auditctx"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
+	"go.opentelemetry.io/otel/trace"
 )
 
-type mockAuditRepository struct {
-	mock.Mock
-}
-
-func (m *mockAuditRepository) InsertAuditEntries(
-	ctx context.Context,
-	entries []*audit.Entry,
-) error {
-	args := m.Called(ctx, entries)
-	return args.Error(0)
-}
-
-func (m *mockAuditRepository) List(
-	ctx context.Context,
-	req *auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*pagination.ListResult[*audit.Entry]), args.Error(1)
-}
-
-func (m *mockAuditRepository) ListConnection(
-	ctx context.Context,
-	req *auditports.ListAuditEntriesConnectionRequest,
-) (*pagination.CursorListResult[*audit.Entry], error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*pagination.CursorListResult[*audit.Entry]), args.Error(1)
-}
-
-func (m *mockAuditRepository) ListByResourceID(
-	ctx context.Context,
-	req *auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*pagination.ListResult[*audit.Entry]), args.Error(1)
-}
-
-func (m *mockAuditRepository) GetByID(
-	ctx context.Context,
-	req auditports.GetAuditEntryByIDOptions,
-) (*audit.Entry, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*audit.Entry), args.Error(1)
-}
-
-func (m *mockAuditRepository) DeleteAuditEntries(
-	ctx context.Context,
-	req auditports.DeleteAuditEntriesRequest,
-) (int64, error) {
-	args := m.Called(ctx, req)
-	return args.Get(0).(int64), args.Error(1)
-}
-
-type mockBufferRepository struct {
-	mock.Mock
-}
-
-func (m *mockBufferRepository) Push(ctx context.Context, entry *audit.Entry) error {
-	args := m.Called(ctx, entry)
-	return args.Error(0)
-}
-
-func (m *mockBufferRepository) PushBatch(ctx context.Context, entries []*audit.Entry) error {
-	args := m.Called(ctx, entries)
-	return args.Error(0)
-}
-
-func (m *mockBufferRepository) Pop(ctx context.Context, count int) ([]*audit.Entry, error) {
-	args := m.Called(ctx, count)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*audit.Entry), args.Error(1)
-}
-
-func (m *mockBufferRepository) PopTenantBatches(
-	ctx context.Context,
-	batchSize int,
-	totalLimit int,
-) ([][]*audit.Entry, error) {
-	args := m.Called(ctx, batchSize, totalLimit)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([][]*audit.Entry), args.Error(1)
-}
-
-func (m *mockBufferRepository) Size(ctx context.Context) (int64, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(int64), args.Error(1)
-}
-
-type noopRealtimeService struct{}
-
-func (s *noopRealtimeService) PublishResourceInvalidation(
-	_ context.Context,
-	_ *realtimeports.PublishResourceInvalidationRequest,
-) error {
-	return nil
-}
-
-func newTestService(
-	repo *mockAuditRepository,
-	bufferRepo *mockBufferRepository,
-	realtime realtimeports.RealtimeService,
-) *service {
-	logger := zap.NewNop()
-	cfg := &config.Config{
-		App: appconfig.Config{Env: "test"},
-		Security: securityconfig.Config{
-			Encryption: securityconfig.EncryptionConfig{Key: "test-key-for-unit-tests-only"},
-		},
-	}
-	auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-	metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-	srv := &service{
-		repo:       repo,
-		bufferRepo: bufferRepo,
-		realtime:   realtime,
-		logger:     logger.Named("service.audit"),
-		sdm:        NewSensitiveDataManager(&cfg.Security.Encryption),
-		metrics:    metricsRegistry,
-	}
-	srv.configureSensitiveDataManager("test")
-	return srv
-}
-
-func validLogActionParams() *auditports.LogActionParams {
-	return &auditports.LogActionParams{
-		Resource:       permission.ResourceUser,
-		ResourceID:     "usr_01ABC",
-		Operation:      permission.OpCreate,
-		CurrentState:   map[string]any{"name": "test"},
-		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Critical:       false,
-	}
-}
-
-func TestLogAction_NonCritical_BufferSuccess(t *testing.T) {
+func TestLogAction_FillsTheRequestTraceAndChannelFromTheContext(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
-
-	err := srv.LogAction(validLogActionParams())
-
+	traceID, err := trace.TraceIDFromHex("4bf92f3577b34da6a3ce929d0e0e4736")
 	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-	repo.AssertNotCalled(t, "InsertAuditEntries", mock.Anything, mock.Anything)
-}
-
-func TestLogAction_Critical_DirectInsert(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	err := srv.LogAction(params)
-
+	spanID, err := trace.SpanIDFromHex("00f067aa0ba902b7")
 	require.NoError(t, err)
-	repo.AssertExpectations(t)
-	bufferRepo.AssertNotCalled(t, "Push", mock.Anything, mock.Anything)
-}
-
-func TestLogAction_WithoutRealtime(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, nil)
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	require.NotPanics(t, func() {
-		require.NoError(t, srv.LogAction(params))
-	})
-	repo.AssertExpectations(t)
-}
-
-func TestLogAction_Critical_InsertError_Buffered(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db error"))
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1 && entries[0].Critical
-	})).Return(nil)
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	require.NoError(t, srv.LogAction(params))
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogAction_Critical_InsertAndBufferFail(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db error"))
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
-		Return(errors.New("redis error"))
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	err := srv.LogAction(params)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to record critical audit entry")
-	assert.Contains(t, err.Error(), "db error")
-	assert.Contains(t, err.Error(), "redis error")
-}
-
-func TestLogAction_NonCritical_BufferFails_FallbackSuccess(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("Push", mock.Anything, mock.Anything).
-		Return(errors.New("redis down"))
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
-
-	err := srv.LogAction(validLogActionParams())
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-	repo.AssertExpectations(t)
-}
-
-func TestLogAction_NonCritical_BufferFails_FallbackFails(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("Push", mock.Anything, mock.Anything).
-		Return(errors.New("redis down"))
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db also down"))
-
-	err := srv.LogAction(validLogActionParams())
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to insert audit entry")
-}
-
-func TestLogAction_InvalidEntry(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	params := &auditports.LogActionParams{
-		Resource:   "",
-		ResourceID: "",
-		Operation:  "",
-	}
-
-	err := srv.LogAction(params)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid audit entry")
-}
-
-func TestLogAction_WithOptions(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("Push", mock.Anything, mock.MatchedBy(func(entry *audit.Entry) bool {
-		return entry.Comment == "test comment" && entry.IPAddress == "10.0.0.1"
-	})).Return(nil)
-
-	err := srv.LogAction(validLogActionParams(), WithComment("test comment"), WithIP("10.0.0.1"))
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogAction_OptionReturnsError(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	badOpt := func(_ *audit.Entry) error {
-		return errors.New("option error")
-	}
-
-	err := srv.LogAction(validLogActionParams(), badOpt)
-
-	require.Error(t, err)
-	assert.Equal(t, "option error", err.Error())
-}
-
-func TestLogActions_EmptyEntries(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	err := srv.LogActions(nil)
-
-	require.NoError(t, err)
-}
-
-func TestLogActions_AllCritical(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 2
-	})).Return(nil)
-
-	params1 := validLogActionParams()
-	params1.Critical = true
-	params2 := validLogActionParams()
-	params2.Critical = true
-
-	entries := []auditports.BulkLogEntry{
-		{Params: params1},
-		{Params: params2},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	repo.AssertExpectations(t)
-	bufferRepo.AssertNotCalled(t, "PushBatch", mock.Anything, mock.Anything)
-}
-
-func TestLogActions_AllNonCritical_BufferSuccess(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 2
-	})).Return(nil)
-
-	entries := []auditports.BulkLogEntry{
-		{Params: validLogActionParams()},
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogActions_MixedCriticalAndNonCritical(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1 && entries[0].Critical
-	})).Return(nil)
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1 && !entries[0].Critical
-	})).Return(nil)
-
-	criticalParams := validLogActionParams()
-	criticalParams.Critical = true
-
-	entries := []auditports.BulkLogEntry{
-		{Params: criticalParams},
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	repo.AssertExpectations(t)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogActions_NonCritical_BufferFails_FallbackSuccess(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
-		Return(errors.New("redis down"))
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
-
-	entries := []auditports.BulkLogEntry{
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-	repo.AssertExpectations(t)
-}
-
-func TestLogActions_NonCritical_BufferFails_FallbackFails(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
-		Return(errors.New("redis down"))
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db also down"))
-
-	entries := []auditports.BulkLogEntry{
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-}
-
-func TestLogActions_CriticalInsertError_Buffered(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db error"))
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).Return(nil)
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	require.NoError(t, srv.LogActions([]auditports.BulkLogEntry{{Params: params}}))
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogActions_CriticalInsertAndBufferFail(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).
-		Return(errors.New("db error"))
-	bufferRepo.On("PushBatch", mock.Anything, mock.Anything).
-		Return(errors.New("redis error"))
-
-	params := validLogActionParams()
-	params.Critical = true
-
-	require.Error(t, srv.LogActions([]auditports.BulkLogEntry{{Params: params}}))
-}
-
-func TestLogActions_InvalidEntry_Skipped(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1
-	})).Return(nil)
-
-	invalidParams := &auditports.LogActionParams{
-		Resource:   "",
-		ResourceID: "",
-	}
-
-	entries := []auditports.BulkLogEntry{
-		{Params: invalidParams},
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestLogActions_AllInvalid(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	invalidParams := &auditports.LogActionParams{
-		Resource:   "",
-		ResourceID: "",
-	}
-
-	entries := []auditports.BulkLogEntry{
-		{Params: invalidParams},
-		{Params: invalidParams},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "all 2 audit entries failed validation/sanitization")
-}
-
-func TestLogActions_OptionError_Skipped(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1
-	})).Return(nil)
-
-	badOpt := func(_ *audit.Entry) error {
-		return errors.New("option failed")
-	}
-
-	entries := []auditports.BulkLogEntry{
-		{Params: validLogActionParams(), Options: []auditports.LogOption{badOpt}},
-		{Params: validLogActionParams()},
-	}
-
-	err := srv.LogActions(entries)
-
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestList_Success(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	expected := &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total:      1,
-		TotalExact: true,
-	}
-
-	req := &auditports.ListAuditEntriesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-		},
-	}
-
-	repo.On("List", mock.Anything, req).Return(expected, nil)
-
-	result, err := srv.List(t.Context(), req)
-
-	require.NoError(t, err)
-	assert.Equal(t, expected, result)
-	repo.AssertExpectations(t)
-}
-
-func TestList_Error(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	req := &auditports.ListAuditEntriesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-		},
-	}
-
-	repo.On("List", mock.Anything, req).Return(nil, errors.New("db error"))
-
-	result, err := srv.List(t.Context(), req)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to list audit entries")
-}
-
-func TestList_NormalizesNumericOperationFilter(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	expected := &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total:      1,
-		TotalExact: true,
-	}
-
-	req := &auditports.ListAuditEntriesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-			FieldFilters: []domaintypes.FieldFilter{
-				{
-					Field:    "operation",
-					Operator: dbtype.OpEqual,
-					Value:    int64(operationbits.Read),
-				},
-			},
-		},
-	}
-
-	repo.On("List", mock.Anything, req).Return(expected, nil)
-
-	result, err := srv.List(t.Context(), req)
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "read", req.Filter.FieldFilters[0].Value)
-	repo.AssertExpectations(t)
-}
-
-func TestList_NormalizesNumericOperationFilterGroupValues(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	expected := &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total:      1,
-		TotalExact: true,
-	}
-
-	req := &auditports.ListAuditEntriesRequest{
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-			FilterGroups: []domaintypes.FilterGroup{
-				{
-					Filters: []domaintypes.FieldFilter{
-						{
-							Field:    "operation",
-							Operator: dbtype.OpIn,
-							Value: []int64{
-								int64(operationbits.Read),
-								int64(operationbits.Update),
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	repo.On("List", mock.Anything, req).Return(expected, nil)
-
-	result, err := srv.List(t.Context(), req)
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(
-		t,
-		[]string{"read", "update"},
-		req.Filter.FilterGroups[0].Filters[0].Value,
+	ctx := trace.ContextWithSpanContext(
+		requestmeta.With(t.Context(), requestmeta.New("req-1", "198.51.100.7", "Mozilla/5.0")),
+		trace.NewSpanContext(trace.SpanContextConfig{TraceID: traceID, SpanID: spanID}),
 	)
-	repo.AssertExpectations(t)
+
+	require.NoError(t, srv.LogAction(ctx, validLogActionParams()))
+
+	entry := repo.entries()[0]
+	assert.Equal(t, "198.51.100.7", entry.IPAddress)
+	assert.Equal(t, "Mozilla/5.0", entry.UserAgent)
+	assert.Equal(t, "req-1", entry.CorrelationID)
+	assert.Equal(t, "4bf92f3577b34da6a3ce929d0e0e4736", entry.TraceID)
+	assert.Equal(t, audit.ChannelWeb, entry.Channel)
+	assert.Equal(t, "shipment.update", entry.Action)
+	assert.Equal(t, audit.RetentionOperational, entry.RetentionClass)
 }
 
-func TestListByResourceID_Success(t *testing.T) {
+func TestLogAction_AWriteWithNoRequestIsABackgroundJob(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	resourceID := pulid.MustNew("res_")
-	expected := &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total:      1,
-		TotalExact: true,
-	}
+	require.NoError(t, srv.LogAction(t.Context(), validLogActionParams()))
 
-	req := &auditports.ListByResourceIDRequest{
-		ResourceID: resourceID,
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-		},
-	}
-
-	repo.On("ListByResourceID", mock.Anything, req).Return(expected, nil)
-
-	result, err := srv.ListByResourceID(t.Context(), req)
-
-	require.NoError(t, err)
-	assert.Equal(t, expected, result)
+	entry := repo.entries()[0]
+	assert.Equal(t, audit.ChannelJob, entry.Channel)
+	assert.Empty(t, entry.IPAddress)
+	assert.Empty(t, entry.CorrelationID)
 }
 
-func TestListByResourceID_Error(t *testing.T) {
+func TestLogAction_AnAgentToolWriteNamesTheRunAndTheConversation(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	req := &auditports.ListByResourceIDRequest{
-		ResourceID: pulid.MustNew("res_"),
-		Filter: &pagination.QueryOptions{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  pulid.MustNew("org_"),
-				BuID:   pulid.MustNew("bu_"),
-				UserID: pulid.MustNew("usr_"),
-			},
-		},
-	}
+	ctx := auditctx.WithAIRun(t.Context(), "atrn_01", true)
+	require.NoError(t, srv.LogAction(ctx, validLogActionParams()))
 
-	repo.On("ListByResourceID", mock.Anything, req).Return(nil, errors.New("db error"))
-
-	result, err := srv.ListByResourceID(t.Context(), req)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to list audit entries by resource id")
+	entry := repo.entries()[0]
+	assert.Equal(t, audit.ChannelAgentConversation, entry.Channel)
+	assert.Equal(t, "atrn_01", entry.AIRunID)
 }
 
-func TestGetByID_Success(t *testing.T) {
+func TestLogAction_AnAPIKeyWriteArrivesThroughTheAPI(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	entryID := pulid.MustNew("ae_")
-	expected := &audit.Entry{ID: entryID}
+	keyID := pulid.MustNew("ak_")
+	params := validLogActionParams()
+	params.UserID = pulid.Nil
+	params.PrincipalType = permissionports.PrincipalTypeAPIKey
+	params.PrincipalID = keyID
+	params.APIKeyID = keyID
 
-	req := auditports.GetAuditEntryByIDOptions{
-		EntryID: entryID,
-	}
-
-	repo.On("GetByID", mock.Anything, req).Return(expected, nil)
-
-	result, err := srv.GetByID(t.Context(), req)
-
-	require.NoError(t, err)
-	assert.Equal(t, expected, result)
+	require.NoError(t, srv.LogAction(t.Context(), params))
+	assert.Equal(t, audit.ChannelAPI, repo.entries()[0].Channel)
 }
 
-func TestGetByID_Error(t *testing.T) {
+func TestLogAction_AnUpdateWithADiffKeepsOnlyTheDiff(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	req := auditports.GetAuditEntryByIDOptions{
-		EntryID: pulid.MustNew("ae_"),
-	}
+	before := map[string]any{"proNumber": "PRO-1", "status": "New"}
+	after := map[string]any{"proNumber": "PRO-1", "status": "Assigned"}
+	params := validLogActionParams()
+	params.PreviousState = before
+	params.CurrentState = after
 
-	repo.On("GetByID", mock.Anything, req).Return(nil, errors.New("not found"))
+	require.NoError(t, srv.LogAction(t.Context(), params, WithDiff(before, after)))
 
-	result, err := srv.GetByID(t.Context(), req)
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to get audit entry by id")
+	entry := repo.entries()[0]
+	assert.Nil(t, entry.PreviousState)
+	assert.Nil(t, entry.CurrentState)
+	assert.Contains(t, entry.Changes, "status")
+	assert.Equal(t, "PRO-1", entry.EntityRef, "the entity reference is taken before the states go")
 }
 
-func TestService_RegisterSensitiveFields(t *testing.T) {
+func TestLogAction_ACreateKeepsTheNewStateAndADeleteTheOld(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	fields := []auditports.SensitiveField{
-		{Name: "password", Action: auditports.SensitiveFieldOmit},
-	}
+	created := validLogActionParams()
+	created.Operation = permission.OpCreate
+	created.PreviousState = map[string]any{"status": "x"}
+	require.NoError(t, srv.LogAction(t.Context(), created))
 
-	err := srv.RegisterSensitiveFields(permission.ResourceUser, fields)
+	deleted := validLogActionParams()
+	deleted.Operation = permission.OpDelete
+	deleted.PreviousState = map[string]any{"status": "Canceled"}
+	require.NoError(t, srv.LogAction(t.Context(), deleted))
 
-	require.NoError(t, err)
+	entries := repo.entries()
+	assert.Nil(t, entries[0].PreviousState)
+	assert.Equal(t, map[string]any{"status": "Assigned"}, entries[0].CurrentState)
+	assert.Nil(t, entries[1].CurrentState)
+	assert.Equal(t, map[string]any{"status": "Canceled"}, entries[1].PreviousState)
 }
 
-func TestConfigureSensitiveDataManager_Production(t *testing.T) {
+func TestLogAction_KeepsIdentifiersDatesAndContactsReadable(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("production")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyStrict), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Staging(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("staging")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyDefault), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Development(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("development")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyPartial), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Test(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("test")
-
-	assert.False(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyPartial), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Unknown(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("something-else")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyDefault), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Prod(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("prod")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyStrict), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Stage(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("stage")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyDefault), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Dev(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("dev")
-
-	assert.True(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyPartial), srv.sdm.strategy.Load())
-}
-
-func TestConfigureSensitiveDataManager_Testing(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.configureSensitiveDataManager("testing")
-
-	assert.False(t, srv.sdm.autoDetect.Load())
-	assert.Equal(t, int32(MaskStrategyPartial), srv.sdm.strategy.Load())
-}
-
-func TestLogAction_WithSensitiveDataSanitization(t *testing.T) {
-	t.Parallel()
-
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
-
-	srv.sdm.SetAutoDetect(true)
-
-	bufferRepo.On("Push", mock.Anything, mock.Anything).Return(nil)
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
 	params := validLogActionParams()
+	params.Operation = permission.OpCreate
 	params.CurrentState = map[string]any{
-		"name":     "visible",
-		"password": "secret123",
+		"customerId":      "cus_01JBXQ4ZP7M3N8K2R5T6V9W0YA",
+		"bol":             "123456789",
+		"pickupDate":      "03/14/2026",
+		"contactEmail":    "ops@acme.com",
+		"incomeAccountId": "gla_01JBXQ4ZP7M3N8K2R5T6V9W0YA",
+		"healthScore":     float64(92),
 	}
 
-	err := srv.LogAction(params)
+	require.NoError(t, srv.LogAction(t.Context(), params))
 
-	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
+	assert.Equal(t, params.CurrentState, repo.entries()[0].CurrentState)
+	assert.False(t, repo.entries()[0].SensitiveData)
 }
 
-func TestLogActions_WithOptions(t *testing.T) {
+func TestLogAction_DropsSecretsAndFingerprintsIdentifiers(t *testing.T) {
 	t.Parallel()
 
-	repo := new(mockAuditRepository)
-	bufferRepo := new(mockBufferRepository)
-	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
 
-	bufferRepo.On("PushBatch", mock.Anything, mock.MatchedBy(func(entries []*audit.Entry) bool {
-		return len(entries) == 1 && entries[0].Comment == "bulk comment"
-	})).Return(nil)
-
-	entries := []auditports.BulkLogEntry{
-		{
-			Params:  validLogActionParams(),
-			Options: []auditports.LogOption{WithComment("bulk comment")},
-		},
+	params := validLogActionParams()
+	params.Operation = permission.OpCreate
+	params.CurrentState = map[string]any{
+		"name":          "Acme",
+		"password":      "hunter22",
+		"clientSecret":  "abc",
+		"taxId":         "12-3456789",
+		"tokenCount":    float64(120),
+		"configuration": map[string]any{"apiKey": "sk_live_x", "region": "us"},
 	}
 
-	err := srv.LogActions(entries)
+	require.NoError(t, srv.LogAction(t.Context(), params))
 
+	entry := repo.entries()[0]
+	state := entry.CurrentState
+	assert.Equal(t, RedactedValue, state["password"])
+	assert.Equal(t, RedactedValue, state["clientSecret"])
+	assert.Equal(t, float64(120), state["tokenCount"], "a count of tokens is not a token")
+	assert.Equal(t, "Acme", state["name"])
+	assert.Regexp(t, `^\[REDACTED\] …6789 #[0-9a-f]{8}$`, state["taxId"])
+	nested, ok := state["configuration"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, RedactedValue, nested["apiKey"])
+	assert.Equal(t, "us", nested["region"])
+	assert.True(t, entry.SensitiveData)
+}
+
+func TestLogAction_TheSameIdentifierAlwaysHasTheSameFingerprint(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	for range 2 {
+		params := validLogActionParams()
+		params.Operation = permission.OpCreate
+		params.CurrentState = map[string]any{"taxId": "12-3456789"}
+		require.NoError(t, srv.LogAction(t.Context(), params))
+	}
+
+	entries := repo.entries()
+	assert.Equal(t, entries[0].CurrentState["taxId"], entries[1].CurrentState["taxId"])
+}
+
+func TestLogAction_WithSecurityIsACriticalSecurityEntryKeptAsSecurity(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	params := validLogActionParams()
+	params.Resource = permission.ResourceRole
+	require.NoError(t, srv.LogAction(t.Context(), params, WithSecurity(), WithAction("role.assigned")))
+
+	entry := repo.entries()[0]
+	assert.Equal(t, audit.CategorySecurity, entry.Category)
+	assert.True(t, entry.Critical)
+	assert.Equal(t, audit.RetentionSecurity, entry.RetentionClass)
+	assert.Equal(t, "role.assigned", entry.Action)
+}
+
+func TestLogAction_ClassifiesReadsAsAccessAndMoneyAsFinancial(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	read := validLogActionParams()
+	read.Resource = permission.ResourceDocument
+	read.Operation = permission.OpRead
+	require.NoError(t, srv.LogAction(t.Context(), read))
+
+	invoice := validLogActionParams()
+	invoice.Resource = permission.ResourceInvoice
+	require.NoError(t, srv.LogAction(t.Context(), invoice))
+
+	entries := repo.entries()
+	assert.Equal(t, audit.RetentionAccess, entries[0].RetentionClass)
+	assert.Equal(t, audit.RetentionFinancial, entries[1].RetentionClass)
+}
+
+func TestLogAction_ReturnsTheErrorWhenTheEntryCannotBeStored(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{insertErr: errors.New("connection refused")}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	err := srv.LogAction(t.Context(), validLogActionParams())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "connection refused")
+}
+
+func TestLogAction_RefusesAnEntryWithNoTenant(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	params := validLogActionParams()
+	params.OrganizationID = pulid.Nil
+	require.Error(t, srv.LogAction(t.Context(), params))
+	assert.Empty(t, repo.entries())
+	require.ErrorIs(t, srv.LogAction(t.Context(), nil), ErrAuditParamsRequired)
+}
+
+func TestLogActions_StoresTheValidEntriesInOneBatchAndRefusesWhenNoneAre(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	invalid := validLogActionParams()
+	invalid.ResourceID = ""
+	require.NoError(t, srv.LogActions(t.Context(), []auditports.BulkLogEntry{
+		{Params: validLogActionParams()},
+		{Params: invalid},
+		{Params: validLogActionParams()},
+	}))
+	require.Len(t, repo.inserted, 1)
+	assert.Len(t, repo.inserted[0], 2)
+
+	err := srv.LogActions(t.Context(), []auditports.BulkLogEntry{{Params: invalid}})
+	require.ErrorIs(t, err, ErrNoValidEntries)
+}
+
+func TestLogAction_PublishesRealtimeOnlyAfterTheTransactionCommits(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	realtime := &recordingRealtimeService{}
+	srv := newTestService(repo, realtime)
+
+	ctx, hooks := kernelports.WithAfterCommitHooks(t.Context())
+	require.NoError(t, srv.LogAction(ctx, validLogActionParams()))
+	assert.Empty(t, realtime.requests, "nothing is published inside the transaction")
+
+	hooks.Run(context.WithoutCancel(ctx))
+	assert.NotEmpty(t, realtime.requests)
+}
+
+func TestListConnection_PassesTheAccessThrough(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	srv := newTestService(repo, &noopRealtimeService{})
+
+	access := auditports.EntryAccess{Resources: []permission.Resource{permission.ResourceShipment}}
+	_, err := srv.ListConnection(t.Context(), &auditports.ListAuditEntriesRequest{Access: access})
 	require.NoError(t, err)
-	bufferRepo.AssertExpectations(t)
-}
-
-func TestNew(t *testing.T) {
-	t.Parallel()
-
-	t.Run("creates service with all dependencies", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "my-test-encryption-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		require.NotNil(t, svc)
-		concrete, ok := svc.(*service)
-		require.True(t, ok)
-		assert.Same(t, repo, concrete.repo)
-		assert.Same(t, bufferRepo, concrete.bufferRepo)
-		assert.NotNil(t, concrete.logger)
-		assert.NotNil(t, concrete.sdm)
-		assert.Same(t, metricsRegistry, concrete.metrics)
-	})
-
-	t.Run("configures sensitive data manager for test environment", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-		assert.False(t, concrete.sdm.autoDetect.Load())
-		assert.Equal(t, int32(MaskStrategyPartial), concrete.sdm.strategy.Load())
-	})
-
-	t.Run("configures sensitive data manager for production environment", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "production"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "prod-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-		assert.True(t, concrete.sdm.autoDetect.Load())
-		assert.Equal(t, int32(MaskStrategyStrict), concrete.sdm.strategy.Load())
-	})
-
-	t.Run("sets up encryption key in sensitive data manager", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "my-encryption-key-for-testing"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-		assert.NotEmpty(t, concrete.sdm.encryptionKey)
-		assert.Len(t, concrete.sdm.encryptionKey, 32)
-	})
-
-	t.Run("handles empty encryption key", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: ""},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-		assert.Empty(t, concrete.sdm.encryptionKey)
-	})
-
-	t.Run("returns AuditService interface", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		var _ auditports.AuditService = svc
-	})
-}
-
-func TestRegisterDefaultSensitiveFields(t *testing.T) {
-	t.Parallel()
-
-	t.Run("registers user sensitive fields", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-
-		fields, ok := concrete.sdm.registeredFields(permission.ResourceUser)
-		require.True(t, ok)
-
-		passwordCfg, exists := fields["password"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldOmit, passwordCfg.Action)
-
-		hashedPasswordCfg, exists := fields["hashedPassword"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldOmit, hashedPasswordCfg.Action)
-
-		emailCfg, exists := fields["emailAddress"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, emailCfg.Action)
-
-		addressCfg, exists := fields["address"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, addressCfg.Action)
-	})
-
-	t.Run("registers organization sensitive fields", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-
-		fields, ok := concrete.sdm.registeredFields(permission.ResourceOrganization)
-		require.True(t, ok)
-
-		logoCfg, exists := fields["logoUrl"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, logoCfg.Action)
-
-		taxIdCfg, exists := fields["taxId"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, taxIdCfg.Action)
-	})
-
-	t.Run("registers worker sensitive fields", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-
-		fields, ok := concrete.sdm.registeredFields(permission.ResourceWorker)
-		require.True(t, ok)
-
-		licenseCfg, exists := fields["licenseNumber"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, licenseCfg.Action)
-
-		dobCfg, exists := fields["dateOfBirth"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, dobCfg.Action)
-
-		profileLicenseCfg, exists := fields["profile.licenseNumber"]
-		assert.True(t, exists)
-		assert.Equal(t, auditports.SensitiveFieldMask, profileLicenseCfg.Action)
-		assert.Equal(t, "profile", profileLicenseCfg.Path)
-	})
-
-	t.Run("registered fields are applied during sanitization", func(t *testing.T) {
-		t.Parallel()
-
-		repo := new(mockAuditRepository)
-		bufferRepo := new(mockBufferRepository)
-		logger := zap.NewNop()
-		cfg := &config.Config{
-			App: appconfig.Config{Env: "test"},
-			Security: securityconfig.Config{
-				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
-			},
-		}
-		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
-		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
-
-		svc := New(Params{
-			AuditRepository:       repo,
-			AuditBufferRepository: bufferRepo,
-			Realtime:              &noopRealtimeService{},
-			Logger:                logger,
-			AppConfig:             &cfg.App,
-			SecurityConfig:        &cfg.Security,
-			Metrics:               metricsRegistry,
-		})
-
-		concrete := svc.(*service)
-
-		entry := &audit.Entry{
-			Resource: permission.ResourceUser,
-			CurrentState: map[string]any{
-				"name":           "John Doe",
-				"password":       "supersecret",
-				"hashedPassword": "bcrypt-hash-value",
-				"emailAddress":   "john@example.com",
-			},
-		}
-
-		err := concrete.sdm.SanitizeEntry(entry)
-		require.NoError(t, err)
-
-		assert.Nil(t, entry.CurrentState["password"])
-		assert.Nil(t, entry.CurrentState["hashedPassword"])
-		assert.NotEqual(t, "john@example.com", entry.CurrentState["emailAddress"])
-		assert.Equal(t, "John Doe", entry.CurrentState["name"])
-	})
+	assert.Equal(t, access, repo.listReq.Access)
 }

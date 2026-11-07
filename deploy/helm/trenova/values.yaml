@@ -214,11 +214,7 @@ tms:
         enableCompression: false
         compressionThreshold: 0
     audit:
-      bufferFlushInterval: 1m
-      batchSize: 500
-      maxEntriesPerFlush: 5000
-      dlqRetryInterval: 5m
-      dlqMaxRetries: 5
+      exportTtl: 168h
     aiAudit:
       chain:
         activeKeyId: ""

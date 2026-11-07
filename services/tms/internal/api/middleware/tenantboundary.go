@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/tenantboundary"
 	"github.com/gin-gonic/gin"
@@ -70,6 +71,7 @@ func (m *TenantBoundaryMiddleware) report(c *gin.Context, violations []tenantbou
 			Resource:       permission.ResourceOrganization,
 			ResourceID:     violationTarget(violation, authCtx),
 			Operation:      operationForMethod(c.Request.Method),
+			Action:         audit.ActionCrossTenantRefused,
 			Actor:          actorutil.FromAuthContext(authCtx).AuditActor(),
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,

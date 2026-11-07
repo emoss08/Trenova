@@ -2,8 +2,11 @@ package workspace
 
 import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditdlqrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditalertpolicyrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditexportrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditlegalholdrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditsealrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/bulkeditrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
@@ -22,6 +25,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/analyticsservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditretention"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -66,8 +74,11 @@ func SharedOptions() fx.Option {
 			tablelayoutrepository.New,
 			bulkeditrepository.New,
 			homelayoutrepository.New,
-			auditdlqrepository.New,
 			auditrepository.New,
+			auditlegalholdrepository.New,
+			auditalertpolicyrepository.New,
+			auditexportrepository.New,
+			auditsealrepository.New,
 			dataentrycontrolrepository.New,
 			customfieldrepository.New,
 			customfieldvaluerepository.New,
@@ -98,6 +109,12 @@ func SharedOptions() fx.Option {
 			reportdashboardservice.New,
 			auditservice.New,
 			auditservice.NewSecurityAuditor,
+			auditservice.NewAlerts,
+			auditintegrity.New,
+			auditretention.New,
+			auditlegalholdservice.New,
+			auditalertservice.New,
+			auditexportservice.New,
 			customfieldservice.New,
 			customfieldservice.NewValuesService,
 			func(s *customfieldservice.ValuesService) customfieldports.NamedValues { return s },

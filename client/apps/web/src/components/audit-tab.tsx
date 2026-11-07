@@ -7,10 +7,9 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { usePermission } from "@/hooks/use-permission";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { auditLogTableGraphQLConfig, type AuditEntryRow } from "@/lib/graphql/audit-log-table";
+import { fetchRecordActivity, type ActivityEntry } from "@/lib/graphql/record-activity";
 import { audit } from "@/lib/queries/audit";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -29,7 +28,6 @@ import { formatDistanceToNow, fromUnixTime } from "date-fns";
 import { ChevronRightIcon, LinkExternal01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { AuditAlert } from "./audit-alert";
 import { AuditEmpty } from "./audit-empty";
 
 const PAGE_SIZE = 20;
@@ -44,19 +42,10 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   const query = useInfiniteQuery({
     queryKey: [...audit.history(resourceId).queryKey],
     queryFn: async ({ pageParam, signal }) =>
-      fetchGraphQLData(
-        PAGE_SIZE,
-        auditLogTableGraphQLConfig,
-        {
-          cursor: pageParam ?? undefined,
-          fieldFilters: [{ field: "resourceId", operator: "eq", value: resourceId }],
-          sort: [{ field: "timestamp", direction: "desc" }],
-        },
-        { signal },
-      ),
+      fetchRecordActivity(resourceId, { first: PAGE_SIZE, after: pageParam ?? null }, { signal }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>
-      lastPage.pageInfo?.hasNextPage ? (lastPage.pageInfo.endCursor ?? undefined) : undefined,
+      lastPage.hasNextPage ? (lastPage.endCursor ?? undefined) : undefined,
   });
 
   const { allowed: canViewAuditLogs } = usePermission(Resource.AuditLog, Operation.Read);
@@ -86,7 +75,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const allEntries = useMemo(
-    () => query.data?.pages.flatMap((page) => page.results) ?? [],
+    () => query.data?.pages.flatMap((page) => page.rows) ?? [],
     [query.data?.pages],
   );
 
@@ -122,7 +111,6 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <AuditAlert />
       {allEntries.map((entry) => (
         <AuditCard key={entry.id} entry={entry} canNavigate={canViewAuditLogs} />
       ))}
@@ -138,7 +126,7 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
   );
 }
 
-function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: boolean }) {
+function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: boolean }) {
   const t = useT();
 
   const [open, setOpen] = useState(false);
@@ -146,7 +134,7 @@ function AuditCard({ entry, canNavigate }: { entry: AuditEntryRow; canNavigate: 
   const date = fromUnixTime(entry.timestamp);
   const relativeTime = formatDistanceToNow(date, { addSuffix: true });
   const fullDate = formatToUserTimezone(entry.timestamp);
-  const userName = entry.user?.name || entry.user?.emailAddress || "Unknown user";
+  const userName = entry.actorName || entry.user?.name || t("Unknown user");
   const operation = entry.operation?.toLowerCase() || "";
 
   const changes =

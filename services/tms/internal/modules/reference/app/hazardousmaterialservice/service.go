@@ -112,7 +112,7 @@ func (s *Service) BulkUpdateStatus(
 		auditservice.WithComment("Hazardous material status updated"),
 	)
 
-	if err = s.auditService.LogActions(entries); err != nil {
+	if err = s.auditService.LogActions(ctx, entries); err != nil {
 		log.Error("failed to log audit actions", zap.Error(err))
 	}
 
@@ -136,7 +136,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceHazardousMaterial,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -174,7 +174,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceHazardousMaterial,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

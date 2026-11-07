@@ -220,7 +220,7 @@ func (s *Service) postFeedRows(
 		result.AlreadyImported = commit.AlreadyImported
 	}
 
-	s.auditFeedRun(req, batch, result)
+	s.auditFeedRun(ctx, req, batch, result)
 	s.publish(ctx, req.TenantInfo, realtimeImport, permission.OpImport, batch.ID, req.UserID)
 	if result.Committed > 0 {
 		s.publish(ctx, req.TenantInfo, realtimePurchase, permission.OpImport, batch.ID, req.UserID)
@@ -414,11 +414,12 @@ func truncateReference(reference string) string {
 }
 
 func (s *Service) auditFeedRun(
+	ctx context.Context,
 	req *SyncFeedRequest,
 	batch *fuelpurchase.ImportBatch,
 	result *SyncFeedResult,
 ) {
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: batch.ID.String(),
 		operation:  permission.OpImport,

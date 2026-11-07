@@ -433,7 +433,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		Once()
 	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
-	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	auditService.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -566,7 +566,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 	freight := decimal.Zero
 
 	auditService := auditportsmock.NewMockAuditService(t)
-	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	auditService.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -1016,7 +1016,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		Once()
 	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
-	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	auditService.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 

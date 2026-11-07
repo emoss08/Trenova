@@ -1,6 +1,8 @@
 package auditservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -35,6 +37,7 @@ type RecordParams struct {
 	Previous any
 	Current  any
 	Comment  string
+	Action   string
 	Metadata map[string]any
 }
 
@@ -50,6 +53,7 @@ type RecordParams struct {
 // has already happened, and failing the caller would report an error for work
 // that succeeded. Callers pass a logger so the failure is attributable.
 func Record(
+	ctx context.Context,
 	auditService auditports.AuditService,
 	logger *zap.Logger,
 	params *RecordParams,
@@ -77,7 +81,10 @@ func Record(
 		logParams.PreviousState = jsonutils.MustToJSON(params.Previous)
 	}
 
-	opts := make([]auditports.LogOption, 0, 3)
+	opts := make([]auditports.LogOption, 0, 4)
+	if params.Action != "" {
+		opts = append(opts, WithAction(params.Action))
+	}
 	if params.Comment != "" {
 		opts = append(opts, WithComment(params.Comment))
 	}
@@ -88,7 +95,7 @@ func Record(
 		opts = append(opts, WithDiff(params.Previous, params.Current))
 	}
 
-	if err := auditService.LogAction(logParams, opts...); err != nil {
+	if err := auditService.LogAction(ctx, logParams, opts...); err != nil {
 		logger.Error("failed to record audit entry",
 			zap.String("resource", params.Resource.String()),
 			zap.String("resourceId", params.ResourceID),

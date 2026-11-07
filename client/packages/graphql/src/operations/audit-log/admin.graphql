@@ -1,0 +1,128 @@
+query AuditChainStatus {
+  auditChainStatus {
+    signed
+    lastSeq
+    sealedThrough
+    lastVerifiedAt
+    lastVerificationStatus
+    lastVerificationDetail
+  }
+}
+
+fragment AuditLegalHoldRowFields on AuditLegalHold {
+  id
+  name
+  reason
+  resource
+  resourceId
+  placedAt
+  releasedAt
+  releaseReason
+  active
+  placedBy {
+    id
+    name
+  }
+  releasedBy {
+    id
+    name
+  }
+}
+
+query AuditLegalHoldTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "user") {
+  auditLegalHolds(input: $input) {
+    edges {
+      node {
+        ...AuditLegalHoldRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+mutation PlaceAuditLegalHold($input: PlaceAuditLegalHoldInput!) {
+  placeAuditLegalHold(input: $input) {
+    ...AuditLegalHoldRowFields
+  }
+}
+
+mutation ReleaseAuditLegalHold($id: ID!, $reason: String!) {
+  releaseAuditLegalHold(id: $id, reason: $reason) {
+    ...AuditLegalHoldRowFields
+  }
+}
+
+fragment AuditExportRowFields on AuditExport {
+  id
+  format
+  rangeFrom
+  rangeTo
+  includeSecurity
+  status
+  rowCount
+  byteSize
+  sha256
+  artifactExpiresAt
+  errorMessage
+  completedAt
+  createdAt
+  downloadable
+}
+
+query AuditExportTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  auditExports(input: $input) {
+    edges {
+      node {
+        ...AuditExportRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+mutation RequestAuditExport($input: RequestAuditExportInput!) {
+  requestAuditExport(input: $input) {
+    ...AuditExportRowFields
+  }
+}
+
+mutation AuditExportDownload($id: ID!) {
+  auditExportDownload(id: $id) {
+    url
+    fileName
+    expiresAt
+    sha256
+  }
+}
+
+query AuditAlertPolicies {
+  auditAlertPolicies {
+    kind
+    title
+    description
+    counted
+    enabled
+    threshold
+    windowMinutes
+  }
+}
+
+mutation UpdateAuditAlertPolicy($input: UpdateAuditAlertPolicyInput!) {
+  updateAuditAlertPolicy(input: $input) {
+    kind
+    title
+    description
+    counted
+    enabled
+    threshold
+    windowMinutes
+  }
+}

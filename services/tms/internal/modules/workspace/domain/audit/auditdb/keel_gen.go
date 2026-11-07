@@ -18,559 +18,1106 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// dLQEntriesTable is the schema of audit.DLQEntry.
-var dLQEntriesTable = schema.Table{
-	Name:   "audit_dlq_entries",
-	Quoted: `"audit_dlq_entries"`,
-	Alias:  "ade",
-	Model:  "audit.DLQEntry",
-	Label:  `DLQ Entry`,
-	Plural: `DLQ Entries`,
+// alertPoliciesTable is the schema of audit.AlertPolicy.
+var alertPoliciesTable = schema.Table{
+	Name:   "audit_alert_policies",
+	Quoted: `"audit_alert_policies"`,
+	Alias:  "aap",
+	Model:  "audit.AlertPolicy",
+	Label:  `Alert Policy`,
+	Plural: `Alert Policies`,
+	Doc:    `AlertPolicy is an organization's choice for one alert kind.`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "original_entry_id", Quoted: `"original_entry_id"`, Field: "OriginalEntryID", Kind: schema.KindString, Flags: 0, Label: `Original Entry ID`, JSON: `originalEntryId`},
-		{Name: "entry_data", Quoted: `"entry_data"`, Field: "EntryData", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Entry Data`, JSON: `entryData`},
-		{Name: "failure_time", Quoted: `"failure_time"`, Field: "FailureTime", Kind: schema.KindInt64, Flags: 0, Label: `Failure Time`, JSON: `failureTime`},
-		{Name: "retry_count", Quoted: `"retry_count"`, Field: "RetryCount", Kind: schema.KindInt64, Flags: 0, Label: `Retry Count`, JSON: `retryCount`},
-		{Name: "last_error", Quoted: `"last_error"`, Field: "LastError", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Error`, JSON: `lastError`},
-		{Name: "next_retry_at", Quoted: `"next_retry_at"`, Field: "NextRetryAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Next Retry At`, JSON: `nextRetryAt`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumDLQStatus[:]},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumAlertKind[:]},
+		{Name: "enabled", Quoted: `"enabled"`, Field: "Enabled", Kind: schema.KindBool, Flags: 0, Label: `Enabled`, JSON: `enabled`},
+		{Name: "threshold", Quoted: `"threshold"`, Field: "Threshold", Kind: schema.KindInt64, Flags: 0, Label: `Threshold`, JSON: `threshold`},
+		{Name: "window_minutes", Quoted: `"window_minutes"`, Field: "WindowMinutes", Kind: schema.KindInt64, Flags: 0, Label: `Window Minutes`, JSON: `windowMinutes`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
-	PK:           []int32{0},
-	Tenant:       []int32{8, 9},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:       []int32{1, 2, 3, 4, 5, 6, 7, 11},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   10,
-	AutoUpdate:   11,
-	IDPrefix:     "dlq_",
-	New:          newDLQEntry,
-	NewN:         newNDLQEntry,
-	Size:         unsafe.Sizeof(audit.DLQEntry{}),
-	Ptr:          ptrDLQEntry,
-	Value:        valueDLQEntry,
-	BeforeCreate: beforeCreateDLQEntry,
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:     []int32{3, 4, 5, 6, 9},
+	Returning:  nil,
+	Version:    7,
+	AutoID:     0,
+	AutoCreate: 8,
+	AutoUpdate: 9,
+	IDPrefix:   "aap_",
+	New:        newAlertPolicy,
+	NewN:       newNAlertPolicy,
+	Size:       unsafe.Sizeof(audit.AlertPolicy{}),
+	Ptr:        ptrAlertPolicy,
+	Value:      valueAlertPolicy,
 }
 
-var dLQEntriesRef = keel.Ref{Table: &dLQEntriesTable}
+var alertPoliciesRef = keel.Ref{Table: &alertPoliciesTable}
 
-// DLQEntriesTable is the table of audit.DLQEntry.
-type DLQEntriesTable struct {
+// AlertPoliciesTable is the table of audit.AlertPolicy.
+type AlertPoliciesTable struct {
 	keel.TableBase
-	ID              keelkinds.PulidIDCol
-	OriginalEntryID keelkinds.PulidIDCol
-	EntryData       keel.JSONBCol
-	FailureTime     keel.Int64Col
-	RetryCount      keel.Int64Col
-	LastError       keel.StringCol
-	NextRetryAt     keel.Int64Col
-	Status          DLQStatusCol
-	OrganizationID  keelkinds.PulidIDCol
-	BusinessUnitID  keelkinds.PulidIDCol
-	CreatedAt       keel.Int64Col
-	UpdatedAt       keel.Int64Col
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	Kind           AlertKindCol
+	Enabled        keel.BoolCol
+	Threshold      keel.Int64Col
+	WindowMinutes  keel.Int64Col
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
 }
 
-// DLQEntries references the audit_dlq_entries table.
-var DLQEntries = &DLQEntriesTable{
-	TableBase:       keel.TableBase{Ref: &dLQEntriesRef},
-	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 0}}},
-	OriginalEntryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 1}}},
-	EntryData:       keel.JSONBCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 2}},
-	FailureTime:     keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 3}},
-	RetryCount:      keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 4}},
-	LastError:       keel.StringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 5}},
-	NextRetryAt:     keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 6}},
-	Status:          DLQStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 7}}},
-	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 8}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dLQEntriesRef, Index: 9}}},
-	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 10}},
-	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &dLQEntriesRef, Index: 11}},
+// AlertPolicies references the audit_alert_policies table.
+var AlertPolicies = &AlertPoliciesTable{
+	TableBase:      keel.TableBase{Ref: &alertPoliciesRef},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &alertPoliciesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &alertPoliciesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &alertPoliciesRef, Index: 2}}},
+	Kind:           AlertKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &alertPoliciesRef, Index: 3}}},
+	Enabled:        keel.BoolCol{Col: keel.Col{Ref: &alertPoliciesRef, Index: 4}},
+	Threshold:      keel.Int64Col{Col: keel.Col{Ref: &alertPoliciesRef, Index: 5}},
+	WindowMinutes:  keel.Int64Col{Col: keel.Col{Ref: &alertPoliciesRef, Index: 6}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &alertPoliciesRef, Index: 7}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &alertPoliciesRef, Index: 8}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &alertPoliciesRef, Index: 9}},
 }
 
-// BuildDLQEntries builds the table of audit_dlq_entries for ref. Generated relation and alias methods call it.
-func BuildDLQEntries(r *keel.Ref) *DLQEntriesTable {
-	return &DLQEntriesTable{
-		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OriginalEntryID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		EntryData:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 2}},
-		FailureTime:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		RetryCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		LastError:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		NextRetryAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		Status:          DLQStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+// BuildAlertPolicies builds the table of audit_alert_policies for ref. Generated relation and alias methods call it.
+func BuildAlertPolicies(r *keel.Ref) *AlertPoliciesTable {
+	return &AlertPoliciesTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:           AlertKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Enabled:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 4}},
+		Threshold:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		WindowMinutes:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 	}
 }
 
-// DLQEntriesSchema returns the schema of audit_dlq_entries.
-func DLQEntriesSchema() *schema.Table { return &dLQEntriesTable }
+// AlertPoliciesSchema returns the schema of audit_alert_policies.
+func AlertPoliciesSchema() *schema.Table { return &alertPoliciesTable }
 
-// As returns a handle that references audit_dlq_entries under its own alias.
-func (t *DLQEntriesTable) As(alias string) *DLQEntriesTable {
-	return keel.Alias(t.Ref, alias, BuildDLQEntries)
+// As returns a handle that references audit_alert_policies under its own alias.
+func (t *AlertPoliciesTable) As(alias string) *AlertPoliciesTable {
+	return keel.Alias(t.Ref, alias, BuildAlertPolicies)
 }
 
-// Get returns the audit_dlq_entries row with the given key, or keel.ErrNotFound.
-func (t *DLQEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.DLQEntry, error) {
+// Get returns the audit_alert_policies row with the given key, or keel.ErrNotFound.
+func (t *AlertPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.AlertPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
 }
 
-// DLQEntriesQuery is a query over audit.DLQEntry.
-type DLQEntriesQuery struct{ keel.QueryCore }
+// AlertPoliciesQuery is a query over audit.AlertPolicy.
+type AlertPoliciesQuery struct{ keel.QueryCore }
 
-var _ keel.Query[*audit.DLQEntry] = (*DLQEntriesQuery)(nil)
+var _ keel.Query[*audit.AlertPolicy] = (*AlertPoliciesQuery)(nil)
 
 // Query starts a query over the table.
-func (t *DLQEntriesTable) Query() keel.Query[*audit.DLQEntry] {
-	return &DLQEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+func (t *AlertPoliciesTable) Query() keel.Query[*audit.AlertPolicy] {
+	return &AlertPoliciesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
 }
 
-// Where starts a query; see DLQEntriesQuery.Where.
-func (t *DLQEntriesTable) Where(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+// Where starts a query; see AlertPoliciesQuery.Where.
+func (t *AlertPoliciesTable) Where(ps ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Where(ps...)
 }
 
-// Pick starts a query; see DLQEntriesQuery.Pick.
-func (t *DLQEntriesTable) Pick(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+// Pick starts a query; see AlertPoliciesQuery.Pick.
+func (t *AlertPoliciesTable) Pick(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Pick(es...)
 }
 
-// Load starts a query; see DLQEntriesQuery.Load.
-func (t *DLQEntriesTable) Load(ls ...keel.Loader) keel.Query[*audit.DLQEntry] {
+// Load starts a query; see AlertPoliciesQuery.Load.
+func (t *AlertPoliciesTable) Load(ls ...keel.Loader) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Load(ls...)
 }
 
-// Omit starts a query; see DLQEntriesQuery.Omit.
-func (t *DLQEntriesTable) Omit(cols ...keel.Column) keel.Query[*audit.DLQEntry] {
+// Omit starts a query; see AlertPoliciesQuery.Omit.
+func (t *AlertPoliciesTable) Omit(cols ...keel.Column) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Omit(cols...)
 }
 
-// Order starts a query; see DLQEntriesQuery.Order.
-func (t *DLQEntriesTable) Order(os ...keel.Order) keel.Query[*audit.DLQEntry] {
+// Order starts a query; see AlertPoliciesQuery.Order.
+func (t *AlertPoliciesTable) Order(os ...keel.Order) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Order(os...)
 }
 
-// Limit starts a query; see DLQEntriesQuery.Limit.
-func (t *DLQEntriesTable) Limit(n int) keel.Query[*audit.DLQEntry] {
+// Limit starts a query; see AlertPoliciesQuery.Limit.
+func (t *AlertPoliciesTable) Limit(n int) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Limit(n)
 }
 
-// Group starts a query; see DLQEntriesQuery.Group.
-func (t *DLQEntriesTable) Group(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+// Group starts a query; see AlertPoliciesQuery.Group.
+func (t *AlertPoliciesTable) Group(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Group(es...)
 }
 
-// GroupingSets starts a query; see DLQEntriesQuery.GroupingSets.
-func (t *DLQEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.DLQEntry] {
+// GroupingSets starts a query; see AlertPoliciesQuery.GroupingSets.
+func (t *AlertPoliciesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().GroupingSets(sets...)
 }
 
-// Rollup starts a query; see DLQEntriesQuery.Rollup.
-func (t *DLQEntriesTable) Rollup(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+// Rollup starts a query; see AlertPoliciesQuery.Rollup.
+func (t *AlertPoliciesTable) Rollup(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Rollup(es...)
 }
 
-// Cube starts a query; see DLQEntriesQuery.Cube.
-func (t *DLQEntriesTable) Cube(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+// Cube starts a query; see AlertPoliciesQuery.Cube.
+func (t *AlertPoliciesTable) Cube(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Cube(es...)
 }
 
-// AllTenants starts a query; see DLQEntriesQuery.AllTenants.
-func (t *DLQEntriesTable) AllTenants() keel.Query[*audit.DLQEntry] {
+// AllTenants starts a query; see AlertPoliciesQuery.AllTenants.
+func (t *AlertPoliciesTable) AllTenants() keel.Query[*audit.AlertPolicy] {
 	return t.Query().AllTenants()
 }
 
-// Join starts a query; see DLQEntriesQuery.Join.
-func (t *DLQEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+// Join starts a query; see AlertPoliciesQuery.Join.
+func (t *AlertPoliciesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Join(other, on...)
 }
 
-// LeftJoin starts a query; see DLQEntriesQuery.LeftJoin.
-func (t *DLQEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+// LeftJoin starts a query; see AlertPoliciesQuery.LeftJoin.
+func (t *AlertPoliciesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	return t.Query().LeftJoin(other, on...)
 }
 
-// LeftJoinLateral starts a query; see DLQEntriesQuery.LeftJoinLateral.
-func (t *DLQEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+// LeftJoinLateral starts a query; see AlertPoliciesQuery.LeftJoinLateral.
+func (t *AlertPoliciesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.AlertPolicy] {
 	return t.Query().LeftJoinLateral(sub)
 }
 
-// JoinLateral starts a query; see DLQEntriesQuery.JoinLateral.
-func (t *DLQEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+// JoinLateral starts a query; see AlertPoliciesQuery.JoinLateral.
+func (t *AlertPoliciesTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.AlertPolicy] {
 	return t.Query().JoinLateral(sub)
 }
 
-// Lock starts a query; see DLQEntriesQuery.Lock.
-func (t *DLQEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.DLQEntry] {
+// Lock starts a query; see AlertPoliciesQuery.Lock.
+func (t *AlertPoliciesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Lock(strength, wait...)
 }
 
-// DistinctOn starts a query; see DLQEntriesQuery.DistinctOn.
-func (t *DLQEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+// DistinctOn starts a query; see AlertPoliciesQuery.DistinctOn.
+func (t *AlertPoliciesTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().DistinctOn(es...)
 }
 
-// Cache starts a query; see DLQEntriesQuery.Cache.
-func (t *DLQEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.DLQEntry] {
+// Cache starts a query; see AlertPoliciesQuery.Cache.
+func (t *AlertPoliciesTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Cache(opts...)
 }
 
-// LoadStrategy starts a query; see DLQEntriesQuery.LoadStrategy.
-func (t *DLQEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.DLQEntry] {
+// LoadStrategy starts a query; see AlertPoliciesQuery.LoadStrategy.
+func (t *AlertPoliciesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.AlertPolicy] {
 	return t.Query().LoadStrategy(s)
 }
 
-// With starts a query; see DLQEntriesQuery.With.
-func (t *DLQEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*audit.DLQEntry] {
+// With starts a query; see AlertPoliciesQuery.With.
+func (t *AlertPoliciesTable) With(ctes ...*keel.CTETable) keel.Query[*audit.AlertPolicy] {
 	return t.Query().With(ctes...)
 }
 
-// Compute starts a query; see DLQEntriesQuery.Compute.
-func (t *DLQEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.DLQEntry] {
+// Compute starts a query; see AlertPoliciesQuery.Compute.
+func (t *AlertPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.AlertPolicy] {
 	return t.Query().Compute(col, e)
 }
 
 // Create inserts row.
-func (t *DLQEntriesTable) Create(ctx context.Context, db *keel.DB, row *audit.DLQEntry) error {
+func (t *AlertPoliciesTable) Create(ctx context.Context, db *keel.DB, row *audit.AlertPolicy) error {
 	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
-func (t *DLQEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry) error {
+func (t *AlertPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.AlertPolicy) error {
 	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
-func (t *DLQEntriesTable) Save(ctx context.Context, db *keel.DB, row *audit.DLQEntry, cols ...keel.Column) error {
+func (t *AlertPoliciesTable) Save(ctx context.Context, db *keel.DB, row *audit.AlertPolicy, cols ...keel.Column) error {
 	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
-func (t *DLQEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.DLQEntry, cols ...keel.Column) error {
+func (t *AlertPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.AlertPolicy, cols ...keel.Column) error {
 	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
-func (t *DLQEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.DLQEntry) error {
+func (t *AlertPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.AlertPolicy) error {
 	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
-func (t *DLQEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry, c keel.Conflict) ([]bool, error) {
+func (t *AlertPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.AlertPolicy, c keel.Conflict) ([]bool, error) {
 	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
-func (t *DLQEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry, targets ...keel.Expr) (int64, error) {
+func (t *AlertPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.AlertPolicy, targets ...keel.Expr) (int64, error) {
 	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
-func (t *DLQEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.DLQEntry) (int64, error) {
+func (t *AlertPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.AlertPolicy) (int64, error) {
 	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
-func (q *DLQEntriesQuery) Where(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Where(ps ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Where(ps...)
 	return q
 }
 
 // Pick selects only es.
-func (q *DLQEntriesQuery) Pick(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Pick(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Pick(es...)
 	return q
 }
 
 // Omit leaves cols out of the columns the query reads.
-func (q *DLQEntriesQuery) Omit(cols ...keel.Column) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Omit(cols ...keel.Column) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Omit(cols...)
 	return q
 }
 
 // Load loads relations into the rows.
-func (q *DLQEntriesQuery) Load(ls ...keel.Loader) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Load(ls ...keel.Loader) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Load(ls...)
 	return q
 }
 
 // Order sets the sort order.
-func (q *DLQEntriesQuery) Order(os ...keel.Order) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Order(os ...keel.Order) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Order(os...)
 	return q
 }
 
 // Distinct returns each distinct row once: SELECT DISTINCT.
-func (q *DLQEntriesQuery) Distinct() keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Distinct() keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Distinct()
 	return q
 }
 
 // Group adds GROUP BY expressions.
-func (q *DLQEntriesQuery) Group(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Group(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Group(es...)
 	return q
 }
 
 // GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
-func (q *DLQEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.GroupingSets(sets...)
 	return q
 }
 
 // Rollup groups by es and by each prefix of es down to the grand total.
-func (q *DLQEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Rollup(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Rollup(es...)
 	return q
 }
 
 // Cube groups by every subset of es.
-func (q *DLQEntriesQuery) Cube(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Cube(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Cube(es...)
 	return q
 }
 
 // Window declares a named window (WINDOW name AS (…)).
-func (q *DLQEntriesQuery) Window(name string, w keel.Window) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Window(name string, w keel.Window) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Window(name, w)
 	return q
 }
 
 // Having adds HAVING predicates.
-func (q *DLQEntriesQuery) Having(ps ...keel.Pred) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Having(ps ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Having(ps...)
 	return q
 }
 
 // Limit caps the number of rows.
-func (q *DLQEntriesQuery) Limit(n int) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Limit(n int) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Limit(n)
 	return q
 }
 
 // Offset skips n rows.
-func (q *DLQEntriesQuery) Offset(n int) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Offset(n int) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Offset(n)
 	return q
 }
 
 // DistinctOn keeps the first row of each group of es (DISTINCT ON).
-func (q *DLQEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.DistinctOn(es...)
 	return q
 }
 
 // AllTenants lets the query cross tenants. It needs a system scope.
-func (q *DLQEntriesQuery) AllTenants() keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) AllTenants() keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.AllTenants()
 	return q
 }
 
 // CustomPlan plans the query for its parameter values on every execution.
-func (q *DLQEntriesQuery) CustomPlan() keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) CustomPlan() keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.CustomPlan()
 	return q
 }
 
 // Timeout bounds the query's execution.
-func (q *DLQEntriesQuery) Timeout(d time.Duration) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Timeout(d time.Duration) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Timeout(d)
 	return q
 }
 
 // Lock locks the table's selected rows.
-func (q *DLQEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Lock(strength, wait...)
 	return q
 }
 
 // Join adds an INNER JOIN of another table on the given predicates.
-func (q *DLQEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Join(other, on...)
 	return q
 }
 
 // LeftJoin adds a LEFT JOIN of another table on the given predicates.
-func (q *DLQEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.LeftJoin(other, on...)
 	return q
 }
 
 // LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
-func (q *DLQEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.LeftJoinLateral(sub)
 	return q
 }
 
 // JoinLateral adds CROSS JOIN LATERAL (sub).
-func (q *DLQEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.JoinLateral(sub)
 	return q
 }
 
 // Cache serves the query's reads from the result cache.
-func (q *DLQEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Cache(opts...)
 	return q
 }
 
 // With declares CTEs the query uses.
-func (q *DLQEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.With(ctes...)
 	return q
 }
 
 // Compute selects e into the computed field col of the rows.
-func (q *DLQEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.Compute(col, e)
 	return q
 }
 
 // LoadStrategy chooses how the query's relations load.
-func (q *DLQEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.DLQEntry] {
+func (q *AlertPoliciesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.AlertPolicy] {
 	q.QueryCore.LoadStrategy(s)
 	return q
 }
 
 // Clone returns an independent copy of the query.
-func (q *DLQEntriesQuery) Clone() keel.Query[*audit.DLQEntry] {
-	return &DLQEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+func (q *AlertPoliciesQuery) Clone() keel.Query[*audit.AlertPolicy] {
+	return &AlertPoliciesQuery{QueryCore: *q.QueryCore.Clone()}
 }
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
-func (q *DLQEntriesQuery) One(ctx context.Context, db *keel.DB) (*audit.DLQEntry, error) {
+func (q *AlertPoliciesQuery) One(ctx context.Context, db *keel.DB) (*audit.AlertPolicy, error) {
 	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
-	return (*audit.DLQEntry)(row), err
+	return (*audit.AlertPolicy)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
-func (q *DLQEntriesQuery) First(ctx context.Context, db *keel.DB) (*audit.DLQEntry, error) {
+func (q *AlertPoliciesQuery) First(ctx context.Context, db *keel.DB) (*audit.AlertPolicy, error) {
 	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
-	return (*audit.DLQEntry)(row), err
+	return (*audit.AlertPolicy)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
-func (q *DLQEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*audit.DLQEntry, error) {
+func (q *AlertPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*audit.AlertPolicy, error) {
 	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
-	return *(*[]*audit.DLQEntry)(unsafe.Pointer(&rows)), err
+	return *(*[]*audit.AlertPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
-func (q *DLQEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*audit.DLQEntry, error) {
+func (q *AlertPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*audit.AlertPolicy, error) {
 	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
-	return *(*[]*audit.DLQEntry)(unsafe.Pointer(&rows)), err
+	return *(*[]*audit.AlertPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
-func (q *DLQEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.DLQEntry, error) {
+func (q *AlertPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.AlertPolicy, error) {
 	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
-	return *(*[]*audit.DLQEntry)(unsafe.Pointer(&rows)), err
+	return *(*[]*audit.AlertPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
-func (q *DLQEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.DLQEntry], error) {
+func (q *AlertPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.AlertPolicy], error) {
 	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
-	return *(*keel.Page[*audit.DLQEntry])(unsafe.Pointer(&page)), err
+	return *(*keel.Page[*audit.AlertPolicy])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
-func (q *DLQEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.DLQEntry) error) error {
+func (q *AlertPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.AlertPolicy) error) error {
 	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
-		return fn(ctx, *(*[]*audit.DLQEntry)(unsafe.Pointer(&rows)))
+		return fn(ctx, *(*[]*audit.AlertPolicy)(unsafe.Pointer(&rows)))
 	})
 }
 
-func newDLQEntry() unsafe.Pointer { return unsafe.Pointer(new(audit.DLQEntry)) }
+func newAlertPolicy() unsafe.Pointer { return unsafe.Pointer(new(audit.AlertPolicy)) }
 
-func newNDLQEntry(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]audit.DLQEntry, n)))
+func newNAlertPolicy(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]audit.AlertPolicy, n)))
 }
 
-func ptrDLQEntry(p unsafe.Pointer, c int32) any {
-	r := (*audit.DLQEntry)(p)
+func ptrAlertPolicy(p unsafe.Pointer, c int32) any {
+	r := (*audit.AlertPolicy)(p)
 	switch c {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
 	case 1:
-		return (*string)(unsafe.Pointer(&r.OriginalEntryID))
-	case 2:
-		return &r.EntryData
-	case 3:
-		return &r.FailureTime
-	case 4:
-		return (*int64)(unsafe.Pointer(&r.RetryCount))
-	case 5:
-		return &r.LastError
-	case 6:
-		return &r.NextRetryAt
-	case 7:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 8:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 9:
 		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 10:
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.Kind))
+	case 4:
+		return &r.Enabled
+	case 5:
+		return (*int64)(unsafe.Pointer(&r.Threshold))
+	case 6:
+		return (*int64)(unsafe.Pointer(&r.WindowMinutes))
+	case 7:
+		return &r.Version
+	case 8:
 		return &r.CreatedAt
-	case 11:
+	case 9:
 		return &r.UpdatedAt
 	}
 	return nil
 }
 
-func valueDLQEntry(p unsafe.Pointer, c int32) any {
-	r := (*audit.DLQEntry)(p)
+func valueAlertPolicy(p unsafe.Pointer, c int32) any {
+	r := (*audit.AlertPolicy)(p)
 	switch c {
 	case 0:
 		return string(r.ID)
 	case 1:
-		return string(r.OriginalEntryID)
-	case 2:
-		if r.EntryData == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.EntryData
-	case 3:
-		return r.FailureTime
-	case 4:
-		return int64(r.RetryCount)
-	case 5:
-		if r.LastError == "" {
-			return nil
-		}
-		return r.LastError
-	case 6:
-		if r.NextRetryAt == 0 {
-			return nil
-		}
-		return r.NextRetryAt
-	case 7:
-		return string(r.Status)
-	case 8:
-		return string(r.OrganizationID)
-	case 9:
 		return string(r.BusinessUnitID)
-	case 10:
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.Kind)
+	case 4:
+		return r.Enabled
+	case 5:
+		return int64(r.Threshold)
+	case 6:
+		return int64(r.WindowMinutes)
+	case 7:
+		return r.Version
+	case 8:
 		return r.CreatedAt
-	case 11:
+	case 9:
 		return r.UpdatedAt
 	}
 	return nil
 }
 
-func beforeCreateDLQEntry(ctx context.Context, p unsafe.Pointer) error {
-	return (*audit.DLQEntry)(p).BeforeCreate(ctx)
+// chainHeadsTable is the schema of audit.ChainHead.
+var chainHeadsTable = schema.Table{
+	Name:   "audit_chain_heads",
+	Quoted: `"audit_chain_heads"`,
+	Alias:  "ach",
+	Model:  "audit.ChainHead",
+	Label:  `Chain Head`,
+	Plural: `Chain Heads`,
+	Doc:    `ChainHead is where a tenant's chain of audit seals ends, how far its entries are sealed and what the last verification found. The sealer locks it to append the next seal.`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "last_seq", Quoted: `"last_seq"`, Field: "LastSeq", Kind: schema.KindInt64, Flags: 0, Label: `Last Seq`, JSON: `lastSeq`},
+		{Name: "last_hash", Quoted: `"last_hash"`, Field: "LastHash", Kind: schema.KindString, Flags: 0, Label: `Last Hash`, JSON: `lastHash`},
+		{Name: "sealed_through", Quoted: `"sealed_through"`, Field: "SealedThrough", Kind: schema.KindInt64, Flags: 0, Label: `Sealed Through`, JSON: `sealedThrough`},
+		{Name: "hash_key_id", Quoted: `"hash_key_id"`, Field: "HashKeyID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hash Key ID`, JSON: `hashKeyId`},
+		{Name: "last_verified_seq", Quoted: `"last_verified_seq"`, Field: "LastVerifiedSeq", Kind: schema.KindInt64, Flags: 0, Label: `Last Verified Seq`, JSON: `lastVerifiedSeq`},
+		{Name: "last_verified_at", Quoted: `"last_verified_at"`, Field: "LastVerifiedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Verified At`, JSON: `lastVerifiedAt`},
+		{Name: "last_verification_status", Quoted: `"last_verification_status"`, Field: "LastVerificationStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Verification Status`, JSON: `lastVerificationStatus`, Enum: enumVerificationStatus[:]},
+		{Name: "last_verification_failed_seq", Quoted: `"last_verification_failed_seq"`, Field: "LastVerificationFailedSeq", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Verification Failed Seq`, JSON: `lastVerificationFailedSeq`},
+		{Name: "last_verification_detail", Quoted: `"last_verification_detail"`, Field: "LastVerificationDetail", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Last Verification Detail`, JSON: `lastVerificationDetail`},
+		{Name: "verify_cursor_seq", Quoted: `"verify_cursor_seq"`, Field: "VerifyCursorSeq", Kind: schema.KindInt64, Flags: 0, Label: `Verify Cursor Seq`, JSON: `verifyCursorSeq`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:  nil,
+	Version:    12,
+	AutoID:     -1,
+	AutoCreate: 13,
+	AutoUpdate: 14,
+	IDPrefix:   "",
+	New:        newChainHead,
+	NewN:       newNChainHead,
+	Size:       unsafe.Sizeof(audit.ChainHead{}),
+	Ptr:        ptrChainHead,
+	Value:      valueChainHead,
+}
+
+var chainHeadsRef = keel.Ref{Table: &chainHeadsTable}
+
+// ChainHeadsTable is the table of audit.ChainHead.
+type ChainHeadsTable struct {
+	keel.TableBase
+	OrganizationID            keelkinds.PulidIDCol
+	BusinessUnitID            keelkinds.PulidIDCol
+	LastSeq                   keel.Int64Col
+	LastHash                  keel.StringCol
+	SealedThrough             keel.Int64Col
+	HashKeyID                 keel.StringCol
+	LastVerifiedSeq           keel.Int64Col
+	LastVerifiedAt            keel.Int64Col
+	LastVerificationStatus    VerificationStatusCol
+	LastVerificationFailedSeq keel.Int64Col
+	LastVerificationDetail    keel.StringCol
+	VerifyCursorSeq           keel.Int64Col
+	Version                   keel.Int64Col
+	CreatedAt                 keel.Int64Col
+	UpdatedAt                 keel.Int64Col
+}
+
+// ChainHeads references the audit_chain_heads table.
+var ChainHeads = &ChainHeadsTable{
+	TableBase:                 keel.TableBase{Ref: &chainHeadsRef},
+	OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 0}}},
+	BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 1}}},
+	LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 2}},
+	LastHash:                  keel.StringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 3}},
+	SealedThrough:             keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 4}},
+	HashKeyID:                 keel.StringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 5}},
+	LastVerifiedSeq:           keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 6}},
+	LastVerifiedAt:            keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 7}},
+	LastVerificationStatus:    VerificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 8}}},
+	LastVerificationFailedSeq: keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 9}},
+	LastVerificationDetail:    keel.StringCol{Col: keel.Col{Ref: &chainHeadsRef, Index: 10}},
+	VerifyCursorSeq:           keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 11}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 12}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 13}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &chainHeadsRef, Index: 14}},
+}
+
+// BuildChainHeads builds the table of audit_chain_heads for ref. Generated relation and alias methods call it.
+func BuildChainHeads(r *keel.Ref) *ChainHeadsTable {
+	return &ChainHeadsTable{
+		TableBase:                 keel.TableBase{Ref: r},
+		OrganizationID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
+		LastHash:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
+		SealedThrough:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		HashKeyID:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		LastVerifiedSeq:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		LastVerifiedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		LastVerificationStatus:    VerificationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		LastVerificationFailedSeq: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		LastVerificationDetail:    keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		VerifyCursorSeq:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+	}
+}
+
+// ChainHeadsSchema returns the schema of audit_chain_heads.
+func ChainHeadsSchema() *schema.Table { return &chainHeadsTable }
+
+// As returns a handle that references audit_chain_heads under its own alias.
+func (t *ChainHeadsTable) As(alias string) *ChainHeadsTable {
+	return keel.Alias(t.Ref, alias, BuildChainHeads)
+}
+
+// ChainHeadsQuery is a query over audit.ChainHead.
+type ChainHeadsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*audit.ChainHead] = (*ChainHeadsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ChainHeadsTable) Query() keel.Query[*audit.ChainHead] {
+	return &ChainHeadsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ChainHeadsQuery.Where.
+func (t *ChainHeadsTable) Where(ps ...keel.Pred) keel.Query[*audit.ChainHead] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ChainHeadsQuery.Pick.
+func (t *ChainHeadsTable) Pick(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ChainHeadsQuery.Load.
+func (t *ChainHeadsTable) Load(ls ...keel.Loader) keel.Query[*audit.ChainHead] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ChainHeadsQuery.Omit.
+func (t *ChainHeadsTable) Omit(cols ...keel.Column) keel.Query[*audit.ChainHead] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ChainHeadsQuery.Order.
+func (t *ChainHeadsTable) Order(os ...keel.Order) keel.Query[*audit.ChainHead] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ChainHeadsQuery.Limit.
+func (t *ChainHeadsTable) Limit(n int) keel.Query[*audit.ChainHead] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ChainHeadsQuery.Group.
+func (t *ChainHeadsTable) Group(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ChainHeadsQuery.GroupingSets.
+func (t *ChainHeadsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ChainHeadsQuery.Rollup.
+func (t *ChainHeadsTable) Rollup(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ChainHeadsQuery.Cube.
+func (t *ChainHeadsTable) Cube(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ChainHeadsQuery.AllTenants.
+func (t *ChainHeadsTable) AllTenants() keel.Query[*audit.ChainHead] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ChainHeadsQuery.Join.
+func (t *ChainHeadsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.ChainHead] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ChainHeadsQuery.LeftJoin.
+func (t *ChainHeadsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.ChainHead] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ChainHeadsQuery.LeftJoinLateral.
+func (t *ChainHeadsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.ChainHead] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ChainHeadsQuery.JoinLateral.
+func (t *ChainHeadsTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.ChainHead] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ChainHeadsQuery.Lock.
+func (t *ChainHeadsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.ChainHead] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ChainHeadsQuery.DistinctOn.
+func (t *ChainHeadsTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ChainHeadsQuery.Cache.
+func (t *ChainHeadsTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.ChainHead] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ChainHeadsQuery.LoadStrategy.
+func (t *ChainHeadsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.ChainHead] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ChainHeadsQuery.With.
+func (t *ChainHeadsTable) With(ctes ...*keel.CTETable) keel.Query[*audit.ChainHead] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ChainHeadsQuery.Compute.
+func (t *ChainHeadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.ChainHead] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ChainHeadsTable) Create(ctx context.Context, db *keel.DB, row *audit.ChainHead) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ChainHeadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.ChainHead) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *ChainHeadsTable) Save(ctx context.Context, db *keel.DB, row *audit.ChainHead, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ChainHeadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.ChainHead, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ChainHeadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.ChainHead) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ChainHeadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.ChainHead, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ChainHeadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.ChainHead, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ChainHeadsTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.ChainHead) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ChainHeadsQuery) Where(ps ...keel.Pred) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ChainHeadsQuery) Pick(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ChainHeadsQuery) Omit(cols ...keel.Column) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ChainHeadsQuery) Load(ls ...keel.Loader) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ChainHeadsQuery) Order(os ...keel.Order) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ChainHeadsQuery) Distinct() keel.Query[*audit.ChainHead] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ChainHeadsQuery) Group(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ChainHeadsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ChainHeadsQuery) Rollup(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ChainHeadsQuery) Cube(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ChainHeadsQuery) Window(name string, w keel.Window) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ChainHeadsQuery) Having(ps ...keel.Pred) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ChainHeadsQuery) Limit(n int) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ChainHeadsQuery) Offset(n int) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ChainHeadsQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ChainHeadsQuery) AllTenants() keel.Query[*audit.ChainHead] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ChainHeadsQuery) CustomPlan() keel.Query[*audit.ChainHead] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ChainHeadsQuery) Timeout(d time.Duration) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ChainHeadsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ChainHeadsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ChainHeadsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.ChainHead] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ChainHeadsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.ChainHead] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ChainHeadsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.ChainHead] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ChainHeadsQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ChainHeadsQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.ChainHead] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ChainHeadsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.ChainHead] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ChainHeadsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.ChainHead] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ChainHeadsQuery) Clone() keel.Query[*audit.ChainHead] {
+	return &ChainHeadsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ChainHeadsQuery) One(ctx context.Context, db *keel.DB) (*audit.ChainHead, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*audit.ChainHead)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ChainHeadsQuery) First(ctx context.Context, db *keel.DB) (*audit.ChainHead, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*audit.ChainHead)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ChainHeadsQuery) List(ctx context.Context, db *keel.DB) ([]*audit.ChainHead, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.ChainHead)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ChainHeadsQuery) All(ctx context.Context, db *keel.DB) ([]*audit.ChainHead, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.ChainHead)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ChainHeadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.ChainHead, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*audit.ChainHead)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ChainHeadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.ChainHead], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*audit.ChainHead])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ChainHeadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.ChainHead) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*audit.ChainHead)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newChainHead() unsafe.Pointer { return unsafe.Pointer(new(audit.ChainHead)) }
+
+func newNChainHead(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]audit.ChainHead, n)))
+}
+
+func ptrChainHead(p unsafe.Pointer, c int32) any {
+	r := (*audit.ChainHead)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return &r.LastSeq
+	case 3:
+		return &r.LastHash
+	case 4:
+		return &r.SealedThrough
+	case 5:
+		return &r.HashKeyID
+	case 6:
+		return &r.LastVerifiedSeq
+	case 7:
+		return &r.LastVerifiedAt
+	case 8:
+		return (*string)(unsafe.Pointer(&r.LastVerificationStatus))
+	case 9:
+		return &r.LastVerificationFailedSeq
+	case 10:
+		return &r.LastVerificationDetail
+	case 11:
+		return &r.VerifyCursorSeq
+	case 12:
+		return &r.Version
+	case 13:
+		return &r.CreatedAt
+	case 14:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueChainHead(p unsafe.Pointer, c int32) any {
+	r := (*audit.ChainHead)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return r.LastSeq
+	case 3:
+		return r.LastHash
+	case 4:
+		return r.SealedThrough
+	case 5:
+		if r.HashKeyID == "" {
+			return nil
+		}
+		return r.HashKeyID
+	case 6:
+		return r.LastVerifiedSeq
+	case 7:
+		if r.LastVerifiedAt == nil {
+			return nil
+		}
+		return *r.LastVerifiedAt
+	case 8:
+		if r.LastVerificationStatus == "" {
+			return nil
+		}
+		return string(r.LastVerificationStatus)
+	case 9:
+		if r.LastVerificationFailedSeq == nil {
+			return nil
+		}
+		return *r.LastVerificationFailedSeq
+	case 10:
+		if r.LastVerificationDetail == "" {
+			return nil
+		}
+		return r.LastVerificationDetail
+	case 11:
+		return r.VerifyCursorSeq
+	case 12:
+		return r.Version
+	case 13:
+		return r.CreatedAt
+	case 14:
+		return r.UpdatedAt
+	}
+	return nil
 }
 
 // entriesTable is the schema of audit.Entry.
@@ -583,37 +1130,44 @@ var entriesTable = schema.Table{
 	Plural: `Entries`,
 	Columns: []schema.Column{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`, JSON: `userId`},
-		{Name: "principal_type", Quoted: `"principal_type"`, Field: "PrincipalType", Kind: schema.KindString, Flags: 0, Label: `Principal Type`, JSON: `principalType`},
-		{Name: "principal_id", Quoted: `"principal_id"`, Field: "PrincipalID", Kind: schema.KindString, Flags: 0, Label: `Principal ID`, JSON: `principalId`},
-		{Name: "api_key_id", Quoted: `"api_key_id"`, Field: "APIKeyID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `API Key ID`, JSON: `apiKeyId`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "timestamp", Quoted: `"timestamp"`, Field: "Timestamp", Kind: schema.KindInt64, Flags: 0, Label: `Timestamp`, JSON: `timestamp`},
+		{Name: "timestamp", Quoted: `"timestamp"`, Field: "Timestamp", Kind: schema.KindInt64, Flags: schema.FlagPK, Label: `Timestamp`, JSON: `timestamp`},
+		{Name: "resource", Quoted: `"resource"`, Field: "Resource", Kind: schema.KindString, Flags: 0, Label: `Resource`, JSON: `resource`, Enum: enumPermissionResource[:]},
+		{Name: "resource_id", Quoted: `"resource_id"`, Field: "ResourceID", Kind: schema.KindString, Flags: 0, Label: `Resource ID`, JSON: `resourceId`},
+		{Name: "operation", Quoted: `"operation"`, Field: "Operation", Kind: schema.KindString, Flags: 0, Label: `Operation`, JSON: `operation`, Enum: enumPermissionOperation[:]},
+		{Name: "action", Quoted: `"action"`, Field: "Action", Kind: schema.KindString, Flags: 0, Label: `Action`, JSON: `action`},
+		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: 0, Label: `Category`, JSON: `category`, Enum: enumCategory[:]},
+		{Name: "retention_class", Quoted: `"retention_class"`, Field: "RetentionClass", Kind: schema.KindString, Flags: 0, Label: `Retention Class`, JSON: `retentionClass`, Enum: enumRetentionClass[:]},
+		{Name: "channel", Quoted: `"channel"`, Field: "Channel", Kind: schema.KindString, Flags: 0, Label: `Channel`, JSON: `channel`, Enum: enumChannel[:]},
+		{Name: "principal_type", Quoted: `"principal_type"`, Field: "PrincipalType", Kind: schema.KindString, Flags: 0, Label: `Principal Type`, JSON: `principalType`},
+		{Name: "principal_id", Quoted: `"principal_id"`, Field: "PrincipalID", Kind: schema.KindString, Flags: 0, Label: `Principal ID`, JSON: `principalId`},
+		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`, JSON: `userId`},
+		{Name: "api_key_id", Quoted: `"api_key_id"`, Field: "APIKeyID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `API Key ID`, JSON: `apiKeyId`},
+		{Name: "actor_name", Quoted: `"actor_name"`, Field: "ActorName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Actor Name`, JSON: `actorName`},
+		{Name: "ai_run_id", Quoted: `"ai_run_id"`, Field: "AIRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `AI Run ID`, JSON: `aiRunId`},
+		{Name: "entity_ref", Quoted: `"entity_ref"`, Field: "EntityRef", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Entity Ref`, JSON: `entityRef`},
+		{Name: "correlation_id", Quoted: `"correlation_id"`, Field: "CorrelationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Correlation ID`, JSON: `correlationId`},
+		{Name: "trace_id", Quoted: `"trace_id"`, Field: "TraceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Trace ID`, JSON: `traceId`},
+		{Name: "ip_address", Quoted: `"ip_address"`, Field: "IPAddress", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `IP Address`, JSON: `ipAddress`},
+		{Name: "user_agent", Quoted: `"user_agent"`, Field: "UserAgent", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User Agent`, JSON: `userAgent`},
+		{Name: "comment", Quoted: `"comment"`, Field: "Comment", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Comment`, JSON: `comment`},
 		{Name: "changes", Quoted: `"changes"`, Field: "Changes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Changes`, JSON: `changes`},
 		{Name: "previous_state", Quoted: `"previous_state"`, Field: "PreviousState", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Previous State`, JSON: `previousState`},
 		{Name: "current_state", Quoted: `"current_state"`, Field: "CurrentState", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Current State`, JSON: `currentState`},
 		{Name: "metadata", Quoted: `"metadata"`, Field: "Metadata", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Metadata`, JSON: `metadata`},
-		{Name: "resource", Quoted: `"resource"`, Field: "Resource", Kind: schema.KindString, Flags: 0, Label: `Resource`, Doc: `Should be the same as the resource in the permission service`, JSON: `resource`, Enum: enumPermissionResource[:]},
-		{Name: "operation", Quoted: `"operation"`, Field: "Operation", Kind: schema.KindString, Flags: 0, Label: `Operation`, Doc: `Should be the same as the operation in the permission service`, JSON: `operation`, Enum: enumPermissionOperation[:]},
-		{Name: "resource_id", Quoted: `"resource_id"`, Field: "ResourceID", Kind: schema.KindString, Flags: 0, Label: `Resource ID`, JSON: `resourceId`},
-		{Name: "correlation_id", Quoted: `"correlation_id"`, Field: "CorrelationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Correlation ID`, JSON: `correlationId`},
-		{Name: "user_agent", Quoted: `"user_agent"`, Field: "UserAgent", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User Agent`, JSON: `userAgent`},
-		{Name: "comment", Quoted: `"comment"`, Field: "Comment", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Comment`, JSON: `comment`},
-		{Name: "ip_address", Quoted: `"ip_address"`, Field: "IPAddress", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `IP Address`, Doc: `IPv6 addresses need space`, JSON: `ipAddress`},
-		{Name: "category", Quoted: `"category"`, Field: "Category", Kind: schema.KindString, Flags: 0, Label: `Category`, JSON: `category`, Enum: enumCategory[:]},
 		{Name: "sensitive_data", Quoted: `"sensitive_data"`, Field: "SensitiveData", Kind: schema.KindBool, Flags: 0, Label: `Sensitive Data`, JSON: `sensitiveData`},
 		{Name: "critical", Quoted: `"critical"`, Field: "Critical", Kind: schema.KindBool, Flags: 0, Label: `Critical`, JSON: `critical`},
 	},
 	Relations: []schema.Relation{
-		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `User`, JSON: `user`},
-		{Name: "APIKey", Alias: "ak", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `API Key`, JSON: `apiKey`},
+		{Name: "User", Alias: "u", Kind: schema.BelongsTo, Local: []int32{13}, Remote: []int32{0}, Label: `User`, JSON: `user`},
+		{Name: "APIKey", Alias: "ak", Kind: schema.BelongsTo, Local: []int32{14}, Remote: []int32{0}, Label: `API Key`, JSON: `apiKey`},
 	},
-	PK:           []int32{0, 5, 6},
-	Tenant:       []int32{5, 6},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
-	Update:       []int32{1, 2, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	PK:           []int32{0, 1, 2, 3},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
+	Update:       []int32{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
@@ -635,25 +1189,32 @@ var entriesRef = keel.Ref{Table: &entriesTable}
 type EntriesTable struct {
 	keel.TableBase
 	ID             keelkinds.PulidIDCol
-	UserID         keelkinds.PulidIDCol
-	PrincipalType  keel.StringCol
-	PrincipalID    keelkinds.PulidIDCol
-	APIKeyID       keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	Timestamp      keel.Int64Col
+	Resource       keelkinds.PermissionResourceCol
+	ResourceID     keel.StringCol
+	Operation      keelkinds.PermissionOperationCol
+	Action         keel.StringCol
+	Category       CategoryCol
+	RetentionClass RetentionClassCol
+	Channel        ChannelCol
+	PrincipalType  keel.StringCol
+	PrincipalID    keelkinds.PulidIDCol
+	UserID         keelkinds.PulidIDCol
+	APIKeyID       keelkinds.PulidIDCol
+	ActorName      keel.StringCol
+	AIRunID        keel.StringCol
+	EntityRef      keel.StringCol
+	CorrelationID  keel.StringCol
+	TraceID        keel.StringCol
+	IPAddress      keel.StringCol
+	UserAgent      keel.StringCol
+	Comment        keel.StringCol
 	Changes        keel.JSONBCol
 	PreviousState  keel.JSONBCol
 	CurrentState   keel.JSONBCol
 	Metadata       keel.JSONBCol
-	Resource       keelkinds.PermissionResourceCol
-	Operation      keelkinds.PermissionOperationCol
-	ResourceID     keel.StringCol
-	CorrelationID  keel.StringCol
-	UserAgent      keel.StringCol
-	Comment        keel.StringCol
-	IPAddress      keel.StringCol
-	Category       CategoryCol
 	SensitiveData  keel.BoolCol
 	Critical       keel.BoolCol
 }
@@ -662,27 +1223,34 @@ type EntriesTable struct {
 var Entries = &EntriesTable{
 	TableBase:      keel.TableBase{Ref: &entriesRef},
 	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 0}}},
-	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
-	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}},
-	PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 3}}},
-	APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 4}}},
-	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 5}}},
-	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 6}}},
-	Timestamp:      keel.Int64Col{Col: keel.Col{Ref: &entriesRef, Index: 7}},
-	Changes:        keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 8}},
-	PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 9}},
-	CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 10}},
-	Metadata:       keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 11}},
-	Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
-	Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
-	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 14}},
-	CorrelationID:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 15}},
-	UserAgent:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 16}},
-	Comment:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 17}},
-	IPAddress:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 18}},
-	Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 19}}},
-	SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 20}},
-	Critical:       keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 21}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 2}}},
+	Timestamp:      keel.Int64Col{Col: keel.Col{Ref: &entriesRef, Index: 3}},
+	Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 4}}},
+	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 5}},
+	Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 6}}},
+	Action:         keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 7}},
+	Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 8}}},
+	RetentionClass: RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 9}}},
+	Channel:        ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 10}}},
+	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 11}},
+	PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 12}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 13}}},
+	APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &entriesRef, Index: 14}}},
+	ActorName:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 15}},
+	AIRunID:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 16}},
+	EntityRef:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 17}},
+	CorrelationID:  keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 18}},
+	TraceID:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 19}},
+	IPAddress:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 20}},
+	UserAgent:      keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 21}},
+	Comment:        keel.StringCol{Col: keel.Col{Ref: &entriesRef, Index: 22}},
+	Changes:        keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 23}},
+	PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 24}},
+	CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 25}},
+	Metadata:       keel.JSONBCol{Col: keel.Col{Ref: &entriesRef, Index: 26}},
+	SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 27}},
+	Critical:       keel.BoolCol{Col: keel.Col{Ref: &entriesRef, Index: 28}},
 }
 
 // BuildEntries builds the table of audit_entries for ref. Generated relation and alias methods call it.
@@ -690,27 +1258,34 @@ func BuildEntries(r *keel.Ref) *EntriesTable {
 	return &EntriesTable{
 		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Timestamp:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		Changes:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
-		PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		Metadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
-		Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		CorrelationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		UserAgent:      keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		Comment:        keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		IPAddress:      keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
-		Critical:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Timestamp:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		Operation:      keelkinds.PermissionOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Action:         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		RetentionClass: RetentionClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Channel:        ChannelCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		APIKeyID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ActorName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		AIRunID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		EntityRef:      keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		CorrelationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		TraceID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		IPAddress:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		UserAgent:      keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		Comment:        keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
+		Changes:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		PreviousState:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		CurrentState:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
+		Metadata:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
+		SensitiveData:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 27}},
+		Critical:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
 	}
 }
 
@@ -1106,46 +1681,60 @@ func ptrEntry(p unsafe.Pointer, c int32) any {
 	case 0:
 		return (*string)(unsafe.Pointer(&r.ID))
 	case 1:
-		return (*string)(unsafe.Pointer(&r.UserID))
-	case 2:
-		return &r.PrincipalType
-	case 3:
-		return (*string)(unsafe.Pointer(&r.PrincipalID))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.APIKeyID))
-	case 5:
 		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 6:
+	case 2:
 		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 7:
+	case 3:
 		return &r.Timestamp
-	case 8:
-		return &r.Changes
-	case 9:
-		return &r.PreviousState
-	case 10:
-		return &r.CurrentState
-	case 11:
-		return &r.Metadata
-	case 12:
+	case 4:
 		return (*string)(unsafe.Pointer(&r.Resource))
-	case 13:
-		return (*string)(unsafe.Pointer(&r.Operation))
-	case 14:
+	case 5:
 		return &r.ResourceID
-	case 15:
-		return &r.CorrelationID
-	case 16:
-		return &r.UserAgent
-	case 17:
-		return &r.Comment
-	case 18:
-		return &r.IPAddress
-	case 19:
+	case 6:
+		return (*string)(unsafe.Pointer(&r.Operation))
+	case 7:
+		return &r.Action
+	case 8:
 		return (*string)(unsafe.Pointer(&r.Category))
+	case 9:
+		return (*string)(unsafe.Pointer(&r.RetentionClass))
+	case 10:
+		return (*string)(unsafe.Pointer(&r.Channel))
+	case 11:
+		return &r.PrincipalType
+	case 12:
+		return (*string)(unsafe.Pointer(&r.PrincipalID))
+	case 13:
+		return (*string)(unsafe.Pointer(&r.UserID))
+	case 14:
+		return (*string)(unsafe.Pointer(&r.APIKeyID))
+	case 15:
+		return &r.ActorName
+	case 16:
+		return &r.AIRunID
+	case 17:
+		return &r.EntityRef
+	case 18:
+		return &r.CorrelationID
+	case 19:
+		return &r.TraceID
 	case 20:
-		return &r.SensitiveData
+		return &r.IPAddress
 	case 21:
+		return &r.UserAgent
+	case 22:
+		return &r.Comment
+	case 23:
+		return &r.Changes
+	case 24:
+		return &r.PreviousState
+	case 25:
+		return &r.CurrentState
+	case 26:
+		return &r.Metadata
+	case 27:
+		return &r.SensitiveData
+	case 28:
 		return &r.Critical
 	}
 	return nil
@@ -1157,76 +1746,102 @@ func valueEntry(p unsafe.Pointer, c int32) any {
 	case 0:
 		return string(r.ID)
 	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.Timestamp
+	case 4:
+		return string(r.Resource)
+	case 5:
+		return r.ResourceID
+	case 6:
+		return string(r.Operation)
+	case 7:
+		return r.Action
+	case 8:
+		return string(r.Category)
+	case 9:
+		return string(r.RetentionClass)
+	case 10:
+		return string(r.Channel)
+	case 11:
+		return r.PrincipalType
+	case 12:
+		return string(r.PrincipalID)
+	case 13:
 		if r.UserID == "" {
 			return nil
 		}
 		return string(r.UserID)
-	case 2:
-		return r.PrincipalType
-	case 3:
-		return string(r.PrincipalID)
-	case 4:
+	case 14:
 		if r.APIKeyID == "" {
 			return nil
 		}
 		return string(r.APIKeyID)
-	case 5:
-		return string(r.BusinessUnitID)
-	case 6:
-		return string(r.OrganizationID)
-	case 7:
-		return r.Timestamp
-	case 8:
-		if r.Changes == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.Changes
-	case 9:
-		if r.PreviousState == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.PreviousState
-	case 10:
-		if r.CurrentState == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.CurrentState
-	case 11:
-		if r.Metadata == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.Metadata
-	case 12:
-		return string(r.Resource)
-	case 13:
-		return string(r.Operation)
-	case 14:
-		return r.ResourceID
 	case 15:
+		if r.ActorName == "" {
+			return nil
+		}
+		return r.ActorName
+	case 16:
+		if r.AIRunID == "" {
+			return nil
+		}
+		return r.AIRunID
+	case 17:
+		if r.EntityRef == "" {
+			return nil
+		}
+		return r.EntityRef
+	case 18:
 		if r.CorrelationID == "" {
 			return nil
 		}
 		return r.CorrelationID
-	case 16:
-		if r.UserAgent == "" {
+	case 19:
+		if r.TraceID == "" {
 			return nil
 		}
-		return r.UserAgent
-	case 17:
-		if r.Comment == "" {
-			return nil
-		}
-		return r.Comment
-	case 18:
+		return r.TraceID
+	case 20:
 		if r.IPAddress == "" {
 			return nil
 		}
 		return r.IPAddress
-	case 19:
-		return string(r.Category)
-	case 20:
-		return r.SensitiveData
 	case 21:
+		if r.UserAgent == "" {
+			return nil
+		}
+		return r.UserAgent
+	case 22:
+		if r.Comment == "" {
+			return nil
+		}
+		return r.Comment
+	case 23:
+		if r.Changes == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.Changes
+	case 24:
+		if r.PreviousState == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.PreviousState
+	case 25:
+		if r.CurrentState == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.CurrentState
+	case 26:
+		if r.Metadata == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.Metadata
+	case 27:
+		return r.SensitiveData
+	case 28:
 		return r.Critical
 	}
 	return nil
@@ -1246,6 +1861,1777 @@ func beforeCreateEntry(ctx context.Context, p unsafe.Pointer) error {
 	return (*audit.Entry)(p).BeforeCreate(ctx)
 }
 
+// exportsTable is the schema of audit.Export.
+var exportsTable = schema.Table{
+	Name:   "audit_exports",
+	Quoted: `"audit_exports"`,
+	Alias:  "ae",
+	Model:  "audit.Export",
+	Label:  `Export`,
+	Plural: `Exports`,
+	Doc:    `Export is a request to write a range of the audit trail to a file, and the file it produced.`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "requested_by_id", Quoted: `"requested_by_id"`, Field: "RequestedByID", Kind: schema.KindString, Flags: 0, Label: `Requested By ID`, JSON: `requestedById`},
+		{Name: "format", Quoted: `"format"`, Field: "Format", Kind: schema.KindString, Flags: 0, Label: `Format`, JSON: `format`, Enum: enumExportFormat[:]},
+		{Name: "filters", Quoted: `"filters"`, Field: "Filters", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Filters`, JSON: `filters`},
+		{Name: "range_from", Quoted: `"range_from"`, Field: "RangeFrom", Kind: schema.KindInt64, Flags: 0, Label: `Range From`, JSON: `rangeFrom`},
+		{Name: "range_to", Quoted: `"range_to"`, Field: "RangeTo", Kind: schema.KindInt64, Flags: 0, Label: `Range To`, JSON: `rangeTo`},
+		{Name: "include_security", Quoted: `"include_security"`, Field: "IncludeSecurity", Kind: schema.KindBool, Flags: 0, Label: `Include Security`, JSON: `includeSecurity`},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumExportStatus[:]},
+		{Name: "row_count", Quoted: `"row_count"`, Field: "RowCount", Kind: schema.KindInt64, Flags: 0, Label: `Row Count`, JSON: `rowCount`},
+		{Name: "byte_size", Quoted: `"byte_size"`, Field: "ByteSize", Kind: schema.KindInt64, Flags: 0, Label: `Byte Size`, JSON: `byteSize`},
+		{Name: "sha256", Quoted: `"sha256"`, Field: "SHA256", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `SHA 256`, JSON: `sha256`},
+		{Name: "artifact_key", Quoted: `"artifact_key"`, Field: "ArtifactKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Artifact Key`},
+		{Name: "artifact_expires_at", Quoted: `"artifact_expires_at"`, Field: "ArtifactExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Artifact Expires At`, JSON: `artifactExpiresAt`},
+		{Name: "workflow_id", Quoted: `"workflow_id"`, Field: "WorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Workflow ID`, JSON: `workflowId`},
+		{Name: "error_message", Quoted: `"error_message"`, Field: "ErrorMessage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error Message`, JSON: `errorMessage`},
+		{Name: "started_at", Quoted: `"started_at"`, Field: "StartedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Started At`, JSON: `startedAt`},
+		{Name: "completed_at", Quoted: `"completed_at"`, Field: "CompletedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Completed At`, JSON: `completedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "aex_",
+	New:        newExport,
+	NewN:       newNExport,
+	Size:       unsafe.Sizeof(audit.Export{}),
+	Ptr:        ptrExport,
+	Value:      valueExport,
+}
+
+var exportsRef = keel.Ref{Table: &exportsTable}
+
+// ExportsTable is the table of audit.Export.
+type ExportsTable struct {
+	keel.TableBase
+	ID                keelkinds.PulidIDCol
+	BusinessUnitID    keelkinds.PulidIDCol
+	OrganizationID    keelkinds.PulidIDCol
+	RequestedByID     keelkinds.PulidIDCol
+	Format            ExportFormatCol
+	Filters           keel.JSONBCol
+	RangeFrom         keel.Int64Col
+	RangeTo           keel.Int64Col
+	IncludeSecurity   keel.BoolCol
+	Status            ExportStatusCol
+	RowCount          keel.Int64Col
+	ByteSize          keel.Int64Col
+	SHA256            keel.StringCol
+	ArtifactKey       keel.StringCol
+	ArtifactExpiresAt keel.Int64Col
+	WorkflowID        keel.StringCol
+	ErrorMessage      keel.StringCol
+	StartedAt         keel.Int64Col
+	CompletedAt       keel.Int64Col
+	Version           keel.Int64Col
+	CreatedAt         keel.Int64Col
+	UpdatedAt         keel.Int64Col
+}
+
+// Exports references the audit_exports table.
+var Exports = &ExportsTable{
+	TableBase:         keel.TableBase{Ref: &exportsRef},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 2}}},
+	RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 3}}},
+	Format:            ExportFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 4}}},
+	Filters:           keel.JSONBCol{Col: keel.Col{Ref: &exportsRef, Index: 5}},
+	RangeFrom:         keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 6}},
+	RangeTo:           keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 7}},
+	IncludeSecurity:   keel.BoolCol{Col: keel.Col{Ref: &exportsRef, Index: 8}},
+	Status:            ExportStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exportsRef, Index: 9}}},
+	RowCount:          keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 10}},
+	ByteSize:          keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 11}},
+	SHA256:            keel.StringCol{Col: keel.Col{Ref: &exportsRef, Index: 12}},
+	ArtifactKey:       keel.StringCol{Col: keel.Col{Ref: &exportsRef, Index: 13}},
+	ArtifactExpiresAt: keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 14}},
+	WorkflowID:        keel.StringCol{Col: keel.Col{Ref: &exportsRef, Index: 15}},
+	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &exportsRef, Index: 16}},
+	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 17}},
+	CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 18}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 19}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 20}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &exportsRef, Index: 21}},
+}
+
+// BuildExports builds the table of audit_exports for ref. Generated relation and alias methods call it.
+func BuildExports(r *keel.Ref) *ExportsTable {
+	return &ExportsTable{
+		TableBase:         keel.TableBase{Ref: r},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Format:            ExportFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Filters:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
+		RangeFrom:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		RangeTo:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		IncludeSecurity:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
+		Status:            ExportStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RowCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		ByteSize:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		SHA256:            keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		ArtifactKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		ArtifactExpiresAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		WorkflowID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
+		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+	}
+}
+
+// ExportsSchema returns the schema of audit_exports.
+func ExportsSchema() *schema.Table { return &exportsTable }
+
+// As returns a handle that references audit_exports under its own alias.
+func (t *ExportsTable) As(alias string) *ExportsTable { return keel.Alias(t.Ref, alias, BuildExports) }
+
+// Get returns the audit_exports row with the given key, or keel.ErrNotFound.
+func (t *ExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.Export, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExportsQuery is a query over audit.Export.
+type ExportsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*audit.Export] = (*ExportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExportsTable) Query() keel.Query[*audit.Export] {
+	return &ExportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExportsQuery.Where.
+func (t *ExportsTable) Where(ps ...keel.Pred) keel.Query[*audit.Export] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExportsQuery.Pick.
+func (t *ExportsTable) Pick(es ...keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExportsQuery.Load.
+func (t *ExportsTable) Load(ls ...keel.Loader) keel.Query[*audit.Export] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExportsQuery.Omit.
+func (t *ExportsTable) Omit(cols ...keel.Column) keel.Query[*audit.Export] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExportsQuery.Order.
+func (t *ExportsTable) Order(os ...keel.Order) keel.Query[*audit.Export] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExportsQuery.Limit.
+func (t *ExportsTable) Limit(n int) keel.Query[*audit.Export] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExportsQuery.Group.
+func (t *ExportsTable) Group(es ...keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExportsQuery.GroupingSets.
+func (t *ExportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExportsQuery.Rollup.
+func (t *ExportsTable) Rollup(es ...keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExportsQuery.Cube.
+func (t *ExportsTable) Cube(es ...keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExportsQuery.AllTenants.
+func (t *ExportsTable) AllTenants() keel.Query[*audit.Export] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExportsQuery.Join.
+func (t *ExportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Export] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExportsQuery.LeftJoin.
+func (t *ExportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Export] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExportsQuery.LeftJoinLateral.
+func (t *ExportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Export] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExportsQuery.JoinLateral.
+func (t *ExportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Export] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExportsQuery.Lock.
+func (t *ExportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Export] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExportsQuery.DistinctOn.
+func (t *ExportsTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExportsQuery.Cache.
+func (t *ExportsTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.Export] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExportsQuery.LoadStrategy.
+func (t *ExportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Export] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExportsQuery.With.
+func (t *ExportsTable) With(ctes ...*keel.CTETable) keel.Query[*audit.Export] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExportsQuery.Compute.
+func (t *ExportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Export] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExportsTable) Create(ctx context.Context, db *keel.DB, row *audit.Export) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.Export) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *ExportsTable) Save(ctx context.Context, db *keel.DB, row *audit.Export, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.Export, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.Export) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.Export, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.Export, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExportsTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.Export) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExportsQuery) Where(ps ...keel.Pred) keel.Query[*audit.Export] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExportsQuery) Pick(es ...keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExportsQuery) Omit(cols ...keel.Column) keel.Query[*audit.Export] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExportsQuery) Load(ls ...keel.Loader) keel.Query[*audit.Export] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExportsQuery) Order(os ...keel.Order) keel.Query[*audit.Export] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExportsQuery) Distinct() keel.Query[*audit.Export] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExportsQuery) Group(es ...keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExportsQuery) Rollup(es ...keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExportsQuery) Cube(es ...keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExportsQuery) Window(name string, w keel.Window) keel.Query[*audit.Export] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExportsQuery) Having(ps ...keel.Pred) keel.Query[*audit.Export] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExportsQuery) Limit(n int) keel.Query[*audit.Export] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExportsQuery) Offset(n int) keel.Query[*audit.Export] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExportsQuery) AllTenants() keel.Query[*audit.Export] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExportsQuery) CustomPlan() keel.Query[*audit.Export] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExportsQuery) Timeout(d time.Duration) keel.Query[*audit.Export] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Export] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Export] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Export] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Export] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Export] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.Export] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExportsQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.Export] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Export] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Export] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExportsQuery) Clone() keel.Query[*audit.Export] {
+	return &ExportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExportsQuery) One(ctx context.Context, db *keel.DB) (*audit.Export, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*audit.Export)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExportsQuery) First(ctx context.Context, db *keel.DB) (*audit.Export, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*audit.Export)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExportsQuery) List(ctx context.Context, db *keel.DB) ([]*audit.Export, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Export)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExportsQuery) All(ctx context.Context, db *keel.DB) ([]*audit.Export, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Export)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.Export, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*audit.Export)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.Export], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*audit.Export])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.Export) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*audit.Export)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newExport() unsafe.Pointer { return unsafe.Pointer(new(audit.Export)) }
+
+func newNExport(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]audit.Export, n)))
+}
+
+func ptrExport(p unsafe.Pointer, c int32) any {
+	r := (*audit.Export)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.RequestedByID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.Format))
+	case 5:
+		return &r.Filters
+	case 6:
+		return &r.RangeFrom
+	case 7:
+		return &r.RangeTo
+	case 8:
+		return &r.IncludeSecurity
+	case 9:
+		return (*string)(unsafe.Pointer(&r.Status))
+	case 10:
+		return &r.RowCount
+	case 11:
+		return &r.ByteSize
+	case 12:
+		return &r.SHA256
+	case 13:
+		return &r.ArtifactKey
+	case 14:
+		return &r.ArtifactExpiresAt
+	case 15:
+		return &r.WorkflowID
+	case 16:
+		return &r.ErrorMessage
+	case 17:
+		return &r.StartedAt
+	case 18:
+		return &r.CompletedAt
+	case 19:
+		return &r.Version
+	case 20:
+		return &r.CreatedAt
+	case 21:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueExport(p unsafe.Pointer, c int32) any {
+	r := (*audit.Export)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.RequestedByID)
+	case 4:
+		return string(r.Format)
+	case 5:
+		return r.Filters
+	case 6:
+		return r.RangeFrom
+	case 7:
+		return r.RangeTo
+	case 8:
+		return r.IncludeSecurity
+	case 9:
+		return string(r.Status)
+	case 10:
+		return r.RowCount
+	case 11:
+		return r.ByteSize
+	case 12:
+		if r.SHA256 == "" {
+			return nil
+		}
+		return r.SHA256
+	case 13:
+		if r.ArtifactKey == "" {
+			return nil
+		}
+		return r.ArtifactKey
+	case 14:
+		if r.ArtifactExpiresAt == nil {
+			return nil
+		}
+		return *r.ArtifactExpiresAt
+	case 15:
+		if r.WorkflowID == "" {
+			return nil
+		}
+		return r.WorkflowID
+	case 16:
+		if r.ErrorMessage == "" {
+			return nil
+		}
+		return r.ErrorMessage
+	case 17:
+		if r.StartedAt == nil {
+			return nil
+		}
+		return *r.StartedAt
+	case 18:
+		if r.CompletedAt == nil {
+			return nil
+		}
+		return *r.CompletedAt
+	case 19:
+		return r.Version
+	case 20:
+		return r.CreatedAt
+	case 21:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+// legalHoldsTable is the schema of audit.LegalHold.
+var legalHoldsTable = schema.Table{
+	Name:   "audit_legal_holds",
+	Quoted: `"audit_legal_holds"`,
+	Alias:  "alh",
+	Model:  "audit.LegalHold",
+	Label:  `Legal Hold`,
+	Plural: `Legal Holds`,
+	Doc:    `LegalHold stops the retention sweep deleting an organization's audit entries: all of them, one resource's, or one record's, until it is released.`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`, JSON: `reason`},
+		{Name: "resource", Quoted: `"resource"`, Field: "Resource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resource`, JSON: `resource`, Enum: enumPermissionResource[:]},
+		{Name: "resource_id", Quoted: `"resource_id"`, Field: "ResourceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resource ID`, JSON: `resourceId`},
+		{Name: "placed_by_id", Quoted: `"placed_by_id"`, Field: "PlacedByID", Kind: schema.KindString, Flags: 0, Label: `Placed By ID`, JSON: `placedById`},
+		{Name: "placed_at", Quoted: `"placed_at"`, Field: "PlacedAt", Kind: schema.KindInt64, Flags: 0, Label: `Placed At`, JSON: `placedAt`},
+		{Name: "released_by_id", Quoted: `"released_by_id"`, Field: "ReleasedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Released By ID`, JSON: `releasedById`},
+		{Name: "released_at", Quoted: `"released_at"`, Field: "ReleasedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Released At`, JSON: `releasedAt`},
+		{Name: "release_reason", Quoted: `"release_reason"`, Field: "ReleaseReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Release Reason`, JSON: `releaseReason`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Returning:    nil,
+	Version:      12,
+	AutoID:       0,
+	AutoCreate:   13,
+	AutoUpdate:   14,
+	IDPrefix:     "alh_",
+	New:          newLegalHold,
+	NewN:         newNLegalHold,
+	Size:         unsafe.Sizeof(audit.LegalHold{}),
+	Ptr:          ptrLegalHold,
+	Value:        valueLegalHold,
+	BeforeCreate: beforeCreateLegalHold,
+}
+
+var legalHoldsRef = keel.Ref{Table: &legalHoldsTable}
+
+// LegalHoldsTable is the table of audit.LegalHold.
+type LegalHoldsTable struct {
+	keel.TableBase
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	Name           keel.StringCol
+	Reason         keel.StringCol
+	Resource       keelkinds.PermissionResourceCol
+	ResourceID     keel.StringCol
+	PlacedByID     keelkinds.PulidIDCol
+	PlacedAt       keel.Int64Col
+	ReleasedByID   keelkinds.PulidIDCol
+	ReleasedAt     keel.Int64Col
+	ReleaseReason  keel.StringCol
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
+}
+
+// LegalHolds references the audit_legal_holds table.
+var LegalHolds = &LegalHoldsTable{
+	TableBase:      keel.TableBase{Ref: &legalHoldsRef},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 2}}},
+	Name:           keel.StringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 3}},
+	Reason:         keel.StringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 4}},
+	Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 5}}},
+	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 6}},
+	PlacedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 7}}},
+	PlacedAt:       keel.Int64Col{Col: keel.Col{Ref: &legalHoldsRef, Index: 8}},
+	ReleasedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 9}}},
+	ReleasedAt:     keel.Int64Col{Col: keel.Col{Ref: &legalHoldsRef, Index: 10}},
+	ReleaseReason:  keel.StringCol{Col: keel.Col{Ref: &legalHoldsRef, Index: 11}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &legalHoldsRef, Index: 12}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &legalHoldsRef, Index: 13}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &legalHoldsRef, Index: 14}},
+}
+
+// BuildLegalHolds builds the table of audit_legal_holds for ref. Generated relation and alias methods call it.
+func BuildLegalHolds(r *keel.Ref) *LegalHoldsTable {
+	return &LegalHoldsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
+		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		PlacedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		PlacedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		ReleasedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ReleasedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		ReleaseReason:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+	}
+}
+
+// LegalHoldsSchema returns the schema of audit_legal_holds.
+func LegalHoldsSchema() *schema.Table { return &legalHoldsTable }
+
+// As returns a handle that references audit_legal_holds under its own alias.
+func (t *LegalHoldsTable) As(alias string) *LegalHoldsTable {
+	return keel.Alias(t.Ref, alias, BuildLegalHolds)
+}
+
+// Get returns the audit_legal_holds row with the given key, or keel.ErrNotFound.
+func (t *LegalHoldsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.LegalHold, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LegalHoldsQuery is a query over audit.LegalHold.
+type LegalHoldsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*audit.LegalHold] = (*LegalHoldsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LegalHoldsTable) Query() keel.Query[*audit.LegalHold] {
+	return &LegalHoldsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LegalHoldsQuery.Where.
+func (t *LegalHoldsTable) Where(ps ...keel.Pred) keel.Query[*audit.LegalHold] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LegalHoldsQuery.Pick.
+func (t *LegalHoldsTable) Pick(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LegalHoldsQuery.Load.
+func (t *LegalHoldsTable) Load(ls ...keel.Loader) keel.Query[*audit.LegalHold] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LegalHoldsQuery.Omit.
+func (t *LegalHoldsTable) Omit(cols ...keel.Column) keel.Query[*audit.LegalHold] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LegalHoldsQuery.Order.
+func (t *LegalHoldsTable) Order(os ...keel.Order) keel.Query[*audit.LegalHold] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LegalHoldsQuery.Limit.
+func (t *LegalHoldsTable) Limit(n int) keel.Query[*audit.LegalHold] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LegalHoldsQuery.Group.
+func (t *LegalHoldsTable) Group(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LegalHoldsQuery.GroupingSets.
+func (t *LegalHoldsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LegalHoldsQuery.Rollup.
+func (t *LegalHoldsTable) Rollup(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LegalHoldsQuery.Cube.
+func (t *LegalHoldsTable) Cube(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LegalHoldsQuery.AllTenants.
+func (t *LegalHoldsTable) AllTenants() keel.Query[*audit.LegalHold] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LegalHoldsQuery.Join.
+func (t *LegalHoldsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.LegalHold] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LegalHoldsQuery.LeftJoin.
+func (t *LegalHoldsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.LegalHold] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LegalHoldsQuery.LeftJoinLateral.
+func (t *LegalHoldsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.LegalHold] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LegalHoldsQuery.JoinLateral.
+func (t *LegalHoldsTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.LegalHold] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LegalHoldsQuery.Lock.
+func (t *LegalHoldsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.LegalHold] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LegalHoldsQuery.DistinctOn.
+func (t *LegalHoldsTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LegalHoldsQuery.Cache.
+func (t *LegalHoldsTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.LegalHold] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LegalHoldsQuery.LoadStrategy.
+func (t *LegalHoldsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.LegalHold] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LegalHoldsQuery.With.
+func (t *LegalHoldsTable) With(ctes ...*keel.CTETable) keel.Query[*audit.LegalHold] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LegalHoldsQuery.Compute.
+func (t *LegalHoldsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.LegalHold] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LegalHoldsTable) Create(ctx context.Context, db *keel.DB, row *audit.LegalHold) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LegalHoldsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.LegalHold) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *LegalHoldsTable) Save(ctx context.Context, db *keel.DB, row *audit.LegalHold, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LegalHoldsTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.LegalHold, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LegalHoldsTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.LegalHold) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LegalHoldsTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.LegalHold, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LegalHoldsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.LegalHold, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LegalHoldsTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.LegalHold) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LegalHoldsQuery) Where(ps ...keel.Pred) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LegalHoldsQuery) Pick(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LegalHoldsQuery) Omit(cols ...keel.Column) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LegalHoldsQuery) Load(ls ...keel.Loader) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LegalHoldsQuery) Order(os ...keel.Order) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LegalHoldsQuery) Distinct() keel.Query[*audit.LegalHold] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LegalHoldsQuery) Group(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LegalHoldsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LegalHoldsQuery) Rollup(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LegalHoldsQuery) Cube(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LegalHoldsQuery) Window(name string, w keel.Window) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LegalHoldsQuery) Having(ps ...keel.Pred) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LegalHoldsQuery) Limit(n int) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LegalHoldsQuery) Offset(n int) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LegalHoldsQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LegalHoldsQuery) AllTenants() keel.Query[*audit.LegalHold] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LegalHoldsQuery) CustomPlan() keel.Query[*audit.LegalHold] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LegalHoldsQuery) Timeout(d time.Duration) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LegalHoldsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LegalHoldsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LegalHoldsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.LegalHold] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LegalHoldsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.LegalHold] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LegalHoldsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.LegalHold] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LegalHoldsQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LegalHoldsQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.LegalHold] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LegalHoldsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.LegalHold] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LegalHoldsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.LegalHold] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LegalHoldsQuery) Clone() keel.Query[*audit.LegalHold] {
+	return &LegalHoldsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LegalHoldsQuery) One(ctx context.Context, db *keel.DB) (*audit.LegalHold, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*audit.LegalHold)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LegalHoldsQuery) First(ctx context.Context, db *keel.DB) (*audit.LegalHold, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*audit.LegalHold)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LegalHoldsQuery) List(ctx context.Context, db *keel.DB) ([]*audit.LegalHold, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.LegalHold)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LegalHoldsQuery) All(ctx context.Context, db *keel.DB) ([]*audit.LegalHold, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.LegalHold)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LegalHoldsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.LegalHold, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*audit.LegalHold)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LegalHoldsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.LegalHold], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*audit.LegalHold])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LegalHoldsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.LegalHold) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*audit.LegalHold)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newLegalHold() unsafe.Pointer { return unsafe.Pointer(new(audit.LegalHold)) }
+
+func newNLegalHold(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]audit.LegalHold, n)))
+}
+
+func ptrLegalHold(p unsafe.Pointer, c int32) any {
+	r := (*audit.LegalHold)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return &r.Name
+	case 4:
+		return &r.Reason
+	case 5:
+		return (*string)(unsafe.Pointer(&r.Resource))
+	case 6:
+		return &r.ResourceID
+	case 7:
+		return (*string)(unsafe.Pointer(&r.PlacedByID))
+	case 8:
+		return &r.PlacedAt
+	case 9:
+		return (*string)(unsafe.Pointer(&r.ReleasedByID))
+	case 10:
+		return &r.ReleasedAt
+	case 11:
+		return &r.ReleaseReason
+	case 12:
+		return &r.Version
+	case 13:
+		return &r.CreatedAt
+	case 14:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueLegalHold(p unsafe.Pointer, c int32) any {
+	r := (*audit.LegalHold)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return r.Name
+	case 4:
+		return r.Reason
+	case 5:
+		if r.Resource == "" {
+			return nil
+		}
+		return string(r.Resource)
+	case 6:
+		if r.ResourceID == "" {
+			return nil
+		}
+		return r.ResourceID
+	case 7:
+		return string(r.PlacedByID)
+	case 8:
+		return r.PlacedAt
+	case 9:
+		if r.ReleasedByID == "" {
+			return nil
+		}
+		return string(r.ReleasedByID)
+	case 10:
+		if r.ReleasedAt == nil {
+			return nil
+		}
+		return *r.ReleasedAt
+	case 11:
+		if r.ReleaseReason == "" {
+			return nil
+		}
+		return r.ReleaseReason
+	case 12:
+		return r.Version
+	case 13:
+		return r.CreatedAt
+	case 14:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+func beforeCreateLegalHold(ctx context.Context, p unsafe.Pointer) error {
+	return (*audit.LegalHold)(p).BeforeCreate(ctx)
+}
+
+// sealsTable is the schema of audit.Seal.
+var sealsTable = schema.Table{
+	Name:   "audit_seals",
+	Quoted: `"audit_seals"`,
+	Alias:  "as_",
+	Model:  "audit.Seal",
+	Label:  `Seal`,
+	Plural: `Seals`,
+	Doc:    `Seal checkpoints one hour of a tenant's audit entries: how many of each retention class there were and the digest of their content, signed and chained to the seal before it.`,
+	Columns: []schema.Column{
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "seq", Quoted: `"seq"`, Field: "Seq", Kind: schema.KindInt64, Flags: schema.FlagPK, Label: `Seq`, JSON: `seq`},
+		{Name: "from_ts", Quoted: `"from_ts"`, Field: "FromTS", Kind: schema.KindInt64, Flags: 0, Label: `From TS`, JSON: `fromTs`},
+		{Name: "to_ts", Quoted: `"to_ts"`, Field: "ToTS", Kind: schema.KindInt64, Flags: 0, Label: `To TS`, JSON: `toTs`},
+		{Name: "row_count", Quoted: `"row_count"`, Field: "RowCount", Kind: schema.KindInt64, Flags: 0, Label: `Row Count`, JSON: `rowCount`},
+		{Name: "class_digests", Quoted: `"class_digests"`, Field: "ClassDigests", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Class Digests`, JSON: `classDigests`},
+		{Name: "prev_hash", Quoted: `"prev_hash"`, Field: "PrevHash", Kind: schema.KindString, Flags: 0, Label: `Prev Hash`, JSON: `prevHash`},
+		{Name: "hash", Quoted: `"hash"`, Field: "Hash", Kind: schema.KindString, Flags: 0, Label: `Hash`, JSON: `hash`},
+		{Name: "hash_key_id", Quoted: `"hash_key_id"`, Field: "HashKeyID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Hash Key ID`, JSON: `hashKeyId`},
+		{Name: "hash_version", Quoted: `"hash_version"`, Field: "HashVersion", Kind: schema.KindInt16, Flags: 0, Label: `Hash Version`, JSON: `hashVersion`},
+		{Name: "sealed_at", Quoted: `"sealed_at"`, Field: "SealedAt", Kind: schema.KindInt64, Flags: 0, Label: `Sealed At`, JSON: `sealedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{0, 1},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     -1,
+	AutoCreate: -1,
+	AutoUpdate: -1,
+	IDPrefix:   "",
+	New:        newSeal,
+	NewN:       newNSeal,
+	Size:       unsafe.Sizeof(audit.Seal{}),
+	Ptr:        ptrSeal,
+	Value:      valueSeal,
+}
+
+var sealsRef = keel.Ref{Table: &sealsTable}
+
+// SealsTable is the table of audit.Seal.
+type SealsTable struct {
+	keel.TableBase
+	OrganizationID keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	Seq            keel.Int64Col
+	FromTS         keel.Int64Col
+	ToTS           keel.Int64Col
+	RowCount       keel.Int64Col
+	ClassDigests   keel.JSONBCol
+	PrevHash       keel.StringCol
+	Hash           keel.StringCol
+	HashKeyID      keel.StringCol
+	HashVersion    keel.Int16Col
+	SealedAt       keel.Int64Col
+}
+
+// Seals references the audit_seals table.
+var Seals = &SealsTable{
+	TableBase:      keel.TableBase{Ref: &sealsRef},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sealsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sealsRef, Index: 1}}},
+	Seq:            keel.Int64Col{Col: keel.Col{Ref: &sealsRef, Index: 2}},
+	FromTS:         keel.Int64Col{Col: keel.Col{Ref: &sealsRef, Index: 3}},
+	ToTS:           keel.Int64Col{Col: keel.Col{Ref: &sealsRef, Index: 4}},
+	RowCount:       keel.Int64Col{Col: keel.Col{Ref: &sealsRef, Index: 5}},
+	ClassDigests:   keel.JSONBCol{Col: keel.Col{Ref: &sealsRef, Index: 6}},
+	PrevHash:       keel.StringCol{Col: keel.Col{Ref: &sealsRef, Index: 7}},
+	Hash:           keel.StringCol{Col: keel.Col{Ref: &sealsRef, Index: 8}},
+	HashKeyID:      keel.StringCol{Col: keel.Col{Ref: &sealsRef, Index: 9}},
+	HashVersion:    keel.Int16Col{Col: keel.Col{Ref: &sealsRef, Index: 10}},
+	SealedAt:       keel.Int64Col{Col: keel.Col{Ref: &sealsRef, Index: 11}},
+}
+
+// BuildSeals builds the table of audit_seals for ref. Generated relation and alias methods call it.
+func BuildSeals(r *keel.Ref) *SealsTable {
+	return &SealsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		Seq:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
+		FromTS:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		ToTS:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		RowCount:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		ClassDigests:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
+		PrevHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Hash:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		HashKeyID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		HashVersion:    keel.Int16Col{Col: keel.Col{Ref: r, Index: 10}},
+		SealedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+	}
+}
+
+// SealsSchema returns the schema of audit_seals.
+func SealsSchema() *schema.Table { return &sealsTable }
+
+// As returns a handle that references audit_seals under its own alias.
+func (t *SealsTable) As(alias string) *SealsTable { return keel.Alias(t.Ref, alias, BuildSeals) }
+
+// Get returns the audit_seals row with the given key, or keel.ErrNotFound.
+func (t *SealsTable) Get(ctx context.Context, db *keel.DB, key int64) (*audit.Seal, error) {
+	return t.Where(t.Seq.Eq(key)).One(ctx, db)
+}
+
+// SealsQuery is a query over audit.Seal.
+type SealsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*audit.Seal] = (*SealsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SealsTable) Query() keel.Query[*audit.Seal] {
+	return &SealsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SealsQuery.Where.
+func (t *SealsTable) Where(ps ...keel.Pred) keel.Query[*audit.Seal] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SealsQuery.Pick.
+func (t *SealsTable) Pick(es ...keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SealsQuery.Load.
+func (t *SealsTable) Load(ls ...keel.Loader) keel.Query[*audit.Seal] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SealsQuery.Omit.
+func (t *SealsTable) Omit(cols ...keel.Column) keel.Query[*audit.Seal] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SealsQuery.Order.
+func (t *SealsTable) Order(os ...keel.Order) keel.Query[*audit.Seal] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SealsQuery.Limit.
+func (t *SealsTable) Limit(n int) keel.Query[*audit.Seal] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SealsQuery.Group.
+func (t *SealsTable) Group(es ...keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SealsQuery.GroupingSets.
+func (t *SealsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SealsQuery.Rollup.
+func (t *SealsTable) Rollup(es ...keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SealsQuery.Cube.
+func (t *SealsTable) Cube(es ...keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SealsQuery.AllTenants.
+func (t *SealsTable) AllTenants() keel.Query[*audit.Seal] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SealsQuery.Join.
+func (t *SealsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Seal] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SealsQuery.LeftJoin.
+func (t *SealsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Seal] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SealsQuery.LeftJoinLateral.
+func (t *SealsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Seal] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SealsQuery.JoinLateral.
+func (t *SealsTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Seal] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SealsQuery.Lock.
+func (t *SealsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Seal] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SealsQuery.DistinctOn.
+func (t *SealsTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SealsQuery.Cache.
+func (t *SealsTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.Seal] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SealsQuery.LoadStrategy.
+func (t *SealsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Seal] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SealsQuery.With.
+func (t *SealsTable) With(ctes ...*keel.CTETable) keel.Query[*audit.Seal] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SealsQuery.Compute.
+func (t *SealsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Seal] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SealsTable) Create(ctx context.Context, db *keel.DB, row *audit.Seal) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SealsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.Seal) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *SealsTable) Save(ctx context.Context, db *keel.DB, row *audit.Seal, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SealsTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.Seal, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SealsTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.Seal) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SealsTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.Seal, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SealsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.Seal, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SealsTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.Seal) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SealsQuery) Where(ps ...keel.Pred) keel.Query[*audit.Seal] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SealsQuery) Pick(es ...keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SealsQuery) Omit(cols ...keel.Column) keel.Query[*audit.Seal] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SealsQuery) Load(ls ...keel.Loader) keel.Query[*audit.Seal] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SealsQuery) Order(os ...keel.Order) keel.Query[*audit.Seal] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SealsQuery) Distinct() keel.Query[*audit.Seal] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SealsQuery) Group(es ...keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SealsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SealsQuery) Rollup(es ...keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SealsQuery) Cube(es ...keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SealsQuery) Window(name string, w keel.Window) keel.Query[*audit.Seal] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SealsQuery) Having(ps ...keel.Pred) keel.Query[*audit.Seal] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SealsQuery) Limit(n int) keel.Query[*audit.Seal] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SealsQuery) Offset(n int) keel.Query[*audit.Seal] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SealsQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SealsQuery) AllTenants() keel.Query[*audit.Seal] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SealsQuery) CustomPlan() keel.Query[*audit.Seal] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SealsQuery) Timeout(d time.Duration) keel.Query[*audit.Seal] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SealsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Seal] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SealsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Seal] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SealsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Seal] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SealsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Seal] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SealsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Seal] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SealsQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.Seal] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SealsQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.Seal] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SealsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Seal] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SealsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Seal] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SealsQuery) Clone() keel.Query[*audit.Seal] {
+	return &SealsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SealsQuery) One(ctx context.Context, db *keel.DB) (*audit.Seal, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*audit.Seal)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SealsQuery) First(ctx context.Context, db *keel.DB) (*audit.Seal, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*audit.Seal)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SealsQuery) List(ctx context.Context, db *keel.DB) ([]*audit.Seal, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Seal)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SealsQuery) All(ctx context.Context, db *keel.DB) ([]*audit.Seal, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Seal)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SealsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.Seal, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*audit.Seal)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SealsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.Seal], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*audit.Seal])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SealsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.Seal) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*audit.Seal)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newSeal() unsafe.Pointer { return unsafe.Pointer(new(audit.Seal)) }
+
+func newNSeal(n int) unsafe.Pointer { return unsafe.Pointer(unsafe.SliceData(make([]audit.Seal, n))) }
+
+func ptrSeal(p unsafe.Pointer, c int32) any {
+	r := (*audit.Seal)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return &r.Seq
+	case 3:
+		return &r.FromTS
+	case 4:
+		return &r.ToTS
+	case 5:
+		return &r.RowCount
+	case 6:
+		return &r.ClassDigests
+	case 7:
+		return &r.PrevHash
+	case 8:
+		return &r.Hash
+	case 9:
+		return &r.HashKeyID
+	case 10:
+		return &r.HashVersion
+	case 11:
+		return &r.SealedAt
+	}
+	return nil
+}
+
+func valueSeal(p unsafe.Pointer, c int32) any {
+	r := (*audit.Seal)(p)
+	switch c {
+	case 0:
+		return string(r.OrganizationID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return r.Seq
+	case 3:
+		return r.FromTS
+	case 4:
+		return r.ToTS
+	case 5:
+		return r.RowCount
+	case 6:
+		if r.ClassDigests == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.ClassDigests
+	case 7:
+		return r.PrevHash
+	case 8:
+		return r.Hash
+	case 9:
+		if r.HashKeyID == "" {
+			return nil
+		}
+		return r.HashKeyID
+	case 10:
+		return r.HashVersion
+	case 11:
+		return r.SealedAt
+	}
+	return nil
+}
+
 func init() {
 	entriesTable.Relations[0].Target = tenantdb.UsersSchema()
 	entriesTable.Relations[1].Target = apikeydb.KeysSchema()
@@ -1254,16 +3640,48 @@ func init() {
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
+var enumAlertKind = [...]schema.EnumValue{
+	{Value: `RoleChanged`, Label: `Alert Role Changed`},
+	{Value: `APIKeyChanged`, Label: `Alert API Key Changed`},
+	{Value: `MFAReset`, Label: `Alert MFA Reset`},
+	{Value: `IdentityConfigChanged`, Label: `Alert Identity Config Changed`},
+	{Value: `CrossTenantRefused`, Label: `Alert Cross Tenant Refused`},
+	{Value: `MalwareRefused`, Label: `Alert Malware Refused`},
+	{Value: `LegalHoldChanged`, Label: `Alert Legal Hold Changed`},
+	{Value: `BulkDelete`, Label: `Alert Bulk Delete`},
+	{Value: `BulkExport`, Label: `Alert Bulk Export`},
+}
+
 var enumCategory = [...]schema.EnumValue{
 	{Value: `System`, Label: `System`},
 	{Value: `User`, Label: `User`},
+	{Value: `Security`, Label: `Security`},
 }
 
-var enumDLQStatus = [...]schema.EnumValue{
-	{Value: `pending`, Label: `Pending`},
-	{Value: `retrying`, Label: `Retrying`},
-	{Value: `failed`, Label: `Failed`},
-	{Value: `recovered`, Label: `Recovered`},
+var enumChannel = [...]schema.EnumValue{
+	{Value: `web`, Label: `Web`},
+	{Value: `api`, Label: `API`},
+	{Value: `portal`, Label: `Portal`},
+	{Value: `agent_conversation`, Label: `Agent Conversation`},
+	{Value: `agent_run`, Label: `Agent Run`},
+	{Value: `support`, Label: `Support`},
+	{Value: `scim`, Label: `SCIM`},
+	{Value: `job`, Label: `Job`},
+	{Value: `cli`, Label: `CLI`},
+	{Value: `system`, Label: `System`},
+}
+
+var enumExportFormat = [...]schema.EnumValue{
+	{Value: `CSV`, Label: `CSV`},
+	{Value: `JSONL`, Label: `JSONL`},
+}
+
+var enumExportStatus = [...]schema.EnumValue{
+	{Value: `Pending`, Label: `Pending`},
+	{Value: `Running`, Label: `Running`},
+	{Value: `Succeeded`, Label: `Succeeded`},
+	{Value: `Failed`, Label: `Failed`},
+	{Value: `Expired`, Label: `Expired`},
 }
 
 var enumPermissionOperation = [...]schema.EnumValue{
@@ -1301,6 +3719,8 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `user`, Label: `User`},
 	{Value: `role`, Label: `Role`},
 	{Value: `audit_log`, Label: `Audit Log`},
+	{Value: `security_audit_log`, Label: `Security Audit Log`},
+	{Value: `audit_legal_hold`, Label: `Audit Legal Hold`},
 	{Value: `table_configuration`, Label: `Table Configuration`},
 	{Value: `custom_field_definition`, Label: `Custom Field Definition`},
 	{Value: `sequence_config`, Label: `Sequence Config`},
@@ -1491,6 +3911,42 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `protected_margins`, Label: `Protected Margins`},
 }
 
+var enumRetentionClass = [...]schema.EnumValue{
+	{Value: `Access`, Label: `Retention Access`},
+	{Value: `Operational`, Label: `Retention Operational`},
+	{Value: `Financial`, Label: `Retention Financial`},
+	{Value: `Security`, Label: `Retention Security`},
+}
+
+var enumVerificationStatus = [...]schema.EnumValue{
+	{Value: `Verified`, Label: `Verification Verified`},
+	{Value: `Broken`, Label: `Verification Broken`},
+	{Value: `KeyMissing`, Label: `Verification Key Missing`},
+}
+
+// AlertKindCol is a column of audit.AlertKind values.
+type AlertKindCol struct{ keel.TypedStringCol }
+
+func (c AlertKindCol) Eq(v audit.AlertKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AlertKindCol) Ne(v audit.AlertKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AlertKindCol) Gt(v audit.AlertKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AlertKindCol) Gte(v audit.AlertKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AlertKindCol) Lt(v audit.AlertKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AlertKindCol) Lte(v audit.AlertKind) keel.Pred { return c.Text().Lte(string(v)) }
+func (c AlertKindCol) IsDistinctFrom(v audit.AlertKind) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c AlertKindCol) Between(lo, hi audit.AlertKind) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c AlertKindCol) To(v audit.AlertKind) keel.Assignment { return c.Text().To(string(v)) }
+func (c AlertKindCol) In(vs ...audit.AlertKind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c AlertKindCol) NotIn(vs ...audit.AlertKind) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
 // CategoryCol is a column of audit.Category values.
 type CategoryCol struct{ keel.TypedStringCol }
 
@@ -1514,25 +3970,131 @@ func (c CategoryCol) NotIn(vs ...audit.Category) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
-// DLQStatusCol is a column of audit.DLQStatus values.
-type DLQStatusCol struct{ keel.TypedStringCol }
+// ChannelCol is a column of audit.Channel values.
+type ChannelCol struct{ keel.TypedStringCol }
 
-func (c DLQStatusCol) Eq(v audit.DLQStatus) keel.Pred  { return c.Text().Eq(string(v)) }
-func (c DLQStatusCol) Ne(v audit.DLQStatus) keel.Pred  { return c.Text().Ne(string(v)) }
-func (c DLQStatusCol) Gt(v audit.DLQStatus) keel.Pred  { return c.Text().Gt(string(v)) }
-func (c DLQStatusCol) Gte(v audit.DLQStatus) keel.Pred { return c.Text().Gte(string(v)) }
-func (c DLQStatusCol) Lt(v audit.DLQStatus) keel.Pred  { return c.Text().Lt(string(v)) }
-func (c DLQStatusCol) Lte(v audit.DLQStatus) keel.Pred { return c.Text().Lte(string(v)) }
-func (c DLQStatusCol) IsDistinctFrom(v audit.DLQStatus) keel.Pred {
+func (c ChannelCol) Eq(v audit.Channel) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ChannelCol) Ne(v audit.Channel) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ChannelCol) Gt(v audit.Channel) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ChannelCol) Gte(v audit.Channel) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ChannelCol) Lt(v audit.Channel) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ChannelCol) Lte(v audit.Channel) keel.Pred { return c.Text().Lte(string(v)) }
+func (c ChannelCol) IsDistinctFrom(v audit.Channel) keel.Pred {
 	return c.Text().IsDistinctFrom(string(v))
 }
-func (c DLQStatusCol) Between(lo, hi audit.DLQStatus) keel.Pred {
+func (c ChannelCol) Between(lo, hi audit.Channel) keel.Pred {
 	return c.Text().Between(string(lo), string(hi))
 }
-func (c DLQStatusCol) To(v audit.DLQStatus) keel.Assignment { return c.Text().To(string(v)) }
-func (c DLQStatusCol) In(vs ...audit.DLQStatus) keel.Pred {
+func (c ChannelCol) To(v audit.Channel) keel.Assignment { return c.Text().To(string(v)) }
+func (c ChannelCol) In(vs ...audit.Channel) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
-func (c DLQStatusCol) NotIn(vs ...audit.DLQStatus) keel.Pred {
+func (c ChannelCol) NotIn(vs ...audit.Channel) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// ExportFormatCol is a column of audit.ExportFormat values.
+type ExportFormatCol struct{ keel.TypedStringCol }
+
+func (c ExportFormatCol) Eq(v audit.ExportFormat) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ExportFormatCol) Ne(v audit.ExportFormat) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ExportFormatCol) Gt(v audit.ExportFormat) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ExportFormatCol) Gte(v audit.ExportFormat) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ExportFormatCol) Lt(v audit.ExportFormat) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ExportFormatCol) Lte(v audit.ExportFormat) keel.Pred { return c.Text().Lte(string(v)) }
+func (c ExportFormatCol) IsDistinctFrom(v audit.ExportFormat) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c ExportFormatCol) Between(lo, hi audit.ExportFormat) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c ExportFormatCol) To(v audit.ExportFormat) keel.Assignment { return c.Text().To(string(v)) }
+func (c ExportFormatCol) In(vs ...audit.ExportFormat) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c ExportFormatCol) NotIn(vs ...audit.ExportFormat) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// ExportStatusCol is a column of audit.ExportStatus values.
+type ExportStatusCol struct{ keel.TypedStringCol }
+
+func (c ExportStatusCol) Eq(v audit.ExportStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ExportStatusCol) Ne(v audit.ExportStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ExportStatusCol) Gt(v audit.ExportStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ExportStatusCol) Gte(v audit.ExportStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ExportStatusCol) Lt(v audit.ExportStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ExportStatusCol) Lte(v audit.ExportStatus) keel.Pred { return c.Text().Lte(string(v)) }
+func (c ExportStatusCol) IsDistinctFrom(v audit.ExportStatus) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c ExportStatusCol) Between(lo, hi audit.ExportStatus) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c ExportStatusCol) To(v audit.ExportStatus) keel.Assignment { return c.Text().To(string(v)) }
+func (c ExportStatusCol) In(vs ...audit.ExportStatus) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c ExportStatusCol) NotIn(vs ...audit.ExportStatus) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// RetentionClassCol is a column of audit.RetentionClass values.
+type RetentionClassCol struct{ keel.TypedStringCol }
+
+func (c RetentionClassCol) Eq(v audit.RetentionClass) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RetentionClassCol) Ne(v audit.RetentionClass) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RetentionClassCol) Gt(v audit.RetentionClass) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RetentionClassCol) Gte(v audit.RetentionClass) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RetentionClassCol) Lt(v audit.RetentionClass) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RetentionClassCol) Lte(v audit.RetentionClass) keel.Pred { return c.Text().Lte(string(v)) }
+func (c RetentionClassCol) IsDistinctFrom(v audit.RetentionClass) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c RetentionClassCol) Between(lo, hi audit.RetentionClass) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c RetentionClassCol) To(v audit.RetentionClass) keel.Assignment { return c.Text().To(string(v)) }
+func (c RetentionClassCol) In(vs ...audit.RetentionClass) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c RetentionClassCol) NotIn(vs ...audit.RetentionClass) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// VerificationStatusCol is a column of audit.VerificationStatus values.
+type VerificationStatusCol struct{ keel.TypedStringCol }
+
+func (c VerificationStatusCol) Eq(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Eq(string(v))
+}
+func (c VerificationStatusCol) Ne(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Ne(string(v))
+}
+func (c VerificationStatusCol) Gt(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Gt(string(v))
+}
+func (c VerificationStatusCol) Gte(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Gte(string(v))
+}
+func (c VerificationStatusCol) Lt(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Lt(string(v))
+}
+func (c VerificationStatusCol) Lte(v audit.VerificationStatus) keel.Pred {
+	return c.Text().Lte(string(v))
+}
+func (c VerificationStatusCol) IsDistinctFrom(v audit.VerificationStatus) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c VerificationStatusCol) Between(lo, hi audit.VerificationStatus) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c VerificationStatusCol) To(v audit.VerificationStatus) keel.Assignment {
+	return c.Text().To(string(v))
+}
+func (c VerificationStatusCol) In(vs ...audit.VerificationStatus) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c VerificationStatusCol) NotIn(vs ...audit.VerificationStatus) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

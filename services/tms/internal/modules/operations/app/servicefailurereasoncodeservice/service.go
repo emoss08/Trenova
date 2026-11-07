@@ -115,7 +115,7 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(
+	s.logReasonCodeAction(ctx,
 		created,
 		actor,
 		permission.OpCreate,
@@ -158,7 +158,7 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(
+	s.logReasonCodeAction(ctx,
 		updated,
 		actor,
 		permission.OpUpdate,
@@ -191,7 +191,7 @@ func (s *service) Archive(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(
+	s.logReasonCodeAction(ctx,
 		archived,
 		actor,
 		permission.OpArchive,
@@ -224,7 +224,7 @@ func (s *service) Activate(
 		return nil, err
 	}
 
-	s.logReasonCodeAction(
+	s.logReasonCodeAction(ctx,
 		activated,
 		actor,
 		permission.OpUpdate,
@@ -250,7 +250,7 @@ func (s *service) Reorder(
 	}
 
 	auditActor := actor.AuditActorOrSystem()
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceFailureReasonCode,
 		ResourceID:     req.TenantInfo.BuID.String(),
 		Operation:      permission.OpUpdate,
@@ -278,6 +278,7 @@ func validateReasonCode(entity *servicefailure.ReasonCode) *errortypes.MultiErro
 }
 
 func (s *service) logReasonCodeAction(
+	ctx context.Context,
 	entity *servicefailure.ReasonCode,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
@@ -308,7 +309,7 @@ func (s *service) logReasonCodeAction(
 	if previous != nil && current != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Warn("failed to log service failure reason code audit", zap.Error(err))
 	}
 }

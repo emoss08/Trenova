@@ -85,7 +85,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	for _, entity := range duplicated {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		if auditErr := a.auditService.LogAction(
+		if auditErr := a.auditService.LogAction(ctx,
 			&auditports.LogActionParams{
 				Resource:       permission.ResourceShipment,
 				ResourceID:     entity.GetID().String(),

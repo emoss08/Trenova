@@ -76,7 +76,7 @@ func (s *Service) CreateCard(
 	}
 
 	tenantInfo := cardTenant(created)
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelCard,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -144,7 +144,7 @@ func (s *Service) UpdateCard(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelCard,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -209,7 +209,7 @@ func (s *Service) CancelCard(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelCard,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpCancel,
@@ -267,7 +267,7 @@ func (s *Service) AssignCard(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelCard,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,

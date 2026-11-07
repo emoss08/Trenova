@@ -349,7 +349,7 @@ func (s *Service) UpdateConfig(
 		).WithInternal(err)
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceIntegration,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

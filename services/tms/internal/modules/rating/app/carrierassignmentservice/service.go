@@ -282,7 +282,7 @@ func (s *Service) AssignToMove(
 		carrierEntity.Name,
 		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
-	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+	s.logCarrierAssignmentAudit(ctx, &carrierAssignmentAuditParams{
 		TenantInfo: req.TenantInfo,
 		MoveID:     req.ShipmentMoveID,
 		Operation:  permission.OpAssign,
@@ -343,7 +343,7 @@ func (s *Service) ConfirmAssignment(
 		return err
 	}
 
-	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+	s.logCarrierAssignmentAudit(ctx, &carrierAssignmentAuditParams{
 		TenantInfo: tenantInfo,
 		MoveID:     updated.ShipmentMoveID,
 		Operation:  permission.OpUpdate,
@@ -432,7 +432,7 @@ func (s *Service) Cancel(
 		req.Reason,
 		shipmenteventservice.ActorFor(req.TenantInfo),
 	))
-	s.logCarrierAssignmentAudit(&carrierAssignmentAuditParams{
+	s.logCarrierAssignmentAudit(ctx, &carrierAssignmentAuditParams{
 		TenantInfo: req.TenantInfo,
 		MoveID:     req.ShipmentMoveID,
 		Operation:  permission.OpUnassign,

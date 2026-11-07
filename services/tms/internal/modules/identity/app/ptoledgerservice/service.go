@@ -420,7 +420,7 @@ func (s *Service) Adjust(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerPTO,
 		ResourceID:     req.WorkerID.String(),
 		Operation:      permission.OpManage,

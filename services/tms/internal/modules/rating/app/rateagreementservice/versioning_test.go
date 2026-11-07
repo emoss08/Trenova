@@ -49,7 +49,7 @@ func TestCreate_WritesTheInitialHeaderVersion(t *testing.T) {
 		Once()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
@@ -343,7 +343,7 @@ func updateHarness(
 		Once()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	return repo, audit
 }

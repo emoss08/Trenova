@@ -103,7 +103,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 
 	autoPost := s.shouldAutoPost(ctx, created.OrganizationID, dependencies.Customer)
 	auditActor := actor.AuditActor()
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		created,
 		auditActor,
 		permission.OpCreate,

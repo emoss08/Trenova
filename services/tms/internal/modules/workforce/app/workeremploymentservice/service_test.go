@@ -285,7 +285,7 @@ func newHarness(t *testing.T) *harness {
 	payRepo := &fakePayRepo{err: errortypes.NewNotFoundError("none")}
 	fleet := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h := &harness{
 		events:   newFakeEventRepo(),

@@ -101,7 +101,7 @@ func TestCreateMatch_FlagsASecondInvoiceOnTheSameLoad(t *testing.T) {
 			entity.ID = pulid.MustNew("cim_")
 			return entity
 		}, nil)
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	match, err := deps.svc.CreateMatch(t.Context(), req, matchingActor())
 
@@ -209,7 +209,7 @@ func TestAutoMatch_LeavesAPossibleDuplicateForReview(t *testing.T) {
 	deps.matches.On("ListLiveByAssignment", mock.Anything, mock.Anything).
 		Return([]*carriersettlement.InvoiceMatch{{ID: pulid.MustNew("cim_")}}, nil)
 	created := deps.expectMatchCreate()
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	deps.invoices.On("UpdateCarrierInvoice", mock.Anything, mock.Anything).
 		Return(invoice, nil).
 		Maybe()

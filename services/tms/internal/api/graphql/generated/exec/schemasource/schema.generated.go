@@ -7137,6 +7137,14 @@ extend type Query {
 	{Name: "../schema/audit_log.graphqls", Input: `enum AuditCategory {
   System
   User
+  Security
+}
+
+enum AuditRetentionClass {
+  Access
+  Operational
+  Financial
+  Security
 }
 
 type AuditEntry {
@@ -7154,12 +7162,22 @@ type AuditEntry {
   metadata: JSON
   resource: String!
   operation: String!
+  "Stable dotted code for what happened, such as shipment.update or role.assigned."
+  action: String!
   resourceId: String!
   correlationId: String
+  traceId: String
   userAgent: String
   comment: String
   ipAddress: String
   category: AuditCategory!
+  retentionClass: AuditRetentionClass!
+  "How the change arrived: web, api, portal, agent_conversation, agent_run, support, scim, job, cli or system."
+  channel: String!
+  "Who acted, named as they were when the entry was written."
+  actorName: String
+  "The agent run or assistant turn that made the change."
+  aiRunId: String
   sensitiveData: Boolean!
   critical: Boolean!
   entityRef: String
@@ -7179,13 +7197,191 @@ type AuditEntryConnection {
   totalCountExact: Boolean!
 }
 
+enum AuditVerificationStatus {
+  Verified
+  Broken
+  KeyMissing
+}
+
+type AuditChainStatus {
+  "Whether seals are signed with a configured key rather than plain SHA-256."
+  signed: Boolean!
+  lastSeq: Int!
+  "Entries written before this moment are sealed."
+  sealedThrough: Timestamp
+  lastVerifiedAt: Timestamp
+  lastVerificationStatus: AuditVerificationStatus
+  lastVerificationDetail: String
+}
+
+type AuditLegalHold {
+  id: ID!
+  name: String!
+  reason: String!
+  resource: String
+  resourceId: String
+  placedById: ID!
+  placedAt: Timestamp!
+  releasedById: ID
+  releasedAt: Timestamp
+  releaseReason: String
+  active: Boolean!
+  placedBy: User
+  releasedBy: User
+}
+
+type AuditLegalHoldEdge {
+  node: AuditLegalHold!
+  cursor: String!
+}
+
+type AuditLegalHoldConnection {
+  edges: [AuditLegalHoldEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  totalCountExact: Boolean!
+}
+
+input PlaceAuditLegalHoldInput {
+  name: String!
+  reason: String!
+  "Leave empty to hold every entry; name a kind of record to hold only its entries."
+  resource: String
+  "With resource, hold only one record's entries."
+  resourceId: String
+}
+
+enum AuditExportFormat {
+  CSV
+  JSONL
+}
+
+enum AuditExportStatus {
+  Pending
+  Running
+  Succeeded
+  Failed
+  Expired
+}
+
+type AuditExportFilters {
+  resources: [String!]!
+  operations: [String!]!
+  categories: [String!]!
+  channels: [String!]!
+  principalId: String
+  resourceId: String
+}
+
+type AuditExport {
+  id: ID!
+  format: AuditExportFormat!
+  filters: AuditExportFilters!
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
+  includeSecurity: Boolean!
+  status: AuditExportStatus!
+  rowCount: Int!
+  byteSize: Int!
+  sha256: String
+  artifactExpiresAt: Timestamp
+  errorMessage: String
+  startedAt: Timestamp
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  downloadable: Boolean!
+}
+
+type AuditExportEdge {
+  node: AuditExport!
+  cursor: String!
+}
+
+type AuditExportConnection {
+  edges: [AuditExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  totalCountExact: Boolean!
+}
+
+input AuditExportFiltersInput {
+  resources: [String!]
+  operations: [String!]
+  categories: [AuditCategory!]
+  channels: [String!]
+  principalId: ID
+  resourceId: String
+}
+
+input RequestAuditExportInput {
+  format: AuditExportFormat!
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
+  includeSecurity: Boolean
+  filters: AuditExportFiltersInput
+}
+
+type AuditExportDownload {
+  url: String!
+  fileName: String!
+  expiresAt: Timestamp!
+  sha256: String
+}
+
+enum AuditAlertKind {
+  RoleChanged
+  APIKeyChanged
+  MFAReset
+  IdentityConfigChanged
+  CrossTenantRefused
+  MalwareRefused
+  LegalHoldChanged
+  BulkDelete
+  BulkExport
+}
+
+type AuditAlertPolicy {
+  kind: AuditAlertKind!
+  title: String!
+  description: String!
+  "Whether the alert counts entries over a window rather than firing on one."
+  counted: Boolean!
+  enabled: Boolean!
+  threshold: Int!
+  windowMinutes: Int!
+}
+
+input UpdateAuditAlertPolicyInput {
+  kind: AuditAlertKind!
+  enabled: Boolean!
+  threshold: Int
+  windowMinutes: Int
+}
+
 extend type Query {
+  "The organization's audit log, narrowed to the kinds of record the caller can read; security entries need security_audit_log read."
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  "One record's history, for anyone who can read that kind of record organization-wide. field narrows it to the entries that changed that field."
   auditEntriesByResourceId(
     input: DataTableConnectionInput!
     resourceId: ID!
+    field: String
   ): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
+  auditChainStatus: AuditChainStatus!
+  auditLegalHolds(input: DataTableConnectionInput!, activeOnly: Boolean): AuditLegalHoldConnection!
+  "The caller's own audit log exports."
+  auditExports(input: DataTableConnectionInput!): AuditExportConnection!
+  auditAlertPolicies: [AuditAlertPolicy!]!
+}
+
+extend type Mutation {
+  placeAuditLegalHold(input: PlaceAuditLegalHoldInput!): AuditLegalHold!
+  releaseAuditLegalHold(id: ID!, reason: String!): AuditLegalHold!
+  requestAuditExport(input: RequestAuditExportInput!): AuditExport!
+  "A short-lived link to download one of the caller's exports; the download is itself audited."
+  auditExportDownload(id: ID!): AuditExportDownload!
+  updateAuditAlertPolicy(input: UpdateAuditAlertPolicyInput!): AuditAlertPolicy!
 }
 `, BuiltIn: false},
 	{Name: "../schema/benefits.graphqls", Input: `enum BenefitPlanType {

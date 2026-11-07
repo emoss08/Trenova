@@ -157,7 +157,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -230,7 +230,7 @@ func (s *Service) AttachShipments(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Shipments attached to order")
+	s.logMembershipChange(ctx, updated, actor, "Shipments attached to order")
 	return updated, nil
 }
 
@@ -465,7 +465,7 @@ func (s *Service) DetachShipment(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Shipment detached from order")
+	s.logMembershipChange(ctx, updated, actor, "Shipment detached from order")
 	return updated, nil
 }
 
@@ -505,6 +505,7 @@ func detachableLeg(ord *order.Order, shipmentID pulid.ID) (*shipment.Shipment, e
 }
 
 func (s *Service) logMembershipChange(
+	ctx context.Context,
 	updated *order.Order,
 	actor *permissionports.RequestActor,
 	comment string,
@@ -514,7 +515,7 @@ func (s *Service) logMembershipChange(
 	}
 
 	auditActor := actor.AuditActor()
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     updated.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -641,7 +642,7 @@ func (s *Service) AddChargeWithAllocations(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order charge added")
+	s.logMembershipChange(ctx, updated, actor, "Order charge added")
 	return updated, nil
 }
 
@@ -695,7 +696,7 @@ func (s *Service) RemoveCharge(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order charge removed")
+	s.logMembershipChange(ctx, updated, actor, "Order charge removed")
 	return updated, nil
 }
 
@@ -781,7 +782,7 @@ func (s *Service) UpdateCharge(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order charge updated")
+	s.logMembershipChange(ctx, updated, actor, "Order charge updated")
 	return updated, nil
 }
 
@@ -878,7 +879,7 @@ func (s *Service) SetChargeAllocations(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order charge allocations updated")
+	s.logMembershipChange(ctx, updated, actor, "Order charge allocations updated")
 	return updated, nil
 }
 
@@ -1064,7 +1065,7 @@ func (s *Service) Close(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order closed")
+	s.logMembershipChange(ctx, updated, actor, "Order closed")
 	return s.repo.GetByID(ctx, orderports.GetOrderByIDRequest{
 		ID:              orderID,
 		TenantInfo:      tenantInfo,
@@ -1113,7 +1114,7 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 
-	s.logMembershipChange(updated, actor, "Order canceled")
+	s.logMembershipChange(ctx, updated, actor, "Order canceled")
 	return updated, nil
 }
 
@@ -1136,7 +1137,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceOrder,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"go.uber.org/fx"
@@ -98,11 +99,12 @@ func (s *Service) Stream(
 	}
 	reader, writer := io.Pipe()
 	stream := &scanStream{
-		service: s,
-		req:     req,
-		writer:  writer,
-		digest:  sha256.New(),
-		done:    make(chan struct{}),
+		auditCtx: context.WithoutCancel(ctx),
+		service:  s,
+		req:      req,
+		writer:   writer,
+		digest:   sha256.New(),
+		done:     make(chan struct{}),
 	}
 	go func() {
 		defer close(stream.done)
@@ -140,6 +142,7 @@ func (unscannedStream) Finish() (*contentscanports.ScanResult, error) {
 func (unscannedStream) Abort() {}
 
 type scanStream struct {
+	auditCtx context.Context
 	service  *Service
 	req      *contentscanports.StreamRequest
 	writer   *io.PipeWriter
@@ -181,7 +184,7 @@ func (w *scanStream) Finish() (*contentscanports.ScanResult, error) {
 	w.finished.Do(func() {
 		_ = w.writer.Close()
 		<-w.done
-		w.verdict, w.refusal = w.decide()
+		w.verdict, w.refusal = w.decide(w.auditCtx)
 	})
 	return w.verdict, w.refusal
 }
@@ -194,7 +197,7 @@ func (w *scanStream) Abort() {
 	})
 }
 
-func (w *scanStream) decide() (*contentscanports.ScanResult, error) {
+func (w *scanStream) decide(ctx context.Context) (*contentscanports.ScanResult, error) {
 	s := w.service
 	if w.err != nil || w.broken || w.result == nil {
 		err := w.unavailable()
@@ -212,11 +215,12 @@ func (w *scanStream) decide() (*contentscanports.ScanResult, error) {
 		return w.result, nil
 	}
 
-	s.recordInfected(w.req, w.result, hex.EncodeToString(w.digest.Sum(nil)), w.size)
+	s.recordInfected(ctx, w.req, w.result, hex.EncodeToString(w.digest.Sum(nil)), w.size)
 	return w.result, &contentscanports.InfectedError{Signature: w.result.Signature}
 }
 
 func (s *Service) recordInfected(
+	ctx context.Context,
 	req *contentscanports.StreamRequest,
 	result *contentscanports.ScanResult,
 	checksum string,
@@ -251,10 +255,11 @@ func (s *Service) recordInfected(
 	}
 	comment := fmt.Sprintf("Refused %q from %s: the malware scanner found %s",
 		req.FileName, req.Source, result.Signature)
-	if err := s.audit.LogAction(params, func(entry *audit.Entry) error {
-		entry.Comment = comment
-		return nil
-	}); err != nil {
+	if err := s.audit.LogAction(ctx, params,
+		auditservice.WithComment(comment),
+		auditservice.WithSecurity(),
+		auditservice.WithAction(audit.ActionMalwareRefused),
+	); err != nil {
 		s.l.Error("could not record a refused infected file", zap.Error(err))
 	}
 }

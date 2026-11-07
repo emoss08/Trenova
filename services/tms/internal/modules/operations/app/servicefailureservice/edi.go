@@ -165,7 +165,7 @@ func (s *service) recordServiceFailure214Result(
 	if result.Action == ediports.ServiceFailureEDIActionQueued {
 		comment = "Service failure EDI 214 queued to go with the partner's next batch"
 	}
-	s.logServiceFailureEDIAction(params, comment, metadata)
+	s.logServiceFailureEDIAction(ctx, params, comment, metadata)
 	s.comment(ctx, commentParams{
 		entity:   params.current,
 		comment:  comment,
@@ -174,6 +174,7 @@ func (s *service) recordServiceFailure214Result(
 }
 
 func (s *service) logServiceFailureEDIAction(
+	ctx context.Context,
 	params serviceFailure214Params,
 	comment string,
 	metadata map[string]any,
@@ -194,7 +195,7 @@ func (s *service) logServiceFailureEDIAction(
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(metadata),
 	}
-	if err := s.auditService.LogAction(logParams, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, logParams, opts...); err != nil {
 		s.l.Warn("failed to log service failure EDI audit", zap.Error(err))
 	}
 }

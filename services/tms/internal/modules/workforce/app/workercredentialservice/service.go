@@ -79,13 +79,14 @@ func New(p Params) *Service {
 }
 
 func (s *Service) auditType(
+	ctx context.Context,
 	current, previous *workercredential.WorkerCredentialType,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
 	log *zap.Logger,
 ) {
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerCredentialType,
 		resourceID: current.GetResourceID(),
 		operation:  operation,
@@ -99,13 +100,14 @@ func (s *Service) auditType(
 }
 
 func (s *Service) auditCredential(
+	ctx context.Context,
 	current, previous *workercredential.WorkerCredential,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
 	log *zap.Logger,
 ) {
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerCredential,
 		resourceID: current.GetResourceID(),
 		operation:  operation,
@@ -130,7 +132,7 @@ type auditParams struct {
 	log        *zap.Logger
 }
 
-func (s *Service) audit(p *auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
@@ -148,7 +150,7 @@ func (s *Service) audit(p *auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		p.log.Error("failed to log audit action", zap.Error(err))
 	}
 }

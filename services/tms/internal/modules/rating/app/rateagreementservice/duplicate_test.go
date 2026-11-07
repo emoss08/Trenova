@@ -100,7 +100,7 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 		Once()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Twice()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),

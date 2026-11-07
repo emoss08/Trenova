@@ -92,7 +92,7 @@ func (s *Service) CreateMemo(
 		}
 
 		auditActor := actor.AuditActor()
-		s.rec.LogAction(
+		s.rec.LogAction(ctx,
 			created,
 			auditActor,
 			permission.OpCreate,

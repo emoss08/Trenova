@@ -30,7 +30,7 @@ func TestAudit_ANonMaterialEditIsNotCriticalButCarriesTheRequest(t *testing.T) {
 
 	entry := logged.Last(t)
 	assert.False(t, entry.Critical)
-	assert.Equal(t, "req-42", entry.Metadata["requestId"])
+	assert.Equal(t, "req-42", entry.CorrelationID)
 }
 
 func TestAudit_AMaterialEditIsCritical(t *testing.T) {

@@ -35,7 +35,11 @@ type AuditEntry struct {
 	Comment  string
 }
 
-func (r *Recorder) Log(actor *permissionports.RequestActor, entry *AuditEntry) {
+func (r *Recorder) Log(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	entry *AuditEntry,
+) {
 	if r.Audit == nil || entry.Entity == nil || actor == nil {
 		return
 	}
@@ -56,7 +60,7 @@ func (r *Recorder) Log(actor *permissionports.RequestActor, entry *AuditEntry) {
 		params.PreviousState = jsonutils.MustToJSON(entry.Previous)
 		opts = append(opts, auditservice.WithDiff(entry.Previous, entry.Entity))
 	}
-	if err := r.Audit.LogAction(params, opts...); err != nil {
+	if err := r.Audit.LogAction(ctx, params, opts...); err != nil {
 		r.Logger.Warn("failed to log factoring audit",
 			zap.String("resource", entry.Resource.String()),
 			zap.Error(err))

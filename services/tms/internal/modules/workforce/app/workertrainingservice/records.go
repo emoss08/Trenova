@@ -144,7 +144,7 @@ func (s *Service) Assign(
 	}
 	created.Course = course
 
-	s.auditRecord(
+	s.auditRecord(ctx,
 		created,
 		nil,
 		permission.OpAssign,
@@ -249,7 +249,7 @@ func (s *Service) Complete(
 	if !passed {
 		comment = "Training failed: " + course.Name
 	}
-	s.auditRecord(saved, original, permission.OpUpdate, req.UserID, comment, log)
+	s.auditRecord(ctx, saved, original, permission.OpUpdate, req.UserID, comment, log)
 	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpUpdate, saved.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
 
@@ -406,7 +406,15 @@ func (s *Service) Waive(
 	}
 	saved.Course = original.Course
 
-	s.auditRecord(saved, original, permission.OpCancel, req.UserID, "Training waived: "+reason, log)
+	s.auditRecord(
+		ctx,
+		saved,
+		original,
+		permission.OpCancel,
+		req.UserID,
+		"Training waived: "+reason,
+		log,
+	)
 	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpCancel, saved.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
 
@@ -433,7 +441,7 @@ func (s *Service) Cancel(
 	}
 	saved.Course = original.Course
 
-	s.auditRecord(
+	s.auditRecord(ctx,
 		saved,
 		original,
 		permission.OpCancel,
@@ -474,7 +482,15 @@ func (s *Service) AttachDocument(
 	}
 	saved.Course = original.Course
 
-	s.auditRecord(saved, original, permission.OpUpdate, req.UserID, "Certificate attached", log)
+	s.auditRecord(
+		ctx,
+		saved,
+		original,
+		permission.OpUpdate,
+		req.UserID,
+		"Certificate attached",
+		log,
+	)
 	s.publish(ctx, req.TenantInfo, realtimeResource, permission.OpUpdate, saved.ID, req.UserID)
 	s.refreshRollupQuietly(ctx, req.TenantInfo, saved.WorkerID)
 

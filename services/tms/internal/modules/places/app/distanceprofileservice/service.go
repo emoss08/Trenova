@@ -91,7 +91,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.logAudit(created, nil, permission.OpCreate, userID, "Distance profile created")
+	s.logAudit(ctx, created, nil, permission.OpCreate, userID, "Distance profile created")
 	return created, nil
 }
 
@@ -121,7 +121,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.logAudit(updated, original, permission.OpUpdate, userID, "Distance profile updated")
+	s.logAudit(ctx, updated, original, permission.OpUpdate, userID, "Distance profile updated")
 	return updated, nil
 }
 
@@ -144,7 +144,7 @@ func (s *Service) Delete(
 	if err = s.repo.Delete(ctx, req); err != nil {
 		return err
 	}
-	s.logAudit(existing, existing, permission.OpDelete, userID, "Distance profile deleted")
+	s.logAudit(ctx, existing, existing, permission.OpDelete, userID, "Distance profile deleted")
 	return nil
 }
 
@@ -157,7 +157,7 @@ func (s *Service) SetDefault(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, nil, permission.OpUpdate, userID, "Distance profile set as default")
+	s.logAudit(ctx, updated, nil, permission.OpUpdate, userID, "Distance profile set as default")
 	return updated, nil
 }
 
@@ -169,6 +169,7 @@ func (s *Service) SelectOptions(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current *distanceprofile.DistanceProfile,
 	previous *distanceprofile.DistanceProfile,
 	op permission.Operation,
@@ -195,7 +196,7 @@ func (s *Service) logAudit(
 	if previous != nil && op == permission.OpUpdate {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log distance profile audit action", zap.Error(err))
 	}
 }

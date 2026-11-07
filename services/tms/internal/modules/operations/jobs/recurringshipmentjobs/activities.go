@@ -147,7 +147,7 @@ func (a *Activities) dispatchSeries(
 
 	result.Dispatched++
 
-	if auditErr := a.auditService.LogAction(
+	if auditErr := a.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     generation.Shipment.GetID().String(),

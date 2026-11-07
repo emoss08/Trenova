@@ -286,7 +286,7 @@ func (s *Service) settleAccess(
 ) {
 	s.invalidate(ctx, tenant, written.change.Added, written.change.Removed)
 	if written.changed() {
-		s.logAgentAudit(agentAuditEntry{
+		s.logAgentAudit(ctx, &agentAuditEntry{
 			definition:   written.definition,
 			previousMode: written.previousMode,
 			previousIDs:  written.change.Previous,
@@ -295,7 +295,7 @@ func (s *Service) settleAccess(
 			actor:        actor,
 		})
 	}
-	s.logRoleGrantAudits(roleGrantAudit{
+	s.logRoleGrantAudits(ctx, &roleGrantAudit{
 		tenant:  tenant,
 		agent:   written.definition,
 		added:   written.change.Added,
@@ -383,8 +383,8 @@ func (s *Service) SetRoleAgents(
 
 	if change.Changed() {
 		s.invalidate(ctx, req.TenantInfo, []pulid.ID{role.ID})
-		s.logRoleAudit(role, change, agentIDs, actor)
-		s.logAgentGrantAudits(req.TenantInfo, role, change, actor)
+		s.logRoleAudit(ctx, role, change, agentIDs, actor)
+		s.logAgentGrantAudits(ctx, req.TenantInfo, role, change, actor)
 	}
 
 	return &agentdefinitionports.RoleAgents{Role: role, Agents: agents}, nil
@@ -601,9 +601,9 @@ type agentAuditEntry struct {
 	actor        *permissionports.RequestActor
 }
 
-func (s *Service) logAgentAudit(entry agentAuditEntry) {
+func (s *Service) logAgentAudit(ctx context.Context, entry *agentAuditEntry) {
 	auditActor := entry.actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentDefinition,
 		ResourceID:     entry.definition.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -635,23 +635,28 @@ type roleGrantAudit struct {
 	actor   *permissionports.RequestActor
 }
 
-func (s *Service) logRoleGrantAudits(entry roleGrantAudit) {
+func (s *Service) logRoleGrantAudits(ctx context.Context, entry *roleGrantAudit) {
 	for _, roleID := range entry.added {
-		s.logRoleGrant(entry, roleID, true)
+		s.logRoleGrant(ctx, entry, roleID, true)
 	}
 	for _, roleID := range entry.removed {
-		s.logRoleGrant(entry, roleID, false)
+		s.logRoleGrant(ctx, entry, roleID, false)
 	}
 }
 
-func (s *Service) logRoleGrant(entry roleGrantAudit, roleID pulid.ID, granted bool) {
+func (s *Service) logRoleGrant(
+	ctx context.Context,
+	entry *roleGrantAudit,
+	roleID pulid.ID,
+	granted bool,
+) {
 	comment := "Agent access removed"
 	if granted {
 		comment = "Agent access granted"
 	}
 
 	auditActor := entry.actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceRole,
 		ResourceID:     roleID.String(),
 		Operation:      permission.OpUpdate,
@@ -673,13 +678,14 @@ func (s *Service) logRoleGrant(entry roleGrantAudit, roleID pulid.ID, granted bo
 }
 
 func (s *Service) logRoleAudit(
+	ctx context.Context,
 	role *rbac.Role,
 	change permissionports.GrantChange,
 	agentIDs []pulid.ID,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceRole,
 		ResourceID:     role.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -698,6 +704,7 @@ func (s *Service) logRoleAudit(
 }
 
 func (s *Service) logAgentGrantAudits(
+	ctx context.Context,
 	tenant pagination.TenantInfo,
 	role *rbac.Role,
 	change permissionports.GrantChange,
@@ -711,7 +718,7 @@ func (s *Service) logAgentGrantAudits(
 		if granted {
 			comment = "Role granted this agent"
 		}
-		if err := s.audit.LogAction(&auditports.LogActionParams{
+		if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceAgentDefinition,
 			ResourceID:     agentID.String(),
 			Operation:      permission.OpUpdate,

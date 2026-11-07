@@ -56,7 +56,7 @@ func (s *Service) UpdateDraft(
 		}
 	}
 
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		updated,
 		actor.AuditActor(),
 		permission.OpUpdate,

@@ -51,7 +51,7 @@ func (s *Service) Approve(
 
 	if result != nil {
 		s.engine.LogAdjustmentEvent("invoice adjustment approved", result, zap.InfoLevel)
-		s.engine.LogAudit(result, actor, permission.OpApprove, "Invoice adjustment approved")
+		s.engine.LogAudit(ctx, result, actor, permission.OpApprove, "Invoice adjustment approved")
 	}
 	return result, nil
 }
@@ -101,7 +101,7 @@ func (s *Service) Reject(
 	}
 
 	s.engine.LogAdjustmentEvent("invoice adjustment rejected", updated, zap.InfoLevel)
-	s.engine.LogAudit(updated, actor, permission.OpReject, "Invoice adjustment rejected")
+	s.engine.LogAudit(ctx, updated, actor, permission.OpReject, "Invoice adjustment rejected")
 	s.engine.PublishAdjustedInvoices(ctx, actor, restored)
 	return updated, nil
 }

@@ -180,7 +180,7 @@ func (u *controlUpdate) spendCapRaised() bool {
 func (s *Service) afterControlUpdate(ctx context.Context, u *controlUpdate) {
 	log := s.l.With(zap.String("operation", "UpdateControl"))
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     u.updated.ID.String(),
 		Operation:      permission.OpManage,
@@ -297,7 +297,7 @@ func (s *Service) SwitchPrimaryProvider(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpManage,

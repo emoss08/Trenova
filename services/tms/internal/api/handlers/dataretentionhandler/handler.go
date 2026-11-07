@@ -3,6 +3,8 @@ package dataretentionhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dataretentionservice"
@@ -75,6 +77,7 @@ func (h *Handler) update(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
+	req.Actor = actorutil.FromAuthContext(authCtx).AuditActor()
 	entity, err := h.service.Update(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)

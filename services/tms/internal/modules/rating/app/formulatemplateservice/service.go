@@ -692,7 +692,6 @@ func (s *Service) LogAuditAction(
 
 	opts := []auditports.LogOption{
 		auditservice.WithComment(comment),
-		auditservice.WithRequest(ctx),
 	}
 
 	if previousState != nil {
@@ -702,7 +701,7 @@ func (s *Service) LogAuditAction(
 
 	opts = append(opts, extraOpts...)
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

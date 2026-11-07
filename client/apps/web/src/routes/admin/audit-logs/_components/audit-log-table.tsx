@@ -6,6 +6,8 @@ import { useMemo } from "react";
 import { getColumns } from "./audit-log-columns";
 import { AuditLogPanel } from "./audit-log-panel";
 
+const INITIAL_VISIBILITY = { correlationId: false, category: false };
+
 export default function AuditLogTable() {
   const t = useT();
 
@@ -22,6 +24,7 @@ export default function AuditLogTable() {
       TablePanel={AuditLogPanel}
       enableCreateAction={false}
       enableReadOnlyPanel
+      initialColumnVisibility={INITIAL_VISIBILITY}
     />
   );
 }

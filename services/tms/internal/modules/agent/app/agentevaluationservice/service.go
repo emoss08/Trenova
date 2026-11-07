@@ -218,7 +218,7 @@ func (s *Service) start(
 		return nil, err
 	}
 
-	s.log(updated, actor, comment)
+	s.log(ctx, updated, actor, comment)
 
 	return updated, nil
 }
@@ -238,12 +238,13 @@ func (s *Service) ListConnection(
 }
 
 func (s *Service) log(
+	ctx context.Context,
 	evaluation *agentevaluation.Evaluation,
 	actor *permissionports.RequestActor,
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentRun,
 		ResourceID:     evaluation.ID.String(),
 		Operation:      permission.OpCreate,

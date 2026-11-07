@@ -79,14 +79,18 @@ func (s *Service) RunSuite(
 		return nil, err
 	}
 
-	s.logRun(run, actor)
+	s.logRun(ctx, run, actor)
 
 	return run, nil
 }
 
-func (s *Service) logRun(run *agentqualitysuite.SuiteRun, actor *permissionports.RequestActor) {
+func (s *Service) logRun(
+	ctx context.Context,
+	run *agentqualitysuite.SuiteRun,
+	actor *permissionports.RequestActor,
+) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentEvalSuite,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpCreate,

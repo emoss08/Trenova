@@ -143,7 +143,7 @@ func TestSetSignatureRecordsAPersonsAnswerAndAuditsIt(t *testing.T) {
 			return &saved, nil
 		})
 	h.audit.EXPECT().
-		LogAction(mock.MatchedBy(func(params *auditports.LogActionParams) bool {
+		LogAction(mock.Anything, mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 			return params.Resource == permission.ResourceDocument &&
 				params.ResourceID == h.doc.ID.String() &&
 				params.Operation == permission.OpUpdate &&
@@ -225,7 +225,7 @@ func TestSetSignatureRefusesAStaleVersion(t *testing.T) {
 	assert.Equal(t, errortypes.ErrVersionMismatch, validation.Code)
 	assert.Equal(t, "version", validation.Field)
 	h.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
-	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestSetSignatureSurfacesARaceTheRepositoryCaught(t *testing.T) {
@@ -244,7 +244,7 @@ func TestSetSignatureSurfacesARaceTheRepositoryCaught(t *testing.T) {
 	_, err := h.svc.SetSignature(t.Context(), h.request(document.SignatureStatusUnsigned, nil))
 
 	require.ErrorIs(t, err, conflict)
-	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestSetSignatureRefusesADateOnAnUnsignedDocument(t *testing.T) {
@@ -281,7 +281,7 @@ func TestSetSignatureLeavesAnUnchangedAnswerAlone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Same(t, h.doc, got)
 	h.repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
-	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	h.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestSetSignatureOverridesWhatExtractionRead(t *testing.T) {
@@ -301,7 +301,7 @@ func TestSetSignatureOverridesWhatExtractionRead(t *testing.T) {
 		RunAndReturn(func(_ context.Context, doc *document.Document) (*document.Document, error) {
 			return doc, nil
 		})
-	h.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+	h.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	updated, err := h.svc.SetSignature(
 		t.Context(),

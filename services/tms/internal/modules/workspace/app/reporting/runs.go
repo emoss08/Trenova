@@ -3,9 +3,13 @@ package reporting
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,7 +87,35 @@ func (s *Service) RunReport(ctx context.Context, req *RunReportRequest) (*report
 		)
 	}
 
+	s.auditRunRequested(ctx, created)
 	return created, nil
+}
+
+func (s *Service) auditRunRequested(ctx context.Context, run *report.ReportRun) {
+	params := &auditports.LogActionParams{
+		Resource:       permission.ResourceReport,
+		ResourceID:     run.ID.String(),
+		Operation:      permission.OpExport,
+		UserID:         run.RequestedByID,
+		OrganizationID: run.OrganizationID,
+		BusinessUnitID: run.BusinessUnitID,
+	}
+	if run.RequestedByID.IsNil() {
+		params.PrincipalType = permissionports.PrincipalTypeSystem
+		params.PrincipalID = run.OrganizationID
+	}
+	params.CurrentState = map[string]any{
+		auditEventKey:  "run_requested",
+		auditFormatKey: string(run.Format),
+		"trigger":      string(run.Trigger),
+	}
+	if err := s.audit.LogAction(
+		ctx,
+		params,
+		auditservice.WithAction("report.run_requested"),
+	); err != nil {
+		s.l.Warn("failed to audit report run", zap.String("runId", run.ID.String()), zap.Error(err))
+	}
 }
 
 func (s *Service) enforceEnqueueGate(ctx context.Context, req *RunReportRequest) error {

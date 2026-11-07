@@ -221,7 +221,7 @@ func (s *Service) ConfirmByToken(
 		if confirmErr != nil {
 			return confirmErr
 		}
-		s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 			TenantInfo: tenantInfo,
 			Operation:  permission.OpApprove,
 			Comment:    "Confirmed via public signing token by " + signerName,

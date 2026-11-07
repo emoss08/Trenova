@@ -1,6 +1,7 @@
 package auditservice_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -31,8 +32,8 @@ func capture(t *testing.T) (*auditportsmock.MockAuditService, func() (*auditport
 		optCount int
 	)
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *auditports.LogActionParams, opts ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, p *auditports.LogActionParams, opts ...auditports.LogOption) error {
 			params = p
 			optCount = len(opts)
 			return nil
@@ -46,7 +47,7 @@ func TestRecord_CarriesTheActorAndScope(t *testing.T) {
 	auditService, read := capture(t)
 	orgID, buID, userID := pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_")
 
-	auditservice.Record(auditService, zap.NewNop(), &auditservice.RecordParams{
+	auditservice.Record(t.Context(), auditService, zap.NewNop(), &auditservice.RecordParams{
 		Resource:   permission.ResourcePermit,
 		ResourceID: "pmt_1",
 		Operation:  permission.OpCreate,
@@ -77,7 +78,7 @@ func TestRecord_CarriesTheActorAndScope(t *testing.T) {
 func TestRecord_LeavesTenantUnsetWhenNotSupplied(t *testing.T) {
 	auditService, read := capture(t)
 
-	auditservice.Record(auditService, zap.NewNop(), &auditservice.RecordParams{
+	auditservice.Record(t.Context(), auditService, zap.NewNop(), &auditservice.RecordParams{
 		Resource:   permission.ResourceJurisdictionRule,
 		ResourceID: "jrl_1",
 		Operation:  permission.OpUpdate,
@@ -106,7 +107,7 @@ func TestRecord_AttachesADiffOnlyWithBothStates(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			auditService, read := capture(t)
 
-			auditservice.Record(auditService, zap.NewNop(), &auditservice.RecordParams{
+			auditservice.Record(t.Context(), auditService, zap.NewNop(), &auditservice.RecordParams{
 				Resource:   permission.ResourcePermit,
 				ResourceID: "pmt_1",
 				Operation:  permission.OpUpdate,
@@ -123,7 +124,7 @@ func TestRecord_AttachesADiffOnlyWithBothStates(t *testing.T) {
 func TestRecord_AttachesCommentAndMetadataOnlyWhenPresent(t *testing.T) {
 	auditService, read := capture(t)
 
-	auditservice.Record(auditService, zap.NewNop(), &auditservice.RecordParams{
+	auditservice.Record(t.Context(), auditService, zap.NewNop(), &auditservice.RecordParams{
 		Resource:   permission.ResourcePermit,
 		ResourceID: "pmt_1",
 		Operation:  permission.OpCreate,
@@ -140,11 +141,11 @@ func TestRecord_AttachesCommentAndMetadataOnlyWhenPresent(t *testing.T) {
 // the audited change already succeeded.
 func TestRecord_IsSafeWithoutAnAuditServiceOrParams(t *testing.T) {
 	assert.NotPanics(t, func() {
-		auditservice.Record(nil, zap.NewNop(), &auditservice.RecordParams{ResourceID: "x"})
+		auditservice.Record(t.Context(), nil, zap.NewNop(), &auditservice.RecordParams{ResourceID: "x"})
 	})
 
 	auditService := auditportsmock.NewMockAuditService(t)
 	assert.NotPanics(t, func() {
-		auditservice.Record(auditService, zap.NewNop(), nil)
+		auditservice.Record(t.Context(), auditService, zap.NewNop(), nil)
 	})
 }

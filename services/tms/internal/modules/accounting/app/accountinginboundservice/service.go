@@ -261,7 +261,7 @@ func (s *Service) Ignore(
 		return nil, err
 	}
 
-	s.logAudit(updated, actor.UserID, previous, "Ignored a payment recorded in the books")
+	s.logAudit(ctx, updated, actor.UserID, previous, "Ignored a payment recorded in the books")
 	s.afterDecision(ctx, updated, actor.UserID)
 	return updated, nil
 }
@@ -275,6 +275,7 @@ func decisionError(err error) error {
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	change *accountinginbound.AccountingInboundChange,
 	userID pulid.ID,
 	previous map[string]any,
@@ -290,7 +291,7 @@ func (s *Service) logAudit(
 		OrganizationID: change.OrganizationID,
 		BusinessUnitID: change.BusinessUnitID,
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log accounting inbound audit", zap.Error(err))
 	}
 }

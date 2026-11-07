@@ -73,7 +73,8 @@ func (s *Service) PromoteReady(
 			continue
 		}
 		s.logTierChange(
-			change,
+			ctx,
+			&change,
 			tool.promotion.To,
 			"Tool promoted when earned autonomy was turned on: its streak had already met the threshold",
 		)
@@ -186,7 +187,7 @@ func (s *Service) PromoteTool(
 		if !moved {
 			break
 		}
-		s.logTierChange(change, tool.promotion.To,
+		s.logTierChange(ctx, &change, tool.promotion.To,
 			"Tool promoted from a tune-up: its streak had met the threshold")
 		return &tool.promotion, nil
 	}

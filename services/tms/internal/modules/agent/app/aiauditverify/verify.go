@@ -425,7 +425,7 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 
 	if v.audit != nil {
 		actor := permissionports.SystemAuditActor()
-		if err := v.audit.LogAction(&auditports.LogActionParams{
+		if err := v.audit.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceAIAuditTrail,
 			ResourceID:     tenantInfo.OrgID.String(),
 			Operation:      permission.OpRead,

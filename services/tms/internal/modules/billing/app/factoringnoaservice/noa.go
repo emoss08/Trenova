@@ -154,7 +154,7 @@ func (s *NoaService) Draft(
 	if err != nil {
 		return nil, err
 	}
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringNoa,
 		Entity:   created,
 		Op:       permission.OpCreate,
@@ -210,7 +210,7 @@ func (s *NoaService) Send(
 	}
 
 	s.recordLetter(ctx, req.TenantInfo, letter, updated, actor.UserID)
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringNoa,
 		Entity:   updated,
 		Previous: &previous,
@@ -263,7 +263,7 @@ func (s *NoaService) Acknowledge(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringNoa,
 		Entity:   updated,
 		Previous: &previous,
@@ -303,7 +303,7 @@ func (s *NoaService) Release(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringNoa,
 		Entity:   updated,
 		Previous: &previous,

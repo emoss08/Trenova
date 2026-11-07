@@ -351,7 +351,7 @@ func (s *Service) TransferOwnership(
 		return nil, err
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err = s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,
@@ -592,7 +592,7 @@ func (s *Service) Cancel(
 		return nil, err
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err = s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		auditActor,
 		permission.OpCancel,
@@ -665,7 +665,7 @@ func (s *Service) Uncancel(
 		return nil, err
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err = s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,

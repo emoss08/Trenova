@@ -71,6 +71,13 @@ func (s *Service) ExistsRecent(
 	return s.repo.ExistsRecent(ctx, req)
 }
 
+func (s *Service) NotifiedUsers(
+	ctx context.Context,
+	req notificationports.ExistsRecentNotificationRequest,
+) ([]pulid.ID, error) {
+	return s.repo.NotifiedUsers(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *notification.Notification,

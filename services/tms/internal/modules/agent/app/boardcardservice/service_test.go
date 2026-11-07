@@ -145,11 +145,11 @@ func (f *fakeReceivables) GetDashboardKPIs(
 
 type fakeActivity struct{ entries []*audit.Entry }
 
-func (f *fakeActivity) ListByResourceID(
+func (f *fakeActivity) ListConnection(
 	context.Context,
-	*auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{Items: f.entries}, nil
+	*auditports.ListAuditEntriesRequest,
+) (*pagination.CursorListResult[*audit.Entry], error) {
+	return &pagination.CursorListResult[*audit.Entry]{Items: f.entries}, nil
 }
 
 type fakeOrganizations struct{}

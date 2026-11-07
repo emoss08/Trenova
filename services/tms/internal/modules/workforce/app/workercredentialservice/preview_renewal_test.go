@@ -50,7 +50,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	svc := workercredentialservice.New(workercredentialservice.Params{
 		Logger:       zap.NewNop(),

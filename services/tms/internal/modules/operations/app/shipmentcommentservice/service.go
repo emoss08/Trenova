@@ -230,7 +230,7 @@ func (s *service) Create(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logCommentAction(
+	s.logCommentAction(ctx,
 		created,
 		auditActor,
 		permission.OpCreate,
@@ -335,7 +335,7 @@ func (s *service) CreateSystem(
 
 	normalizeCommentView(created)
 	auditActor := permissionports.SystemAuditActor()
-	s.logCommentAction(
+	s.logCommentAction(ctx,
 		created,
 		auditActor,
 		permission.OpCreate,
@@ -404,7 +404,7 @@ func (s *service) Update(
 	if req.AsModerator && original.UserID != userID {
 		auditComment = "Shipment comment updated by moderator"
 	}
-	s.logCommentAction(
+	s.logCommentAction(ctx,
 		updated,
 		auditActor,
 		permission.OpUpdate,
@@ -453,7 +453,7 @@ func (s *service) Delete(
 		return err
 	}
 
-	s.logCommentAction(
+	s.logCommentAction(ctx,
 		original,
 		auditActor,
 		permission.OpDelete,
@@ -516,7 +516,7 @@ func (s *service) tombstoneComment(
 	}
 
 	normalizeCommentView(tombstone)
-	s.logCommentAction(
+	s.logCommentAction(ctx,
 		original,
 		auditActor,
 		permission.OpDelete,
@@ -795,6 +795,7 @@ func (s *service) getEditableComment(
 }
 
 func (s *service) logCommentAction(
+	ctx context.Context,
 	entity *shipment.ShipmentComment,
 	actor kernelports.AuditActor,
 	op permission.Operation,
@@ -831,7 +832,7 @@ func (s *service) logCommentAction(
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log shipment comment action", zap.Error(err))
 	}
 }

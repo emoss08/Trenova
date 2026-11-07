@@ -30,7 +30,7 @@ func (s *Service) AttachGeneratedPDF(
 		return nil, err
 	}
 
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		updated,
 		req.Actor,
 		permission.OpUpdate,

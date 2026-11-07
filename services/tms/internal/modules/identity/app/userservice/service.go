@@ -181,7 +181,7 @@ func (s *Service) BulkUpdateStatus(
 		auditservice.WithComment("User status updated"),
 	)
 
-	if err = s.auditService.LogActions(entries); err != nil {
+	if err = s.auditService.LogActions(ctx, entries); err != nil {
 		log.Error("failed to log audit actions", zap.Error(err))
 		return nil, err
 	}
@@ -804,7 +804,7 @@ func (s *Service) recordPasswordChange(
 	tenantInfo pagination.TenantInfo,
 	user, original *tenant.User,
 ) error {
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     user.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -817,7 +817,6 @@ func (s *Service) recordPasswordChange(
 	},
 		auditservice.WithComment("User password updated"),
 		auditservice.WithCategory(audit.CategoryUser),
-		auditservice.WithRequest(ctx),
 	); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 		return err

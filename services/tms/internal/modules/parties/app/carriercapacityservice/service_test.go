@@ -77,8 +77,8 @@ func newTestService(t *testing.T) (*Service, *memoryRepo, *recordingInvalidator)
 	t.Helper()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	repo := &memoryRepo{stored: map[pulid.ID]*carriercapacity.Posting{}}
 	invalidator := &recordingInvalidator{}

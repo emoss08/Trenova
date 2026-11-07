@@ -155,7 +155,7 @@ func TestPatch_AuditsAgainstTheTargetUser(t *testing.T) {
 	d.expectLoad(d.target)
 	d.expectSave()
 	var logged *auditports.LogActionParams
-	d.audit.On("LogAction", mock.MatchedBy(func(p *auditports.LogActionParams) bool {
+	d.audit.On("LogAction", mock.Anything, mock.MatchedBy(func(p *auditports.LogActionParams) bool {
 		logged = p
 		return true
 	}), mock.Anything).Return(nil).Once()
@@ -279,7 +279,7 @@ func TestPatch_IgnoresAttemptsToChangeImmutableFields(t *testing.T) {
 	assert.Equal(t, original.Username, updated.Username)
 	assert.Equal(t, original.CurrentOrganizationID, updated.CurrentOrganizationID)
 	d.repo.AssertNotCalled(t, "UpdateColumns", mock.Anything, mock.Anything)
-	d.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	d.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestPatch_RefusesAnEmailAddressAnotherUserHas(t *testing.T) {
