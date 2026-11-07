@@ -59,17 +59,17 @@ func (f *fakeRecords) UserNames(
 }
 
 type fakeActivity struct {
-	spoke bool
-	asked []*agentwaitports.PersonSpokeSinceRequest
+	read  bool
+	asked []*agentwaitports.RecordReadSinceRequest
 }
 
-func (f *fakeActivity) PersonSpokeSince(
+func (f *fakeActivity) RecordReadSince(
 	_ context.Context,
-	req *agentwaitports.PersonSpokeSinceRequest,
+	req *agentwaitports.RecordReadSinceRequest,
 ) (bool, error) {
 	f.asked = append(f.asked, req)
 
-	return f.spoke, nil
+	return f.read, nil
 }
 
 type fakeFeed struct {
@@ -368,24 +368,31 @@ func finishRecordWait(s *streams, wait *agentwait.Wait, firstMetAt int64) error 
 	})
 }
 
-func TestFinish_APersonWhoSpokeSinceTheChangeIsNotAnsweredTwice(t *testing.T) {
+func TestFinish_ARecordTheConversationReadSinceTheChangeIsNotAnsweredTwice(t *testing.T) {
 	t.Parallel()
 
 	s := newStreams()
-	s.activity.spoke = true
-	wait := openRecordWait(s, pulid.MustNew("shp_"), now-600)
+	s.activity.read = true
+	record := pulid.MustNew("shp_")
+	wait := openRecordWait(s, record, now-600)
 
 	require.NoError(t, finishRecordWait(s, wait, now-90))
 
 	assert.Equal(t, agentwait.StatusMet, wait.Status)
-	assert.Empty(t, s.turns.started, "the conversation already took the change in")
+	assert.Empty(t, s.turns.started, "the conversation already read the change")
 	require.Len(t, s.activity.asked, 1)
 	assert.Equal(t, now-90, s.activity.asked[0].Since)
 	assert.Equal(t, wait.ThreadID, s.activity.asked[0].ThreadID)
+	assert.Equal(t, record, s.activity.asked[0].RecordID)
 	require.Len(t, s.feed.unwatched, 1, "a closed wait leaves the stream")
 }
 
-func TestFinish_AChangeNobodyMentionedPicksTheConversationUp(t *testing.T) {
+/*
+A person settled a flagged check, then sent "ok" while the wait settled. The
+"ok" turn never looked at the record, so the work is still picked up: closing
+the wait because the person spoke left them asking "did you not see it?".
+*/
+func TestFinish_AChangeNobodyReadPicksTheConversationUpEvenAfterThePersonSpoke(t *testing.T) {
 	t.Parallel()
 
 	s := newStreams()

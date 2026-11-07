@@ -111,17 +111,18 @@ type RecordFinder interface {
 	) (map[pulid.ID]string, error)
 }
 
-type PersonSpokeSinceRequest struct {
+type RecordReadSinceRequest struct {
 	ThreadID   pulid.ID
+	RecordID   pulid.ID
 	TenantInfo pagination.TenantInfo
 	Since      int64
 }
 
-// ConversationActivity reads what a conversation's owner did after a time:
-// a change they made and then told the conversation about needs no second
-// turn to pick it up.
+// ConversationActivity reads what a conversation did after a time: a record
+// a turn read again after it changed has been seen as it now stands, so the
+// wait on it needs no second turn to pick it up.
 type ConversationActivity interface {
-	PersonSpokeSince(ctx context.Context, req *PersonSpokeSinceRequest) (bool, error)
+	RecordReadSince(ctx context.Context, req *RecordReadSinceRequest) (bool, error)
 }
 
 // RecordChangeNotifier hands changes to watched records, read off the

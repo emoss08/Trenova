@@ -784,8 +784,8 @@ func (s *Service) Finish(ctx context.Context, in *agentwaitcontract.FinishInput)
 		return nil
 	}
 	if s.conversationTookItIn(ctx, wait, in.FirstMetAt) {
-		s.l.Info("a watched record changed and the person has spoken in the conversation "+
-			"since; not picking the work up again", zap.String("wait", wait.ID.String()))
+		s.l.Info("a watched record changed and the conversation has read it since; not "+
+			"picking the work up again", zap.String("wait", wait.ID.String()))
 		return nil
 	}
 

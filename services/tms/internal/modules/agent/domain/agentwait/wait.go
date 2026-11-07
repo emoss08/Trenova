@@ -59,7 +59,10 @@ const (
 	// RecordSettleSeconds is how long a changed record must stay quiet before
 	// the work is picked up: a person fixing what blocked a write makes
 	// several edits, and the agent should read the record once they are done.
-	RecordSettleSeconds int64 = 30
+	// It is short because the person is usually still in the conversation:
+	// at 30 seconds a biller who settled a check heard nothing and asked
+	// whether the agent had seen it.
+	RecordSettleSeconds int64 = 10
 	// RecordSettleMaxSeconds bounds the settling, so a record edited without
 	// pause still picks the work up.
 	RecordSettleMaxSeconds int64 = 120

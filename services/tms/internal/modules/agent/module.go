@@ -239,7 +239,7 @@ func SharedOptions() fx.Option {
 			agentruneventrepository.New,
 			agentrunsteprepository.New,
 			assistantturnrepository.New,
-			assistantturnrepository.NewConversationActivity,
+			conversationrepository.NewConversationActivity,
 			agentproposalrepository.New,
 			agentplanrepository.New,
 			agentmemoryrepository.New,

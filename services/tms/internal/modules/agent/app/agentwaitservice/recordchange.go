@@ -306,10 +306,11 @@ func watchedLabel(c *agentwait.Condition) string {
 	}
 }
 
-// conversationTookItIn reports whether the conversation's owner spoke in it
-// after the first change a settled wait heard: a person who fixed the record
-// and said so has already had their answer, and a second turn would only
-// repeat it.
+// conversationTookItIn reports whether a turn of the conversation read the
+// watched record again after the first change a settled wait heard: the
+// agent has seen it as it now stands, and a second turn would only repeat
+// that answer. That the person spoke is not enough: an "ok" sent while the
+// wait settled closed it with nobody having looked at the change.
 func (s *Service) conversationTookItIn(
 	ctx context.Context,
 	wait *agentwait.Wait,
@@ -318,16 +319,17 @@ func (s *Service) conversationTookItIn(
 	if firstMetAt <= 0 || !wait.Conversational() || wait.Kind != agentwait.KindRecordChanged {
 		return false
 	}
-	spoke, err := s.activity.PersonSpokeSince(ctx, &agentwaitports.PersonSpokeSinceRequest{
+	read, err := s.activity.RecordReadSince(ctx, &agentwaitports.RecordReadSinceRequest{
 		ThreadID:   wait.ThreadID,
+		RecordID:   wait.WatchID,
 		TenantInfo: tenantOf(wait),
 		Since:      firstMetAt,
 	})
 	if err != nil {
-		s.l.Debug("could not read whether the person spoke since the change; picking the "+
-			"work up", zap.String("wait", wait.ID.String()), zap.Error(err))
+		s.l.Debug("could not read whether the conversation read the record since the "+
+			"change; picking the work up", zap.String("wait", wait.ID.String()), zap.Error(err))
 		return false
 	}
 
-	return spoke
+	return read
 }
