@@ -1338,6 +1338,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `worker_pto`, Label: `Worker PTO`},
 	{Value: `pto_policy`, Label: `PTO Policy`},
 	{Value: `worker_dispatch_hold`, Label: `Worker Dispatch Hold`},
+	{Value: `driver_positioning`, Label: `Driver Positioning`},
 	{Value: `worker_credential`, Label: `Worker Credential`},
 	{Value: `worker_credential_type`, Label: `Worker Credential Type`},
 	{Value: `worker_employment_event`, Label: `Worker Employment Event`},

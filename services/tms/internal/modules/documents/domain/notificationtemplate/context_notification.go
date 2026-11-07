@@ -108,6 +108,16 @@ type DriverNotificationContext struct {
 	// them, the same inversion the agent email uses.
 	AlertTitle   string
 	AlertMessage string
+
+	// AreaName, ArriveBy and FreightFrom describe a positioning: where the office
+	// is sending the driver, by when (already formatted in the organization's time
+	// zone) and when freight is expected there. Canceled is set when the office
+	// called it off; a template that does not branch on it tells a driver to drive
+	// somewhere they are no longer wanted.
+	AreaName    string
+	ArriveBy    string
+	FreightFrom string
+	Canceled    bool
 }
 
 // DriverObligation is one line of an obligations digest: a credential to renew
@@ -715,6 +725,11 @@ var driverNotificationKinds = []notificationKind{
 		kind:        documenttemplate.KindNotificationDispatchMessage,
 		displayName: "Dispatch Message",
 		description: "A message from the office about a load in progress. AlertTitle is the subject and AlertMessage the text; this decides how they are presented.",
+	},
+	{
+		kind:        documenttemplate.KindNotificationPositioning,
+		displayName: "Positioning",
+		description: "Sends an empty driver toward an area where freight is expected, from the freight outlook. AreaName is where, ArriveBy is by when and FreightFrom is when the freight is expected. Branch on Canceled: the same kind tells the driver the office called it off.",
 	},
 	{
 		kind:        documenttemplate.KindNotificationObligationsDigest,

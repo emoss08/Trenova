@@ -185,6 +185,13 @@ const dispatchModule: NavModule = {
       resource: Resource.ShipmentMove,
     },
     {
+      id: "freight-outlook",
+      label: "Freight outlook",
+      path: "/dispatch/outlook",
+      resource: Resource.ShipmentMove,
+      capability: OrganizationCapability.AssetOperations,
+    },
+    {
       id: "locations",
       label: "Locations",
       path: "/dispatch/locations",

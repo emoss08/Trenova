@@ -207,3 +207,20 @@ func TestCellsOf_ListsEachKnownCellOnce(t *testing.T) {
 	assert.Len(t, cells, 2)
 	assert.True(t, cells[0] < cells[1])
 }
+
+func TestBoundsOf_HoldsTheCellsCenterAndCoversItsCorners(t *testing.T) {
+	t.Parallel()
+
+	dallas := dispatchmarket.Point{Latitude: 32.7767, Longitude: -96.797}
+	cell, ok := dispatchmarket.CellOf(dallas)
+	require.True(t, ok)
+	bounds := dispatchmarket.BoundsOf(cell)
+
+	assert.True(t, bounds.Contains(dallas))
+	assert.True(t, bounds.Contains(dispatchmarket.CenterOf(cell)))
+	assert.False(t, bounds.Contains(dispatchmarket.Point{Latitude: 30.2672, Longitude: -97.7431}),
+		"Austin is in another area")
+	assert.Greater(t, dispatchmarket.CoverMeters(cell), 50_000.0,
+		"the circle reaches the corners of a tile over a degree wide")
+	assert.Less(t, dispatchmarket.CoverMeters(cell), 150_000.0)
+}

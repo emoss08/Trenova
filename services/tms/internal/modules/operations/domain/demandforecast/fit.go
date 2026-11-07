@@ -161,6 +161,7 @@ func Fit(h *History) *Fitted {
 		return fitted
 	}
 	agg := aggregateOf(h.Counts, w)
+	recent := recentCounts(h.Counts, beforeWeek)
 
 	for _, cell := range sortedCells(agg.areas) {
 		area := agg.areas[cell]
@@ -173,6 +174,7 @@ func Fit(h *History) *Fitted {
 				Alpha:    alpha,
 				Beta:     beta,
 				Loads:    area.raw[slot],
+				Recent:   recent.of(cell, int16(slot)),
 				FittedAt: h.Now,
 			})
 		}
@@ -213,6 +215,37 @@ func Fit(h *History) *Fitted {
 		})
 	}
 	return fitted
+}
+
+type recentWeeks struct {
+	first  int64
+	counts map[slotKey][]int32
+}
+
+func recentCounts(counts []LoadCount, beforeWeek int64) recentWeeks {
+	r := recentWeeks{first: beforeWeek - RecordWeeks, counts: map[slotKey][]int32{}}
+	for _, count := range counts {
+		if count.Week < r.first || count.Week >= beforeWeek {
+			continue
+		}
+		key := slotKey{cell: count.Cell, slot: count.Slot}
+		weeks := r.counts[key]
+		if weeks == nil {
+			weeks = make([]int32, RecordWeeks)
+			r.counts[key] = weeks
+		}
+		weeks[count.Week-r.first] += count.Loads
+	}
+
+	return r
+}
+
+func (r recentWeeks) of(cell int64, slot int16) []int32 {
+	if weeks, ok := r.counts[slotKey{cell: cell, slot: slot}]; ok {
+		return weeks
+	}
+
+	return make([]int32, RecordWeeks)
 }
 
 func sortedCells(areas map[int64]*series) []int64 {

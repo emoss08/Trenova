@@ -52,6 +52,7 @@ const (
 	ResourceWorkerPTO                 Resource = "worker_pto"
 	ResourcePTOPolicy                 Resource = "pto_policy"
 	ResourceWorkerDispatchHold        Resource = "worker_dispatch_hold"
+	ResourceDriverPositioning         Resource = "driver_positioning"
 	ResourceWorkerCredential          Resource = "worker_credential"
 	ResourceWorkerCredentialType      Resource = "worker_credential_type"
 	ResourceWorkerEmploymentEvent     Resource = "worker_employment_event"

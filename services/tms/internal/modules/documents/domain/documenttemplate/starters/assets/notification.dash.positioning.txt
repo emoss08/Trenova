@@ -1,0 +1,1 @@
+{{ if .Canceled }}{{ t "Dispatch called off the move to {0}. Wait for your next load where you are." .AreaName }}{{ else }}{{ t "After your drop, head toward {0} and be there by {1}. Freight is expected there from {2}." .AreaName .ArriveBy .FreightFrom }}{{ end }}

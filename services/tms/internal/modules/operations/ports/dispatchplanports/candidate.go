@@ -16,6 +16,7 @@ const (
 	OriginCommitment = OriginSource("commitment")
 	OriginPosition   = OriginSource("position")
 	OriginLastDrop   = OriginSource("lastDrop")
+	OriginPositioned = OriginSource("positioning")
 )
 
 type EndMarketSource string

@@ -11,7 +11,6 @@ import {
   DispatchDriverMovesDocument,
   DispatchForecastQualityDocument,
   DispatchForecastQualityFieldsFragmentDoc,
-  DispatchFreightOutlookDocument,
   DispatchMoveCandidatesDocument,
   DispatchMoveDocument,
   DispatchPlanAutoAssignDocument,
@@ -30,8 +29,6 @@ import {
   type DispatchDriverMovesInput,
   type DispatchDriverMovesQuery,
   type DispatchForecastQualityFieldsFragment,
-  type DispatchFreightOutlookQuery,
-  type DispatchFreightOutlookQueryVariables,
   type DispatchMoveCandidatesInput,
   type DispatchCandidateFieldsFragment,
   type DispatchPlanAutoAssignMutation,
@@ -83,11 +80,6 @@ export type DispatchEndMarket = NonNullable<DispatchCandidate["endMarket"]>;
 export type DispatchForecastCustomer = DispatchEndMarket["customers"][number];
 export type DispatchForecastQuality = DispatchForecastQualityFieldsFragment;
 export type DispatchForecastStatus = DispatchForecastQuality["status"];
-export type DispatchFreightOutlook = Omit<
-  DispatchFreightOutlookQuery["dispatchFreightOutlook"],
-  "quality"
-> & { quality: DispatchForecastQuality };
-export type DispatchFreightWindow = DispatchFreightOutlook["windows"][number];
 
 export async function getDispatchBoardGraphQL(
   input: DispatchBoardInput,
@@ -242,24 +234,6 @@ export async function planDispatchAutoAssignGraphQL(
       bestCandidate:
         getFragmentData(DispatchCandidateFieldsFragmentDoc, move.bestCandidate) ?? null,
     })),
-  };
-}
-
-/** Freight likely to appear in the hours ahead, by area, with how far the forecast is trusted. */
-export async function getDispatchFreightOutlookGraphQL(
-  variables: DispatchFreightOutlookQueryVariables,
-  options?: { signal?: AbortSignal },
-): Promise<DispatchFreightOutlook> {
-  const data = await requestGraphQL({
-    document: DispatchFreightOutlookDocument,
-    operationName: "DispatchFreightOutlook",
-    variables,
-    signal: options?.signal,
-  });
-  const outlook = data.dispatchFreightOutlook;
-  return {
-    ...outlook,
-    quality: getFragmentData(DispatchForecastQualityFieldsFragmentDoc, outlook.quality),
   };
 }
 

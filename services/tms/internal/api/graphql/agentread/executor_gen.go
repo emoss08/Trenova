@@ -218,6 +218,8 @@ import (
 	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	customertrackingports "github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	demandforecastports "github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	driverpositioningports "github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
+	freightoutlookports "github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
@@ -365,6 +367,7 @@ type ResolverParams struct {
 	DriverPortalInvitationService     *driverportalinvitationservice.Service
 	DriverPortalRecordsService        *driverportalrecordsservice.Service
 	DriverPortalService               *driverportalservice.Service
+	DriverPositioningService          driverpositioningports.Service
 	DriverSettlementRepo              driversettlementports.DriverSettlementRepository
 	DriverSettlementReviewService     *driversettlementreviewservice.Service
 	DriverSettlementService           *driversettlementservice.Service
@@ -392,6 +395,7 @@ type ResolverParams struct {
 	FleetCodeService                  *fleetcodeservice.Service
 	FormulaLibraryService             *formulalibraryservice.Service
 	FormulaTemplateService            *formulatemplateservice.Service
+	FreightOutlookService             freightoutlookports.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	FuelIndexPriceRepo                fuelsurchargeports.FuelIndexPriceRepository
 	FuelIndexRepo                     fuelsurchargeports.FuelIndexRepository
@@ -1409,6 +1413,8 @@ func NewSchema(p ResolverParams) Schema {
 		DispatchConsoleService:    p.DispatchConsoleService,
 		DispatchAutoAssignService: p.DispatchAutoAssignService,
 		DemandForecastService:     p.DemandForecastService,
+		FreightOutlookService:     p.FreightOutlookService,
+		DriverPositioningService:  p.DriverPositioningService,
 		AssignmentService:         p.AssignmentService,
 	}
 	documenttypeDeps := &documenttyperesolver.Deps{

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -68,6 +69,7 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 
 	cases := []struct {
 		name      string
+		resource  permission.Resource
 		operation permission.Operation
 		invoke    func(ctx context.Context, r *Deps) error
 	}{
@@ -127,7 +129,43 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 			name:      "the freight outlook requires read",
 			operation: permission.OpRead,
 			invoke: func(ctx context.Context, r *Deps) error {
-				_, err := (&QueryResolver{r}).DispatchFreightOutlook(ctx, nil, nil)
+				_, err := (&QueryResolver{r}).DispatchFreightOutlook(ctx)
+				return err
+			},
+		},
+		{
+			name:      "a freight outlook area requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchFreightArea(ctx, 12971, nil)
+				return err
+			},
+		},
+		{
+			name:      "sending a driver requires positioning create",
+			resource:  permission.ResourceDriverPositioning,
+			operation: permission.OpCreate,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&MutationResolver{r}).DispatchPositionDriver(
+					ctx,
+					gqlmodel.DispatchPositionDriverInput{
+						WorkerID:  pulid.MustNew("wrk_").String(),
+						ToCell:    12971,
+						SlotStart: 1_800_000_000,
+					},
+				)
+				return err
+			},
+		},
+		{
+			name:      "calling a positioning off requires positioning cancel",
+			resource:  permission.ResourceDriverPositioning,
+			operation: permission.OpCancel,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&MutationResolver{r}).DispatchCallOffPositioning(
+					ctx,
+					pulid.MustNew("dpo_").String(),
+				)
 				return err
 			},
 		},
@@ -192,7 +230,11 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 
 			require.Error(t, err, "a denied permission must not fall through to the service")
 			require.NotNil(t, engine.request)
-			assert.Equal(t, permission.ResourceShipmentMove.String(), engine.request.Resource)
+			resource := tc.resource
+			if resource == "" {
+				resource = permission.ResourceShipmentMove
+			}
+			assert.Equal(t, resource.String(), engine.request.Resource)
 			assert.Equal(t, tc.operation, engine.request.Operation)
 		})
 	}
@@ -479,26 +521,8 @@ func allowAllCore() *resolvercore.Core {
 type forecastService struct {
 	demandforecastports.Service
 
-	outlookRequest *demandforecastports.OutlookRequest
-	qualityTenant  pagination.TenantInfo
-	quality        *demandforecast.Quality
-}
-
-func (s *forecastService) Outlook(
-	_ context.Context,
-	req *demandforecastports.OutlookRequest,
-) (*demandforecastports.Outlook, error) {
-	s.outlookRequest = req
-	return &demandforecastports.Outlook{
-		Quality:     s.quality,
-		GeneratedAt: 1_800_000_000,
-		Windows: []*demandforecastports.OutlookWindow{{
-			AreaLabel:   "Dallas, TX",
-			WindowStart: 1_800_000_000,
-			WindowEnd:   1_800_014_400,
-			Explanation: "Ending near Dallas, TX is worth $610.00.",
-		}},
-	}, nil
+	qualityTenant pagination.TenantInfo
+	quality       *demandforecast.Quality
 }
 
 func (s *forecastService) Quality(
@@ -509,48 +533,88 @@ func (s *forecastService) Quality(
 	return s.quality, nil
 }
 
-func TestDispatchFreightOutlook_ReadsTheCallersTenantWithTheirWindow(t *testing.T) {
+type outlookService struct {
+	freightoutlookports.Service
+
+	request     *freightoutlookports.Request
+	areaRequest *freightoutlookports.AreaRequest
+	quality     *demandforecast.Quality
+}
+
+func (s *outlookService) Outlook(
+	_ context.Context,
+	req *freightoutlookports.Request,
+) (*freightoutlookports.Outlook, error) {
+	s.request = req
+	return &freightoutlookports.Outlook{
+		Quality:     s.quality,
+		GeneratedAt: 1_800_000_000,
+		Starts:      []int64{1_800_000_000},
+		Areas: []*freightoutlookports.Area{{
+			Balance: demandforecast.AreaBalance{Cell: 12971, Label: "Chicago, IL"},
+		}},
+		AreaCount: 3,
+	}, nil
+}
+
+func (s *outlookService) Area(
+	_ context.Context,
+	req *freightoutlookports.AreaRequest,
+) (*freightoutlookports.AreaDetail, error) {
+	s.areaRequest = req
+	return &freightoutlookports.AreaDetail{
+		Quality:   s.quality,
+		Area:      &freightoutlookports.Area{Balance: demandforecast.AreaBalance{Cell: req.Cell}},
+		SlotStart: 1_800_014_400,
+	}, nil
+}
+
+func TestDispatchFreightOutlook_ReadsTheCallersTenant(t *testing.T) {
 	t.Parallel()
 
 	ctx := dispatchAuthContext(t)
-	service := &forecastService{
+	service := &outlookService{
 		quality: &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: 1},
 	}
 
 	outlook, err := (&QueryResolver{&Deps{
 		Core:                  allowAllCore(),
-		DemandForecastService: service,
-	}}).DispatchFreightOutlook(ctx, new(72), new(10))
+		FreightOutlookService: service,
+	}}).DispatchFreightOutlook(ctx)
 	require.NoError(t, err)
 
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	require.True(t, ok)
-	require.NotNil(t, service.outlookRequest)
-	assert.Equal(t, authCtx.OrganizationID, service.outlookRequest.TenantInfo.OrgID)
-	assert.Equal(t, authCtx.BusinessUnitID, service.outlookRequest.TenantInfo.BuID)
-	assert.Equal(t, 72, service.outlookRequest.Hours)
-	assert.Equal(t, 10, service.outlookRequest.Limit)
+	require.NotNil(t, service.request)
+	assert.Equal(t, authCtx.OrganizationID, service.request.TenantInfo.OrgID)
+	assert.Equal(t, authCtx.BusinessUnitID, service.request.TenantInfo.BuID)
 	assert.Equal(t, gqlmodel.DispatchForecastStatusReady, outlook.Quality.Status)
-	require.Len(t, outlook.Windows, 1)
-	assert.Equal(t, "Dallas, TX", outlook.Windows[0].AreaLabel)
+	assert.Equal(t, []int{1_800_000_000}, outlook.SlotStarts)
+	assert.Equal(t, 3, outlook.AreaCount)
+	require.Len(t, outlook.Areas, 1)
+	assert.Equal(t, "Chicago, IL", outlook.Areas[0].Label)
 }
 
-func TestDispatchFreightOutlook_LeavesTheDefaultsToTheService(t *testing.T) {
+func TestDispatchFreightArea_PassesTheCellAndWindowAsked(t *testing.T) {
 	t.Parallel()
 
-	service := &forecastService{
-		quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
-	}
+	service := &outlookService{quality: &demandforecast.Quality{Status: demandforecast.StatusReady}}
+	resolver := &QueryResolver{&Deps{Core: allowAllCore(), FreightOutlookService: service}}
 
-	_, err := (&QueryResolver{&Deps{
-		Core:                  allowAllCore(),
-		DemandForecastService: service,
-	}}).DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	detail, err := resolver.DispatchFreightArea(dispatchAuthContext(t), 12971, new(1_800_014_400))
 	require.NoError(t, err)
+	require.NotNil(t, service.areaRequest)
+	assert.Equal(t, int64(12971), service.areaRequest.Cell)
+	assert.Equal(t, int64(1_800_014_400), service.areaRequest.SlotStart)
+	assert.Equal(t, 12971, detail.Area.Cell)
 
-	require.NotNil(t, service.outlookRequest)
-	assert.Zero(t, service.outlookRequest.Hours)
-	assert.Zero(t, service.outlookRequest.Limit)
+	_, err = resolver.DispatchFreightArea(dispatchAuthContext(t), 12971, nil)
+	require.NoError(t, err)
+	assert.Zero(
+		t,
+		service.areaRequest.SlotStart,
+		"no window asked leaves the area's worst to the service",
+	)
 }
 
 func TestDispatchForecastQuality_ReadsTheCallersTenant(t *testing.T) {
@@ -580,16 +644,21 @@ func TestDispatchForecastResolvers_DeniedReadNeverReachesTheService(t *testing.T
 	t.Parallel()
 
 	service := &forecastService{}
+	outlook := &outlookService{}
 	resolver := &QueryResolver{&Deps{
 		Core:                  &resolvercore.Core{PermissionEngine: &denyingPermissionEngine{}},
 		DemandForecastService: service,
+		FreightOutlookService: outlook,
 	}}
 
-	_, err := resolver.DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	_, err := resolver.DispatchFreightOutlook(dispatchAuthContext(t))
+	require.Error(t, err)
+	_, err = resolver.DispatchFreightArea(dispatchAuthContext(t), 12971, nil)
 	require.Error(t, err)
 	_, err = resolver.DispatchForecastQuality(dispatchAuthContext(t))
 	require.Error(t, err)
 
-	assert.Nil(t, service.outlookRequest)
+	assert.Nil(t, outlook.request)
+	assert.Nil(t, outlook.areaRequest)
 	assert.True(t, service.qualityTenant.OrgID.IsNil())
 }

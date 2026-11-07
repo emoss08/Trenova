@@ -87,6 +87,14 @@ func dispatchBoardBundle() permissionspec.Bundle {
 				Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
 			},
 			{
+				Resource: permission.ResourceDriverPositioning,
+				Operations: []permission.Operation{
+					permission.OpRead,
+					permission.OpCreate,
+					permission.OpCancel,
+				},
+			},
+			{
 				Resource:   permission.ResourceLocationCategory,
 				Operations: []permission.Operation{permission.OpRead},
 			},

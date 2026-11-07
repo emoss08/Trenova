@@ -5,6 +5,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity/equipmentcontinuitydb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning/driverpositioningdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -28,9 +30,10 @@ const (
 )
 
 type Start struct {
-	Latitude  keel.Float64Expr
-	Longitude keel.Float64Expr
-	FreeAt    keel.Int64Expr
+	Latitude      keel.Float64Expr
+	Longitude     keel.Float64Expr
+	FreeAt        keel.Int64Expr
+	PositioningID keel.Expr
 }
 
 func Join(
@@ -44,9 +47,12 @@ func Join(
 	ec := equipmentcontinuitydb.EquipmentContinuities.As("ds_drop")
 	drop := locationdb.Locations.As("ds_drop_loc")
 
+	to := positioningOf(w, now)
+
 	q = q.
 		With(job).
 		LeftJoin(job, job.Col(finalDropWorker).EqCol(w.ID)).
+		LeftJoinLateral(to.query).
 		LeftJoin(pos,
 			pos.TractorID.EqCol(wt.ID),
 			pos.RecordedAt.Gte(now-PositionFreshnessSeconds),
@@ -59,11 +65,32 @@ func Join(
 		LeftJoin(drop, drop.ID.EqCol(ec.CurrentLocationID))
 
 	return q, Start{
-		Latitude: keel.Float64Of(job.Col(finalDropLatitude)).
-			Coalesce(pos.Latitude, drop.Latitude),
-		Longitude: keel.Float64Of(job.Col(finalDropLongitude)).
-			Coalesce(pos.Longitude, drop.Longitude),
-		FreeAt: keel.Int64Of(job.Col(finalDropEndsAt)).Coalesce(now),
+		Latitude: keel.Float64Of(to.p.ToLatitude).
+			Coalesce(keel.Float64Of(job.Col(finalDropLatitude)), pos.Latitude, drop.Latitude),
+		Longitude: keel.Float64Of(to.p.ToLongitude).
+			Coalesce(keel.Float64Of(job.Col(finalDropLongitude)), pos.Longitude, drop.Longitude),
+		FreeAt: keel.Int64Of(to.p.ArriveAt).
+			Coalesce(keel.Int64Of(job.Col(finalDropEndsAt)), keel.Int64(now)),
+		PositioningID: to.p.ID,
+	}
+}
+
+type positioningJoin struct {
+	p     *driverpositioningdb.PositioningsTable
+	query keel.Query[*driverpositioning.Positioning]
+}
+
+func positioningOf(w *workerdb.WorkersTable, now int64) positioningJoin {
+	p := driverpositioningdb.Positionings.As("ds_to")
+	where := append([]keel.Pred{p.WorkerID.EqCol(w.ID)}, LivePositioning(p, w.ID, now)...)
+
+	return positioningJoin{
+		p: p,
+		query: p.
+			Pick(p.ID, p.ToLatitude, p.ToLongitude, p.ArriveAt).
+			Where(where...).
+			Order(p.CreatedAt.Desc()).
+			Limit(1),
 	}
 }
 

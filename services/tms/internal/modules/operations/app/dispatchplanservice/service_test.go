@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/positioningtest"
+
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -71,6 +73,7 @@ func newPlanRig(t *testing.T) *planRig {
 		consoleRepo: rig.console,
 		controls:    rig.controls,
 		candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+			Positionings:    positioningtest.None{},
 			ConsoleRepo:     rig.console,
 			IntegrationRepo: rig.integrations,
 			TractorRepo:     rig.tractors,

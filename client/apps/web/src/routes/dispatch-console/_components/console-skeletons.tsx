@@ -36,7 +36,7 @@ export function MoveQueueRowsSkeleton() {
     <div className="flex min-h-0 flex-col overflow-hidden" aria-hidden>
       {QUEUE_SKELETON_GROUPS.map((rows, group) => (
         <div key={group} className="flex flex-col">
-          <div className="bg-background flex h-7 items-center gap-2 px-3.5">
+          <div className="flex h-7 items-center gap-2 bg-background px-3.5">
             <Skeleton className="size-1.5 rounded-full" />
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-2.5 w-40" />
@@ -65,60 +65,6 @@ export function MoveQueueRowsSkeleton() {
 }
 
 const QUEUE_SKELETON_GROUPS = [3, 5, 3] as const;
-
-/**
- * The outlook's columns, shared by its rows, its heading and its skeleton: area, window,
- * likely loads, drivers expected, short by, and what one more driver is worth.
- */
-export const OUTLOOK_GRID_CLASS =
-  "grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_5.5rem_4.5rem_4rem_5.5rem] gap-3.5";
-
-const OUTLOOK_SKELETON_ROWS = 8;
-
-/** The outlook as it will be drawn: its heading over two-line rows. */
-export function OutlookRowsSkeleton() {
-  const t = useT();
-
-  return (
-    <div
-      className="flex min-h-0 flex-col overflow-hidden"
-      aria-busy
-      aria-label={t("Loading the freight outlook")}
-    >
-      <div aria-hidden className="contents">
-        <div
-          className={`${OUTLOOK_GRID_CLASS} border-border h-7.5 shrink-0 items-center border-b pr-5.5 pl-3.5`}
-        >
-          <Skeleton className="h-2.5 w-10" />
-          <Skeleton className="h-2.5 w-14" />
-          <Skeleton className="ml-auto h-2.5 w-16" />
-          <Skeleton className="ml-auto h-2.5 w-12" />
-          <Skeleton className="ml-auto h-2.5 w-10" />
-          <Skeleton className="ml-auto h-2.5 w-14" />
-        </div>
-        {Array.from({ length: OUTLOOK_SKELETON_ROWS }, (_, row) => (
-          <div key={row} className={`${OUTLOOK_GRID_CLASS} mx-1.5 items-center px-2 py-2`}>
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-2.5 w-28" />
-              <Skeleton className="h-2 w-36" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-2.5 w-32" />
-              <Skeleton className="h-2 w-16" />
-            </div>
-            <div className="flex flex-col items-end gap-1.5">
-              <Skeleton className="h-2.5 w-8" />
-              <Skeleton className="h-2 w-12" />
-            </div>
-            <Skeleton className="ml-auto h-2.5 w-4" />
-            <Skeleton className="ml-auto h-2.5 w-6" />
-            <Skeleton className="ml-auto h-2.5 w-10" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /**
  * The timeline while it loads, on the real canvas: the window's own axis, night hours and now
@@ -225,7 +171,7 @@ export function InspectorSkeleton() {
         </div>
       </div>
       <Skeleton className="h-44 rounded-md" />
-      <div className="border-border flex flex-col gap-1 rounded-md border p-1">
+      <div className="flex flex-col gap-1 rounded-md border border-border p-1">
         {Array.from({ length: 4 }, (_, index) => (
           <Skeleton key={index} className="h-11 rounded-md" />
         ))}

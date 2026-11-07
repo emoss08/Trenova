@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/positioningtest"
+
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
@@ -52,6 +54,7 @@ func TestGetMoveCandidates_ReadsTheDriversNearestThePickup(t *testing.T) {
 				consoleRepo:         console,
 				dispatchControlRepo: controls,
 				candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+					Positionings:    positioningtest.None{},
 					ConsoleRepo:     console,
 					IntegrationRepo: integrations,
 					TractorRepo:     tractorportsmock.NewMockTractorRepository(t),

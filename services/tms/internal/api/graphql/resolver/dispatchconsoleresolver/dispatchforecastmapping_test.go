@@ -5,8 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/freightmove"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -185,66 +188,149 @@ func TestMapDispatchForecastQuality_NeverFittedHasNoFittedAt(t *testing.T) {
 	assert.Equal(t, gqlmodel.DispatchForecastStatusInsufficientHistory, mapped.Status)
 }
 
-func TestMapDispatchFreightOutlook_MapsEachWindow(t *testing.T) {
+func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 	t.Parallel()
 
-	customerID := pulid.MustNew("cus_")
-	mapped := mapDispatchFreightOutlook(&demandforecastports.Outlook{
+	worker := pulid.MustNew("wrk_")
+	partner := pulid.MustNew("wrk_")
+	move := pulid.MustNew("sm_")
+	customer := pulid.MustNew("cus_")
+	positioning := pulid.MustNew("dpo_")
+	mapped := mapDispatchFreightOutlook(&freightoutlookports.Outlook{
 		Quality:     &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: 1},
-		GeneratedAt: 1_800_000_100,
-		Windows: []*demandforecastports.OutlookWindow{{
-			Cell:             7,
-			AreaLabel:        "Dallas, TX",
-			WindowStart:      1_800_000_000,
-			WindowEnd:        1_800_014_400,
-			TypicalLow:       3,
-			TypicalHigh:      9,
-			LikelyLow:        4,
-			LikelyHigh:       8,
-			Booked:           2,
-			ExpectedUnbooked: 4.25,
-			DriversExpected:  1,
-			Shortfall:        5.25,
-			ValueCents:       61_000,
-			Customers: []demandforecast.CustomerShare{
-				{CustomerID: customerID, Name: "Acme Foods", Expected: 3.5},
+		GeneratedAt: 1_800_000_000,
+		Starts:      []int64{1_800_000_000, 1_800_014_400},
+		Network: []demandforecast.NetworkSlot{{
+			Start: 1_800_000_000, Low: 20, High: 30, NeedLow: 9, NeedHigh: 14, Need: 25, Drivers: 24,
+			Short: 1, Uncovered: 6, Idle: 4,
+		}},
+		Areas: []*freightoutlookports.Area{{
+			Balance: demandforecast.AreaBalance{
+				Cell:  12971,
+				Label: "Chicago, IL",
+				Slots: []demandforecast.SlotBalance{{
+					Start: 1_800_000_000, Low: 2, High: 5, Booked: 2, Need: 3.5,
+					Drivers: 1, Short: 2.5,
+				}},
 			},
-			Explanation: "Ending near Dallas, TX is worth $610.00.",
+			Point:      dispatchmarket.Point{Latitude: 41.9, Longitude: -87.6},
+			ValueCents: 61_000,
+			Customers: []freightoutlookports.AreaCustomer{
+				{CustomerID: customer, Name: "Patriot Brewing", Share: 0.4},
+			},
+		}},
+		AreaCount: 9,
+		Steps: []freightmove.Step{
+			{
+				Kind: freightmove.KindKeep, WorkerID: worker, WorkerName: "Dana Ortiz",
+				ToCell: 12971, ToLabel: "Chicago, IL", SlotStart: 1_800_014_400,
+				NetCents: 54_000, MoveID: move, ProNumber: "PRO-1",
+				PartnerID: partner, PartnerName: "Joe Kowalski", PartnerCell: 12802,
+				PartnerFreeAt: 1_800_003_600,
+			},
+			{
+				Kind: freightmove.KindCall, ToCell: 12971, ToLabel: "Chicago, IL",
+				SlotStart: 1_800_014_400, CustomerID: customer, CustomerName: "Patriot Brewing",
+				Usual: 5, ByNow: 3, Tendered: 1, Loads: 4,
+			},
+		},
+		Days: []*demandforecast.Day{
+			{DayStart: 1_799_913_600, Low: 80, High: 104, Mean: 92, Actual: 96},
+		},
+		Positionings: []*freightoutlookports.Positioning{{
+			Positioning: &driverpositioning.Positioning{
+				ID: positioning, WorkerID: worker, ToCell: 12971, ToLabel: "Chicago, IL",
+				Status: driverpositioning.StatusActive, ArriveAt: 1_800_007_200,
+			},
+			WorkerName: "Dana Ortiz",
 		}},
 	})
 
-	require.NotNil(t, mapped)
-	assert.Equal(t, gqlmodel.DispatchForecastStatusReady, mapped.Quality.Status)
-	assert.Equal(t, 1_800_000_100, mapped.GeneratedAt)
-	assert.Equal(t, []*gqlmodel.DispatchFreightWindow{{
-		AreaLabel:        "Dallas, TX",
-		WindowStart:      1_800_000_000,
-		WindowEnd:        1_800_014_400,
-		TypicalLow:       3,
-		TypicalHigh:      9,
-		LikelyLow:        4,
-		LikelyHigh:       8,
-		Booked:           2,
-		ExpectedUnbooked: 4.25,
-		DriversExpected:  1,
-		Shortfall:        5.25,
-		ValueCents:       61_000,
-		Customers: []*gqlmodel.DispatchForecastCustomer{
-			{CustomerID: customerID.String(), Name: "Acme Foods", ExpectedLoads: 3.5},
-		},
-		Explanation: "Ending near Dallas, TX is worth $610.00.",
-	}}, mapped.Windows)
+	assert.Equal(t, []int{1_800_000_000, 1_800_014_400}, mapped.SlotStarts)
+	assert.Equal(t, 9, mapped.AreaCount)
+	assert.Equal(t, []*gqlmodel.DispatchFreightNetworkSlot{{
+		Start: 1_800_000_000, LikelyLow: 20, LikelyHigh: 30, NeedLow: 9, NeedHigh: 14,
+		Need: 25, Drivers: 24,
+		Short: 1, Uncovered: 6, Idle: 4,
+	}}, mapped.Network)
+	require.Len(t, mapped.Areas, 1)
+	area := mapped.Areas[0]
+	assert.Equal(t, 12971, area.Cell)
+	assert.Equal(t, 61_000, area.ValueCents)
+	assert.InDelta(t, 41.9, area.Latitude, 1e-9)
+	assert.Equal(t, []*gqlmodel.DispatchFreightSlot{{
+		Start: 1_800_000_000, LikelyLow: 2, LikelyHigh: 5, Booked: 2, Need: 3.5,
+		Drivers: 1, Short: 2.5,
+	}}, area.Slots)
+	assert.Equal(t, "Patriot Brewing", area.Customers[0].Name)
+
+	require.Len(t, mapped.Moves, 2)
+	keep := mapped.Moves[0]
+	assert.Equal(t, gqlmodel.DispatchFreightMoveKindKeep, keep.Kind)
+	assert.Equal(t, worker.String(), *keep.WorkerID)
+	assert.Equal(t, move.String(), *keep.MoveID)
+	assert.Equal(t, partner.String(), *keep.PartnerID)
+	assert.Equal(t, 1_800_003_600, *keep.PartnerFreeAt)
+	assert.Equal(t, 12802, keep.PartnerCell, "a keep is drawn from where its partner frees up")
+	assert.Nil(t, keep.CustomerID, "a keep names no customer")
+	assert.Nil(t, keep.FreeAt, "an unset time maps to null, not zero")
+	call := mapped.Moves[1]
+	assert.Equal(t, gqlmodel.DispatchFreightMoveKindCall, call.Kind)
+	assert.Nil(t, call.WorkerID, "a call names no driver")
+	assert.Equal(t, customer.String(), *call.CustomerID)
+	assert.Equal(t, 1, call.Tendered)
+	assert.InDelta(t, 4, call.Loads, 1e-9)
+	assert.Equal(t, []string{}, call.LaneMoveIds)
+
+	assert.Equal(t, []*gqlmodel.DispatchForecastDay{{
+		DayStart: 1_799_913_600, Low: 80, High: 104, Mean: 92, Actual: 96,
+	}}, mapped.Record)
+	require.Len(t, mapped.Positionings, 1)
+	assert.Equal(t, positioning.String(), mapped.Positionings[0].ID)
+	assert.Equal(t, "Dana Ortiz", mapped.Positionings[0].WorkerName)
+	assert.Equal(t, gqlmodel.DispatchPositioningStatusActive, mapped.Positionings[0].Status)
 }
 
-func TestMapDispatchFreightOutlook_AnUnreadyForecastHasNoWindows(t *testing.T) {
+func TestMapDispatchFreightOutlook_AnUnreadyForecastHasEmptySections(t *testing.T) {
 	t.Parallel()
 
-	mapped := mapDispatchFreightOutlook(&demandforecastports.Outlook{
+	mapped := mapDispatchFreightOutlook(&freightoutlookports.Outlook{
 		Quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill},
-		Windows: []*demandforecastports.OutlookWindow{},
 	})
 
 	assert.Equal(t, gqlmodel.DispatchForecastStatusNoSkill, mapped.Quality.Status)
-	assert.NotNil(t, mapped.Windows)
-	assert.Empty(t, mapped.Windows)
+	assert.NotNil(t, mapped.Areas)
+	assert.Empty(t, mapped.Areas)
+	assert.NotNil(t, mapped.Moves)
+	assert.NotNil(t, mapped.Positionings)
+}
+
+func TestMapDispatchFreightAreaDetail_MapsReachAndTheRecentWeeks(t *testing.T) {
+	t.Parallel()
+
+	worker := pulid.MustNew("wrk_")
+	mapped := mapDispatchFreightAreaDetail(&freightoutlookports.AreaDetail{
+		Quality:   &demandforecast.Quality{Status: demandforecast.StatusReady},
+		Area:      &freightoutlookports.Area{Balance: demandforecast.AreaBalance{Cell: 12971}},
+		SlotStart: 1_800_014_400,
+		Reach: []freightmove.ReachRow{{
+			WorkerID: worker, WorkerName: "Joe Kowalski", Label: "Indianapolis, IN",
+			Point:  dispatchmarket.Point{Latitude: 39.8, Longitude: -86.2},
+			FreeAt: 1_800_000_000, ArriveAt: 1_800_010_000, Miles: 318, NetCents: 37_100,
+			Reach: freightmove.ReachOnTime,
+		}},
+		Recent:     []int32{5, 4, 6},
+		RecentLow:  3,
+		RecentHigh: 7,
+	})
+
+	assert.Equal(t, 1_800_014_400, mapped.SlotStart)
+	assert.Equal(t, []int{5, 4, 6}, mapped.Recent)
+	assert.Equal(t, 3, mapped.RecentLow)
+	assert.Equal(t, 7, mapped.RecentHigh)
+	assert.Equal(t, []*gqlmodel.DispatchFreightReach{{
+		WorkerID: worker.String(), WorkerName: "Joe Kowalski", Label: "Indianapolis, IN",
+		Latitude: 39.8, Longitude: -86.2, FreeAt: 1_800_000_000, ArriveAt: 1_800_010_000,
+		Miles: 318, NetCents: 37_100, Reach: gqlmodel.DispatchFreightReachKindOnTime,
+	}}, mapped.Reach)
 }

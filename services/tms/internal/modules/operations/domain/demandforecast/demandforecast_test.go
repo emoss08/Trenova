@@ -4,7 +4,6 @@ import (
 	"math"
 	"math/rand/v2"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -379,28 +378,6 @@ func TestForecaster_WithSupplyRecountsWithoutChangingTheOriginal(t *testing.T) {
 	assert.Less(t, after.Cents, before.Cents)
 }
 
-func TestExplain_NamesTheAreaWindowAndCustomers(t *testing.T) {
-	t.Parallel()
-
-	reason := &demandforecast.Reason{
-		AreaLabel:       "Dallas, TX",
-		WindowStart:     time.Date(2026, 11, 10, 6, 0, 0, 0, time.UTC).Unix(),
-		WindowEnd:       time.Date(2026, 11, 10, 18, 0, 0, 0, time.UTC).Unix(),
-		TypicalLow:      3,
-		TypicalHigh:     5,
-		Booked:          1,
-		DriversExpected: 1,
-		Customers:       []demandforecast.CustomerShare{{Name: "Acme Foods", Expected: 2.9}},
-		ValueCents:      24_800,
-	}
-
-	assert.Equal(t,
-		"Ending near Dallas, TX is worth $248: 3–5 loads usually appear there Tue 06:00–18:00 "+
-			"(Acme Foods about 3), 1 already booked, 1 other driver expected.",
-		demandforecast.Explain(reason, time.UTC),
-	)
-}
-
 func patternedHistory(t *testing.T, weeks int64) *demandforecast.History {
 	t.Helper()
 	r := rand.New(rand.NewPCG(3, 5))
@@ -439,31 +416,6 @@ func TestBacktest_SaysWhenHistoryIsTooShort(t *testing.T) {
 	assert.EqualValues(t, 5, quality.HistoryWeeks)
 }
 
-func TestExplain_SaysUpToWhenTheRangeStartsAtNoneAndNamesBothDaysAcrossMidnight(t *testing.T) {
-	t.Parallel()
-
-	reason := &demandforecast.Reason{
-		AreaLabel:   "Cedar Rapids, IA",
-		WindowStart: time.Date(2026, 11, 7, 22, 0, 0, 0, time.UTC).Unix(),
-		WindowEnd:   time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC).Unix(),
-		TypicalLow:  0,
-		TypicalHigh: 2,
-		Booked:      1,
-		ValueCents:  9_000,
-	}
-
-	assert.Equal(t,
-		"Ending near Cedar Rapids, IA is worth $90: up to 2 loads usually appear there "+
-			"Sat 22:00–Sun 10:00, 1 already booked, no other driver expected.",
-		demandforecast.Explain(reason, time.UTC),
-	)
-}
-
-/*
-Booked loads were added to the mean of the unbooked count, which the walk then read as a
-Poisson around the new mean: four booked loads and nothing more expected became a spread of
-about one to seven, and the chance of demand beyond the drivers was mispriced.
-*/
 func TestCount_ShiftAddsAKnownCountNotASpread(t *testing.T) {
 	t.Parallel()
 

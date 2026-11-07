@@ -5,7 +5,9 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -58,6 +60,7 @@ type Params struct {
 	Style           dispatchlearningports.MultiplierSource
 	Market          dispatchmarketports.ValuerSource
 	Forecasts       demandforecastports.Service
+	Positionings    driverpositioningports.LiveReader
 	Logger          *zap.Logger
 }
 
@@ -71,6 +74,7 @@ type Service struct {
 	style           dispatchlearningports.MultiplierSource
 	market          dispatchmarketports.ValuerSource
 	forecasts       demandforecastports.Service
+	positionings    driverpositioningports.LiveReader
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
@@ -84,6 +88,7 @@ func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In paramete
 		style:           p.Style,
 		market:          p.Market,
 		forecasts:       p.Forecasts,
+		positionings:    p.Positionings,
 	}
 }
 
@@ -155,7 +160,11 @@ func (s *Service) BuildSnapshot(
 			map[pulid.ID]*telematicsports.WorkerHOSViolationStats,
 			len(drivers),
 		),
-		NamesByWorker:  make(map[pulid.ID]string, len(drivers)),
+		NamesByWorker: make(map[pulid.ID]string, len(drivers)),
+		PositionedByWorker: make(
+			map[pulid.ID]*driverpositioning.Positioning,
+			len(drivers),
+		),
 		LaneExperience: make(map[laneKey]int, len(drivers)),
 		Control:        req.Control,
 		Now:            now,
@@ -186,6 +195,17 @@ func (s *Service) BuildSnapshot(
 
 	if err = s.loadSchedules(ctx, req, snapshot, workerIDs); err != nil {
 		return nil, err
+	}
+	positioned, err := s.positionings.ListLive(ctx, &driverpositioningports.LiveRequest{
+		TenantInfo: req.TenantInfo,
+		WorkerIDs:  workerIDs,
+		Now:        now,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, positioning := range positioned {
+		snapshot.PositionedByWorker[positioning.WorkerID] = positioning
 	}
 	if err = s.loadWorkersAndEquipment(ctx, req, snapshot, workerIDs, tractorIDs); err != nil {
 		return nil, err

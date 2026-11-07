@@ -48,8 +48,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -308,9 +308,9 @@ func providePlanDispatchTool(
 }
 
 func provideForecastDemandTool(
-	forecasts demandforecastports.Service,
+	outlook freightoutlookports.Service,
 ) agenttoolports.AgentQueryTool {
-	return dispatchquerytools.NewForecastDemandTool(forecasts)
+	return dispatchquerytools.NewForecastDemandTool(outlook)
 }
 
 func provideListInsightsTool(insights *insightservice.Service) agenttoolports.AgentQueryTool {

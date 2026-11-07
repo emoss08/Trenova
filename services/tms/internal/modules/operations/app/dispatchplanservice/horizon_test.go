@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/positioningtest"
+
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -220,6 +222,7 @@ func TestPlanHorizon_ChainsAFollowOnMoveOntoOneDriver(t *testing.T) {
 		due: horizonTestNow + 44*hour,
 	})
 	candidates := dispatchcandidateservice.New(dispatchcandidateservice.Params{
+		Positionings:   positioningtest.None{},
 		Logger:         zap.NewNop(),
 		RouteEstimator: straightLineRoutes{},
 	})

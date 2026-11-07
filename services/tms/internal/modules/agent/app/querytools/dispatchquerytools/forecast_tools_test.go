@@ -11,22 +11,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/freightmove"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeOutlook struct {
-	outlook *demandforecastports.Outlook
-	lastReq *demandforecastports.OutlookRequest
+	outlook *freightoutlookports.Outlook
+	lastReq *freightoutlookports.Request
 }
 
 func (f *fakeOutlook) Outlook(
 	_ context.Context,
-	req *demandforecastports.OutlookRequest,
-) (*demandforecastports.Outlook, error) {
+	req *freightoutlookports.Request,
+) (*freightoutlookports.Outlook, error) {
 	f.lastReq = req
 
 	return f.outlook, nil
@@ -57,7 +57,6 @@ func TestForecastFreight_DeclaresBoundedHoursAndLimitAsATenantRead(t *testing.T)
 	additional, ok := schema[toolschema.KeyAdditionalProperties].(bool)
 	require.True(t, ok)
 	assert.False(t, additional)
-
 	properties, ok := schema[toolschema.KeyProperties].(map[string]any)
 	require.True(t, ok)
 	assert.Len(t, properties, 2)
@@ -65,16 +64,15 @@ func TestForecastFreight_DeclaresBoundedHoursAndLimitAsATenantRead(t *testing.T)
 	hours, ok := properties[paramHoursAhead].(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, toolschema.TypeInteger, hours[toolschema.KeyType])
-	assert.Equal(t, 1, hours[toolschema.KeyMinimum])
-	assert.Equal(t, demandforecastports.MaxOutlookHours, hours[toolschema.KeyMaximum])
+	assert.Equal(t, 4, hours[toolschema.KeyMinimum])
+	assert.Equal(t, maxForecastHours, hours[toolschema.KeyMaximum])
 	clamped, _ := hours[toolschema.KeyClamp].(bool)
 	assert.True(t, clamped, "a value past the bounds is clamped, not refused")
-	assert.Contains(t, hours[toolschema.KeyDescription], "48 unless you ask, at most 96")
+	assert.Contains(t, hours[toolschema.KeyDescription], "24 unless you ask, at most 48")
 
 	limit, ok := properties[querytool.ParamLimit].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, demandforecastports.MaxOutlookLimit, limit[toolschema.KeyMaximum])
-	assert.Contains(t, limit[toolschema.KeyDescription], "20 unless you ask, at most 50")
+	assert.Equal(t, maxForecastLimit, limit[toolschema.KeyMaximum])
 
 	searchable, ok := tool.(agenttoolports.SearchableTool)
 	require.True(t, ok)
@@ -89,45 +87,32 @@ func TestForecastFreight_DeclaresBoundedHoursAndLimitAsATenantRead(t *testing.T)
 	assert.Equal(t, agenttooltrust.ExternalReadNever, policy.ReadsExternal)
 }
 
-func TestForecastFreight_DefaultsAndBoundsHoursAndLimit(t *testing.T) {
+func TestForecastFreight_DefaultsAndBoundsHours(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
 		name   string
 		params map[string]any
 		hours  int
-		limit  int
 	}{
-		{name: "defaults", params: map[string]any{}, hours: 48, limit: 20},
-		{
-			name:   "past the bounds",
-			params: map[string]any{"hoursAhead": 500, "limit": 500},
-			hours:  96,
-			limit:  50,
-		},
-		{name: "zero", params: map[string]any{"hoursAhead": 0, "limit": 0}, hours: 48, limit: 20},
-		{name: "negative", params: map[string]any{"hoursAhead": -6}, hours: 48, limit: 20},
-		{
-			name:   "numbers sent as text",
-			params: map[string]any{"hoursAhead": "12", "limit": "5"},
-			hours:  12,
-			limit:  5,
-		},
+		{name: "default", params: map[string]any{}, hours: 24},
+		{name: "past the bounds", params: map[string]any{"hoursAhead": 500}, hours: 48},
+		{name: "zero", params: map[string]any{"hoursAhead": 0}, hours: 24},
+		{name: "negative", params: map[string]any{"hoursAhead": -6}, hours: 24},
+		{name: "numbers sent as text", params: map[string]any{"hoursAhead": "12"}, hours: 12},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			outlook := &fakeOutlook{outlook: &demandforecastports.Outlook{Quality: readyQuality()}}
+			outlook := &fakeOutlook{outlook: &freightoutlookports.Outlook{Quality: readyQuality()}}
 			result, err := NewForecastDemandTool(outlook).Query(
 				t.Context(),
 				querytooltest.TestParams(tc.params),
 			)
 			require.NoError(t, err)
 			require.NotNil(t, outlook.lastReq)
-			assert.Equal(t, tc.hours, outlook.lastReq.Hours)
-			assert.Equal(t, tc.limit, outlook.lastReq.Limit)
 			assert.Equal(t, querytooltest.TestOrganizationID, outlook.lastReq.TenantInfo.OrgID)
 			assert.Equal(t, querytooltest.TestBusinessUnitID, outlook.lastReq.TenantInfo.BuID)
 
@@ -181,14 +166,13 @@ func TestForecastFreight_SaysPlainlyWhenTheForecastIsNotReady(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			outlook := &fakeOutlook{outlook: &demandforecastports.Outlook{
-				Quality: tc.quality,
-				Windows: []*demandforecastports.OutlookWindow{{
-					AreaLabel:   "Dallas, TX",
-					WindowStart: tuesdayMorning(),
-					WindowEnd:   tuesdayMorning() + 12*3600,
-					TypicalHigh: 4,
-				}},
+			outlook := &fakeOutlook{outlook: &freightoutlookports.Outlook{
+				Quality:     tc.quality,
+				GeneratedAt: tuesdayMorning(),
+				Areas:       []*freightoutlookports.Area{shortArea("Dallas, TX", 2.6)},
+				Steps: []freightmove.Step{
+					{Kind: freightmove.KindSend, ToLabel: "Dallas, TX"},
+				},
 			}}
 			result, err := NewForecastDemandTool(outlook).Query(
 				t.Context(),
@@ -201,117 +185,124 @@ func TestForecastFreight_SaysPlainlyWhenTheForecastIsNotReady(t *testing.T) {
 			assert.Equal(t, tc.status, view.Quality.Status)
 			assert.Contains(t, view.Quality.Meaning, tc.meaning)
 			assert.Contains(t, view.Note, "The forecast is not Ready (status "+tc.status+")")
-			assert.Contains(t, view.Note, "no windows are listed")
-			assert.Equal(t, 0, view.Count, "an unproven forecast names no area")
-			assert.NotNil(t, view.Windows)
-			assert.Empty(t, view.Windows)
+			assert.Empty(t, view.Short, "an unproven forecast names no area")
+			assert.Empty(t, view.Spare)
+			assert.Empty(t, view.Moves, "an unproven forecast suggests no move")
 		})
 	}
 }
 
-func TestForecastFreight_ReadsAReadyOutlookByAreaAndWindow(t *testing.T) {
+func shortArea(label string, short float64) *freightoutlookports.Area {
+	slots := make([]demandforecast.SlotBalance, 12)
+	for i := range slots {
+		slots[i].Start = tuesdayMorning() + int64(i)*4*3600
+	}
+	slots[1].Short = short
+	slots[1].Low, slots[1].High, slots[1].Booked, slots[1].Drivers = 3, 6, 2, 1
+
+	return &freightoutlookports.Area{
+		Balance:    demandforecast.AreaBalance{Label: label, Slots: slots},
+		ValueCents: 61_000,
+		Customers:  []freightoutlookports.AreaCustomer{{Name: "Acme Foods", Share: 0.6}},
+	}
+}
+
+func spareArea(label string, spare float64, at int) *freightoutlookports.Area {
+	slots := make([]demandforecast.SlotBalance, 12)
+	for i := range slots {
+		slots[i].Start = tuesdayMorning() + int64(i)*4*3600
+	}
+	slots[at].Spare = spare
+
+	return &freightoutlookports.Area{
+		Balance: demandforecast.AreaBalance{Label: label, Slots: slots},
+	}
+}
+
+func TestForecastFreight_ReadsAReadyOutlookAsShortAreasSpareAreasAndMoves(t *testing.T) {
 	t.Parallel()
 
-	acme := pulid.MustNew("cus_")
-	start := tuesdayMorning()
-	outlook := &fakeOutlook{outlook: &demandforecastports.Outlook{
+	now := tuesdayMorning()
+	outlook := &fakeOutlook{outlook: &freightoutlookports.Outlook{
 		Quality:     readyQuality(),
-		GeneratedAt: start - 18*3600,
-		Windows: []*demandforecastports.OutlookWindow{
+		GeneratedAt: now,
+		Areas: []*freightoutlookports.Area{
+			shortArea("Dallas, TX", 2.6),
+			spareArea("Kansas City, MO", 3.2, 2),
+			spareArea("Long Beach, CA", 2, 10),
+		},
+		Steps: []freightmove.Step{
 			{
-				Cell:             41_234,
-				AreaLabel:        "Dallas, TX",
-				WindowStart:      start,
-				WindowEnd:        start + 12*3600,
-				TypicalLow:       3,
-				TypicalHigh:      5,
-				Booked:           1,
-				ExpectedUnbooked: 3.44,
-				DriversExpected:  1,
-				Shortfall:        3.06,
-				ValueCents:       24_800,
-				Customers: []demandforecast.CustomerShare{
-					{CustomerID: acme, Name: "Acme Foods", Expected: 2.96},
-				},
-				Explanation: "Ending near Dallas, TX is worth $248: 3–5 loads usually appear " +
-					"there Tue 06:00–18:00 (Acme Foods about 3), 1 already booked, 1 other " +
-					"driver expected.",
+				Kind: freightmove.KindSend, WorkerName: "Ana Ruiz", FromLabel: "Kansas City, MO",
+				ToLabel: "Dallas, TX", SlotStart: now + 4*3600, Miles: 501.4, NetCents: 90_700,
 			},
-			nil,
 			{
-				WindowStart: start + 4*3600,
-				WindowEnd:   start + 16*3600,
-				TypicalHigh: 1,
+				Kind: freightmove.KindKeep, WorkerName: "Dana Ortiz", ToLabel: "Dallas, TX",
+				SlotStart: now + 4*3600, NetCents: 54_000, ProNumber: "PRO-1",
+				PartnerName: "Joe Kowalski",
+			},
+			{
+				Kind: freightmove.KindCall, ToLabel: "Dallas, TX", SlotStart: now + 4*3600,
+				CustomerName: "Acme Foods", Loads: 3.96,
+			},
+			{
+				Kind: freightmove.KindSend, WorkerName: "Late Mover", ToLabel: "Dallas, TX",
+				SlotStart: now + 40*3600, NetCents: 10_000,
 			},
 		},
 	}}
 
 	result, err := NewForecastDemandTool(outlook).Query(
 		t.Context(),
-		querytooltest.TestParamsIn("America/Chicago", map[string]any{"hoursAhead": 24}),
+		querytooltest.TestParams(map[string]any{"hoursAhead": 24}),
 	)
 	require.NoError(t, err)
-
 	view, ok := result.(*freightOutlookView)
 	require.True(t, ok)
-	assert.Equal(t, forecastQualityView{
-		Status: "Ready",
-		Meaning: "Tested on the last 8 weeks of this organization's own history: 82% of " +
-			"actual counts fell inside the forecast range, and its misses were 31% smaller " +
-			"than repeating the same slot last week. Plans use it when Anticipate freight is on.",
-		HistoryWeeks:            26,
-		HistoryLoads:            1_840,
-		WeeksTested:             8,
-		IntervalCoveragePercent: 82,
-		SkillPercent:            31,
-		FittedAt:                "Sun 08 Nov 2026 18:00 CST",
-	}, view.Quality)
-	assert.Equal(t, 24, view.Hours)
-	assert.Equal(t, "Mon 09 Nov 2026 12:00 CST", view.GeneratedAt)
-	assert.Equal(t, 2, view.Count, "a nil window is skipped")
-	assert.Contains(t, view.Note, "2 windows in the next 24 hours, the most short of drivers")
 
-	require.Len(t, view.Windows, 2)
-	assert.Equal(t, freightWindowView{
-		Area:               "Dallas, TX",
-		WindowStart:        "Tue 10 Nov 2026 06:00 CST",
-		WindowEnd:          "Tue 10 Nov 2026 18:00 CST",
-		TypicalLow:         3,
-		TypicalHigh:        5,
-		Booked:             1,
-		ExpectedUnbooked:   3.4,
-		DriversExpected:    1,
-		Shortfall:          3.1,
-		OneMoreDriverWorth: "$248",
-		Customers: []forecastCustomerView{
-			{CustomerID: acme.String(), Name: "Acme Foods", ExpectedLoads: 3},
-		},
-		Explanation: outlook.outlook.Windows[0].Explanation,
-	}, view.Windows[0])
+	require.Len(t, view.Short, 1)
+	assert.Equal(t, "Dallas, TX", view.Short[0].Area)
+	assert.InDelta(t, 2.6, view.Short[0].LoadsWithNoTruck, 1e-9)
+	assert.Equal(t, 3, view.Short[0].LikelyLow)
+	assert.Equal(t, 6, view.Short[0].LikelyHigh)
+	assert.Equal(t, "$610", view.Short[0].OneMoreDriverWorth)
+	assert.Equal(t, []string{"Acme Foods"}, view.Short[0].Customers)
 
-	unnamed := view.Windows[1]
-	assert.Equal(t, unnamedArea, unnamed.Area)
-	assert.Equal(t, "$0", unnamed.OneMoreDriverWorth)
-	assert.NotNil(t, unnamed.Customers, "an empty list, never null")
+	require.Len(t, view.Spare, 1, "a spare window past the hours asked is left out")
+	assert.Equal(t, "Kansas City, MO", view.Spare[0].Area)
+	assert.InDelta(t, 3.2, view.Spare[0].DriversToSpare, 1e-9)
+
+	require.Len(t, view.Moves, 3, "a move for a window past the hours asked is left out")
+	assert.Equal(t, forecastMoveView{
+		Kind: "Send", Driver: "Ana Ruiz", From: "Kansas City, MO", To: "Dallas, TX",
+		Window: view.Moves[0].Window, Miles: 501, Worth: "$907",
+	}, view.Moves[0])
+	assert.Equal(t, "Joe Kowalski", view.Moves[1].HandTo)
+	assert.Equal(t, "PRO-1", view.Moves[1].ProNumber)
+	assert.Equal(t, "Call", view.Moves[2].Kind)
+	assert.Empty(t, view.Moves[2].Driver)
+	assert.Equal(t, "Acme Foods", view.Moves[2].Customer)
+	assert.InDelta(t, 4, view.Moves[2].LoadsMissed, 1e-9)
+	assert.Contains(t, view.Note, "1 areas run short of trucks in the next 24 hours")
 }
 
-func TestForecastFreight_SaysWhenNothingIsLikely(t *testing.T) {
+func TestForecastFreight_SaysWhenNoAreaIsShort(t *testing.T) {
 	t.Parallel()
 
-	outlook := &fakeOutlook{outlook: &demandforecastports.Outlook{Quality: readyQuality()}}
+	outlook := &fakeOutlook{outlook: &freightoutlookports.Outlook{
+		Quality:     readyQuality(),
+		GeneratedAt: tuesdayMorning(),
+		Areas:       []*freightoutlookports.Area{spareArea("Kansas City, MO", 3, 1)},
+	}}
 	result, err := NewForecastDemandTool(outlook).Query(
 		t.Context(),
 		querytooltest.TestParams(map[string]any{}),
 	)
 	require.NoError(t, err)
-
 	view, ok := result.(*freightOutlookView)
 	require.True(t, ok)
-	assert.Equal(t, 0, view.Count)
-	assert.NotNil(t, view.Windows)
-	assert.Equal(t,
-		"The forecast lists no area with freight beyond the drivers expected there in the "+
-			"next 48 hours.",
-		view.Note,
-	)
+
+	assert.Empty(t, view.Short)
+	require.Len(t, view.Spare, 1)
+	assert.Contains(t, view.Note, "No area is short of trucks in the next 24 hours")
 }

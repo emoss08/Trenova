@@ -32,7 +32,7 @@ func loadsBetween(since, until int64) loadQuery {
 	sp := shipmentdb.Shipments.As("dh_sp")
 	st := shipmentdb.Stops.As("dh_st")
 	first := st.
-		Pick(st.LocationID, st.ScheduledWindowStart).
+		Pick(st.LocationID, st.ScheduledWindowStart, st.ScheduledWindowEnd).
 		Where(
 			st.ShipmentMoveID.EqCol(sm.ID),
 			st.Status.Ne(shipmentvocab.StopStatusCanceled),

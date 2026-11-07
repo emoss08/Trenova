@@ -3,6 +3,8 @@ package dispatchcandidateservice
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
@@ -37,6 +39,7 @@ type FleetSnapshot struct {
 	AcceptanceByWorker  map[pulid.ID]*dispatchboardports.WorkerAcceptanceStats
 	ViolationsByWorker  map[pulid.ID]*telematicsports.WorkerHOSViolationStats
 	NamesByWorker       map[pulid.ID]string
+	PositionedByWorker  map[pulid.ID]*driverpositioning.Positioning
 	LaneExperience      map[laneKey]int
 	Control             *dispatchcontrol.DispatchControl
 	TelematicsActive    bool

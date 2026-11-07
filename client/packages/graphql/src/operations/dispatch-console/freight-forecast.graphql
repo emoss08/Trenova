@@ -11,31 +11,169 @@ fragment DispatchForecastQualityFields on DispatchForecastQuality {
   fittedAt
 }
 
-query DispatchFreightOutlook($hours: Int, $limit: Int) {
-  dispatchFreightOutlook(hours: $hours, limit: $limit) {
+fragment DispatchFreightAreaFields on DispatchFreightArea {
+  cell
+  label
+  latitude
+  longitude
+  valueCents
+  slots {
+    start
+    likelyLow
+    likelyHigh
+    booked
+    need
+    drivers
+    short
+    spare
+  }
+  customers {
+    customerId
+    name
+    share
+  }
+}
+
+fragment DispatchFreightMoveFields on DispatchFreightMove {
+  kind
+  workerId
+  workerName
+  fromCell
+  fromLabel
+  toCell
+  toLabel
+  slotStart
+  short
+  freeAt
+  arriveAt
+  miles
+  emptyCostCents
+  dropCents
+  stayCents
+  netCents
+  savedCents
+  moveId
+  proNumber
+  laneMoveIds
+  partnerId
+  partnerName
+  partnerCell
+  partnerLabel
+  partnerFreeAt
+  partnerMiles
+  customerId
+  customerName
+  usual
+  byNow
+  tendered
+  loads
+}
+
+fragment DispatchFreightPaceFields on DispatchFreightPace {
+  customerId
+  customerName
+  cell
+  label
+  slots {
+    start
+    usual
+    byNow
+    tendered
+  }
+}
+
+fragment DispatchPositioningFields on DispatchPositioning {
+  id
+  workerId
+  workerName
+  fromLabel
+  toCell
+  toLabel
+  slotStart
+  freeAt
+  arriveAt
+  miles
+  valueCents
+  status
+  createdAt
+}
+
+query DispatchFreightOutlook {
+  dispatchFreightOutlook {
     generatedAt
     quality {
       ...DispatchForecastQualityFields
     }
-    windows {
-      areaLabel
-      windowStart
-      windowEnd
-      typicalLow
-      typicalHigh
+    slotStarts
+    network {
+      start
       likelyLow
       likelyHigh
-      booked
-      expectedUnbooked
-      driversExpected
-      shortfall
-      valueCents
-      customers {
-        customerId
-        name
-        expectedLoads
-      }
-      explanation
+      needLow
+      needHigh
+      need
+      drivers
+      short
+      uncovered
+      idle
+    }
+    areas {
+      ...DispatchFreightAreaFields
+    }
+    areaCount
+    moves {
+      ...DispatchFreightMoveFields
+    }
+    pace {
+      ...DispatchFreightPaceFields
+    }
+    record {
+      dayStart
+      low
+      high
+      mean
+      actual
+    }
+    positionings {
+      ...DispatchPositioningFields
+    }
+  }
+}
+
+query DispatchFreightArea($cell: Int!, $slotStart: Timestamp) {
+  dispatchFreightArea(cell: $cell, slotStart: $slotStart) {
+    generatedAt
+    quality {
+      ...DispatchForecastQualityFields
+    }
+    area {
+      ...DispatchFreightAreaFields
+    }
+    slotStart
+    reach {
+      workerId
+      workerName
+      label
+      latitude
+      longitude
+      freeAt
+      arriveAt
+      miles
+      netCents
+      reach
+    }
+    moves {
+      ...DispatchFreightMoveFields
+    }
+    pace {
+      ...DispatchFreightPaceFields
+    }
+    recent
+    recentLow
+    recentHigh
+    deliveryLocationIds
+    positionings {
+      ...DispatchPositioningFields
     }
   }
 }
@@ -43,5 +181,17 @@ query DispatchFreightOutlook($hours: Int, $limit: Int) {
 query DispatchForecastQuality {
   dispatchForecastQuality {
     ...DispatchForecastQualityFields
+  }
+}
+
+mutation DispatchPositionDriver($input: DispatchPositionDriverInput!) {
+  dispatchPositionDriver(input: $input) {
+    ...DispatchPositioningFields
+  }
+}
+
+mutation DispatchCallOffPositioning($id: ID!) {
+  dispatchCallOffPositioning(id: $id) {
+    ...DispatchPositioningFields
   }
 }

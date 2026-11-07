@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/positioningtest"
+
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
@@ -55,6 +57,7 @@ func TestGetBoard_SaysWhenTheDriverListWasCut(t *testing.T) {
 				dispatchControlRepo: controls,
 				organizations:       organizations,
 				candidates: dispatchcandidateservice.New(dispatchcandidateservice.Params{
+					Positionings:    positioningtest.None{},
 					ConsoleRepo:     console,
 					IntegrationRepo: integrations,
 					TractorRepo:     tractors,

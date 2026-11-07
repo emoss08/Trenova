@@ -1062,6 +1062,15 @@
       "apps/web/lib"
     ]
   },
+  "12 h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "12 hours": {
     "sites": 1,
     "scope": [
@@ -1365,6 +1374,15 @@
       "apps/web/lib"
     ]
   },
+  "24 h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "24 hours": {
     "sites": 2,
     "scope": [
@@ -1659,6 +1677,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "48 h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "48 hours": {
@@ -2587,6 +2614,15 @@
       "routes/inbox"
     ]
   },
+  "<b>Enough drivers overall</b>, yet at the worst hour {0, plural, one {# load has} other {# loads have}} no truck nearby: where drivers end up, not how many.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "<b>Nova</b> reviews each shipment as it reaches billing, so the next ones arrive with its notes.": {
     "sites": 1,
     "scope": [
@@ -2657,6 +2693,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "<b>{0, plural, one {# truck} other {# trucks}} short {1}</b>. {2}–{3} loads likely, {4} booked, {5, plural, one {# driver} other {# drivers}} expected. One more driver ending here is worth <b>{6}</b>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "<b>{0, plural, one {# truck} other {# trucks}} to spare {1}</b>. {2}–{3} loads likely against {4, plural, one {# driver} other {# drivers}}. A good place to send drivers from.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "<b>{0} are</b> yours — <ref>{1}</ref> has waited longest.": {
@@ -2983,6 +3037,15 @@
       "apps/web/components"
     ]
   },
+  "<c>{0}</c> is behind its usual pace in {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "<c>{0}</c> rises as <c>{1}</c> grows:": {
     "sites": 1,
     "scope": [
@@ -2990,6 +3053,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "<d>{0, plural, one {# driver} other {# drivers}}</d> will sit with little to haul, most in {1}, and moving {2, plural, one {one of them} other {# of them}} first is worth <b>{3}</b>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "<d>{0, plural, one {# driver} other {# drivers}}</d> will sit with little to haul, most in {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "<e>{0, plural, one {# exception is} other {# exceptions are}}</e> still open.": {
@@ -4569,6 +4650,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "A cell is loads likely minus drivers expected in that area and window. Click a window to read everything at that hour; click an area to open it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "A certificate": {
@@ -15765,6 +15855,24 @@
       "routes/settings"
     ]
   },
+  "About {0, plural, one {# driver} other {# drivers}} more than freight.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "About {0, plural, one {# load} other {# loads}} more than drivers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "About {0}": {
     "sites": 5,
     "scope": [
@@ -18235,6 +18343,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Across the network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Across today's reviews": {
@@ -23085,6 +23202,15 @@
       "template/tender.offer.email"
     ]
   },
+  "After the next nightly fit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "After this day agents stop reading it.": {
     "sites": 1,
     "scope": [
@@ -23112,6 +23238,15 @@
       "routes/inbox"
     ]
   },
+  "After your drop, head toward {0} and be there by {1}. Freight is expected there from {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.positioning"
+    ]
+  },
   "After: months of service before the tier applies. Amount: replaces the base accrual from then on. Max balance: overrides the rule's cap; leave empty to inherit it.": {
     "sites": 1,
     "scope": [
@@ -23128,6 +23263,15 @@
     ],
     "areas": [
       "routes/formula-library"
+    ]
+  },
+  "Against each customer's own booking curve; the tick is where they usually are by now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Age": {
@@ -24250,6 +24394,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Ahead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Ahead of the appointment": {
@@ -25849,6 +26002,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Already booked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Already confirmed": {
@@ -33534,9 +33696,18 @@
     ],
     "areas": [
       "apps/web/types",
-      "routes/dispatch-console",
+      "routes/freight-outlook",
       "routes/insights",
       "routes/shipment"
+    ]
+  },
+  "Area within about 30 mi of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Argument": {
@@ -33899,6 +34070,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Arrives too late": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Arriving": {
@@ -40543,12 +40723,13 @@
     ]
   },
   "Balanced": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/freight-outlook",
       "routes/journal-entry",
       "routes/manual-journal"
     ]
@@ -41538,6 +41719,15 @@
     ],
     "areas": [
       "routes/pay-code"
+    ]
+  },
+  "Behind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Being checked": {
@@ -44388,13 +44578,14 @@
     ]
   },
   "Board": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/freight-outlook"
     ]
   },
   "Board density": {
@@ -44575,12 +44766,23 @@
     ]
   },
   "Book": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/freight-outlook"
+    ]
+  },
+  "Book <w>{0}</w> toward <a>{1}</a>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Book a remittance's matched lines to the ledger": {
@@ -44619,15 +44821,25 @@
       "routes/factoring-submission"
     ]
   },
+  "Book {0} toward {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Booked": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
-      "routes/factoring-remittance"
+      "routes/factoring-remittance",
+      "routes/freight-outlook"
     ]
   },
   "Booked By ID": {
@@ -45040,11 +45252,12 @@
     ]
   },
   "Brief": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/freight-outlook",
       "routes/shipment"
     ]
   },
@@ -45910,6 +46123,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Busier than the range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Business Central journal lines cannot post to a customer or vendor or apply to an invoice, so Trenova's journals cannot be sent to Business Central as they are. Send documents instead.": {
@@ -46893,14 +47115,24 @@
     ]
   },
   "Call": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "routes/collections",
-      "routes/desk"
+      "routes/desk",
+      "routes/freight-outlook"
+    ]
+  },
+  "Call <w>{0}</w>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Call back": {
@@ -46948,6 +47180,35 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Call off": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/freight-outlook"
+    ]
+  },
+  "Call off a positioning and tell the driver": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Call {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Call {0} about the missed {1} promise": {
@@ -54737,6 +54998,15 @@
       "apps/web/components"
     ]
   },
+  "Choose a driver to send": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a field": {
     "sites": 1,
     "scope": [
@@ -55228,6 +55498,15 @@
       "routes/desk"
     ]
   },
+  "Choose a window in the next 48 hours of the outlook": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a worker": {
     "sites": 2,
     "scope": [
@@ -55310,6 +55589,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Choose an area to send the driver to": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose an environment": {
@@ -58202,6 +58490,15 @@
       "apps/web/lib"
     ]
   },
+  "Click again for the whole range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Click again to confirm": {
     "sites": 1,
     "scope": [
@@ -58254,6 +58551,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Click to read the board at this hour.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Click to select a color": {
@@ -58531,7 +58837,7 @@
     ]
   },
   "Close": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "go",
       "ts"
@@ -58555,6 +58861,7 @@
       "routes/factoring",
       "routes/formula-library",
       "routes/formula-template",
+      "routes/freight-outlook",
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
       "routes/home",
@@ -67882,6 +68189,15 @@
       "apps/dash/_components"
     ]
   },
+  "Could run short": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Could the driver reasonably have avoided it? This drives the scorecard penalty.": {
     "sites": 1,
     "scope": [
@@ -72949,6 +73265,15 @@
       "go/other"
     ]
   },
+  "Customer pace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Customer payment": {
     "sites": 4,
     "scope": [
@@ -73959,6 +74284,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Daily forecast ranges and the loads that came, last fourteen days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Daily full profile cap": {
@@ -83340,6 +83674,15 @@
       "go/other"
     ]
   },
+  "Dispatch called off the move to {0}. Wait for your next load where you are.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.positioning"
+    ]
+  },
   "Dispatch chat": {
     "sites": 1,
     "scope": [
@@ -87424,6 +87767,15 @@
       "go/other"
     ]
   },
+  "Driver Positioning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Driver Settlement": {
     "sites": 2,
     "scope": [
@@ -88236,7 +88588,7 @@
     ]
   },
   "Drivers": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -88245,6 +88597,7 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/fleet-safety",
+      "routes/freight-outlook",
       "routes/org-structure",
       "routes/pay-profile",
       "routes/shipment"
@@ -88257,6 +88610,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Drivers already match the freight in {0}, so one more would likely sit idle.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Drivers and freight roughly match over the next 48 hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Drivers and freight roughly match.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Drivers and operational workers": {
@@ -88331,15 +88711,6 @@
       "routes/dash-control"
     ]
   },
-  "Drivers cover the freight ahead": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.": {
     "sites": 1,
     "scope": [
@@ -88359,12 +88730,12 @@
     ]
   },
   "Drivers expected": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "Drivers for this move": {
@@ -88401,6 +88772,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Drivers match the freight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Drivers may decline a load with a reason. Turn off for forced dispatch — drivers can only acknowledge.": {
@@ -88509,6 +88889,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Drivers who can reach {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Drivers with nothing nearby": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Drivers worth more elsewhere": {
@@ -90991,6 +91389,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Each day forecast only from the weeks before it. {0, plural, one {# day was} other {# days were}} busier than the range; a typical day lands ±{1} loads from the middle.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Each document can be filed only once in a request": {
@@ -95754,6 +96161,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Enough drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Enough to recognise the card on a statement. The full card number is never stored.": {
@@ -113861,13 +114277,14 @@
     ]
   },
   "For {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/benefits"
+      "routes/benefits",
+      "routes/freight-outlook"
     ]
   },
   "For {0} · {1} archived": {
@@ -113942,6 +114359,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Forecast range": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Foregone Amount": {
@@ -115034,6 +115460,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Free {0} · {1} mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Free {0}, {1, plural, one {# mile} other {# miles}} empty, there by {2}. {3} is {4, plural, one {# truck} other {# trucks}} short from {5}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Free-form internal notes. Not shared with the carrier.": {
     "sites": 1,
     "scope": [
@@ -115295,7 +115739,7 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "apps/web/components"
     ]
   },
   "Freight invoice": {
@@ -115339,12 +115783,40 @@
     ]
   },
   "Freight outlook": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/freight-outlook"
+    ]
+  },
+  "Freight outruns the fleet by about <b>{0, plural, one {# load} other {# loads}}</b> at the peak.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
+    ]
+  },
+  "Freight outruns your drivers in <a>{0}</a> and <c>{1}</c> {2}, <b>{3, plural, one {# load} other {# loads}}</b> with no truck nearby.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Freight outruns your drivers in <a>{0}</a> {1}, <b>{2, plural, one {# load} other {# loads}}</b> with no truck nearby.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Freight retired, not rebilled": {
@@ -115852,6 +116324,15 @@
       "routes/inbox"
     ]
   },
+  "From {0} · free {1} · {2} mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "From {0} · rate agreement": {
     "sites": 1,
     "scope": [
@@ -115859,6 +116340,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "From {0} · there by {1} · {2} mi": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "From {0} · {1}": {
@@ -121241,6 +121731,15 @@
       "go/other"
     ]
   },
+  "Head to {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.positioning"
+    ]
+  },
   "Headers": {
     "sites": 1,
     "scope": [
@@ -121752,6 +122251,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Here a test checks held, rejected, declined, warned, or no holds, rejects, declines, warnings; not {0}": {
     "sites": 2,
     "scope": [
@@ -121779,6 +122287,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Here, free {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Hi {0},": {
@@ -122043,6 +122560,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Hide the brief": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Hide the button when closed": {
@@ -123226,6 +123752,15 @@
       "go/other"
     ]
   },
+  "Hour by hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Hour is required for a delivery hour filter": {
     "sites": 1,
     "scope": [
@@ -123738,6 +124273,15 @@
     ],
     "areas": [
       "routes/leave-control"
+    ]
+  },
+  "How far ahead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "How far ahead of expiry the credential is flagged as expiring soon.": {
@@ -126108,6 +126652,15 @@
       "routes/admin"
     ]
   },
+  "Idle drivers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Idle sign-out": {
     "sites": 1,
     "scope": [
@@ -127501,6 +128054,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "In time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "In transit": {
@@ -129270,6 +129832,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Inside the range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Inside the window": {
@@ -136025,14 +136596,24 @@
     ]
   },
   "Keep": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/freight-outlook",
       "routes/holiday"
+    ]
+  },
+  "Keep <w>{0}</w> in <a>{1}</a>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Keep a memory for yourself, a role you hold or the organization": {
@@ -136905,6 +137486,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keep {0} in {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Keep, change, retire, review and approve memories and profile guidance shared with a team, the organization or every agent": {
@@ -139278,13 +139868,14 @@
     ]
   },
   "Last week": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/freight-outlook"
     ]
   },
   "Last week fell further below its own recent weeks than allowed": {
@@ -142205,13 +142796,13 @@
       "routes/agent-control"
     ]
   },
-  "Likely loads": {
-    "sites": 2,
+  "Likely range": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "Limit cannot exceed 500": {
@@ -145680,6 +146271,15 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading the area": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Loading the artifact…": {
     "sites": 1,
     "scope": [
@@ -145941,7 +146541,7 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "Loading the fuel card…": {
@@ -146068,6 +146668,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the map": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Loading the order…": {
@@ -146601,7 +147210,7 @@
     ]
   },
   "Loads": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -146611,7 +147220,17 @@
       "apps/web/components",
       "routes/carrier-settlement",
       "routes/driver-settlement",
+      "routes/freight-outlook",
       "routes/inbox"
+    ]
+  },
+  "Loads against drivers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Loads and replies. Nothing is sent or created until you look.": {
@@ -146623,6 +147242,24 @@
       "routes/inbox"
     ]
   },
+  "Loads in this window in each of the last weeks, against its usual range": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Loads into {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Loads it pays": {
     "sites": 2,
     "scope": [
@@ -146630,6 +147267,42 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loads likely": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Loads likely, booked and drivers expected in each window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Loads likely, with those covered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Loads needing a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Loads observed": {
@@ -146650,6 +147323,15 @@
       "routes/inbox"
     ]
   },
+  "Loads that came": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Loads to pay ({0}/{1})": {
     "sites": 1,
     "scope": [
@@ -146657,6 +147339,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Loads with no truck nearby": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Loads {0} drives pay here once they are completed. Recurring pay and deductions join on the next run.": {
@@ -160160,13 +160851,14 @@
     ]
   },
   "Net": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-settlement-batch",
       "routes/detention-intelligence",
+      "routes/freight-outlook",
       "routes/journal-entry",
       "routes/settlement-batch",
       "routes/settlement-dispute",
@@ -160488,6 +161180,15 @@
       "routes/desk"
     ]
   },
+  "Network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Network error": {
     "sites": 3,
     "scope": [
@@ -160505,6 +161206,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Network loads still needing a driver against drivers free, with loads that have no truck nearby and idle drivers, every four hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Network signals": {
@@ -161959,15 +162669,6 @@
       "packages/shared/lib"
     ]
   },
-  "Next 48 hours, most short of drivers first": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Next 7 days": {
     "sites": 1,
     "scope": [
@@ -162280,6 +162981,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Next moves": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Next open period": {
@@ -164892,6 +165602,15 @@
       "apps/web/components"
     ]
   },
+  "No customer has freight due in this range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "No customer matches “{0}”.": {
     "sites": 1,
     "scope": [
@@ -164935,15 +165654,6 @@
     ],
     "areas": [
       "routes/customer-statement"
-    ]
-  },
-  "No customer stands out": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "No customers yet": {
@@ -166197,6 +166907,15 @@
       "routes/agent-control"
     ]
   },
+  "No forecast areas yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "No form mappings yet": {
     "sites": 1,
     "scope": [
@@ -166269,13 +166988,13 @@
       "routes/formula-template"
     ]
   },
-  "No freight expected beyond your drivers in the next 48 hours.": {
+  "No free driver reaches <a>{0}</a>{1, plural, =0 {} one { or # other area} other { or # other areas}} in time. Open it to see who comes closest.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "No fuel indices yet": {
@@ -167061,6 +167780,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No loads started here in {0} in any of the last {1} weeks, so there is no record to show yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "No loads this period": {
@@ -168513,6 +169241,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "No price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "No price data yet": {
@@ -170889,6 +171626,15 @@
       "routes/reports"
     ]
   },
+  "No truck nearby": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "No truck waited past its free time in the last {0} days.": {
     "sites": 1,
     "scope": [
@@ -172025,6 +172771,15 @@
       "apps/web/components"
     ]
   },
+  "None of your locations are in {0} yet, so there are no loads into it to list.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "None on": {
     "sites": 1,
     "scope": [
@@ -173122,14 +173877,24 @@
       "routes/desk"
     ]
   },
+  "Not needed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Not now": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/freight-outlook"
     ]
   },
   "Not offered": {
@@ -173932,6 +174697,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Not worth the miles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Not written": {
@@ -175511,6 +176285,15 @@
       "routes/intake"
     ]
   },
+  "Nothing is worth moving in this range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Nothing is written until you confirm": {
     "sites": 1,
     "scope": [
@@ -175638,15 +176421,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Nothing moving right now.": {
@@ -178375,6 +179149,15 @@
       "routes/inbox"
     ]
   },
+  "Now {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Nowhere": {
     "sites": 1,
     "scope": [
@@ -180271,6 +181054,15 @@
       "routes/scheduling"
     ]
   },
+  "On pace": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "On schedule": {
     "sites": 2,
     "scope": [
@@ -180473,11 +181265,12 @@
     ]
   },
   "On the way": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/freight-outlook",
       "routes/shipment"
     ]
   },
@@ -180488,6 +181281,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "On the way to {0}, there by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "On the way · Undo": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "On the way · {0}": {
@@ -181029,12 +181840,12 @@
     ]
   },
   "One more driver": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "One notice per obligation": {
@@ -184386,7 +185197,7 @@
     ]
   },
   "Open": {
-    "sites": 70,
+    "sites": 71,
     "scope": [
       "go",
       "ts"
@@ -184413,6 +185224,7 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/edi",
+      "routes/freight-outlook",
       "routes/home",
       "routes/inbox",
       "routes/insights",
@@ -185017,6 +185829,15 @@
       "apps/web/components"
     ]
   },
+  "Open console": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Open course": {
     "sites": 1,
     "scope": [
@@ -185362,6 +186183,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Open in console": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Open in conversation": {
@@ -187019,6 +187849,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Opens the console with the load and driver picked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Opens the console with the load and {0} picked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Opens the courses you choose for {0, plural, one {# selected worker} other {# selected workers}}. Anyone who already has a course open keeps the assignment they have.": {
     "sites": 1,
     "scope": [
@@ -187026,6 +187874,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Opens the customer record.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Opens the timeline. Recorded automatically when a worker is created.": {
@@ -189937,13 +190794,13 @@
       "apps/web/components"
     ]
   },
-  "Outlook": {
+  "Outlook figures": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "Output": {
@@ -201591,6 +202448,24 @@
       "rules/tariff"
     ]
   },
+  "Positioning called off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/notification.dash.positioning"
+    ]
+  },
+  "Positioning not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Positions": {
     "sites": 5,
     "scope": [
@@ -208929,6 +209804,15 @@
       "go/other"
     ]
   },
+  "Quieter than the range.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Quote": {
     "sites": 2,
     "scope": [
@@ -209561,6 +210445,15 @@
       "routes/agent-control",
       "routes/reports",
       "routes/shipment"
+    ]
+  },
+  "Range held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Range maximum must be greater than range minimum": {
@@ -227981,7 +228874,7 @@
     ]
   },
   "Review": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -227995,6 +228888,7 @@
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/driver-expense",
+      "routes/freight-outlook",
       "routes/fuel-purchase",
       "routes/inbox",
       "routes/service-failure",
@@ -238930,6 +239824,15 @@
       "routes/shipment"
     ]
   },
+  "See loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "See margins": {
     "sites": 1,
     "scope": [
@@ -239008,7 +239911,7 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "apps/web/components"
     ]
   },
   "See the run": {
@@ -239129,6 +240032,15 @@
     ]
   },
   "See whether a driver is on the portal and the invitations sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "See which drivers are on their way to an area": {
     "sites": 1,
     "scope": [
       "go"
@@ -241956,7 +242868,7 @@
     ]
   },
   "Send": {
-    "sites": 19,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -241968,6 +242880,7 @@
       "routes/detention-desk",
       "routes/factoring",
       "routes/factoring-company",
+      "routes/freight-outlook",
       "routes/inbox",
       "routes/invoice",
       "routes/onboarding",
@@ -241981,6 +242894,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Send <w>{0}</w> to <a>{1}</a>": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Send EDI": {
@@ -242083,6 +243005,15 @@
     ]
   },
   "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Send a driver toward an area and tell them in Dash": {
     "sites": 1,
     "scope": [
       "go"
@@ -243094,6 +244025,15 @@
       "routes/desk"
     ]
   },
+  "Send {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Send {0} with the invoice": {
     "sites": 1,
     "scope": [
@@ -243267,6 +244207,15 @@
       "routes/inbox"
     ]
   },
+  "Sending an empty driver toward an area where freight is coming, from the freight outlook. The driver is told in Dash, and the forecast and the planner count them at the target until they arrive or it is called off.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sending failed": {
     "sites": 1,
     "scope": [
@@ -243283,6 +244232,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Sending tells the driver in the app and counts them at {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Sending to {0}": {
@@ -243596,6 +244554,15 @@
       "routes/factoring-submission",
       "routes/inbox",
       "routes/time-attendance"
+    ]
+  },
+  "Sent <w>{0}</w> to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Sent At": {
@@ -249251,13 +250218,14 @@
     ]
   },
   "Short": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
       "routes/desk",
+      "routes/freight-outlook",
       "routes/inbox",
       "routes/random-testing"
     ]
@@ -249287,15 +250255,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Short by": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Short context explaining when to apply this reason; use customer-safe wording.": {
@@ -249350,6 +250309,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Short of trucks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Short pay": {
@@ -249596,7 +250564,7 @@
     ]
   },
   "Show all": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -249605,6 +250573,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/dispatch-console",
+      "routes/freight-outlook",
       "routes/shipment"
     ]
   },
@@ -250065,6 +251034,15 @@
       "routes/settings"
     ]
   },
+  "Show the brief": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Show the changes": {
     "sites": 1,
     "scope": [
@@ -250270,6 +251248,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Show {0, plural, one {# hidden move} other {# hidden moves}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Show {0}": {
@@ -254200,6 +255187,15 @@
       "routes/agent-control"
     ]
   },
+  "Spare": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Special Provisions": {
     "sites": 1,
     "scope": [
@@ -257608,6 +258604,15 @@
       "routes/desk"
     ]
   },
+  "Still expected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Still inside the granted free time": {
     "sites": 1,
     "scope": [
@@ -257615,6 +258620,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Still need a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Still open": {
@@ -259869,7 +260883,7 @@
     ]
   },
   "Summary": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -259880,6 +260894,7 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/detention-intelligence",
+      "routes/freight-outlook",
       "routes/worker"
     ]
   },
@@ -263998,6 +265013,15 @@
       "go/other"
     ]
   },
+  "Tendered so far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Tendered {0, plural, one {# load} other {# loads}} to best-match carriers": {
     "sites": 1,
     "scope": [
@@ -264858,6 +265882,24 @@
     ]
   },
   "That approval is already delegated to this person for the same period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That area is not in the freight forecast, so a driver cannot be sent there from the outlook.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "That area is not in the freight forecast.": {
     "sites": 1,
     "scope": [
       "go"
@@ -267289,6 +268331,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The area didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The argument must be this value.": {
@@ -273673,6 +274724,15 @@
       "go/other"
     ]
   },
+  "The forecast has no revenue history for {0} yet, so it can't price one more driver there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "The forecast is fitted every night from your shipment history.": {
     "sites": 1,
     "scope": [
@@ -273680,6 +274740,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The forecast learns areas from where your loads pick up. Once it has, they appear here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The forecast needs 8 weeks and 200 loads of history; it has {0, plural, one {# week} other {# weeks}} and {1, plural, one {# load} other {# loads}}.": {
@@ -273781,6 +274850,15 @@
       "routes/dispatch-control"
     ]
   },
+  "The freight forecast is not ready, so there is no outlook for this area yet.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The freight lines add up to {0}: freight cannot be below zero": {
     "sites": 2,
     "scope": [
@@ -273812,6 +274890,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The freight outlook didn't load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The freight's density, when it has weight and volume.": {
@@ -278218,16 +279305,7 @@
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "The outlook didn't load": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
+      "apps/web/components"
     ]
   },
   "The outstanding balance will no longer be recovered from future settlements.": {
@@ -285441,6 +286519,15 @@
       "apps/web/components"
     ]
   },
+  "The track record appears after the next nightly fit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "The tracking link could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -287099,6 +288186,15 @@
       "routes/desk"
     ]
   },
+  "Their drop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Their encryption certificate": {
     "sites": 2,
     "scope": [
@@ -287124,6 +288220,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Their next load, {0}, would leave {1} {2, plural, one {# truck} other {# trucks}} short from {3}. Hand it to {4}, free in {5} {6}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Their next load, {0}, would leave {1} {2, plural, one {# truck} other {# trucks}} short from {3}. Hand it to {4}, free {5}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Their open receivables are back within the credit limit, so shipments can be booked for them again.": {
@@ -287291,6 +288405,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "There by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "There is already a test named \"{0}\"": {
@@ -290215,6 +291338,15 @@
       "go/other"
     ]
   },
+  "This driver can't be sent: they are not available for dispatch, or nobody knows where they are.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This driver has a clean hours-of-service record for the past month.": {
     "sites": 1,
     "scope": [
@@ -290278,7 +291410,25 @@
       "routes/worker"
     ]
   },
+  "This driver is already in that area.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This driver is no longer active, so this invitation cannot be used.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This driver was just sent somewhere else. Refresh and try again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -291683,6 +292833,15 @@
       "routes/inbox"
     ]
   },
+  "This isn't an empty area: try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "This isn't an empty board: moves in this window may still need drivers.": {
     "sites": 1,
     "scope": [
@@ -291701,13 +292860,13 @@
       "routes/dispatch-console"
     ]
   },
-  "This isn't an empty outlook: freight may still be coming where drivers are short.": {
+  "This isn't an empty outlook: trucks may still be short somewhere. Try again in a moment.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/freight-outlook"
     ]
   },
   "This isn't an empty roster: drivers may still be free for work.": {
@@ -293193,6 +294352,15 @@
     ]
   },
   "This portal task's browser is closed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This positioning was already called off or replaced.": {
     "sites": 1,
     "scope": [
       "go"
@@ -297924,6 +299092,15 @@
       "routes/worker"
     ]
   },
+  "Too far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Too few confirmed fields last week or in the weeks before to judge": {
     "sites": 1,
     "scope": [
@@ -299539,12 +300716,22 @@
     ]
   },
   "Track record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/freight-outlook"
+    ]
+  },
+  "Track record here": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Track report generation, download artifacts, and cancel active runs": {
@@ -302153,6 +303340,15 @@
       "go/other"
     ]
   },
+  "Trucks to spare": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Trucks waited <b>{0} h</b> past free time in the last {1} days, <b>{2} h less</b> than the {1} days before.": {
     "sites": 1,
     "scope": [
@@ -304568,13 +305764,12 @@
     ]
   },
   "Under way": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
-      "routes/dispatch-console"
+      "routes/desk"
     ]
   },
   "Under {0}": {
@@ -307084,6 +308279,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "Updated {0} · learned from {1, plural, one {# week} other {# weeks}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Updated {0}{1}": {
     "sites": 1,
     "scope": [
@@ -309272,6 +310476,15 @@
       "apps/web/lib"
     ]
   },
+  "Usually in by now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Usually sends": {
     "sites": 1,
     "scope": [
@@ -309279,33 +310492,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Usually up to {0, plural, one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0}–{1} loads in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Utah (UT)": {
@@ -310745,7 +311931,7 @@
     ]
   },
   "View": {
-    "sites": 129,
+    "sites": 130,
     "scope": [
       "go",
       "ts"
@@ -317525,6 +318711,15 @@
       "routes/formula-template"
     ]
   },
+  "What one more driver ending in the area is worth to you there": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "What one run may spend looking things up and acting": {
     "sites": 1,
     "scope": [
@@ -320949,6 +322144,15 @@
       "routes/osha"
     ]
   },
+  "Where they are now": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Where they end up": {
     "sites": 1,
     "scope": [
@@ -321057,6 +322261,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "Where trucks will be short or idle over the next two days, the moves that fix it and how far to trust the forecast": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Where volume is concentrating, origin against destination": {
     "sites": 1,
     "scope": [
@@ -321073,6 +322286,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Where {0} is now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Where {0} stands": {
@@ -322451,6 +323673,15 @@
       "routes/worker"
     ]
   },
+  "Who books here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Who can ask it": {
     "sites": 1,
     "scope": [
@@ -322458,6 +323689,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Who can get there by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Who can run it by hand": {
@@ -323900,7 +325140,7 @@
     ]
   },
   "Window": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -323911,7 +325151,6 @@
       "routes/agent-control",
       "routes/desk",
       "routes/detention-intelligence",
-      "routes/dispatch-console",
       "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
@@ -325756,12 +326995,13 @@
     ]
   },
   "Worth acting on": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/freight-outlook"
     ]
   },
   "Worth knowing": {
@@ -329225,6 +330465,15 @@
       "apps/web/hooks"
     ]
   },
+  "Your drivers cover the freight {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Your edits": {
     "sites": 2,
     "scope": [
@@ -332411,6 +333660,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "at {0}; the rest is placement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "auto": {
@@ -337032,6 +338290,24 @@
       "routes/accounting-drift"
     ]
   },
+  "in {0, plural, one {# area} other {# areas}} {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "in {0, plural, one {# area} other {# areas}}, at the worst hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "in {0}": {
     "sites": 5,
     "scope": [
@@ -338625,6 +339901,15 @@
       "routes/desk"
     ]
   },
+  "of {0, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "of {0}": {
     "sites": 11,
     "scope": [
@@ -338905,12 +340190,13 @@
     ]
   },
   "on {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/freight-outlook"
     ]
   },
   "on-time history": {
@@ -341135,6 +342421,15 @@
       "routes/desk"
     ]
   },
+  "the gap is placement, not headcount": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "the guide": {
     "sites": 2,
     "scope": [
@@ -341511,6 +342806,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "through {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "thumbnail URL": {
@@ -344282,6 +345586,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0, plural, one {# empty mile} other {# empty miles}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0, plural, one {# empty — fine for a draft} other {# empty — fine for a draft}}": {
     "sites": 1,
     "scope": [
@@ -345088,7 +346401,7 @@
     ]
   },
   "{0, plural, one {# load} other {# loads}}": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -345096,6 +346409,7 @@
       "apps/dash/routes",
       "routes/desk",
       "routes/dispatch-console",
+      "routes/freight-outlook",
       "routes/shipment"
     ]
   },
@@ -345106,6 +346420,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0, plural, one {# load} other {# loads}} from {1} end nearby by {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0, plural, one {# load} other {# loads}} sent to carriers": {
@@ -345268,6 +346591,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0, plural, one {# mile} other {# miles}} to the pickup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0, plural, one {# minute} other {# minutes}}": {
@@ -345534,6 +346866,15 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/ifta-return"
+    ]
+  },
+  "{0, plural, one {# move} other {# moves}} in the brief": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0, plural, one {# move} other {# moves}} {1}": {
@@ -350054,15 +351395,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0, plural, other {# booked}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0, plural, other {# booked}}; {1, plural, =0 {no other driver expected} one {# other driver expected} other {# other drivers expected}}.": {
     "sites": 1,
     "scope": [
@@ -351851,12 +353183,13 @@
     ]
   },
   "{0} behind": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
+      "routes/freight-outlook",
       "routes/shipment",
       "routes/worker"
     ]
@@ -353992,6 +355325,15 @@
       "routes/shipment"
     ]
   },
+  "{0} gains a driver": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} gal": {
     "sites": 2,
     "scope": [
@@ -354273,6 +355615,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} has more drivers than freight here, so one more driver ending here would likely sit idle.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} has more elements than the base defines": {
@@ -357978,6 +359329,15 @@
       "rules/matrix"
     ]
   },
+  "{0} keeps a driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} kept both documents": {
     "sites": 1,
     "scope": [
@@ -358322,6 +359682,24 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "{0} loses one": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "{0} loses {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} lost access": {
@@ -359570,6 +360948,15 @@
       "routes/shipment-tracking-public"
     ]
   },
+  "{0} of loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} of sell": {
     "sites": 1,
     "scope": [
@@ -359588,6 +360975,24 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0} of the usual {1, plural, one {# load} other {# loads}} in the next day are in; by now {2} usually are, so the rest may be going to another carrier.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "{0} of the usual {1} in for {2}, {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} of {1, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -359604,6 +361009,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} of {1, plural, one {# event} other {# events}} shown.": {
@@ -359697,7 +361111,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -359711,6 +361125,7 @@
       "routes/desk",
       "routes/detention-desk",
       "routes/edi",
+      "routes/freight-outlook",
       "routes/inbox",
       "routes/intake",
       "routes/onboarding",
@@ -359876,6 +361291,33 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} of {1} in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "{0} of {1} in, behind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "{0} of {1} in, {2} by now ·": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} of {1} indexed under {2}. Searches use {3} until every source is done.": {
@@ -360185,6 +361627,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "{0} of {1} tendered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} of {1} tests pass": {
@@ -360918,6 +362369,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} picks up {1, plural, one {# mile} other {# miles}} away and delivers near {2} before {3}, saving {4} against running empty.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} picks up {1}.": {
@@ -362006,12 +363466,22 @@
     ]
   },
   "{0} short": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook",
+      "routes/shipment"
+    ]
+  },
+  "{0} short {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "routes/freight-outlook"
     ]
   },
   "{0} shown": {
@@ -362156,15 +363626,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0} still owed": {
@@ -362465,6 +363926,15 @@
       "edi/lading"
     ]
   },
+  "{0} takes their next load, {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} takes this step": {
     "sites": 1,
     "scope": [
@@ -362692,6 +364162,15 @@
     "areas": [
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "{0} to spare {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} to the partner": {
@@ -363370,6 +364849,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} weeks ago": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} weeks before": {
@@ -364086,6 +365574,15 @@
       "routes/desk"
     ]
   },
+  "{0} · nothing short in reach": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0} · off": {
     "sites": 1,
     "scope": [
@@ -364437,6 +365934,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} · {1} behind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0} · {1} drivers in the pool · drawn {2}": {
@@ -365109,6 +366615,15 @@
       "routes/inbox"
     ]
   },
+  "{0}'s {1, plural, one {# empty mile} other {# empty miles}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0}+ results": {
     "sites": 1,
     "scope": [
@@ -365282,6 +366797,15 @@
       "routes/desk"
     ]
   },
+  "{0}, the last {1} weeks, against its usual {2} to {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "{0}, then moves them to {1}": {
     "sites": 1,
     "scope": [
@@ -365316,6 +366840,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0}, {1, plural, one {# mile} other {# miles}}, free {2} · {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "{0}, {1} and {2}": {

@@ -18,10 +18,11 @@ const (
 )
 
 type Booked struct {
-	Cell      int64
-	SlotStart int64
-	Total     int
-	Open      int
+	CustomerID pulid.ID
+	Cell       int64
+	SlotStart  int64
+	Total      int
+	Open       int
 }
 
 type Driver struct {
@@ -54,6 +55,11 @@ type absoluteKey struct {
 	start int64
 }
 
+type customerKey struct {
+	absoluteKey
+	customer pulid.ID
+}
+
 type Forecaster struct {
 	now       int64
 	ready     bool
@@ -63,6 +69,7 @@ type Forecaster struct {
 	curves    map[pulid.ID][]float64
 	tenant    []float64
 	booked    map[absoluteKey]Booked
+	tendered  map[customerKey]int
 	solving   map[absoluteKey]int
 	supply    map[int64][]Driver
 	names     map[pulid.ID]string
@@ -79,6 +86,7 @@ func NewForecaster(p *ForecasterParams) *Forecaster {
 		customers: map[rateKey][]*Rate{},
 		curves:    make(map[pulid.ID][]float64, len(p.Curves)),
 		booked:    make(map[absoluteKey]Booked, len(p.Booked)),
+		tendered:  map[customerKey]int{},
 		solving:   make(map[absoluteKey]int, len(p.Solving)),
 		names:     p.CustomerNames,
 		margin:    p.MarginPercent,
@@ -111,6 +119,9 @@ func NewForecaster(p *ForecasterParams) *Forecaster {
 		current.Total += booked.Total
 		current.Open += booked.Open
 		f.booked[key] = current
+		if !booked.CustomerID.IsNil() {
+			f.tendered[customerKey{absoluteKey: key, customer: booked.CustomerID}] += booked.Total
+		}
 	}
 	for _, solving := range p.Solving {
 		f.solving[absoluteKey{cell: solving.Cell, start: dispatchmarket.SlotStart(solving.SlotStart)}] += solving.Open
@@ -253,19 +264,19 @@ func (f *Forecaster) forecast(key WindowKey) windowForecast {
 	for i := range int64(WindowSlots) {
 		start := key.Start + i*dispatchmarket.SlotSeconds
 		slot := dispatchmarket.SlotOf(start)
+		booked := f.booked[absoluteKey{cell: key.Cell, start: start}]
+		out.booked += booked.Total
+		out.open += booked.Open - f.solving[absoluteKey{cell: key.Cell, start: start}]
 		rate := f.rates[rateKey{cell: key.Cell, slot: slot}]
 		if rate == nil {
 			continue
 		}
-		booked := f.booked[absoluteKey{cell: key.Cell, start: start}]
 		customers := f.customers[rateKey{cell: key.Cell, slot: slot}]
 		lead := float64(start+slotMidSeconds-f.now) / 3600
 		unbooked := 1 - f.bookedShare(customers, lead)
 
 		out.typical = out.typical.Plus(GammaPoisson(rate.Alpha, rate.Beta))
 		out.unbooked = out.unbooked.Plus(Nowcast(rate.Alpha, rate.Beta, booked.Total, unbooked))
-		out.booked += booked.Total
-		out.open += booked.Open - f.solving[absoluteKey{cell: key.Cell, start: start}]
 		for _, customer := range customers {
 			out.shares[customer.CustomerID] += customer.Alpha / customer.Beta
 		}

@@ -78,6 +78,15 @@ func (r *repository) Replace(ctx context.Context, req *demandforecastports.Repla
 				return fmt.Errorf("write booking curves: %w", err)
 			}
 		}
+		days := demandforecastdb.Days
+		if _, err := days.Where(keel.True()).Delete(ctx, db); err != nil {
+			return fmt.Errorf("clear forecast days: %w", err)
+		}
+		if len(req.Days) > 0 {
+			if err := days.CreateMany(ctx, db, req.Days); err != nil {
+				return fmt.Errorf("write forecast days: %w", err)
+			}
+		}
 
 		q := demandforecastdb.Qualities
 		if _, err := q.Upsert(ctx, db, []*demandforecast.Quality{req.Quality},
@@ -119,6 +128,24 @@ func (r *repository) quality(
 	}
 
 	return rows[0], nil
+}
+
+func (r *repository) Days(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+) ([]*demandforecast.Day, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*demandforecast.Day, error) {
+		d := demandforecastdb.Days
+		rows, err := d.Query().
+			Order(d.DayStart.Asc()).
+			Limit(demandforecast.RecordDays).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("read forecast days: %w", err)
+		}
+
+		return rows, nil
+	})
 }
 
 func (r *repository) ModelForCells(

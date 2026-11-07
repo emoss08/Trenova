@@ -130,6 +130,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/driverpositioningports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
@@ -384,6 +386,8 @@ type Params struct {
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
 	DemandForecastService             demandforecastports.Service
+	FreightOutlookService             freightoutlookports.Service
+	DriverPositioningService          driverpositioningports.Service
 	DispatchStyleService              dispatchlearningports.Service
 	AssignmentService                 assignmentports.AssignmentService
 	DocumentPacketRuleService         *documentpacketruleservice.Service
@@ -673,6 +677,8 @@ type Services struct {
 	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
 	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
 	DemandForecastService             demandforecastports.Service
+	FreightOutlookService             freightoutlookports.Service
+	DriverPositioningService          driverpositioningports.Service
 	DispatchStyleService              dispatchlearningports.Service
 	AssignmentService                 assignmentports.AssignmentService
 	DocumentPacketRuleService         *documentpacketruleservice.Service
@@ -968,6 +974,8 @@ func newServices(p *Params) *Services {
 		DispatchConsoleService:            p.DispatchConsoleService,
 		DispatchAutoAssignService:         p.DispatchAutoAssignService,
 		DemandForecastService:             p.DemandForecastService,
+		FreightOutlookService:             p.FreightOutlookService,
+		DriverPositioningService:          p.DriverPositioningService,
 		DispatchStyleService:              p.DispatchStyleService,
 		AssignmentService:                 p.AssignmentService,
 		DocumentPacketRuleService:         p.DocumentPacketRuleService,

@@ -14,6 +14,7 @@ func operationsResources() []*permissionspec.ResourceDefinition {
 		shipmentMoveResource(),
 		shipmentStopResource(),
 		workerDispatchHoldResource(),
+		driverPositioningResource(),
 		shipmentHoldResource(),
 		jurisdictionRuleOverrideResource(),
 		jurisdictionRuleResource(),
@@ -309,6 +310,36 @@ func workerDispatchHoldResource() *permissionspec.ResourceDefinition {
 				Operation:   permission.OpCreate,
 				DisplayName: "Create",
 				Description: "Take a driver off dispatch, and put them back",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityInternal,
+	}
+}
+
+func driverPositioningResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceDriverPositioning.String(),
+		DisplayName: "Driver Positioning",
+		Description: "Sending an empty driver toward an area where freight is coming, from " +
+			"the freight outlook. The driver is told in Dash, and the forecast and the " +
+			"planner count them at the target until they arrive or it is called off.",
+		Category:       "Dispatch",
+		ParentResource: permission.ResourceWorker.String(),
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "See which drivers are on their way to an area",
+			},
+			{
+				Operation:   permission.OpCreate,
+				DisplayName: "Send",
+				Description: "Send a driver toward an area and tell them in Dash",
+			},
+			{
+				Operation:   permission.OpCancel,
+				DisplayName: "Call off",
+				Description: "Call off a positioning and tell the driver",
 			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,

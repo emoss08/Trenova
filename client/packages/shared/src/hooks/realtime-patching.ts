@@ -55,6 +55,8 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   distance_profile: ["distance-profile-list"],
   document_type: ["document-type-list"],
   driver_pay_profile: ["pay-profile-list"],
+  // A driver sent toward an area, or called off: the outlook counts them at the target.
+  driver_positioning: ["freightOutlook"],
   driver_settlement: ["settlement-batch-list"],
   edi: [
     "edi-communication-profile-list",

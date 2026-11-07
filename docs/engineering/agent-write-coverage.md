@@ -97,7 +97,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1123 writes: 663 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1125 writes: 665 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
@@ -112,10 +112,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Read-only | 47 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
-| **Pending** | **2** |
-| Total | 1123 |
+| **Pending** | **4** |
+| Total | 1125 |
 
-Of the 445 writes an agent should be able to make, 443 have a tool (99%).
+Of the 447 writes an agent should be able to make, 443 have a tool (99%).
 
 ## Pending
 
@@ -124,6 +124,8 @@ The writes no tool performs yet, and what the tool would do.
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
 | billingqueue | `PUT /api/v1/billing-queue/:itemID/invoice-details/` | Set the customer PO, invoice note, payment term, invoice date and packet documents on a queue item before approval |
+| dispatchconsole | `mutation dispatchCallOffPositioning` | Call off a driver positioning the outlook made and tell the driver in Dash |
+| dispatchconsole | `mutation dispatchPositionDriver` | Send an empty driver toward a short area from the freight outlook and tell them in Dash |
 | edilading | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
@@ -182,7 +184,7 @@ The writes no tool performs yet, and what the tool would do.
 | decisions | 1 | 0 | 1 | 0 |
 | deskmemory | 6 | 2 | 4 | 0 |
 | detention | 8 | 4 | 4 | 0 |
-| dispatchconsole | 5 | 4 | 1 | 0 |
+| dispatchconsole | 7 | 4 | 1 | 2 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
 | dispatchstyle | 1 | 0 | 1 | 0 |
 | distancecontrol | 1 | 0 | 1 | 0 |
@@ -909,8 +911,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_create_carrier_assignment` |
 | `mutation dispatchAssignMoves`<br>twin `POST /api/v1/shipment-moves/:moveID/assignment/`<br>twin `PUT /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_assign_move` |
+| `mutation dispatchCallOffPositioning` | Pending: Call off a driver positioning the outlook made and tell the driver in Dash |
 | `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `dispatch_cancel_carrier_assignment` |
 | `mutation dispatchPlanAutoAssign` | Exempt, read-only: Plans coverage for review: it files pending proposals a person decides with decideAgentProposal and refreshes the stored plan prices, and assigns nothing. |
+| `mutation dispatchPositionDriver` | Pending: Send an empty driver toward a short area from the freight outlook and tell them in Dash |
 | `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Tool: `dispatch_unassign_move` |
 
 ### dispatchcontrol
