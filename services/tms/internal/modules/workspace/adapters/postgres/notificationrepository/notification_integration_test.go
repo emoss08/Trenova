@@ -28,13 +28,17 @@ func TestNotifiedUsers_NamesOnlyThePeopleToldOfThatEventSinceItHappened(t *testi
 	since := time.Now().Add(-time.Minute).Unix()
 	create := func(eventType, correlation string, target *pulid.ID) {
 		t.Helper()
+		channel := notification.ChannelUser
+		if target == nil {
+			channel = notification.ChannelGlobal
+		}
 		_, err := repo.Create(ctx, &notification.Notification{
 			OrganizationID: data.Organization.ID,
 			BusinessUnitID: &buID,
 			TargetUserID:   target,
 			EventType:      eventType,
 			Priority:       notification.PriorityHigh,
-			Channel:        notification.ChannelUser,
+			Channel:        channel,
 			Title:          "Role changed",
 			Message:        "A role was assigned",
 			DeliveryStatus: notification.DeliveryStatusPending,
