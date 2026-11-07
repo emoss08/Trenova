@@ -11534,6 +11534,9 @@ type CustomerBillingProfile {
   autoBill: Boolean!
   autoCreditHold: Boolean!
   autoMarkReadyToBill: Boolean!
+  """
+  Whether a posted invoice is emailed to the customer as soon as its PDF is made, without anyone sending it. Email must also be allowed by emailInvoiceEnabled.
+  """
   autoSendInvoiceOnGeneration: Boolean!
   autoTransfer: Boolean!
   billingCurrency: String!

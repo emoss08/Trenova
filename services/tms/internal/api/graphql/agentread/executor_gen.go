@@ -666,8 +666,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskCustomerCard",
-		Hash:     "sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f",
-		Document: "query DeskCustomerCard($id: ID!) { customer(id: $id) { addressLine1 addressLine2 billingProfile { applyLateCharges autoBill billingCurrency billingCycle billingNotes creditBalance creditHoldReason creditLimit creditStatus documentTypes { id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit fuelSurchargeMode gracePeriodDays invoiceDelivery lateChargeRate paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber taxExempt } city code createdAt dotNumber id mcNumber name postalCode state { abbreviation } status updatedAt } }",
+		Hash:     "sha256:e8fa7445761533bfffee688cc9b0bed9823b030d91fd77abd7f7a7a53018d6fc",
+		Document: "query DeskCustomerCard($id: ID!) { customer(id: $id) { addressLine1 addressLine2 billingProfile { applyLateCharges autoBill autoSendInvoiceOnGeneration billingCurrency billingCycle billingNotes creditBalance creditHoldReason creditLimit creditStatus documentTypes { id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit fuelSurchargeMode gracePeriodDays invoiceDelivery lateChargeRate paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber taxExempt } city code createdAt dotNumber id mcNumber name postalCode state { abbreviation } status updatedAt } }",
 	},
 	{
 		Name:     "DeskCustomerUpdatePreferences",

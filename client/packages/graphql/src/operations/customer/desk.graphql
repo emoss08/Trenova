@@ -23,6 +23,7 @@ query DeskCustomerCard($id: ID!) {
       billingCycle
       invoiceDelivery
       emailInvoiceEnabled
+      autoSendInvoiceOnGeneration
       ediInvoiceEnabled
       autoBill
       creditLimit

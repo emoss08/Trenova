@@ -110,6 +110,7 @@ type CustomerBillingProfile {
   creditHoldAutomatic: Boolean!
   """When creditBalance was last recomputed from the receivables ledger."""
   creditReviewedAt: Timestamp
+  "Whether a posted invoice is emailed to the customer as soon as its PDF is made, without anyone sending it. Email must also be allowed by emailInvoiceEnabled."
   autoSendInvoiceOnGeneration: Boolean!
   "Whether the organization's payment reminders may email this customer about overdue invoices."
   sendPaymentReminders: Boolean!

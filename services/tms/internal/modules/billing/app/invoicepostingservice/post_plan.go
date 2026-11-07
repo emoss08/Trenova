@@ -96,6 +96,8 @@ type PostPreview struct {
 	AccountingSync []accountingsyncports.AccountingSyncDestination
 	// EDI is the invoice's outbound 210 as it would stand after posting.
 	EDI *invoiceports.InvoiceEDISendPlan
+	// Email is whether posting emails the invoice on its own.
+	Email *EmailPlan
 }
 
 // Refused reports whether Post would refuse the invoice as it stands.
@@ -186,6 +188,9 @@ func (s *Service) PreviewPost(
 		return nil, err
 	}
 	preview.EDI = s.edi.PlanFor(ctx, entity, req.TenantInfo)
+	if preview.Email, err = s.emailPlanFor(ctx, entity, req.TenantInfo); err != nil {
+		return nil, err
+	}
 
 	return preview, nil
 }

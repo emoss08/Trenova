@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
@@ -269,6 +270,39 @@ func TestPreviewPost_PlansWhatPostWouldWrite(t *testing.T) {
 	assert.Equal(t, f.revenueID, preview.Journal.Lines[1].GLAccountID)
 	assert.Equal(t, int64(125000), preview.Journal.Lines[1].CreditMinor)
 	assert.Empty(t, preview.AccountingSync, "no accounting connection is configured")
+	require.NotNil(t, preview.Email)
+	assert.False(t, preview.Email.AutoSend, "the customer is not sent invoices automatically")
+}
+
+// The preview says whether posting emails the invoice on its own, and to
+// whom, so whoever posts it knows whether it still has to be sent.
+func TestPreviewPost_SaysWhoPostingEmailsTheInvoiceTo(t *testing.T) {
+	t.Parallel()
+
+	f := newPostFixture(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
+	customers.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&customer.Customer{
+			ID: pulid.MustNew("cus_"),
+			BillingProfile: &customer.CustomerBillingProfile{
+				AutoSendInvoiceOnGeneration: true,
+				EmailInvoiceEnabled:         true,
+			},
+			EmailProfile: &customer.CustomerEmailProfile{
+				ToRecipients: "ap@crown.example, billing@crown.example",
+			},
+		}, nil)
+	f.svc.customerRepo = customers
+	f.invoice.SendStatus = invoice.SendStatusNotSent
+
+	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
+	require.NoError(t, err)
+
+	require.NotNil(t, preview.Email)
+	assert.True(t, preview.Email.Allowed)
+	assert.True(t, preview.Email.AutoSend)
+	assert.Equal(t, []string{"ap@crown.example", "billing@crown.example"}, preview.Email.Recipients)
 }
 
 // Posting books what the preview showed: the same accounts and amounts.

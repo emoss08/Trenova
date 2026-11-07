@@ -210,7 +210,8 @@ func postSummary(post *invoicepostingservice.PostPreview, label, total string) s
 	}
 
 	sentences := []string{strings.Join(parts, "; ") + "."}
-	sentences = append(sentences, syncSentence(post.AccountingSync), ediSentence(post.EDI))
+	sentences = append(sentences, syncSentence(post.AccountingSync), ediSentence(post.EDI),
+		emailSentence(post.Email))
 
 	return strings.Join(changepreview.SlicesNonEmpty(sentences), " ")
 }
@@ -245,6 +246,28 @@ func ediSentence(plan *invoiceports.InvoiceEDISendPlan) string {
 		return "An EDI 210 would be sent to " + plan.PartnerName + "."
 	default:
 		return "The customer takes EDI invoices; the 210 waits for someone to send it."
+	}
+}
+
+// emailSentence says whether posting emails the invoice on its own, so the
+// agent knows whether invoice_send is still to be proposed afterwards.
+func emailSentence(plan *invoicepostingservice.EmailPlan) string {
+	switch {
+	case plan == nil:
+		return ""
+	case !plan.Allowed:
+		return "The customer does not take invoices by email, so nobody is emailed."
+	case !plan.AutoSend:
+		return "Nobody is emailed: this customer is not sent invoices automatically, so it " +
+			"goes out only when someone sends it (invoice_send)."
+	case len(plan.Recipients) == 0:
+		return "The customer is sent invoices automatically but has no billing email, so " +
+			"nobody is emailed."
+	case len(plan.Recipients) == 1:
+		return "It is emailed to " + plan.Recipients[0] + " on its own once its PDF is made."
+	default:
+		return fmt.Sprintf("It is emailed to %s and %d more on its own once its PDF is made.",
+			plan.Recipients[0], len(plan.Recipients)-1)
 	}
 }
 
