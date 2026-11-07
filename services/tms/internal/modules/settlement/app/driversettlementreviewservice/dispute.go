@@ -435,7 +435,7 @@ func (s *Service) logDisputeAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log settlement dispute audit action", zap.Error(err))
 	}
 }

@@ -172,11 +172,11 @@ func (s *Service) Create(
 	}
 
 	if replaced.Previous != nil {
-		s.record(req.Actor, req.TenantInfo, replaced.Previous, nil, permission.OpCancel,
+		s.record(ctx, req.Actor, req.TenantInfo, replaced.Previous, nil, permission.OpCancel,
 			"Positioning toward "+replaced.Previous.ToLabel+" replaced by one toward "+
 				positioning.ToLabel)
 	}
-	s.record(req.Actor, req.TenantInfo, positioning, nil, permission.OpCreate,
+	s.record(ctx, req.Actor, req.TenantInfo, positioning, nil, permission.OpCreate,
 		"Driver sent toward "+positioning.ToLabel)
 	s.tellDriver(ctx, req.TenantInfo, positioning, false)
 
@@ -204,7 +204,7 @@ func (s *Service) CallOff(
 		return nil, err
 	}
 
-	s.record(req.Actor, req.TenantInfo, positioning, before, permission.OpCancel,
+	s.record(ctx, req.Actor, req.TenantInfo, positioning, before, permission.OpCancel,
 		"Positioning toward "+positioning.ToLabel+" called off")
 	s.tellDriver(ctx, req.TenantInfo, positioning, true)
 
@@ -263,6 +263,7 @@ func (s *Service) driverStart(
 }
 
 func (s *Service) record(
+	ctx context.Context,
 	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 	current, previous *driverpositioning.Positioning,
@@ -285,7 +286,7 @@ func (s *Service) record(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log positioning audit", zap.Error(err))
 	}
 }

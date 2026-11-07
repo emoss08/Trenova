@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
+	"github.com/emoss08/trenova/pkg/auditctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,7 +114,10 @@ func (h *Handler) requireDirectory() gin.HandlerFunc {
 		}
 
 		c.Set(directoryKey, dir)
-		c.Request = c.Request.WithContext(dbscope.WithTenant(c.Request.Context(), dir.DBTenant()))
+		c.Request = c.Request.WithContext(auditctx.WithChannel(
+			dbscope.WithTenant(c.Request.Context(), dir.DBTenant()),
+			auditctx.ChannelSCIM,
+		))
 		c.Next()
 	}
 }

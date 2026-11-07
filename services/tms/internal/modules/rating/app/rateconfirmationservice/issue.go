@@ -71,7 +71,7 @@ func (s *Service) IssueForTenderAcceptance(
 		if genErr != nil {
 			return nil, genErr
 		}
-		s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+		s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 			TenantInfo: req.TenantInfo,
 			Operation:  permission.OpCreate,
 			Comment: fmt.Sprintf(
@@ -130,7 +130,7 @@ func (s *Service) completeTenderIssued(
 		return nil, err
 	}
 
-	s.logRateConfirmationAudit(&rateConfirmationAuditParams{
+	s.logRateConfirmationAudit(ctx, &rateConfirmationAuditParams{
 		TenantInfo: req.TenantInfo,
 		Operation:  permission.OpApprove,
 		Comment: fmt.Sprintf(

@@ -76,7 +76,7 @@ type auditLog struct {
 	comments int
 }
 
-func (a *auditLog) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (a *auditLog) LogAction(context.Context, *auditports.LogActionParams, ...auditports.LogOption) error {
 	a.comments++
 	return nil
 }

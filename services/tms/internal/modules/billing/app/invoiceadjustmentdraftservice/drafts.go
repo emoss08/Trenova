@@ -84,7 +84,7 @@ func (s *Service) CreateDraft(
 	}
 
 	s.engine.LogAdjustmentEvent("invoice adjustment draft created", created, zap.InfoLevel)
-	s.engine.LogAudit(created, actor, permission.OpCreate, "Invoice adjustment draft created")
+	s.engine.LogAudit(ctx, created, actor, permission.OpCreate, "Invoice adjustment draft created")
 
 	return created, nil
 }

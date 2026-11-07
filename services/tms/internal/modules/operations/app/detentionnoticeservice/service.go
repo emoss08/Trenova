@@ -570,7 +570,7 @@ func (s *Service) SendOccurrenceNotice(
 		return nil, err
 	}
 
-	s.effects.Audit(&original, occurrence, p.UserID, "Detention notice sent")
+	s.effects.Audit(ctx, &original, occurrence, p.UserID, "Detention notice sent")
 
 	return occurrence, nil
 }

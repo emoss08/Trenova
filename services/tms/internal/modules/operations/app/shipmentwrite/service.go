@@ -403,7 +403,7 @@ func (s *Service) announceCreated(
 	created *shipment.Shipment,
 	auditActor kernelports.AuditActor,
 ) {
-	if err := s.effects.LogShipmentAction(
+	if err := s.effects.LogShipmentAction(ctx,
 		created,
 		auditActor,
 		permission.OpCreate,
@@ -627,7 +627,7 @@ func (s *Service) finishShipmentUpdate(
 		return nil, err
 	}
 
-	if err := s.effects.LogShipmentAction(
+	if err := s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,

@@ -147,7 +147,7 @@ func (s *Service) Import(
 		return nil, err
 	}
 
-	s.logAudit(updatedBatch, nil, actor.UserID, "Bank receipt batch imported")
+	s.logAudit(ctx, updatedBatch, nil, actor.UserID, "Bank receipt batch imported")
 	return &bankreceiptbatchports.BankReceiptBatchResult{
 		Batch:    updatedBatch,
 		Receipts: receipts,
@@ -226,6 +226,7 @@ func (s *Service) importBatchWithinTx(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current, previous *bankreceiptbatch.BankReceiptBatch,
 	userID pulid.ID,
 	comment string,
@@ -246,7 +247,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log bank receipt batch audit action",
 			zap.Error(err),

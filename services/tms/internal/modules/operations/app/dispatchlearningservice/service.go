@@ -128,7 +128,7 @@ func (s *Service) Reset(
 		return nil, err
 	}
 
-	if err = s.audit.LogAction(
+	if err = s.audit.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceDispatchControl,
 			ResourceID:     saved.ID.String(),

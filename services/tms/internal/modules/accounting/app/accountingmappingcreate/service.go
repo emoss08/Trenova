@@ -153,7 +153,7 @@ func (s *Service) CreateReferenceRecord(
 		return nil, err
 	}
 
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		updated,
 		req.UserID,
 		before,

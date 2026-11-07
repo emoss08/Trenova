@@ -310,6 +310,23 @@ writes:
     exempt: agent-administration
     reason: "Starts an agent on demand; agents hand work to one another through delegate_task instead."
 
+  # auditlog
+  "mutation auditExportDownload":
+    exempt: read-only
+    reason: "Returns a short-lived link to an export the person already asked for; the download is itself audited."
+  "mutation placeAuditLegalHold":
+    exempt: security
+    reason: "A legal hold overrides retention for litigation or an investigation; only a person accountable for that decision places one."
+  "mutation releaseAuditLegalHold":
+    exempt: security
+    reason: "Releasing a legal hold lets retention delete evidence; only a person accountable for that decision releases one."
+  "mutation requestAuditExport":
+    exempt: security
+    reason: "An audit log export carries the organization's whole trail out of Trenova; a person asks for it and is recorded doing so."
+  "mutation updateAuditAlertPolicy":
+    exempt: security
+    reason: "Security alerts are how administrators learn of access changes; an agent must not be able to silence them."
+
   # aiaudit
   "mutation aiAuditExportDownload":
     exempt: read-only

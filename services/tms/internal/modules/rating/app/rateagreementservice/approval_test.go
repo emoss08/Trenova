@@ -177,7 +177,7 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 		Once()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := New(Params{
 		Logger:       zap.NewNop(),
@@ -240,7 +240,7 @@ func serviceFor(
 		Maybe()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return New(Params{
 		Logger:       zap.NewNop(),

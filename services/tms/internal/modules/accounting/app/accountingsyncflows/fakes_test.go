@@ -1439,7 +1439,7 @@ type fakeAudit struct {
 	comments []string
 }
 
-func (f *fakeAudit) LogAction(
+func (f *fakeAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	opts ...auditports.LogOption,
 ) error {

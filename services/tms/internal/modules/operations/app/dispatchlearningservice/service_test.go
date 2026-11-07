@@ -238,8 +238,8 @@ func TestReset_ForgetsTheWeightsKeepsTheCursorAndAudits(t *testing.T) {
 
 	var logged *auditports.LogActionParams
 	audit.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		Run(func(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) {
 			logged = params
 		}).
 		Return(nil).

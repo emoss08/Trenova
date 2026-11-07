@@ -9,10 +9,13 @@ import (
 )
 
 const (
-	SourceName    = "core"
-	Dir           = "schema/migrations"
-	ReconcileRLS  = "SELECT trenova_rls.reconcile()"
-	MarkLeakproof = "SELECT trenova_rls.mark_leakproof_operators()"
+	SourceName                 = "core"
+	Dir                        = "schema/migrations"
+	ReconcileRLS               = "SELECT trenova_rls.reconcile()"
+	MarkLeakproof              = "SELECT trenova_rls.mark_leakproof_operators()"
+	EnsureAuditPartitions      = "SELECT audit_partitions.ensure_partitions(NULL, 24)"
+	DropExpiredAuditPartitions = "SELECT audit_partitions.drop_expired_partitions(" +
+		"EXTRACT(epoch FROM now() - interval '3651 days')::BIGINT)"
 )
 
 //go:embed *.sql
@@ -27,7 +30,10 @@ func Set() migrate.Set {
 }
 
 func Options() migrate.Options {
-	return migrate.Options{After: []string{ReconcileRLS}, Ensure: []string{MarkLeakproof}}
+	return migrate.Options{
+		After:  []string{ReconcileRLS},
+		Ensure: []string{MarkLeakproof, EnsureAuditPartitions, DropExpiredAuditPartitions},
+	}
 }
 
 func Dirs() []migrate.Dir {

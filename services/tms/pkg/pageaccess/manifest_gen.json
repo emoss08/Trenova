@@ -1,5 +1,5 @@
 {
-  "version": "sha256:2d0192e1e4111131611601ce88322d1c9d454785fddeeaf20ca34c3832d2e4ad",
+  "version": "sha256:6e41aeacfb777fae43a2fbb57d27e76c12ecdbb0989675622339e0d46f5cc6f3",
   "screens": [
     {
       "path": "/",
@@ -3351,7 +3351,15 @@
         }
       ],
       "operations": [
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportDownload",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BulkEditFields",
         "DataTableAggregates",
         "DataTableFacets",
@@ -3359,12 +3367,16 @@
         "ExportTableView",
         "MyBulkEdit",
         "MyTableLayout",
+        "PlaceAuditLegalHold",
         "PreviewBulkEdit",
+        "ReleaseAuditLegalHold",
+        "RequestAuditExport",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
         "ScheduleTableView",
         "StartBulkEdit",
-        "UndoMyBulkEdit"
+        "UndoMyBulkEdit",
+        "UpdateAuditAlertPolicy"
       ],
       "endpoints": [
         {
@@ -3378,7 +3390,9 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "audit_legal_hold"
+      ],
       "references": [
         "report"
       ],
@@ -3720,7 +3734,19 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "DispatchAssignmentPreview",
+        "DispatchBoard",
+        "DispatchCarrierAssignmentPreview",
+        "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
+        "DispatchMoveCandidates",
+        "DispatchStyle",
+        "LiveTenderByMove",
+        "ResetDispatchStyle",
+        "TendersByShipment"
+      ],
       "endpoints": [
         {
           "method": "GET",
@@ -3743,8 +3769,12 @@
           ]
         }
       ],
-      "reads": [],
-      "references": [],
+      "reads": [
+        "tender"
+      ],
+      "references": [
+        "carrier"
+      ],
       "declared": []
     },
     {
@@ -10805,7 +10835,14 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -10817,6 +10854,7 @@
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
         "DeskInvoiceCard",
+        "DeskRecordActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
@@ -10857,6 +10895,26 @@
         "WithdrawInvoiceDispute"
       ],
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
         {
           "method": "GET",
           "path": "/billing-queue/",
@@ -11562,8 +11620,53 @@
         },
         {
           "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/integrations/GoogleMaps/runtime-config/",
           "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
         },
         {
           "method": "GET",
@@ -11619,6 +11722,7 @@
       "reads": [
         "accounting_integration",
         "accounting_sync",
+        "audit_legal_hold",
         "factoring_agreement",
         "factoring_company",
         "factoring_noa",
@@ -11681,7 +11785,14 @@
       "operations": [
         "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -11693,6 +11804,7 @@
         "CarrierTrackingLink",
         "CustomerStatusNotifications",
         "CustomerTrackingLinks",
+        "DeskRecordActivity",
         "MyActiveBillingTransferRun",
         "RetryBillingTransferRun",
         "ShipmentCheckCalls",
@@ -12277,6 +12389,7 @@
         }
       ],
       "reads": [
+        "audit_legal_hold",
         "formula_template",
         "rate_agreement",
         "shipment"
@@ -18906,8 +19019,11 @@
         }
       ],
       "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
         "CarrierEquipmentVerifications",
         "CarrierIntelligence",
+        "DecideAgentProposal",
         "DispatchAssignMoveToCarrier",
         "DispatchAssignMoves",
         "DispatchAssignmentPreview",
@@ -18915,16 +19031,21 @@
         "DispatchCancelCarrierAssignment",
         "DispatchCarrierAssignmentPreview",
         "DispatchDriverMoves",
+        "DispatchForecastQuality",
+        "DispatchMove",
         "DispatchMoveCandidates",
         "DispatchPlanAutoAssign",
         "DispatchUnassignMoves",
         "GrantCarrierIntelOverride",
         "LiveTenderByMove",
         "MatchRoutingGuide",
+        "MyPlanPreview",
+        "MyProposalPreview",
         "OverrideCarrierEquipmentVerification",
         "RoutingGuideOptions",
         "RoutingGuideTable",
         "TendersByShipment",
+        "UndoMyDecision",
         "VerifyCarrierEquipment"
       ],
       "endpoints": [
@@ -19168,26 +19289,6 @@
           "requires": [
             {
               "resource": "document",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/insights/:param/",
-          "requires": [
-            {
-              "resource": "insight",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/insights/browse/",
-          "requires": [
-            {
-              "resource": "insight",
               "operation": "read"
             }
           ]
@@ -19460,6 +19561,92 @@
         "location_category",
         "report"
       ],
+      "declared": []
+    },
+    {
+      "path": "/dispatch/outlook",
+      "name": "Freight outlook",
+      "requires": [
+        {
+          "resource": "shipment_move",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "DispatchCallOffPositioning",
+        "DispatchFreightArea",
+        "DispatchFreightOutlook",
+        "DispatchPositionDriver"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        }
+      ],
+      "reads": [],
+      "references": [],
       "declared": []
     },
     {
@@ -27879,6 +28066,26 @@
       "endpoints": [
         {
           "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/assignments/:param/",
           "requires": [
             {
@@ -28257,6 +28464,61 @@
           "requires": [
             {
               "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/google-maps/autocomplete/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/GoogleMaps/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
               "operation": "read"
             }
           ]
@@ -30254,7 +30516,14 @@
       "operations": [
         "AddOrderCharge",
         "AttachOrderShipments",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "BulkEditFields",
         "CancelOrder",
         "CloseOrder",
@@ -30263,6 +30532,7 @@
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeskRecordActivity",
         "DetachOrderShipment",
         "ExportTableView",
         "MyBulkEdit",
@@ -30292,6 +30562,7 @@
         }
       ],
       "reads": [
+        "audit_legal_hold",
         "order"
       ],
       "references": [
@@ -30482,7 +30753,14 @@
         "ArOpenItems",
         "ArPaymentStats",
         "ArTopOverdueCustomers",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditRequestEntries",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
@@ -30514,6 +30792,7 @@
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DecideAgentProposals",
         "DecideShipmentSuggestion",
         "DeskCustomerCard",
         "DeskCustomerRateAgreements",
@@ -30522,6 +30801,7 @@
         "DeskLocationCard",
         "DeskLocationDwell",
         "DeskLocationPolicies",
+        "DeskRecordActivity",
         "DeskServiceFailureCard",
         "DetentionIntelligence",
         "DispatchAssignMoves",
@@ -31382,6 +31662,7 @@
         }
       ],
       "reads": [
+        "audit_legal_hold",
         "capture_batch",
         "capture_device",
         "capture_profile",
@@ -34887,6 +35168,81 @@
       "declared": []
     },
     {
+      "name": "AuditAlertPolicies",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AuditChainStatus",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AuditEntryDetail",
+      "type": "query",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "emailAddress",
+            "name",
+            "profilePicUrl",
+            "thumbnailUrl",
+            "username"
+          ]
+        }
+      ],
+      "declared": [
+        "user"
+      ]
+    },
+    {
+      "name": "AuditExportDownload",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AuditExportTable",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "AuditFieldHistory",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": [
+        "user"
+      ]
+    },
+    {
+      "name": "AuditLegalHoldTable",
+      "type": "query",
+      "reads": [
+        "audit_legal_hold"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": [
+        "user"
+      ]
+    },
+    {
       "name": "AuditLogTable",
       "type": "query",
       "reads": [],
@@ -34902,6 +35258,15 @@
           ]
         }
       ],
+      "declared": [
+        "user"
+      ]
+    },
+    {
+      "name": "AuditRequestEntries",
+      "type": "query",
+      "reads": [],
+      "linked": [],
       "declared": [
         "user"
       ]
@@ -37844,6 +38209,13 @@
       "declared": []
     },
     {
+      "name": "DispatchCallOffPositioning",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DispatchCancelCarrierAssignment",
       "type": "mutation",
       "reads": [],
@@ -37865,6 +38237,34 @@
       "declared": []
     },
     {
+      "name": "DispatchForecastQuality",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchFreightArea",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchFreightOutlook",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchMove",
+      "type": "query",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "DispatchMoveCandidates",
       "type": "query",
       "reads": [],
@@ -37874,6 +38274,20 @@
     {
       "name": "DispatchPlanAutoAssign",
       "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchPositionDriver",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "DispatchStyle",
+      "type": "query",
       "reads": [],
       "linked": [],
       "declared": []
@@ -40343,6 +40757,20 @@
       "declared": []
     },
     {
+      "name": "PlaceAuditLegalHold",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "PlanSteps",
       "type": "query",
       "reads": [
@@ -40886,6 +41314,20 @@
       "declared": []
     },
     {
+      "name": "ReleaseAuditLegalHold",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
       "name": "ReleaseDriverPayEvent",
       "type": "mutation",
       "reads": [],
@@ -41094,6 +41536,13 @@
       "declared": []
     },
     {
+      "name": "RequestAuditExport",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
       "name": "RequestLeaveCertification",
       "type": "mutation",
       "reads": [],
@@ -41126,6 +41575,13 @@
           ]
         }
       ],
+      "declared": []
+    },
+    {
+      "name": "ResetDispatchStyle",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
       "declared": []
     },
     {
@@ -42979,6 +43435,13 @@
     },
     {
       "name": "UpdateAgentQualityControl",
+      "type": "mutation",
+      "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "UpdateAuditAlertPolicy",
       "type": "mutation",
       "reads": [],
       "linked": [],

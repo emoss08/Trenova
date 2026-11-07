@@ -372,7 +372,7 @@ func (s *Service) UpdateConfig(
 		return nil, err
 	}
 
-	s.logChange(auditChange{
+	s.logChange(ctx, &auditChange{
 		Tenant:   tenantInfo,
 		before:   existing,
 		after:    saved,
@@ -515,7 +515,7 @@ type auditChange struct {
 	critical bool
 }
 
-func (s *Service) logChange(change auditChange) {
+func (s *Service) logChange(ctx context.Context, change *auditChange) {
 	after := auditSnapshot(change.after, change.spec)
 	before := auditSnapshot(change.before, change.spec)
 
@@ -532,7 +532,7 @@ func (s *Service) logChange(change auditChange) {
 		operation = permission.OpCreate
 	}
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentExtension,
 		ResourceID:     change.after.ID.String(),
 		Operation:      operation,

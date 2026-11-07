@@ -107,7 +107,10 @@ func (r *repository) Upsert(
 			BuID:  entity.BusinessUnitID,
 		})
 		if err == nil {
-			existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
+			existing.AuditAccessRetentionDays = entity.AuditAccessRetentionDays
+			existing.AuditOperationalRetentionDays = entity.AuditOperationalRetentionDays
+			existing.AuditFinancialRetentionDays = entity.AuditFinancialRetentionDays
+			existing.AuditSecurityRetentionDays = entity.AuditSecurityRetentionDays
 			existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
 			existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
 			existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
@@ -126,7 +129,10 @@ func (r *repository) Upsert(
 			r.db.Keel(ctx),
 			[]*dataretention.DataRetention{entity},
 			keel.OnConflict(dr.OrganizationID).Update(
-				dr.AuditRetentionPeriod,
+				dr.AuditAccessRetentionDays,
+				dr.AuditOperationalRetentionDays,
+				dr.AuditFinancialRetentionDays,
+				dr.AuditSecurityRetentionDays,
 				dr.EDIInboundFileRetentionPeriod,
 				dr.EDIMessageRetentionPeriod,
 				dr.AgentEvalCaseRetentionPeriod,

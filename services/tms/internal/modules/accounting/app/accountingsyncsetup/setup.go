@@ -110,7 +110,7 @@ func (s *Service) UpdateSettings(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingIntegration,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,
@@ -204,7 +204,7 @@ func (s *Service) EnableSync(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingIntegration,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,
@@ -309,7 +309,7 @@ func (s *Service) Pause(
 	if err != nil {
 		return nil, err
 	}
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingIntegration,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,
@@ -341,7 +341,7 @@ func (s *Service) Resume(
 	if err != nil {
 		return nil, err
 	}
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingIntegration,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,
@@ -408,7 +408,7 @@ func (s *Service) ChooseMode(
 			comment += ", summed by day"
 		}
 	}
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingIntegration,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,

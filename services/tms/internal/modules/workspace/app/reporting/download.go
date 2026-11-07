@@ -18,6 +18,8 @@ import (
 const (
 	downloadURLExpiry  = 60 * time.Second
 	MaxDownloadNameLen = 120
+	auditEventKey      = "event"
+	auditFormatKey     = "format"
 )
 
 type RunDownload struct {
@@ -63,7 +65,7 @@ func (s *Service) DownloadRun(ctx context.Context, req *GetRunRequest) (*RunDown
 		)
 	}
 
-	s.auditDownload(run)
+	s.auditDownload(ctx, run)
 
 	return &RunDownload{URL: url, FileName: fileName}, nil
 }
@@ -97,8 +99,8 @@ func (s *Service) downloadFileName(
 	)
 }
 
-func (s *Service) auditDownload(run *report.ReportRun) {
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+func (s *Service) auditDownload(ctx context.Context, run *report.ReportRun) {
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,
@@ -106,8 +108,8 @@ func (s *Service) auditDownload(run *report.ReportRun) {
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		CurrentState: map[string]any{
-			"event":  "artifact_downloaded",
-			"format": string(run.Format),
+			auditEventKey:  "artifact_downloaded",
+			auditFormatKey: string(run.Format),
 		},
 	}); err != nil {
 		s.l.Warn("failed to audit report download",

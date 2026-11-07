@@ -178,7 +178,7 @@ func (s *Service) SaveSummary(
 		params.previous = nil
 		params.comment = "Started the " + strconv.Itoa(int(saved.Year)) + " OSHA 300A summary"
 	}
-	s.audit(params)
+	s.audit(ctx, params)
 	s.publish(ctx, req.TenantInfo, realtimeSummary, params.operation, saved.ID, req.UserID)
 
 	return saved, nil
@@ -243,7 +243,7 @@ func (s *Service) CertifySummary(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpManage,
 		userID:     userID,
@@ -291,7 +291,7 @@ func (s *Service) UncertifySummary(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpManage,
 		userID:     userID,

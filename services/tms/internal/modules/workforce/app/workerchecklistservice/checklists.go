@@ -134,7 +134,7 @@ func (s *Service) Start(
 		log.Warn("failed to auto-satisfy new checklist", zap.Error(err))
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklist,
 		resourceID: created.GetResourceID(),
 		operation:  permission.OpCreate,
@@ -288,7 +288,7 @@ func (s *Service) settleItem(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklist,
 		resourceID: checklist.GetResourceID(),
 		operation:  permission.OpUpdate,
@@ -343,7 +343,7 @@ func (s *Service) ReopenItem(
 		}
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklist,
 		resourceID: checklist.GetResourceID(),
 		operation:  permission.OpUpdate,
@@ -404,7 +404,7 @@ func (s *Service) cancelChecklist(
 	}
 	saved.Items = items
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklist,
 		resourceID: saved.GetResourceID(),
 		operation:  permission.OpCancel,

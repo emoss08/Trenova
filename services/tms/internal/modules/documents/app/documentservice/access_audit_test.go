@@ -1,12 +1,13 @@
 package documentservice
 
 import (
+	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -19,11 +20,17 @@ import (
 type accessAuditCapture struct {
 	auditports.AuditService
 
+	ctx    context.Context
 	params *auditports.LogActionParams
 	entry  *audit.Entry
 }
 
-func (c *accessAuditCapture) LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error {
+func (c *accessAuditCapture) LogAction(
+	ctx context.Context,
+	params *auditports.LogActionParams,
+	opts ...auditports.LogOption,
+) error {
+	c.ctx = ctx
 	c.params = params
 	c.entry = &audit.Entry{}
 	for _, opt := range opts {
@@ -64,9 +71,11 @@ func TestRecordAccessAuditsTheReaderAndTheRequest(t *testing.T) {
 	assert.Equal(t, permissionports.PrincipalTypeUser, capture.params.PrincipalType)
 	assert.False(t, capture.params.Critical)
 	assert.Equal(t, "Document downloaded", capture.entry.Comment)
-	assert.Equal(t, "198.51.100.20", capture.entry.IPAddress)
-	assert.Equal(t, "browser", capture.entry.UserAgent)
-	assert.Equal(t, "req-3", capture.entry.CorrelationID)
+	meta, ok := requestmeta.From(capture.ctx)
+	require.True(t, ok, "the request reaches the audit write through its context")
+	assert.Equal(t, "198.51.100.20", meta.ClientIP)
+	assert.Equal(t, "browser", meta.UserAgent)
+	assert.Equal(t, "req-3", meta.RequestID)
 	assert.Equal(t, "download", capture.entry.Metadata["access"])
 	assert.Equal(t, "content", capture.entry.Metadata["channel"])
 	assert.Equal(t, "bol.pdf", capture.entry.Metadata["fileName"])

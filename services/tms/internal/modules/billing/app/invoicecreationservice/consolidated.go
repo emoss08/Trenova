@@ -121,7 +121,7 @@ func (s *Service) CreateConsolidated(
 	var created *invoice.Invoice
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
-		created, txErr = s.createConsolidatedTx(txCtx, params, number, customerID, actor)
+		created, txErr = s.createConsolidatedTx(ctx, txCtx, params, number, customerID, actor)
 		return txErr
 	})
 	if err != nil {
@@ -132,6 +132,7 @@ func (s *Service) CreateConsolidated(
 }
 
 func (s *Service) createConsolidatedTx(
+	ctx context.Context,
 	txCtx context.Context,
 	params *ConsolidatedInvoiceParams,
 	number string,
@@ -233,7 +234,7 @@ func (s *Service) createConsolidatedTx(
 	}
 
 	auditActor := actor.AuditActor()
-	s.rec.LogAction(
+	s.rec.LogAction(ctx,
 		created,
 		auditActor,
 		permission.OpCreate,

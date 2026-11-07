@@ -121,7 +121,7 @@ func (s *Service) CreateEvent(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: userID, tenant: eventTenant(created),
 		current: created, comment: "Safety event recorded: " + created.Kind.String(), log: log,
@@ -178,7 +178,7 @@ func (s *Service) UpdateEvent(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: userID, tenant: eventTenant(updated),
 		current: updated, previous: change.Before, comment: "Safety event updated", log: log,
@@ -305,7 +305,7 @@ func (s *Service) moveEvent(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: saved.GetResourceID(),
 		operation: operation, userID: req.UserID, tenant: req.TenantInfo,
 		current: saved, previous: change.Before, comment: comment, log: log,
@@ -389,7 +389,7 @@ func (s *Service) DeleteEvent(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: original.GetResourceID(),
 		operation: permission.OpDelete, userID: userID, tenant: tenantInfo,
 		current: original, comment: "Safety event deleted", log: log,

@@ -108,7 +108,7 @@ func (s *Service) Create(
 		"Initial terms", nil,
 	)
 
-	s.audit(log, created, nil, permission.OpCreate, userID, "Rate agreement created")
+	s.audit(ctx, log, created, nil, permission.OpCreate, userID, "Rate agreement created")
 
 	return created, nil
 }
@@ -167,7 +167,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(log, updated, plan.Before, permission.OpUpdate, userID, "Rate agreement updated")
+	s.audit(ctx, log, updated, plan.Before, permission.OpUpdate, userID, "Rate agreement updated")
 
 	return updated, nil
 }
@@ -210,7 +210,15 @@ func (s *Service) AmendRules(
 		return nil, err
 	}
 
-	s.audit(log, amended, agreement, permission.OpUpdate, userID, "Rate agreement rules amended")
+	s.audit(
+		ctx,
+		log,
+		amended,
+		agreement,
+		permission.OpUpdate,
+		userID,
+		"Rate agreement rules amended",
+	)
 
 	return amended, nil
 }
@@ -255,6 +263,7 @@ func (s *Service) ListVersions(
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	log *zap.Logger,
 	entity *rateagreement.RateAgreement,
 	original *rateagreement.RateAgreement,
@@ -279,7 +288,7 @@ func (s *Service) audit(
 		opts = append(opts, auditservice.WithDiff(original, entity))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

@@ -174,7 +174,7 @@ func (s *Service) CreateDraft(
 		return nil, err
 	}
 
-	s.logAudit(
+	s.logAudit(ctx,
 		permission.OpCreate,
 		created,
 		nil,
@@ -252,7 +252,7 @@ func (s *Service) UpdateDraft(
 		return nil, err
 	}
 
-	s.logAudit(
+	s.logAudit(ctx,
 		permission.OpUpdate,
 		updated,
 		change.Before,
@@ -534,7 +534,7 @@ func (s *Service) Post(
 		return nil, err
 	}
 
-	s.logAudit(
+	s.logAudit(ctx,
 		permission.OpApprove,
 		entity,
 		plan.change.Before,
@@ -653,7 +653,7 @@ func (s *Service) saveTransition(
 		return nil, err
 	}
 
-	s.logAudit(operation, updated, change.Before, entity.UpdatedByID, comment)
+	s.logAudit(ctx, operation, updated, change.Before, entity.UpdatedByID, comment)
 	return updated, nil
 }
 
@@ -773,6 +773,7 @@ func (s *Service) resolvePostingPeriod(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	operation permission.Operation,
 	current *manualjournal.Request,
 	previous *manualjournal.Request,
@@ -797,7 +798,7 @@ func (s *Service) logAudit(
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log manual journal audit action",
 			zap.Error(err),

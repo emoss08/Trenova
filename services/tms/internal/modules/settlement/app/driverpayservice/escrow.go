@@ -57,7 +57,7 @@ func (s *Service) OpenEscrowAccount(
 	if err != nil {
 		return nil, err
 	}
-	s.logEscrowAudit(created, nil, actor.UserID, permission.OpCreate, "Escrow account opened")
+	s.logEscrowAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Escrow account opened")
 	return created, nil
 }
 
@@ -78,7 +78,7 @@ func (s *Service) UpdateEscrowAccount(
 	if err != nil {
 		return nil, err
 	}
-	s.logEscrowAudit(updated, previous, actor.UserID, permission.OpUpdate,
+	s.logEscrowAudit(ctx, updated, previous, actor.UserID, permission.OpUpdate,
 		"Escrow account updated")
 	return updated, nil
 }
@@ -125,7 +125,7 @@ func (s *Service) AdjustEscrowAccount(
 	if err != nil {
 		return nil, err
 	}
-	s.logEscrowAudit(updated, nil, actor.UserID, permission.OpUpdate,
+	s.logEscrowAudit(ctx, updated, nil, actor.UserID, permission.OpUpdate,
 		"Escrow adjustment: "+req.Description)
 	return updated, nil
 }
@@ -167,7 +167,7 @@ func (s *Service) CloseEscrowAccount(
 	if err != nil {
 		return nil, err
 	}
-	s.logEscrowAudit(updated, nil, actor.UserID, permission.OpClose,
+	s.logEscrowAudit(ctx, updated, nil, actor.UserID, permission.OpClose,
 		"Escrow account closed; remaining balance refunded per 49 CFR 376.12(k)")
 	return updated, nil
 }
@@ -258,6 +258,7 @@ func (s *Service) applyEscrowTransaction(
 }
 
 func (s *Service) logEscrowAudit(
+	ctx context.Context,
 	current, previous *payescrow.EscrowAccount,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -277,7 +278,7 @@ func (s *Service) logEscrowAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log escrow account audit action", zap.Error(err))
 	}
 }

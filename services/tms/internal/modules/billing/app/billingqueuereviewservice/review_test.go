@@ -350,7 +350,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 		Return(map[pulid.ID][]*invoice.Invoice{}, nil).Maybe()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	users := tenantportsmock.NewMockUserRepository(t)

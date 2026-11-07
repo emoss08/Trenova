@@ -167,7 +167,7 @@ func (s *Service) Create(
 	}
 
 	s.schedules.Sync(ctx, created)
-	s.logAudit(created, nil, permission.OpCreate, actor, "Agent created")
+	s.logAudit(ctx, created, nil, permission.OpCreate, actor, "Agent created")
 
 	return created, nil
 }
@@ -225,7 +225,7 @@ func (s *Service) Update(
 		previous.Name != saved.Name {
 		s.schedules.Sync(ctx, saved)
 	}
-	s.logAudit(saved, &previous, permission.OpUpdate, actor, "Agent updated")
+	s.logAudit(ctx, saved, &previous, permission.OpUpdate, actor, "Agent updated")
 
 	return saved, nil
 }
@@ -273,7 +273,7 @@ func (s *Service) Delete(
 	}
 
 	s.schedules.Remove(ctx, existing.ID)
-	s.logAudit(existing, existing, permission.OpDelete, actor, "Agent deleted")
+	s.logAudit(ctx, existing, existing, permission.OpDelete, actor, "Agent deleted")
 
 	return nil
 }
@@ -601,6 +601,7 @@ func copyTiers(tiers map[string]agent.AutonomyTier) map[string]agent.AutonomyTie
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	definition *agentdefinition.Definition,
 	previous *agentdefinition.Definition,
 	operation permission.Operation,
@@ -614,7 +615,7 @@ func (s *Service) logAudit(
 		previousState = jsonutils.MustToJSON(previous)
 	}
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentDefinition,
 		ResourceID:     definition.GetID().String(),
 		Operation:      operation,

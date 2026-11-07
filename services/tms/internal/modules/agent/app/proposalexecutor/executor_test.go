@@ -129,7 +129,7 @@ func (p *fakePermissions) Check(
 
 type noopAudit struct{}
 
-func (noopAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (noopAudit) LogAction(_ context.Context, _ *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	return nil
 }
 

@@ -117,7 +117,7 @@ func (s *Service) reviewTransferChange(
 		return nil, err
 	}
 
-	s.logAction(
+	s.logAction(ctx,
 		updated,
 		actor,
 		permission.OpUpdate,

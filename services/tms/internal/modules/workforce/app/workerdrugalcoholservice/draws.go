@@ -107,7 +107,7 @@ func (s *Service) CreatePool(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -153,7 +153,7 @@ func (s *Service) UpdatePool(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -249,7 +249,7 @@ func (s *Service) RunDraw(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: created.ID.String(),
 		operation:  permission.OpManage,
@@ -359,7 +359,7 @@ func (s *Service) FinalizeDraw(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpManage,
@@ -398,7 +398,7 @@ func (s *Service) CancelDraw(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpManage,
@@ -445,7 +445,7 @@ func (s *Service) UpdateDrawEntry(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceDOTRandomPool,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpManage,

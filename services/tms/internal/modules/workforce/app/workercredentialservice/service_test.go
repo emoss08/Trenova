@@ -297,7 +297,7 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	wrk := &worker.Worker{

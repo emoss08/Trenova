@@ -8,9 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/agentextension/exaconnector"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -267,7 +265,7 @@ type RecordingAudit struct {
 	Entries []*auditports.LogActionParams
 }
 
-func (a *RecordingAudit) LogAction(
+func (a *RecordingAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {
@@ -276,20 +274,6 @@ func (a *RecordingAudit) LogAction(
 
 	a.Entries = append(a.Entries, params)
 
-	return nil
-}
-
-func (a *RecordingAudit) List(
-	context.Context,
-	*auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return nil, nil
-}
-
-func (a *RecordingAudit) RegisterSensitiveFields(
-	permission.Resource,
-	[]auditports.SensitiveField,
-) error {
 	return nil
 }
 

@@ -138,7 +138,7 @@ func (s *service) CreateOverride(
 		return nil, err
 	}
 
-	s.logOverrideAction(&overrideAuditParams{
+	s.logOverrideAction(ctx, &overrideAuditParams{
 		Override:  created,
 		Operation: permission.OpCreate,
 		Actor:     actor,
@@ -177,7 +177,7 @@ func (s *service) UpdateOverride(
 		return nil, err
 	}
 
-	s.logOverrideAction(&overrideAuditParams{
+	s.logOverrideAction(ctx, &overrideAuditParams{
 		Override:  updated,
 		Operation: permission.OpUpdate,
 		Actor:     actor,
@@ -212,7 +212,7 @@ func (s *service) DeleteOverride(
 		return err
 	}
 
-	s.logOverrideAction(&overrideAuditParams{
+	s.logOverrideAction(ctx, &overrideAuditParams{
 		Override:  previous,
 		Operation: permission.OpDelete,
 		Actor:     actor,
@@ -240,12 +240,12 @@ type overrideAuditParams struct {
 // Unlike a jurisdiction rule, an override is tenant data, so the entry carries
 // the organization and business unit. It is Critical for the same reason the
 // rule entries are: the row decides whether a load is flagged before it leaves.
-func (s *service) logOverrideAction(params *overrideAuditParams) {
+func (s *service) logOverrideAction(ctx context.Context, params *overrideAuditParams) {
 	if params.Override == nil {
 		return
 	}
 
-	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
+	auditservice.Record(ctx, s.auditService, s.l, &auditservice.RecordParams{
 		Resource:       permission.ResourceJurisdictionRuleOverride,
 		ResourceID:     params.Override.ID.String(),
 		Operation:      params.Operation,

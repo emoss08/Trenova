@@ -172,7 +172,7 @@ func TestCreate_CreatesTheUserMembershipAndRolesInOneTransaction(t *testing.T) {
 	d.expectNoConflicts()
 	captured := d.expectCreate()
 	var logged *auditports.LogActionParams
-	d.audit.On("LogAction", mock.MatchedBy(func(p *auditports.LogActionParams) bool {
+	d.audit.On("LogAction", mock.Anything, mock.MatchedBy(func(p *auditports.LogActionParams) bool {
 		logged = p
 		return true
 	}), mock.Anything).Return(nil).Once()
@@ -319,7 +319,7 @@ func TestCreate_RollsBackWhenARoleCannotBeGranted(t *testing.T) {
 	assert.Equal(t, []string{"begin", "create", "assign:" + allowed.String(), "rollback"}, d.log.all())
 	assert.Empty(t, d.invites.invited, "no invitation for a user that was never committed")
 	assert.Empty(t, d.security.Changes())
-	d.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	d.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestCreate_ReportsAMissingRoleOnTheRolesField(t *testing.T) {

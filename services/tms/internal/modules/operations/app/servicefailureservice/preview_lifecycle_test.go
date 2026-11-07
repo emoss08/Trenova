@@ -103,7 +103,7 @@ func TestPreviewResolve_IsTheResolutionResolveSaves(t *testing.T) {
 		}, nil).
 		Once()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 	svc.auditService = audit

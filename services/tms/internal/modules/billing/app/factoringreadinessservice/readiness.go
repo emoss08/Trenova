@@ -529,7 +529,7 @@ func (s *ReadinessService) SetOverride(
 	if req.Override.Excludes() {
 		comment = "Invoice kept out of factoring: " + strings.TrimSpace(req.Reason)
 	}
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceInvoice,
 		Entity:   plan.After,
 		Previous: plan.Before,

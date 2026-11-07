@@ -147,7 +147,7 @@ func (s *Service) Confirm(
 
 	connectionIDs := make([]pulid.ID, 0, 1)
 	for _, change := range plan.Changes {
-		s.kit.LogAudit(
+		s.kit.LogAudit(ctx,
 			change.After,
 			req.UserID,
 			jsonutils.MustToJSON(change.Before),
@@ -270,7 +270,7 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		updated,
 		req.UserID,
 		jsonutils.MustToJSON(change.Before),
@@ -316,7 +316,7 @@ func (s *Service) Set(
 	if err != nil {
 		return nil, err
 	}
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		updated,
 		req.UserID,
 		before,
@@ -353,7 +353,7 @@ func (s *Service) Clear(
 	if err != nil {
 		return nil, err
 	}
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		updated,
 		req.UserID,
 		before,
@@ -421,7 +421,7 @@ func (s *Service) CompleteSetup(
 		return nil, err
 	}
 
-	if logErr := s.audit.LogAction(&auditports.LogActionParams{
+	if logErr := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAccountingIntegration,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

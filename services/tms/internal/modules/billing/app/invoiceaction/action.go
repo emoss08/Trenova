@@ -31,6 +31,7 @@ type PostedBillingQueueResult struct {
 }
 
 func (s *Recorder) LogAction(
+	ctx context.Context,
 	entity *invoice.Invoice,
 	actor kernelports.AuditActor,
 	op permission.Operation,
@@ -69,7 +70,7 @@ func (s *Recorder) LogAction(
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log invoice action", zap.Error(err))
 	}
 }

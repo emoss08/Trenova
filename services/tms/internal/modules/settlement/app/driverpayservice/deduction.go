@@ -55,7 +55,7 @@ func (s *Service) CreateDeduction(
 	if err != nil {
 		return nil, err
 	}
-	s.logDeductionAudit(created, nil, actor.UserID, permission.OpCreate,
+	s.logDeductionAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
 		"Recurring deduction created")
 	return created, nil
 }
@@ -88,12 +88,13 @@ func (s *Service) UpdateDeduction(
 	if err != nil {
 		return nil, err
 	}
-	s.logDeductionAudit(updated, previous, actor.UserID, permission.OpUpdate,
+	s.logDeductionAudit(ctx, updated, previous, actor.UserID, permission.OpUpdate,
 		"Recurring deduction updated")
 	return updated, nil
 }
 
 func (s *Service) logDeductionAudit(
+	ctx context.Context,
 	current, previous *recurringpay.RecurringDeduction,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -113,7 +114,7 @@ func (s *Service) logDeductionAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log recurring deduction audit action", zap.Error(err))
 	}
 }

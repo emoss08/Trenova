@@ -382,7 +382,7 @@ func (s *Service) revoke(
 		actor = *by
 		principal = permissionports.PrincipalTypeUser
 	}
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureDevice,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

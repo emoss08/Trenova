@@ -817,6 +817,7 @@ var enumDocumenttemplateKind = [...]schema.EnumValue{
 	{Value: `notification.dash.hos_alert`, Label: `Notification HOS Alert`, Doc: `KindNotificationHOSAlert wraps an hours-of-service warning.`},
 	{Value: `notification.dash.dispatch_message`, Label: `Notification Dispatch Message`, Doc: `KindNotificationDispatchMessage carries a message the office, or an agent acting for it, sends a driver about a load in progress.`},
 	{Value: `notification.dash.obligations_digest`, Label: `Notification Obligations Digest`, Doc: `KindNotificationObligationsDigest bundles everything a driver owes into one notice.`},
+	{Value: `notification.dash.positioning`, Label: `Notification Positioning`, Doc: `KindNotificationPositioning sends an empty driver toward an area where freight is expected, or tells them the office called it off.`},
 	{Value: `notification.dash.settlement_posted`, Label: `Notification Settlement Posted`, Doc: `KindNotificationSettlementPosted announces an issued settlement statement.`},
 	{Value: `notification.dash.settlement_paid`, Label: `Notification Settlement Paid`, Doc: `KindNotificationSettlementPaid announces a paid settlement.`},
 	{Value: `notification.dash.pay_held`, Label: `Notification Pay Held`, Doc: `KindNotificationPayHeld tells a driver pay was held, and why.`},

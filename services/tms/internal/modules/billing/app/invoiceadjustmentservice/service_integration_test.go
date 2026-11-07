@@ -40,7 +40,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -225,41 +224,21 @@ type noopAuditService struct {
 	*auditportsmock.MockAuditService
 }
 
-func (noopAuditService) List(
-	context.Context,
-	*auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return nil, nil
-}
-
-func (noopAuditService) ListByResourceID(
-	context.Context,
-	*auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return nil, nil
-}
-
 func (noopAuditService) GetByID(
 	context.Context,
-	auditports.GetAuditEntryByIDOptions,
+	*auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, nil
 }
 
 func (noopAuditService) LogAction(
+	context.Context,
 	*auditports.LogActionParams,
 	...auditports.LogOption,
 ) error {
 	return nil
 }
-func (noopAuditService) LogActions([]auditports.BulkLogEntry) error { return nil }
-
-func (noopAuditService) RegisterSensitiveFields(
-	permission.Resource,
-	[]auditports.SensitiveField,
-) error {
-	return nil
-}
+func (noopAuditService) LogActions(context.Context, []auditports.BulkLogEntry) error { return nil }
 
 type noopRealtimeService struct{}
 

@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5"
@@ -64,11 +63,9 @@ func integrationBootstrapDeps(
 				AuditRepository: auditrepository.New(
 					auditrepository.Params{DB: conn, Logger: logger},
 				),
-				AuditBufferRepository: auditportsmock.NewMockAuditBufferRepository(t),
-				Logger:                logger,
-				AppConfig:             &appCfg.App,
-				SecurityConfig:        &appCfg.Security,
-				Metrics:               registry,
+				Logger:  logger,
+				Config:  &appCfg.Audit,
+				Metrics: registry,
 			})
 			return auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{
 				AuditService: audits,

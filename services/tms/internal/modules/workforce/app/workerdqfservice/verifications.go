@@ -93,7 +93,7 @@ func (s *Service) RecordVerification(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     userID,
@@ -149,7 +149,7 @@ func (s *Service) UpdateVerification(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -269,7 +269,7 @@ func (s *Service) RecordFollowUp(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     userID,
@@ -305,7 +305,7 @@ func (s *Service) DeleteVerification(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: id.String(),
 		operation:  permission.OpDelete,
 		userID:     userID,

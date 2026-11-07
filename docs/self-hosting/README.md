@@ -421,6 +421,25 @@ If you edited `config/config.yaml`, carry `renderer.gotenbergUsername` and
 `renderer.gotenbergPassword` over from the new version: production refuses to start without
 them while `renderer.gotenbergUrl` is set.
 
+### Upgrading to a release with the sealed audit log
+
+The audit log moves to a table partitioned by month, and `trenova-db` copies every existing
+entry into it during the migration, so the first start after the upgrade takes longer on an
+instance with a long history. `.env` gains `TRENOVA_AUDIT_FINGERPRINTPEPPER`, which keys the
+fingerprints of tax IDs and account numbers in audit entries. After step 3 above, from this
+directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+If you edited `config/config.yaml`, replace its `audit` section with the new version's:
+`batchSize`, `maxEntriesPerFlush` and `dlqMaxRetries` are gone, and the API refuses to start
+while they are set. Audit retention is now chosen per kind of entry on Data retention; each
+organization starts at the shortest window, so check it there after the upgrade.
+
 ### Upgrading to a release with document conversion
 
 Releases that bundle the `docling` service read a new key from `.env`,

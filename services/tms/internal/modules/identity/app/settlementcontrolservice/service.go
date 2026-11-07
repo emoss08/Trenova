@@ -80,7 +80,7 @@ func (s *Service) Update(
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
 	}
-	if logErr := s.auditService.LogAction(
+	if logErr := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment("Settlement control updated"),
 		auditservice.WithDiff(original, updated),

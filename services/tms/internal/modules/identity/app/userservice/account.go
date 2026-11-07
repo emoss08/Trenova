@@ -94,7 +94,7 @@ func (s *Service) updateColumns(ctx context.Context, req *columnUpdate) (*tenant
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -107,7 +107,6 @@ func (s *Service) updateColumns(ctx context.Context, req *columnUpdate) (*tenant
 		auditservice.WithComment(req.comment),
 		auditservice.WithCategory(audit.CategoryUser),
 		auditservice.WithDiff(req.original, updated),
-		auditservice.WithRequest(ctx),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 		return nil, err

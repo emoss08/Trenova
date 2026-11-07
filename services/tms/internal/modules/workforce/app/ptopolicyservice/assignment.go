@@ -177,7 +177,7 @@ func (s *Service) AssignWorkers(
 				)},
 			})
 		}
-		if err = s.auditService.LogActions(entries); err != nil {
+		if err = s.auditService.LogActions(ctx, entries); err != nil {
 			log.Error("failed to log audit actions", zap.Error(err))
 		}
 	}
@@ -308,7 +308,7 @@ func (s *Service) EndAssignment(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourcePTOPolicy,
 		ResourceID:     updated.PTOPolicyID.String(),
 		Operation:      permission.OpAssign,

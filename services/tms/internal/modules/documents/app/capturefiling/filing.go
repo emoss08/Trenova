@@ -299,7 +299,7 @@ func (s *Service) EditItems(
 	}
 
 	s.support.PublishBatch(ctx, updated, itemActionEdited)
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -723,7 +723,7 @@ func (s *Service) RecordFiled(
 	if filed.FiledByID != nil {
 		filer = *filed.FiledByID
 	}
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     batch.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -839,7 +839,7 @@ func (s *Service) DiscardItem(
 	}
 
 	s.support.PublishBatch(ctx, settled, capturesupport.BatchActionUpdated)
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     settled.ID.String(),
 		Operation:      permission.OpDelete,
@@ -880,7 +880,7 @@ func (s *Service) DiscardBatch(
 		return nil, err
 	}
 
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureBatch,
 		ResourceID:     discarded.ID.String(),
 		Operation:      permission.OpDelete,

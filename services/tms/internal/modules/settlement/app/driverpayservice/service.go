@@ -121,7 +121,7 @@ func (s *Service) CreateProfile(
 	if err != nil {
 		return nil, err
 	}
-	s.logProfileAudit(created, nil, actor.UserID, permission.OpCreate, "Pay profile created")
+	s.logProfileAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Pay profile created")
 	return created, nil
 }
 
@@ -155,7 +155,14 @@ func (s *Service) UpdateProfile(
 	if err != nil {
 		return nil, err
 	}
-	s.logProfileAudit(updated, previous, actor.UserID, permission.OpUpdate, "Pay profile updated")
+	s.logProfileAudit(
+		ctx,
+		updated,
+		previous,
+		actor.UserID,
+		permission.OpUpdate,
+		"Pay profile updated",
+	)
 	return updated, nil
 }
 
@@ -211,7 +218,7 @@ func (s *Service) AssignProfileToWorker(
 		return nil, err
 	}
 
-	s.logAssignmentAudit(created, actor.UserID, permission.OpAssign,
+	s.logAssignmentAudit(ctx, created, actor.UserID, permission.OpAssign,
 		"Pay profile "+plan.Profile.Name+" assigned to worker")
 	return created, nil
 }
@@ -286,11 +293,12 @@ func (s *Service) EndAssignment(
 	if err != nil {
 		return nil, err
 	}
-	s.logAssignmentAudit(updated, actor.UserID, permission.OpUnassign, "Pay assignment ended")
+	s.logAssignmentAudit(ctx, updated, actor.UserID, permission.OpUnassign, "Pay assignment ended")
 	return updated, nil
 }
 
 func (s *Service) logProfileAudit(
+	ctx context.Context,
 	current, previous *driverpay.PayProfile,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -310,12 +318,13 @@ func (s *Service) logProfileAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log pay profile audit action", zap.Error(err))
 	}
 }
 
 func (s *Service) logAssignmentAudit(
+	ctx context.Context,
 	current *payassignment.WorkerPayAssignment,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -330,7 +339,7 @@ func (s *Service) logAssignmentAudit(
 		OrganizationID: current.OrganizationID,
 		BusinessUnitID: current.BusinessUnitID,
 	}
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment(comment),
 	); err != nil {

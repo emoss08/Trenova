@@ -131,11 +131,12 @@ func (s *Effects) PublishBillingHoldChange(
 }
 
 func (s *Effects) Audit(
+	ctx context.Context,
 	original, updated *detention.DetentionOccurrence,
 	userID pulid.ID,
 	comment string,
 ) {
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDetention,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

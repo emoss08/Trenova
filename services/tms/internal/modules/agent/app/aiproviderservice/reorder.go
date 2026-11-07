@@ -72,7 +72,7 @@ func (s *Service) Reorder(
 	}
 
 	for idx := range changes {
-		s.logAudit(&auditParams{
+		s.logAudit(ctx, &auditParams{
 			provider:  changes[idx].saved,
 			previous:  changes[idx].previous,
 			operation: permission.OpUpdate,
@@ -110,7 +110,7 @@ func (s *Service) AssignTask(
 		return nil, err
 	}
 
-	s.logAudit(&auditParams{
+	s.logAudit(ctx, &auditParams{
 		provider:  saved,
 		previous:  previous,
 		operation: permission.OpUpdate,
@@ -269,7 +269,7 @@ func (s *Service) RouteTask(
 	}
 
 	for idx := range changes {
-		s.logAudit(&auditParams{
+		s.logAudit(ctx, &auditParams{
 			provider:  changes[idx].saved,
 			previous:  changes[idx].previous,
 			operation: permission.OpUpdate,

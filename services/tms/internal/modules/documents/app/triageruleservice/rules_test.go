@@ -73,7 +73,7 @@ func (r *serviceRig) expectNoDuplicate() {
 func (r *serviceRig) expectRulesChanged() {
 	r.cache.EXPECT().DropEnabledRules(mock.Anything, testTenant).Return(nil).Once()
 	r.cache.EXPECT().BumpQueueEpoch(mock.Anything, testTenant).Return(nil).Once()
-	r.audit.EXPECT().LogAction(mock.Anything).Return(nil).Once()
+	r.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 }
 
 func podRule() *triage.Rule {

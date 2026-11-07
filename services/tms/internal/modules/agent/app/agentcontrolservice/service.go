@@ -115,7 +115,7 @@ func (s *Service) Update(
 	}
 
 	auditActor := actor.AuditActor()
-	if err = s.audit.LogAction(&auditports.LogActionParams{
+	if err = s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentControl,
 		ResourceID:     updated.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -127,7 +127,7 @@ func (s *Service) Update(
 		PreviousState:  jsonutils.MustToJSON(&previous),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, agentControlAuditOptions(ctx, &previous, updated)...); err != nil {
+	}, agentControlAuditOptions(&previous, updated)...); err != nil {
 		s.l.Error("failed to log agent control audit", zap.Error(err))
 	}
 
@@ -254,13 +254,11 @@ func applyAgentMoney(
 }
 
 func agentControlAuditOptions(
-	ctx context.Context,
 	previous, updated *agentcontrol.AgentControl,
 ) []auditports.LogOption {
 	moneyChanged := agentMoneyChanged(previous, updated)
 	options := []auditports.LogOption{
 		auditservice.WithComment(agentControlAuditComment(moneyChanged)),
-		auditservice.WithRequest(ctx),
 	}
 	if moneyChanged {
 		options = append(options, auditservice.WithCritical())

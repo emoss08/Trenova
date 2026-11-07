@@ -96,7 +96,7 @@ func createMatchWithVariance(
 		Return(func(_ context.Context, entity *carriersettlement.InvoiceMatch) *carriersettlement.InvoiceMatch {
 			return entity
 		}, nil)
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	match, err := deps.svc.CreateMatch(t.Context(), &CreateMatchRequest{
 		TenantInfo:             tenantInfo,
@@ -213,7 +213,7 @@ func TestAcceptWithVarianceCreatesAdjustmentEvent(t *testing.T) {
 			return entity
 		}, nil)
 	deps.matches.On("Update", mock.Anything, match).Return(match, nil)
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil)
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	updated, err := deps.svc.AcceptWithVariance(
 		t.Context(),

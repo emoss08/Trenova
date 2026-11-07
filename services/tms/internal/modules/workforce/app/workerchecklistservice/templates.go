@@ -87,7 +87,7 @@ func (s *Service) CreateTemplate(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklistTemplate,
 		resourceID: created.GetResourceID(),
 		operation:  permission.OpCreate,
@@ -137,7 +137,7 @@ func (s *Service) UpdateTemplate(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklistTemplate,
 		resourceID: updated.GetResourceID(),
 		operation:  permission.OpUpdate,
@@ -224,7 +224,7 @@ func (s *Service) changeTemplateStatus(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerChecklistTemplate,
 		resourceID: saved.GetResourceID(),
 		operation:  operation,

@@ -92,7 +92,7 @@ func TestRotatingTheInboundURLSavesANewAddress(t *testing.T) {
 
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().
-		LogAction(
+		LogAction(mock.Anything,
 			mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 				states := fmt.Sprint(params.PreviousState, params.CurrentState)
 				return !strings.Contains(states, "OLDADDRESS") &&

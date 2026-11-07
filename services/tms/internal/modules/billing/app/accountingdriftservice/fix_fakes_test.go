@@ -313,7 +313,7 @@ type fakeAudit struct {
 	entries []*auditports.LogActionParams
 }
 
-func (f *fakeAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (f *fakeAudit) LogAction(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)

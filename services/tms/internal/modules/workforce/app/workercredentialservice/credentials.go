@@ -211,7 +211,7 @@ func (s *Service) Create(
 	if req.Renew {
 		comment = "Credential renewed"
 	}
-	s.auditCredential(created, nil, permission.OpCreate, req.UserID, comment, log)
+	s.auditCredential(ctx, created, nil, permission.OpCreate, req.UserID, comment, log)
 	s.afterChange(ctx, created, permission.OpCreate, req.UserID)
 
 	return created, nil
@@ -238,7 +238,15 @@ func (s *Service) Update(
 	}
 	updated.CredentialType = credentialType
 
-	s.auditCredential(updated, original, permission.OpUpdate, userID, "Credential updated", log)
+	s.auditCredential(
+		ctx,
+		updated,
+		original,
+		permission.OpUpdate,
+		userID,
+		"Credential updated",
+		log,
+	)
 	s.afterChange(ctx, updated, permission.OpUpdate, userID)
 
 	return updated, nil
@@ -307,7 +315,15 @@ func (s *Service) Verify(
 	}
 	saved.CredentialType = original.CredentialType
 
-	s.auditCredential(saved, original, permission.OpApprove, req.UserID, "Credential verified", log)
+	s.auditCredential(
+		ctx,
+		saved,
+		original,
+		permission.OpApprove,
+		req.UserID,
+		"Credential verified",
+		log,
+	)
 	s.publish(
 		ctx,
 		credentialTenant(saved),
@@ -342,7 +358,15 @@ func (s *Service) Archive(
 	}
 	saved.CredentialType = original.CredentialType
 
-	s.auditCredential(saved, original, permission.OpArchive, req.UserID, "Credential archived", log)
+	s.auditCredential(
+		ctx,
+		saved,
+		original,
+		permission.OpArchive,
+		req.UserID,
+		"Credential archived",
+		log,
+	)
 	s.afterChange(ctx, saved, permission.OpArchive, req.UserID)
 
 	return saved, nil
@@ -380,7 +404,15 @@ func (s *Service) AttachDocument(
 	saved.CredentialType = original.CredentialType
 	saved.Document = doc
 
-	s.auditCredential(saved, original, permission.OpUpdate, req.UserID, "Document attached", log)
+	s.auditCredential(
+		ctx,
+		saved,
+		original,
+		permission.OpUpdate,
+		req.UserID,
+		"Document attached",
+		log,
+	)
 	s.publish(
 		ctx,
 		credentialTenant(saved),

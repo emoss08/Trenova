@@ -243,7 +243,7 @@ func (s *Service) SubmitLoadTender(
 		return nil, err
 	}
 
-	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI load tender submitted")
+	s.logAction(ctx, created, actor, permission.OpCreate, nil, created, "EDI load tender submitted")
 	return created, nil
 }
 

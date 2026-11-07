@@ -75,7 +75,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		})).
 		Return(updated, nil).
 		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" && req.Action == "ownership_transferred" &&
@@ -161,7 +161,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		BusinessUnitID: buID,
 		OwnerID:        newOwnerID,
 	}, nil).Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
 
 	svc := assembled(&rig{

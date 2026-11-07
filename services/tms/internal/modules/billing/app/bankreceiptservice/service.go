@@ -197,7 +197,7 @@ func (s *Service) Import(
 		return nil, err
 	}
 	if !req.SkipAudit {
-		s.logAudit(created, nil, actor.UserID, permission.OpCreate, "Bank receipt imported")
+		s.logAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Bank receipt imported")
 	}
 	return created, nil
 }
@@ -231,7 +231,7 @@ func (s *Service) Match(
 		return nil, err
 	}
 	if !req.SkipAudit {
-		s.logAudit(
+		s.logAudit(ctx,
 			updated,
 			plan.ReceiptBefore,
 			actor.UserID,
@@ -389,7 +389,7 @@ func (s *Service) markException(
 		}
 	}
 	if !skipAudit {
-		s.logAudit(
+		s.logAudit(ctx,
 			updated,
 			&original,
 			actor.UserID,
@@ -448,6 +448,7 @@ func (s *Service) activeWorkItem(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current *bankreceipt.BankReceipt,
 	previous *bankreceipt.BankReceipt,
 	userID pulid.ID,
@@ -470,7 +471,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log bank receipt audit action",
 			zap.Error(err),

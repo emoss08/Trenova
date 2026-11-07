@@ -124,7 +124,7 @@ func (s *Service) Transition(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: updated.ID.String(),
 		operation:  timesheetOperation(req.Status),
@@ -215,7 +215,7 @@ func (s *Service) GenerateExport(
 		}
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: created.ID.String(),
 		operation:  permission.OpExport,
@@ -338,7 +338,7 @@ func (s *Service) VoidExport(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpCancel,

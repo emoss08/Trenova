@@ -926,6 +926,7 @@ var enumAitaskTask = [...]schema.EnumValue{
 
 var enumFeature = [...]schema.EnumValue{
 	{Value: `AgentTurn`, Label: `Agent Turn`},
+	{Value: `AgentWakeUp`, Label: `Agent Wake Up`},
 	{Value: `AgentEvaluation`, Label: `Agent Evaluation`},
 	{Value: `TableQuery`, Label: `Table Query`},
 	{Value: `FormulaGenerate`, Label: `Formula Generate`},

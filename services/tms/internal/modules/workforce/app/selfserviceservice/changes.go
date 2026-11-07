@@ -219,7 +219,7 @@ func (s *Service) DecideChange(
 	if req.Approve {
 		operation = permission.OpApprove
 	}
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceProfileChangeRequest,
 		resourceID: updated.ID.String(),
 		operation:  operation,

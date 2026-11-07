@@ -194,9 +194,7 @@ func newValidConfig() *Config {
 			},
 		},
 		Audit: auditconfig.Config{
-			BatchSize:          500,
-			MaxEntriesPerFlush: 5000,
-			DLQMaxRetries:      5,
+			ExportTTL: 168 * time.Hour,
 		},
 		Storage: storageconfig.Config{
 			Endpoint:  "http://localhost:9000",
@@ -1187,9 +1185,7 @@ temporal:
     enableEncryption: false
     encryptionKeyID: "test-key-id"
 audit:
-  batchSize: 500
-  maxEntriesPerFlush: 5000
-  dlqMaxRetries: 5
+  exportTtl: 168h
 storage:
   endpoint: "http://localhost:9000"
   accessKey: "test"
@@ -1282,7 +1278,7 @@ func TestTestConfigFileLoads(t *testing.T) {
 	assert.Equal(t, "test-system-password", cfg.System.SystemUserPassword)
 	assert.False(t, cfg.Temporal.Security.EnableEncryption)
 	assert.Empty(t, cfg.Temporal.Security.EncryptionKeyID)
-	assert.Equal(t, 500, cfg.Audit.GetBatchSize())
+	assert.Equal(t, 168*time.Hour, cfg.Audit.GetExportTTL())
 }
 
 func TestProductionConfigFileLoads(t *testing.T) {

@@ -32,37 +32,12 @@ type BulkLogEntry struct {
 	Options []LogOption
 }
 
-type SensitiveFieldAction int
-
-const (
-	SensitiveFieldOmit SensitiveFieldAction = iota
-	SensitiveFieldMask
-	SensitiveFieldHash
-	SensitiveFieldEncrypt
-)
-
-type SensitiveField struct {
-	Name    string
-	Path    string
-	Action  SensitiveFieldAction
-	Pattern string
-}
-
 type AuditService interface {
-	List(
-		ctx context.Context,
-		req *ListAuditEntriesRequest,
-	) (*pagination.ListResult[*audit.Entry], error)
 	ListConnection(
 		ctx context.Context,
-		req *ListAuditEntriesConnectionRequest,
+		req *ListAuditEntriesRequest,
 	) (*pagination.CursorListResult[*audit.Entry], error)
-	ListByResourceID(
-		ctx context.Context,
-		req *ListByResourceIDRequest,
-	) (*pagination.ListResult[*audit.Entry], error)
-	GetByID(ctx context.Context, req GetAuditEntryByIDOptions) (*audit.Entry, error)
-	LogAction(params *LogActionParams, opts ...LogOption) error
-	LogActions(entries []BulkLogEntry) error
-	RegisterSensitiveFields(resource permission.Resource, fields []SensitiveField) error
+	GetByID(ctx context.Context, req *GetAuditEntryByIDOptions) (*audit.Entry, error)
+	LogAction(ctx context.Context, params *LogActionParams, opts ...LogOption) error
+	LogActions(ctx context.Context, entries []BulkLogEntry) error
 }

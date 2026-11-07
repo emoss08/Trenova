@@ -298,7 +298,7 @@ func (s *Service) audit(
 		return
 	}
 
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoiceRun,
 			ResourceID:     run.ID.String(),

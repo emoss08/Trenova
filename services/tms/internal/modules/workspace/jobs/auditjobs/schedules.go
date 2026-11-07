@@ -3,61 +3,58 @@ package auditjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
 
-type ScheduleProvider struct {
-	bufferFlushInterval time.Duration
-	dlqRetryInterval    time.Duration
-}
+type ScheduleProvider struct{}
 
-func NewScheduleProvider(cfg *auditconfig.Config) *ScheduleProvider {
-	return &ScheduleProvider{
-		bufferFlushInterval: cfg.GetBufferFlushInterval(),
-		dlqRetryInterval:    cfg.GetDLQRetryInterval(),
-	}
+func NewScheduleProvider() *ScheduleProvider {
+	return &ScheduleProvider{}
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
-			ID:            "audit-buffer-flush",
-			Description:   "Flush audit buffer from Redis for batch processing",
-			Spec:          schedule.Every(p.bufferFlushInterval),
-			Workflow:      ScheduledAuditFlushWorkflow,
+			ID:            "audit-partition-check",
+			Description:   "Report how many months of audit partitions remain; deploys create them",
+			Spec:          schedule.Cron("17 1 * * *"),
+			Workflow:      AuditPartitionCheckWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-			Memo: map[string]any{
-				"purpose": "batch-processing",
-				"target":  "audit_redis_buffer",
-			},
 		},
 		{
 			ID:            "audit-retention-purge",
-			Description:   "Delete audit entries past each organization's retention window",
-			Spec:          schedule.Cron("0 2 * * *"),
-			Workflow:      DeleteAuditEntriesWorkflow,
+			Description:   "Delete audit entries past each organization's retention, outside legal holds",
+			Spec:          schedule.Cron("43 2 * * *"),
+			Workflow:      AuditRetentionWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-			Memo: map[string]any{
-				"purpose": "audit-retention-purge",
-				"target":  "audit_entries",
-			},
 		},
 		{
-			ID:            "audit-dlq-retry",
-			Description:   "Retry failed audit entries from dead-letter queue",
-			Spec:          schedule.Every(p.dlqRetryInterval),
-			Workflow:      DLQRetryWorkflow,
+			ID:            "audit-seal",
+			Description:   "Seal the last hour of each organization's audit entries",
+			Spec:          schedule.Cron("12 * * * *"),
+			Workflow:      AuditSealWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-			Memo: map[string]any{
-				"purpose": "dlq-retry",
-				"target":  "audit_dlq",
-			},
+		},
+		{
+			ID:            "audit-verify",
+			Description:   "Verify each organization's audit seals against its entries",
+			Spec:          schedule.Cron("27 4 * * *"),
+			Workflow:      AuditVerifyWorkflow,
+			TaskQueue:     temporaltype.AuditTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+		},
+		{
+			ID:            "audit-export-cleanup",
+			Description:   "Delete audit export files past their download window",
+			Spec:          schedule.Every(time.Hour),
+			Workflow:      AuditExportCleanupWorkflow,
+			TaskQueue:     temporaltype.AuditTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 		},
 	}
 }

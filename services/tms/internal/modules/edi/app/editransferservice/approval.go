@@ -173,7 +173,7 @@ func (s *Service) ApproveTransfer(
 		return nil, updateErr
 	}
 
-	s.logUpdate(
+	s.logUpdate(ctx,
 		updated,
 		actor,
 		original,
@@ -624,7 +624,7 @@ func (s *Service) RejectTransfer(
 	if updated.InboundMessageID.IsNotNil() {
 		s.generateExternalTenderResponse(ctx, updated, actor.UserID)
 	}
-	s.logUpdate(updated, actor, &original, updated, "EDI load tender rejected")
+	s.logUpdate(ctx, updated, actor, &original, updated, "EDI load tender rejected")
 	return updated, nil
 }
 
@@ -689,7 +689,7 @@ func (s *Service) CancelTransfer(
 		return nil, err
 	}
 
-	s.logUpdate(updated, actor, &original, updated, "EDI load tender canceled")
+	s.logUpdate(ctx, updated, actor, &original, updated, "EDI load tender canceled")
 	return updated, nil
 }
 
@@ -761,7 +761,7 @@ func (s *Service) ExpireTransfer(
 		return nil, err
 	}
 
-	s.logUpdate(updated, actor, &original, updated, "EDI load tender expired")
+	s.logUpdate(ctx, updated, actor, &original, updated, "EDI load tender expired")
 	return updated, nil
 }
 

@@ -99,7 +99,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.audit(log, created, nil, permission.OpCreate, userID, "Rate zone created")
+	s.audit(ctx, log, created, nil, permission.OpCreate, userID, "Rate zone created")
 
 	return created, nil
 }
@@ -141,7 +141,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(log, updated, original, permission.OpUpdate, userID, "Rate zone updated")
+	s.audit(ctx, log, updated, original, permission.OpUpdate, userID, "Rate zone updated")
 
 	return updated, nil
 }
@@ -170,12 +170,13 @@ func (s *Service) Delete(
 		return err
 	}
 
-	s.audit(log, existing, nil, permission.OpDelete, userID, "Rate zone deleted")
+	s.audit(ctx, log, existing, nil, permission.OpDelete, userID, "Rate zone deleted")
 
 	return nil
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	log *zap.Logger,
 	entity *ratezone.RateZone,
 	original *ratezone.RateZone,
@@ -205,7 +206,7 @@ func (s *Service) audit(
 		opts = append(opts, auditservice.WithDiff(original, entity))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
 }

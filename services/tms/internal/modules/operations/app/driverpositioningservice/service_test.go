@@ -200,8 +200,8 @@ func TestCreate_SendsTheDriverRecordsItAndTellsThem(t *testing.T) {
 	target := slotNow + 4*dispatchmarket.SlotSeconds
 	var logged *auditports.LogActionParams
 	r.audit.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			logged = params
 			return nil
 		}).
@@ -268,7 +268,7 @@ func TestCreate_AuditsTheReplacedPositioningAsItsOwnRecord(t *testing.T) {
 		Status: driverpositioning.StatusReplaced,
 	}
 	r.audit.EXPECT().
-		LogAction(mock.MatchedBy(func(params *auditports.LogActionParams) bool {
+		LogAction(mock.Anything, mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 			return params.ResourceID == "dpo_old" &&
 				params.Operation == permission.OpCancel &&
 				params.CurrentState["status"] == string(driverpositioning.StatusReplaced) &&
@@ -277,7 +277,7 @@ func TestCreate_AuditsTheReplacedPositioningAsItsOwnRecord(t *testing.T) {
 		Return(nil).
 		Once()
 	r.audit.EXPECT().
-		LogAction(mock.MatchedBy(func(params *auditports.LogActionParams) bool {
+		LogAction(mock.Anything, mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 			return params.ResourceID != "dpo_old" &&
 				params.Operation == permission.OpCreate &&
 				params.PreviousState == nil
@@ -392,7 +392,7 @@ func TestCallOff_CancelsItTellsTheDriverAndAuditsTheChange(t *testing.T) {
 		SlotStart: slotNow, ArriveAt: testNow + 4*3600, Status: driverpositioning.StatusActive,
 	}
 	r.audit.EXPECT().
-		LogAction(mock.MatchedBy(func(params *auditports.LogActionParams) bool {
+		LogAction(mock.Anything, mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 			return params.Operation == permission.OpCancel &&
 				params.Resource == permission.ResourceDriverPositioning &&
 				params.PreviousState["status"] == string(driverpositioning.StatusActive) &&

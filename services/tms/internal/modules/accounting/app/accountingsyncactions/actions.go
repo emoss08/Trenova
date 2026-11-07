@@ -87,7 +87,7 @@ func (s *Service) Retry(
 		return 0, nil
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: conn.ID,
 		UserID:     req.UserID,
@@ -130,7 +130,7 @@ func (s *Service) Release(
 		return 0, nil
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: conn.ID,
 		UserID:     req.UserID,
@@ -217,7 +217,7 @@ func (s *Service) Redate(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,
@@ -266,7 +266,7 @@ func (s *Service) Skip(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,

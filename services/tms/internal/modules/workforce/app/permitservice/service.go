@@ -466,8 +466,8 @@ func (s *service) ListRequirements(
 // the compliance risk of moving without one. When a load is stopped at a scale
 // or a claim is worked months later, the audit entry is what establishes who
 // decided what and when.
-func (s *service) logPermitAction(params *permitAuditParams) {
-	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
+func (s *service) logPermitAction(ctx context.Context, params *permitAuditParams) {
+	auditservice.Record(ctx, s.auditService, s.l, &auditservice.RecordParams{
 		Resource:       permission.ResourcePermit,
 		ResourceID:     params.ResourceID,
 		Operation:      params.Operation,
@@ -540,7 +540,7 @@ func (s *service) CreatePermit(
 		return nil, err
 	}
 
-	s.logPermitAction(&permitAuditParams{
+	s.logPermitAction(ctx, &permitAuditParams{
 		ResourceID:     created.ID.String(),
 		ShipmentID:     created.ShipmentID,
 		OrganizationID: created.OrganizationID,
@@ -574,7 +574,7 @@ func (s *service) UpdatePermit(
 		return nil, err
 	}
 
-	s.logPermitAction(&permitAuditParams{
+	s.logPermitAction(ctx, &permitAuditParams{
 		ResourceID:     updated.ID.String(),
 		ShipmentID:     updated.ShipmentID,
 		OrganizationID: updated.OrganizationID,
@@ -623,7 +623,7 @@ func (s *service) WaiveRequirement(
 
 	// OpApprove, not OpUpdate: the waiver is an authorization act, and the
 	// reason is the record of why the risk was accepted.
-	s.logPermitAction(&permitAuditParams{
+	s.logPermitAction(ctx, &permitAuditParams{
 		ResourceID:     waived.ID.String(),
 		ShipmentID:     waived.ShipmentID,
 		OrganizationID: waived.OrganizationID,

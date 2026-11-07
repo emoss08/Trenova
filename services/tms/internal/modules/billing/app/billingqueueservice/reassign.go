@@ -497,12 +497,12 @@ func (s *Service) reassignmentResult(
 	}
 	for _, entity := range created {
 		s.autoAssignDefaultBiller(ctx, entity, nil, req.TenantInfo, actor)
-		s.logAction(entity, auditActor, permission.OpCreate, nil, entity, comment)
+		s.logAction(ctx, entity, auditActor, permission.OpCreate, nil, entity, comment)
 		s.activity.PublishInvalidation(ctx, entity, auditActor, "created", entity)
 		result.CreatedItemIDs = append(result.CreatedItemIDs, entity.ID)
 	}
 	for _, entity := range canceled {
-		s.logAction(
+		s.logAction(ctx,
 			entity,
 			auditActor,
 			permission.OpUpdate,
@@ -514,7 +514,7 @@ func (s *Service) reassignmentResult(
 		result.CanceledItemIDs = append(result.CanceledItemIDs, entity.ID)
 	}
 	if !containsID(result.CanceledItemIDs, item.ID) {
-		s.logAction(item, auditActor, permission.OpUpdate, nil, nil, comment)
+		s.logAction(ctx, item, auditActor, permission.OpUpdate, nil, nil, comment)
 		s.activity.PublishInvalidation(ctx, item, auditActor, "updated", item)
 	}
 

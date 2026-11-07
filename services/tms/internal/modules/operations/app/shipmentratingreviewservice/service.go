@@ -113,19 +113,20 @@ func (s *Service) Approve(
 	}
 
 	if original != nil {
-		s.audit(original, saved, actor)
+		s.audit(ctx, original, saved, actor)
 		s.publishBillingHoldChange(ctx, saved, actor)
 	}
 	return saved, nil
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	original, updated *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
 	reasons := shipmentrating.ReviewReasons(updated.RatingDetail)
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

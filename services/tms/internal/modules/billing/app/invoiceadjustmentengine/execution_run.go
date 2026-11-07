@@ -299,7 +299,7 @@ func (s *Engine) finishExecution(
 		return nil, err
 	}
 
-	s.LogAudit(updated, run.actor, permission.OpUpdate, "Invoice adjustment executed")
+	s.LogAudit(ctx, updated, run.actor, permission.OpUpdate, "Invoice adjustment executed")
 	s.PublishAdjustedInvoices(ctx, run.actor, run.source, run.creditMemo, run.replacement)
 	s.LogAdjustmentEvent("invoice adjustment executed", updated, zap.InfoLevel)
 	return updated, nil
