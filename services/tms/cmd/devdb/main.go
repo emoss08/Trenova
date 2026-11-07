@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/dbcli"
 	"github.com/emoss08/trenova/internal/seeds/fixtures"
 	"github.com/emoss08/trenova/internal/seeds/volume"
+	"github.com/emoss08/trenova/internal/seeds/volume/rollforward"
 )
 
 func main() {
@@ -14,6 +15,6 @@ func main() {
 		Development: true,
 		Dump:        []string{"docker", "exec", "db", "pg_dump", "-U", "postgres", "-d", "{db}"},
 		Fixtures:    fixtures.Seeds,
-		Commands:    []keelcli.Command{volume.Command},
+		Commands:    []keelcli.Command{volume.Command, rollforward.Command},
 	}))
 }
